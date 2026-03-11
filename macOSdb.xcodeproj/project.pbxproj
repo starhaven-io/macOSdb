@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CD1373D52F622DCC00B5FAF5 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = CD1373D42F622DCC00B5FAF5 /* Sparkle */; };
 		CD7EEB852F5F8038005A8490 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7EEB7E2F5F8038005A8490 /* ContentView.swift */; };
 		CD7EEB862F5F8038005A8490 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7EEB802F5F8038005A8490 /* SidebarView.swift */; };
 		CD7EEB872F5F8038005A8490 /* macOSdbApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7EEB822F5F8038005A8490 /* macOSdbApp.swift */; };
@@ -48,6 +49,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD1373D52F622DCC00B5FAF5 /* Sparkle in Frameworks */,
 				CD7EEB8E2F5F80EE005A8490 /* macOSdbKit in Frameworks */,
 				CDAA000D2F6A0001005A8490 /* ArgumentParser in Frameworks */,
 			);
@@ -105,14 +107,6 @@
 			path = macOSdbApp;
 			sourceTree = "<group>";
 		};
-		CDAA00212F6A0002005A8490 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				CDAA00202F6A0002005A8490 /* Assets.xcassets */,
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
 		CDAA000E2F6A0001005A8490 /* CommandLine */ = {
 			isa = PBXGroup;
 			children = (
@@ -132,6 +126,14 @@
 				CDAA00062F6A0001005A8490 /* EntryPoint.swift */,
 			);
 			path = Bootstrap;
+			sourceTree = "<group>";
+		};
+		CDAA00212F6A0002005A8490 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CDAA00202F6A0002005A8490 /* Assets.xcassets */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -154,6 +156,7 @@
 			packageProductDependencies = (
 				CD7EEB8D2F5F80EE005A8490 /* macOSdbKit */,
 				CDAA00112F6A0001005A8490 /* ArgumentParser */,
+				CD1373D42F622DCC00B5FAF5 /* Sparkle */,
 			);
 			productName = macOSdb;
 			productReference = CD7238CF2F5F7DCF0027E06F /* macOSdb.app */;
@@ -185,6 +188,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CD7EEB8C2F5F80EE005A8490 /* XCLocalSwiftPackageReference "../macOSdb" */,
+				CD1373D32F622DCC00B5FAF5 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CD7238D02F5F7DCF0027E06F /* Products */;
@@ -388,6 +392,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = macOSdbApp/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Patrick Linnane. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -431,6 +436,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = macOSdbApp/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Patrick Linnane. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -487,7 +493,23 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		CD1373D32F622DCC00B5FAF5 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		CD1373D42F622DCC00B5FAF5 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CD1373D32F622DCC00B5FAF5 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		CD7EEB8D2F5F80EE005A8490 /* macOSdbKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = macOSdbKit;

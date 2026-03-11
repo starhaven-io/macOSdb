@@ -5,9 +5,12 @@ Expects Conventional Commits PR titles (feat:, fix:, etc.) and the output
 format of `gh release create --generate-notes`.
 
 Usage:
-    python3 format-release-notes.py <raw_notes_file> <tag>
+    python3 format-release-notes.py <raw_notes_file> <tag> [--html]
+
+    --html  Output HTML instead of markdown (for Sparkle appcast).
 """
 
+import html
 import re
 import sys
 from pathlib import Path
@@ -38,8 +41,12 @@ PR_RE = re.compile(
 
 CHANGELOG_RE = re.compile(r"^\*\*Full Changelog\*\*:\s*(?P<url>https?://\S+)")
 
+FIRST_CONTRIBUTION_RE = re.compile(r"made their first contribution", re.IGNORECASE)
 
-def parse_notes(raw: str) -> tuple[dict[str, list[str]], str | None]:
+
+def parse_notes(
+    raw: str, *, strip_contributions: bool = False
+) -> tuple[dict[str, list[str]], str | None]:
     """Parse raw release notes into categorized entries and changelog URL."""
     sections: dict[str, list[str]] = {}
     changelog_url = None
@@ -50,6 +57,9 @@ def parse_notes(raw: str) -> tuple[dict[str, list[str]], str | None]:
         changelog_match = CHANGELOG_RE.match(line)
         if changelog_match:
             changelog_url = changelog_match.group("url")
+            continue
+
+        if strip_contributions and FIRST_CONTRIBUTION_RE.search(line):
             continue
 
         pr_match = PR_RE.match(line)
@@ -92,16 +102,41 @@ def format_markdown(tag: str, sections: dict[str, list[str]], changelog_url: str
     return "\n".join(lines)
 
 
+def format_html(tag: str, sections: dict[str, list[str]], changelog_url: str | None) -> str:
+    """Render categorized notes as HTML (for Sparkle appcast <description>)."""
+    parts: list[str] = []
+
+    ordered_keys = list(dict.fromkeys(SECTIONS.values()))
+    ordered_keys.append("Other")
+
+    for heading in ordered_keys:
+        entries = sections.get(heading)
+        if not entries:
+            continue
+        parts.append(f"<h2>{html.escape(heading)}</h2>")
+        parts.append("<ul>")
+        for entry in entries:
+            parts.append(f"  <li>{html.escape(entry)}</li>")
+        parts.append("</ul>")
+
+    return "\n".join(parts)
+
+
 def main() -> None:
     if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} <raw_notes_file> <tag>", file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <raw_notes_file> <tag> [--html]", file=sys.stderr)
         sys.exit(1)
 
     raw = Path(sys.argv[1]).read_text()
     tag = sys.argv[2]
+    output_html = "--html" in sys.argv
 
-    sections, changelog_url = parse_notes(raw)
-    print(format_markdown(tag, sections, changelog_url))
+    if output_html:
+        sections, changelog_url = parse_notes(raw, strip_contributions=True)
+        print(format_html(tag, sections, changelog_url))
+    else:
+        sections, changelog_url = parse_notes(raw)
+        print(format_markdown(tag, sections, changelog_url))
 
 
 if __name__ == "__main__":

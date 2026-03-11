@@ -23,6 +23,7 @@ jobs:
     environment: release
     outputs:
       tag: ${{ steps.version.outputs.tag }}
+      build_number: ${{ steps.version.outputs.build_number }}
       artifact_name: "macOSdb-${{ steps.version.outputs.tag }}.zip"
     permissions:
       contents: write # required to create tag
@@ -44,7 +45,9 @@ jobs:
             echo "::error::Could not extract MARKETING_VERSION from project.pbxproj"
             exit 1
           fi
+          BUILD_NUMBER=$(grep -m1 'CURRENT_PROJECT_VERSION' macOSdb.xcodeproj/project.pbxproj | sed 's/.*= *//;s/ *;.*//')
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "build_number=${BUILD_NUMBER}" >> "${GITHUB_OUTPUT}"
           echo "TAG=${TAG}" >> "${GITHUB_ENV}"
 
       - name: Create tag
@@ -205,3 +208,56 @@ jobs:
           gh release edit "${TAG}" \
             --repo "${REPOSITORY}" \
             --notes-file "${RUNNER_TEMP}/formatted_notes.md"
+
+      - name: Download Sparkle
+        run: |
+          curl -L -o "${RUNNER_TEMP}/sparkle.tar.xz" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz"
+          mkdir -p "${RUNNER_TEMP}/sparkle"
+          tar xf "${RUNNER_TEMP}/sparkle.tar.xz" -C "${RUNNER_TEMP}/sparkle"
+
+      - name: Sign update with Sparkle EdDSA
+        env:
+          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+        run: |
+          SPARKLE_KEY_FILE="${RUNNER_TEMP}/sparkle_private_key"
+          echo "${SPARKLE_KEY}" > "${SPARKLE_KEY_FILE}"
+          SIG_OUTPUT=$("${RUNNER_TEMP}/sparkle/bin/sign_update" "${ARTIFACT_NAME}" --ed-key-file "${SPARKLE_KEY_FILE}" 2>&1)
+          rm -f "${SPARKLE_KEY_FILE}"
+          echo "SPARKLE_SIG=$(echo "${SIG_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
+          echo "SPARKLE_LENGTH=$(echo "${SIG_OUTPUT}" | grep -o 'length="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
+
+      - name: Generate HTML release notes
+        run: |
+          python3 .github/format-release-notes.py \
+            "${RUNNER_TEMP}/raw_notes.md" "${TAG}" --html \
+            > "${RUNNER_TEMP}/release_notes.html"
+
+      - name: Update appcast
+        env:
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+          REPOSITORY: ${{ github.repository }}
+          BUILD_NUMBER: ${{ needs.build.outputs.build_number }}
+        run: |
+          export PUBDATE="$(date -u '+%a, %d %b %Y %H:%M:%S %z')"
+          export DOWNLOAD_URL="https://github.com/${REPOSITORY}/releases/download/${TAG}/${ARTIFACT_NAME}"
+          export RELEASE_NOTES_HTML="$(cat "${RUNNER_TEMP}/release_notes.html")"
+          envsubst < .github/appcast-template.xml > appcast.xml
+
+      - name: Push appcast
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git"
+          cp appcast.xml "${RUNNER_TEMP}/appcast.xml"
+          git fetch origin appcast
+          git checkout appcast
+          cp "${RUNNER_TEMP}/appcast.xml" appcast.xml
+          git add appcast.xml
+          git diff --cached --quiet && exit 0
+          git commit -m "Update appcast for ${TAG}"
+          git push origin appcast
