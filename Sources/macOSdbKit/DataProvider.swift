@@ -62,16 +62,25 @@ public actor DataProvider {
     public func fetchAllReleases() async throws -> [Release] {
         let index = try await fetchReleaseIndex()
 
-        return try await withThrowingTaskGroup(of: Release.self, returning: [Release].self) { group in
+        return await withTaskGroup(of: Release?.self, returning: [Release].self) { group in
             for entry in index {
                 group.addTask {
-                    try await self.fetchRelease(entry)
+                    do {
+                        return try await self.fetchRelease(entry)
+                    } catch {
+                        Self.logger.error(
+                            "Skipping \(entry.osVersion) (\(entry.buildNumber)): \(error.localizedDescription)"
+                        )
+                        return nil
+                    }
                 }
             }
 
             var releases: [Release] = []
-            for try await release in group {
-                releases.append(release)
+            for await release in group {
+                if let release {
+                    releases.append(release)
+                }
             }
             return releases.sorted()
         }
