@@ -55,6 +55,96 @@
     "releaseName" : "Monterey"
   },
   {
+    "buildNumber" : "21G115",
+    "dataFile" : "releases/12/macOS-12.6-21G115.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.6",
+    "releaseDate" : "2022-09-12",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21G83",
+    "dataFile" : "releases/12/macOS-12.5.1-21G83.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.5.1",
+    "releaseDate" : "2022-08-17",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21G72",
+    "dataFile" : "releases/12/macOS-12.5-21G72.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "releaseDate" : "2022-07-20",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21F79",
+    "dataFile" : "releases/12/macOS-12.4-21F79.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "releaseDate" : "2022-05-16",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21E258",
+    "dataFile" : "releases/12/macOS-12.3.1-21E258.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.3.1",
+    "releaseDate" : "2022-03-31",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21E230",
+    "dataFile" : "releases/12/macOS-12.3-21E230.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.3",
+    "releaseDate" : "2022-03-14",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21D62",
+    "dataFile" : "releases/12/macOS-12.2.1-21D62.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.2.1",
+    "releaseDate" : "2022-02-10",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21D49",
+    "dataFile" : "releases/12/macOS-12.2-21D49.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.2",
+    "releaseDate" : "2022-01-26",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21C52",
+    "dataFile" : "releases/12/macOS-12.1-21C52.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.1",
+    "releaseDate" : "2021-12-13",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21A559",
+    "dataFile" : "releases/12/macOS-12.0.1-21A559.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.0.1",
+    "releaseDate" : "2021-11-04",
+    "releaseName" : "Monterey"
+  },
+  {
     "buildNumber" : "20G165",
     "dataFile" : "releases/11/macOS-11.6-20G165.json",
     "isBeta" : false,
