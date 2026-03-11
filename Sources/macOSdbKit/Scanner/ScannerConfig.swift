@@ -1,7 +1,7 @@
 import Foundation
 
-/// Bump when scanner logic changes in a way that would produce different output from the same IPSW.
-public let scannerVersion = "1.0.0"
+/// Kept in sync with the app's MARKETING_VERSION.
+public let scannerVersion = "1.1.0"
 
 public struct ComponentDefinition: Sendable {
     public let name: String
