@@ -1,0 +1,16 @@
+[
+  {
+    "osVersion": "14.6.1",
+    "buildNumber": "23G93",
+    "releaseName": "Sonoma",
+    "releaseDate": "2024-08-07",
+    "dataFile": "releases/14/macOS-14.6.1-23G93.json"
+  },
+  {
+    "osVersion": "15.6.1",
+    "buildNumber": "24G90",
+    "releaseName": "Sequoia",
+    "releaseDate": "2025-07-07",
+    "dataFile": "releases/15/macOS-15.6.1-24G90.json"
+  }
+]

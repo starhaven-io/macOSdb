@@ -1,0 +1,23 @@
+# Build
+.build/
+build/
+DerivedData/
+
+# Xcode
+xcuserdata/
+*.xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+
+# SPM
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+
+# Claude Code
+.claude/

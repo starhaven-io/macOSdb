@@ -1,0 +1,207 @@
+{
+  "osVersion": "14.6.1",
+  "buildNumber": "23G93",
+  "releaseName": "Sonoma",
+  "releaseDate": "2024-08-07",
+  "ipswFile": "UniversalMac_14.6.1_23G93_Restore.ipsw",
+  "scannerVersion": "1.0.0",
+  "kernels": [
+    {
+      "file": "kernelcache.release.Mac13,1_2_MacBookPro18,1_2_3_4",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T6000",
+      "chip": "M1 Pro",
+      "devices": [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac14,2_3_7_15",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T8112",
+      "chip": "M2",
+      "devices": [
+        "Mac14,2",
+        "Mac14,3",
+        "Mac14,7",
+        "Mac14,15"
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac14,5_6_8_9_10_12_13_14",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T6020",
+      "chip": "M2 Pro",
+      "devices": [
+        "Mac14,5",
+        "Mac14,6",
+        "Mac14,8",
+        "Mac14,9",
+        "Mac14,10",
+        "Mac14,12",
+        "Mac14,13",
+        "Mac14,14"
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac15,3_4_5_12_13",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T8122",
+      "chip": "M3",
+      "devices": [
+        "Mac15,3",
+        "Mac15,4",
+        "Mac15,5",
+        "Mac15,12",
+        "Mac15,13"
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac15,6_7",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T6030",
+      "chip": "M3 Pro",
+      "devices": [
+        "Mac15,6",
+        "Mac15,7"
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac15,8_9_10_11",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T6031",
+      "chip": "M3 Max",
+      "devices": [
+        "Mac15,8",
+        "Mac15,9",
+        "Mac15,10",
+        "Mac15,11"
+      ]
+    },
+    {
+      "file": "kernelcache.release.MacBookAir10,1_MacBookPro17,1_Macmini9,1_iMac21,1_2",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_T8103",
+      "chip": "M1",
+      "devices": [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ]
+    },
+    {
+      "file": "kernelcache.release.VirtualMac2,1",
+      "darwinVersion": "23.6.0",
+      "arch": "ARM64_VMAPPLE",
+      "chip": "Virtual Mac",
+      "devices": [
+        "VirtualMac2,1"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "name": "curl",
+      "version": "8.7.1",
+      "path": "/usr/bin/curl",
+      "source": "filesystem"
+    },
+    {
+      "name": "OpenSSH",
+      "version": "9.7p1",
+      "path": "/usr/bin/ssh",
+      "source": "filesystem"
+    },
+    {
+      "name": "LibreSSL",
+      "version": "3.3.6",
+      "path": "/usr/bin/openssl",
+      "source": "filesystem"
+    },
+    {
+      "name": "Ruby",
+      "version": "2.6.10",
+      "path": "/usr/bin/ruby",
+      "source": "filesystem"
+    },
+    {
+      "name": "SQLite",
+      "version": "3.43.2",
+      "path": "/usr/bin/sqlite3",
+      "source": "filesystem"
+    },
+    {
+      "name": "vim",
+      "version": "9.0",
+      "path": "/usr/bin/vim",
+      "source": "filesystem"
+    },
+    {
+      "name": "zip",
+      "version": "2.0",
+      "path": "/usr/bin/zip",
+      "source": "filesystem"
+    },
+    {
+      "name": "httpd",
+      "version": "2.4.59",
+      "path": "/usr/sbin/httpd",
+      "source": "filesystem"
+    },
+    {
+      "name": "libcurl",
+      "version": "8.7.1",
+      "path": "/usr/lib/libcurl.4.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libssl (LibreSSL)",
+      "version": "2.2.9",
+      "path": "/usr/lib/libssl.35.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libxml2",
+      "version": "2.9.13",
+      "path": "/usr/lib/libxml2.2.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libsqlite3",
+      "version": "3.43.2",
+      "path": "/usr/lib/libsqlite3.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libpcap",
+      "version": "1.10.1",
+      "path": "/usr/lib/libpcap.A.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libbz2 (bzip2)",
+      "version": "1.0.8",
+      "path": "/usr/lib/libbz2.1.0.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libexpat",
+      "version": "2.5.0",
+      "path": "/usr/lib/libexpat.1.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libncurses",
+      "version": "6.0.20150808",
+      "path": "/usr/lib/libncurses.5.4.dylib",
+      "source": "dyldCache"
+    }
+  ]
+}

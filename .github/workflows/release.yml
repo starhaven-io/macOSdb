@@ -1,0 +1,207 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+    environment: release
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      artifact_name: "macOSdb-${{ steps.version.outputs.tag }}.zip"
+    permissions:
+      contents: write # required to create tag
+      attestations: write # required to generate build provenance attestations
+      id-token: write # required to generate build provenance attestations
+    env:
+      TEMPORARY_CERTIFICATE_FILE: "macosdb_developer_id_certificate.p12"
+      TEMPORARY_KEYCHAIN_FILE: "macosdb_signing.keychain-db"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Extract version from Xcode project
+        id: version
+        run: |
+          TAG=$(grep -m1 'MARKETING_VERSION' macOSdb.xcodeproj/project.pbxproj | sed 's/.*= *//;s/ *;.*//')
+          if [[ -z "${TAG}" ]]; then
+            echo "::error::Could not extract MARKETING_VERSION from project.pbxproj"
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "TAG=${TAG}" >> "${GITHUB_ENV}"
+
+      - name: Create tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          gh api "repos/${REPOSITORY}/git/refs" \
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${COMMIT_SHA}"
+
+      - name: Create and unlock temporary macOS keychain
+        run: |
+          TEMPORARY_KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
+          TEMPORARY_KEYCHAIN_PATH="${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          security create-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${TEMPORARY_KEYCHAIN_PATH}"
+          security unlock-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
+
+      - name: Create temporary certificate file
+        env:
+          DEVELOPER_ID_CERTIFICATE: ${{ secrets.DEVELOPER_ID_CERTIFICATE }}
+        run: echo -n "${DEVELOPER_ID_CERTIFICATE}" |
+          base64 --decode --output="${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
+
+      - name: Import certificate into keychain
+        env:
+          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: security import "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
+          -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}"
+          -t cert -f pkcs12 -A
+
+      - name: Clean up temporary certificate file
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
+
+      - name: Open keychain
+        run: security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project macOSdb.xcodeproj \
+            -scheme macOSdb \
+            -destination 'generic/platform=macOS' \
+            -configuration Release \
+            -archivePath "${RUNNER_TEMP}/macOSdb.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}"
+
+      - name: Export
+        run: |
+          cat > "${RUNNER_TEMP}/ExportOptions.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>developer-id</string>
+              <key>teamID</key>
+              <string>${DEVELOPMENT_TEAM}</string>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "${RUNNER_TEMP}/macOSdb.xcarchive" \
+            -exportOptionsPlist "${RUNNER_TEMP}/ExportOptions.plist" \
+            -exportPath "${RUNNER_TEMP}/export"
+
+      - name: Clean up temporary keychain
+        if: always()
+        run: |
+          if [[ -f "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" ]]; then
+            security delete-keychain "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          fi
+
+      - name: Package
+        run: |
+          ditto -c -k --keepParent \
+            "${RUNNER_TEMP}/export/macOSdb.app" \
+            "${RUNNER_TEMP}/macOSdb-${TAG}.zip"
+
+      - name: Generate build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: "${{ runner.temp }}/macOSdb-${{ steps.version.outputs.tag }}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: "macOSdb-${{ steps.version.outputs.tag }}.zip"
+          path: "${{ runner.temp }}/macOSdb-${{ steps.version.outputs.tag }}.zip"
+
+  release:
+    name: Release
+    needs: build
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      contents: write # required to create GitHub releases
+    env:
+      TAG: ${{ needs.build.outputs.tag }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: "${{ needs.build.outputs.artifact_name }}"
+
+      - name: Notarize and staple
+        env:
+          APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+        run: |
+          xcrun notarytool submit "${ARTIFACT_NAME}" \
+            --team-id "${DEVELOPMENT_TEAM}" \
+            --apple-id "${APPLE_ID}" \
+            --password "${NOTARIZATION_PASSWORD}" \
+            --wait
+          ditto -xk "${ARTIFACT_NAME}" "${RUNNER_TEMP}/staple"
+          xcrun stapler staple "${RUNNER_TEMP}/staple/macOSdb.app"
+          ditto -c -k --keepParent \
+            "${RUNNER_TEMP}/staple/macOSdb.app" \
+            "${ARTIFACT_NAME}"
+
+      - name: Create release with generated notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh release create "${TAG}" \
+            --repo "${REPOSITORY}" \
+            --title "${TAG}" \
+            --generate-notes \
+            "${ARTIFACT_NAME}"
+          gh release view "${TAG}" \
+            --repo "${REPOSITORY}" \
+            --json body \
+            --jq '.body' > "${RUNNER_TEMP}/raw_notes.md"
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Format release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 .github/format-release-notes.py \
+            "${RUNNER_TEMP}/raw_notes.md" "${TAG}" \
+            > "${RUNNER_TEMP}/formatted_notes.md"
+          gh release edit "${TAG}" \
+            --repo "${REPOSITORY}" \
+            --notes-file "${RUNNER_TEMP}/formatted_notes.md"

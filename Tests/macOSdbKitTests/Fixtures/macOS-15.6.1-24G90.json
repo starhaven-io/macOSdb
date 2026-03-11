@@ -1,0 +1,310 @@
+{
+  "osVersion": "15.6.1",
+  "buildNumber": "24G90",
+  "releaseName": "Sequoia",
+  "releaseDate": "2025-07-07",
+  "ipswFile": "UniversalMac_15.6.1_24G90_Restore.ipsw",
+  "scannerVersion": "1.0.0",
+  "kernels": [
+    {
+      "file": "kernelcache.release.Mac13,1_2_MacBookPro18,1_2_3_4",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T6000",
+      "chip": "M1 Pro",
+      "devices": [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ],
+      "deviceChips": [
+        { "device": "Mac13,1", "chip": "M1 Max" },
+        { "device": "Mac13,2", "chip": "M1 Ultra" },
+        { "device": "MacBookPro18,1", "chip": "M1 Pro" },
+        { "device": "MacBookPro18,2", "chip": "M1 Max" },
+        { "device": "MacBookPro18,3", "chip": "M1 Pro" },
+        { "device": "MacBookPro18,4", "chip": "M1 Max" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac14,2_3_7_15",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T8112",
+      "chip": "M2",
+      "devices": [
+        "Mac14,2",
+        "Mac14,3",
+        "Mac14,7",
+        "Mac14,15"
+      ],
+      "deviceChips": [
+        { "device": "Mac14,2", "chip": "M2" },
+        { "device": "Mac14,3", "chip": "M2" },
+        { "device": "Mac14,7", "chip": "M2" },
+        { "device": "Mac14,15", "chip": "M2" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac14,5_6_8_9_10_12_13_14",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T6020",
+      "chip": "M2 Pro",
+      "devices": [
+        "Mac14,5",
+        "Mac14,6",
+        "Mac14,8",
+        "Mac14,9",
+        "Mac14,10",
+        "Mac14,12",
+        "Mac14,13",
+        "Mac14,14"
+      ],
+      "deviceChips": [
+        { "device": "Mac14,5", "chip": "M2 Max" },
+        { "device": "Mac14,6", "chip": "M2 Max" },
+        { "device": "Mac14,8", "chip": "M2 Ultra" },
+        { "device": "Mac14,9", "chip": "M2 Pro" },
+        { "device": "Mac14,10", "chip": "M2 Pro" },
+        { "device": "Mac14,12", "chip": "M2 Pro" },
+        { "device": "Mac14,13", "chip": "M2 Max" },
+        { "device": "Mac14,14", "chip": "M2 Ultra" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac15,3_4_5_12_13",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T8122",
+      "chip": "M3",
+      "devices": [
+        "Mac15,3",
+        "Mac15,4",
+        "Mac15,5",
+        "Mac15,12",
+        "Mac15,13"
+      ],
+      "deviceChips": [
+        { "device": "Mac15,3", "chip": "M3" },
+        { "device": "Mac15,4", "chip": "M3" },
+        { "device": "Mac15,5", "chip": "M3" },
+        { "device": "Mac15,12", "chip": "M3" },
+        { "device": "Mac15,13", "chip": "M3" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac15,6_7",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T6030",
+      "chip": "M3 Pro",
+      "devices": [
+        "Mac15,6",
+        "Mac15,7"
+      ],
+      "deviceChips": [
+        { "device": "Mac15,6", "chip": "M3 Pro" },
+        { "device": "Mac15,7", "chip": "M3 Pro" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac15,8_9_10_11_14",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T6031",
+      "chip": "M3 Max",
+      "devices": [
+        "Mac15,8",
+        "Mac15,9",
+        "Mac15,10",
+        "Mac15,11",
+        "Mac15,14"
+      ],
+      "deviceChips": [
+        { "device": "Mac15,8", "chip": "M3 Max" },
+        { "device": "Mac15,9", "chip": "M3 Max" },
+        { "device": "Mac15,10", "chip": "M3 Max" },
+        { "device": "Mac15,11", "chip": "M3 Max" },
+        { "device": "Mac15,14", "chip": "M3 Ultra" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac16,1_2_3_10_12_13",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T8132",
+      "chip": "M4",
+      "devices": [
+        "Mac16,1",
+        "Mac16,2",
+        "Mac16,3",
+        "Mac16,10",
+        "Mac16,12",
+        "Mac16,13"
+      ],
+      "deviceChips": [
+        { "device": "Mac16,1", "chip": "M4" },
+        { "device": "Mac16,2", "chip": "M4" },
+        { "device": "Mac16,3", "chip": "M4" },
+        { "device": "Mac16,10", "chip": "M4" },
+        { "device": "Mac16,12", "chip": "M4" },
+        { "device": "Mac16,13", "chip": "M4" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.Mac16,5_6_7_8_9_11",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T6041",
+      "chip": "M4 Max",
+      "devices": [
+        "Mac16,5",
+        "Mac16,6",
+        "Mac16,7",
+        "Mac16,8",
+        "Mac16,9",
+        "Mac16,11"
+      ],
+      "deviceChips": [
+        { "device": "Mac16,5", "chip": "M4 Max" },
+        { "device": "Mac16,6", "chip": "M4 Max" },
+        { "device": "Mac16,7", "chip": "M4 Pro" },
+        { "device": "Mac16,8", "chip": "M4 Pro" },
+        { "device": "Mac16,9", "chip": "M4 Max" },
+        { "device": "Mac16,11", "chip": "M4 Pro" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.MacBookAir10,1_MacBookPro17,1_Macmini9,1_iMac21,1_2",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_T8103",
+      "chip": "M1",
+      "devices": [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ],
+      "deviceChips": [
+        { "device": "MacBookAir10,1", "chip": "M1" },
+        { "device": "MacBookPro17,1", "chip": "M1" },
+        { "device": "Macmini9,1", "chip": "M1" },
+        { "device": "iMac21,1", "chip": "M1" },
+        { "device": "iMac21,2", "chip": "M1" }
+      ]
+    },
+    {
+      "file": "kernelcache.release.VirtualMac2,1",
+      "darwinVersion": "24.6.0",
+      "arch": "ARM64_VMAPPLE",
+      "chip": "Virtual Mac",
+      "devices": [
+        "VirtualMac2,1"
+      ],
+      "deviceChips": [
+        { "device": "VirtualMac2,1", "chip": "Virtual Mac" }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "name": "curl",
+      "version": "8.7.1",
+      "path": "/usr/bin/curl",
+      "source": "filesystem"
+    },
+    {
+      "name": "OpenSSH",
+      "version": "9.9p2",
+      "path": "/usr/bin/ssh",
+      "source": "filesystem"
+    },
+    {
+      "name": "LibreSSL",
+      "version": "3.3.6",
+      "path": "/usr/bin/openssl",
+      "source": "filesystem"
+    },
+    {
+      "name": "Ruby",
+      "version": "2.6.10",
+      "path": "/usr/bin/ruby",
+      "source": "filesystem"
+    },
+    {
+      "name": "SQLite",
+      "version": "3.43.2",
+      "path": "/usr/bin/sqlite3",
+      "source": "filesystem"
+    },
+    {
+      "name": "vim",
+      "version": "9.1",
+      "path": "/usr/bin/vim",
+      "source": "filesystem"
+    },
+    {
+      "name": "rsync",
+      "version": "2.6.9",
+      "path": "/usr/bin/rsync",
+      "source": "filesystem"
+    },
+    {
+      "name": "zip",
+      "version": "2.0",
+      "path": "/usr/bin/zip",
+      "source": "filesystem"
+    },
+    {
+      "name": "httpd",
+      "version": "2.4.62",
+      "path": "/usr/sbin/httpd",
+      "source": "filesystem"
+    },
+    {
+      "name": "libcurl",
+      "version": "8.7.1",
+      "path": "/usr/lib/libcurl.4.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libssl (LibreSSL)",
+      "version": "2.2.9",
+      "path": "/usr/lib/libssl.35.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libxml2",
+      "version": "2.9.13",
+      "path": "/usr/lib/libxml2.2.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libsqlite3",
+      "version": "3.43.2",
+      "path": "/usr/lib/libsqlite3.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libpcap",
+      "version": "1.10.1",
+      "path": "/usr/lib/libpcap.A.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libbz2 (bzip2)",
+      "version": "1.0.8",
+      "path": "/usr/lib/libbz2.1.0.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libexpat",
+      "version": "2.7.1",
+      "path": "/usr/lib/libexpat.1.dylib",
+      "source": "dyldCache"
+    },
+    {
+      "name": "libncurses",
+      "version": "6.0.20150808",
+      "path": "/usr/lib/libncurses.5.4.dylib",
+      "source": "dyldCache"
+    }
+  ]
+}
