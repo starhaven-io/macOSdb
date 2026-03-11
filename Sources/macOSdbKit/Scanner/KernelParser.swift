@@ -114,11 +114,15 @@ public enum KernelParser {
     /// - `kernelcache.release.Mac16,1_2_3_10_12_13` → `["Mac16,1", "Mac16,2", ...]`
     /// - `kernelcache.release.MacBookAir10,1_MacBookPro17,1` → `["MacBookAir10,1", "MacBookPro17,1"]`
     /// - `kernelcache.release.VirtualMac2,1` → `["VirtualMac2,1"]`
+    /// - `kernelcache.development.Mac16,1_2_3` → `["Mac16,1", "Mac16,2", "Mac16,3"]`
     /// - `kernelcache.release.mac13g` → `[]` (board codename, not device model IDs)
     public static func parseDevicesFromFilename(_ filename: String) -> [String] {
         var suffix = filename
-        if let range = suffix.range(of: "kernelcache.release.") {
-            suffix = String(suffix[range.upperBound...])
+        for prefix in ["kernelcache.release.", "kernelcache.development."] {
+            if let range = suffix.range(of: prefix) {
+                suffix = String(suffix[range.upperBound...])
+                break
+            }
         }
 
         // Handle VirtualMac specially

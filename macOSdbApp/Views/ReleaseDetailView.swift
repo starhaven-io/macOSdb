@@ -100,32 +100,7 @@ struct ReleaseDetailView: View {
                 .fontWeight(.semibold)
 
             ForEach(release.kernels) { kernel in
-                HStack(alignment: .top, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(kernel.chip)
-                            .font(.headline)
-                        Text("Darwin \(kernel.darwinVersion)")
-                            .font(.callout)
-                        if let xnuVersion = kernel.xnuVersion {
-                            Text("XNU \(xnuVersion)")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(kernel.arch)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(kernel.devices.joined(separator: ", "))
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                .padding(12)
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
+                KernelCard(kernel: kernel)
             }
         }
     }
@@ -150,5 +125,48 @@ struct ReleaseDetailView: View {
                 || comp.displayVersion.localizedCaseInsensitiveContains(searchText)
                 || comp.path.localizedCaseInsensitiveContains(searchText)
         }
+    }
+}
+
+// MARK: - Kernel Card
+
+private struct KernelCard: View {
+    let kernel: KernelInfo
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(kernel.sortedChipNames.joined(separator: ", "))
+                        .font(.headline)
+                    if kernel.isDevelopment {
+                        Text("Development")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.orange)
+                    }
+                }
+                Text("Darwin \(kernel.darwinVersion)")
+                    .font(.callout)
+                if let xnuVersion = kernel.xnuVersion {
+                    Text("XNU \(xnuVersion)")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(kernel.arch)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(kernel.devices.joined(separator: ", "))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(12)
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
     }
 }

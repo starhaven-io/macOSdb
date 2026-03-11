@@ -64,6 +64,8 @@ struct SidebarView: View {
                     .font(.callout)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.bar)
             }
         }
     }

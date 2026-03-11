@@ -170,6 +170,22 @@ struct KernelParserTests {
         )
         #expect(devices.isEmpty)
     }
+
+    @Test("Parse device models from development kernelcache")
+    func parseDevelopmentKernelcache() {
+        let devices = KernelParser.parseDevicesFromFilename(
+            "kernelcache.development.Mac16,1_2_3"
+        )
+        #expect(devices == ["Mac16,1", "Mac16,2", "Mac16,3"])
+    }
+
+    @Test("Development board codename returns empty devices")
+    func parseDevelopmentBoardCodename() {
+        let devices = KernelParser.parseDevicesFromFilename(
+            "kernelcache.development.mac13g"
+        )
+        #expect(devices.isEmpty)
+    }
 }
 
 @Suite("Scanner config tests")

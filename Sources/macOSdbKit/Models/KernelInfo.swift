@@ -49,6 +49,30 @@ public struct KernelInfo: Codable, Identifiable, Hashable, Sendable {
         self.deviceChips = deviceChips
     }
 
+    public var isDevelopment: Bool {
+        file.contains("kernelcache.development.")
+    }
+
+    /// Unique chip names from `deviceChips`, sorted by generation then tier
+    /// (generation 0 sorts last). Falls back to the kernel-level `chip`.
+    public var sortedChipNames: [String] {
+        guard let deviceChips, !deviceChips.isEmpty else { return [chip] }
+        return deviceChips
+            .reduce(into: [String]()) { result, dc in
+                if !result.contains(dc.chip) { result.append(dc.chip) }
+            }
+            .sorted { lhs, rhs in
+                let lhsChip = ChipFamily.from(chipName: lhs)
+                let rhsChip = ChipFamily.from(chipName: rhs)
+                let lhsGen = lhsChip?.generation ?? 0
+                let rhsGen = rhsChip?.generation ?? 0
+                let lhsSortGen = lhsGen == 0 ? Int.max : lhsGen
+                let rhsSortGen = rhsGen == 0 ? Int.max : rhsGen
+                if lhsSortGen != rhsSortGen { return lhsSortGen < rhsSortGen }
+                return (lhsChip?.tier ?? .base) < (rhsChip?.tier ?? .base)
+            }
+    }
+
     public var chipFamily: ChipFamily? {
         ChipFamily.from(chipName: chip)
     }

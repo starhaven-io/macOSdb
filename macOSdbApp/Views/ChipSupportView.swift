@@ -78,7 +78,9 @@ struct ChipSupportView: View {
                 for dc in deviceChips {
                     guard let chip = ChipFamily.from(chipName: dc.chip) else { continue }
                     if let index = groups.firstIndex(where: { $0.chip == chip }) {
-                        groups[index].devices.append(dc.device)
+                        if !groups[index].devices.contains(dc.device) {
+                            groups[index].devices.append(dc.device)
+                        }
                     } else {
                         groups.append(ChipGroup(chip: chip, devices: [dc.device], arch: kernel.arch))
                     }
@@ -89,7 +91,9 @@ struct ChipSupportView: View {
                     let chip = DeviceRegistry.chip(for: device) ?? kernelChip
                     guard let chip else { continue }
                     if let index = groups.firstIndex(where: { $0.chip == chip }) {
-                        groups[index].devices.append(device)
+                        if !groups[index].devices.contains(device) {
+                            groups[index].devices.append(device)
+                        }
                     } else {
                         groups.append(ChipGroup(chip: chip, devices: [device], arch: kernel.arch))
                     }

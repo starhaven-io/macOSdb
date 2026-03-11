@@ -30,17 +30,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Cache SPM packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: .build
-          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-
-
       - name: Test with Thread Sanitizer
         run: |
           xcodebuild test \
+            -workspace . \
             -scheme macOSdb-Package \
             -destination 'platform=macOS' \
             -enableCodeCoverage YES \
@@ -73,17 +66,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Cache SPM packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: .build
-          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-
-
       - name: Test with Address Sanitizer
         run: |
           xcodebuild test \
+            -workspace . \
             -scheme macOSdb-Package \
             -destination 'platform=macOS' \
             -enableAddressSanitizer YES \
