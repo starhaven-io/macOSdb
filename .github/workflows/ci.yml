@@ -41,6 +41,7 @@ jobs:
       - name: Test with Thread Sanitizer
         run: |
           xcodebuild test \
+            -workspace . \
             -scheme macOSdb-Package \
             -destination 'platform=macOS' \
             -enableCodeCoverage YES \
@@ -84,6 +85,7 @@ jobs:
       - name: Test with Address Sanitizer
         run: |
           xcodebuild test \
+            -workspace . \
             -scheme macOSdb-Package \
             -destination 'platform=macOS' \
             -enableAddressSanitizer YES \

@@ -105,15 +105,10 @@ public actor IPSWScanner {
         for path in kernelcaches {
             guard var kernel = KernelParser.parse(kernelcachePath: path) else { continue }
             if kernel.devices.isEmpty {
-                // Try BuildManifest device map first, then fall back to hardcoded board codename map.
-                // Normalize development kernelcache names to release for the fallback lookup.
-                let releaseKey = kernel.file.replacingOccurrences(
-                    of: "kernelcache.development.",
-                    with: "kernelcache.release."
-                )
+                // Try BuildManifest device map, then board codename map (normalizing dev → release)
+                let releaseKey = kernel.file.replacingOccurrences(of: ".development.", with: ".release.")
                 let devices = deviceMap[kernel.file]
-                    ?? boardCodeNameDevices[kernel.file]
-                    ?? boardCodeNameDevices[releaseKey]
+                    ?? boardCodeNameDevices[kernel.file] ?? boardCodeNameDevices[releaseKey]
                 if let devices {
                     kernel = KernelInfo(
                         file: kernel.file,

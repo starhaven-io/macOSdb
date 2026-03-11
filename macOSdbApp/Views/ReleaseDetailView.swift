@@ -100,63 +100,7 @@ struct ReleaseDetailView: View {
                 .fontWeight(.semibold)
 
             ForEach(release.kernels) { kernel in
-                HStack(alignment: .top, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            if let deviceChips = kernel.deviceChips,
-                               !deviceChips.isEmpty {
-                                let uniqueChips = deviceChips
-                                    .reduce(into: [String]()) { result, dc in
-                                        if !result.contains(dc.chip) { result.append(dc.chip) }
-                                    }
-                                    .sorted { lhs, rhs in
-                                        let lhsChip = ChipFamily.from(chipName: lhs)
-                                        let rhsChip = ChipFamily.from(chipName: rhs)
-                                        let lhsGen = lhsChip?.generation ?? 0
-                                        let rhsGen = rhsChip?.generation ?? 0
-                                        // Sort generation 0 (A12Z, Virtual Mac) after real generations
-                                        let lhsSortGen = lhsGen == 0 ? Int.max : lhsGen
-                                        let rhsSortGen = rhsGen == 0 ? Int.max : rhsGen
-                                        if lhsSortGen != rhsSortGen { return lhsSortGen < rhsSortGen }
-                                        let lhsTier = lhsChip?.tier ?? .base
-                                        let rhsTier = rhsChip?.tier ?? .base
-                                        return lhsTier < rhsTier
-                                    }
-                                Text(uniqueChips.joined(separator: ", "))
-                                    .font(.headline)
-                            } else {
-                                Text(kernel.chip)
-                                    .font(.headline)
-                            }
-                            if kernel.isDevelopment {
-                                Text("Development")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.orange)
-                            }
-                        }
-                        Text("Darwin \(kernel.darwinVersion)")
-                            .font(.callout)
-                        if let xnuVersion = kernel.xnuVersion {
-                            Text("XNU \(xnuVersion)")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(kernel.arch)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(kernel.devices.joined(separator: ", "))
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                .padding(12)
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
+                KernelCard(kernel: kernel)
             }
         }
     }
@@ -181,5 +125,48 @@ struct ReleaseDetailView: View {
                 || comp.displayVersion.localizedCaseInsensitiveContains(searchText)
                 || comp.path.localizedCaseInsensitiveContains(searchText)
         }
+    }
+}
+
+// MARK: - Kernel Card
+
+private struct KernelCard: View {
+    let kernel: KernelInfo
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(kernel.sortedChipNames.joined(separator: ", "))
+                        .font(.headline)
+                    if kernel.isDevelopment {
+                        Text("Development")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.orange)
+                    }
+                }
+                Text("Darwin \(kernel.darwinVersion)")
+                    .font(.callout)
+                if let xnuVersion = kernel.xnuVersion {
+                    Text("XNU \(xnuVersion)")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(kernel.arch)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(kernel.devices.joined(separator: ", "))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(12)
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
     }
 }
