@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>macOSdb</title>
+        <item>
+            <title>1.2.2</title>
+            <pubDate>Thu, 12 Mar 2026 05:25:59 +0000</pubDate>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>1.2.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[]]></description>
+            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.2.2/macOSdb-1.2.2.zip" length="2695796" type="application/octet-stream" sparkle:edSignature="/pKiXk137ycs7TLK/HSM4pMRASOBsXaRJu/rrAoezHKfXpIGNJDS35ZJbMiOWui+ie5ZFYN6j5MK070iUo1hCA=="/>
+        </item>
+    </channel>
+</rss>
