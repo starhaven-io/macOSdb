@@ -1,7 +1,7 @@
 import Foundation
 
 /// Kept in sync with the app's MARKETING_VERSION.
-public let scannerVersion = "1.2.0"
+public let scannerVersion = "1.2.1"
 
 public struct ComponentDefinition: Sendable {
     public let name: String
