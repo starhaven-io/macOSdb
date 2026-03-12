@@ -7,10 +7,14 @@ on:
     paths:
       - "**/*.swift"
       - "Package.swift"
+      - "Package.resolved"
+      - "macOSdb.xcodeproj/**"
   pull_request:
     paths:
       - "**/*.swift"
       - "Package.swift"
+      - "Package.resolved"
+      - "macOSdb.xcodeproj/**"
       - ".github/workflows/codeql.yml"
 
 concurrency:
@@ -42,7 +46,16 @@ jobs:
           build-mode: manual
 
       - name: Build
-        run: swift build
+        run: |
+          xcodebuild \
+            -project macOSdb.xcodeproj \
+            -scheme macOSdb \
+            -destination 'generic/platform=macOS' \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
