@@ -176,6 +176,25 @@ jobs:
             "${RUNNER_TEMP}/staple/macOSdb.app" \
             "${ARTIFACT_NAME}"
 
+      - name: Download Sparkle
+        run: |
+          curl -L -o "${RUNNER_TEMP}/sparkle.tar.xz" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz"
+          mkdir -p "${RUNNER_TEMP}/sparkle"
+          tar xf "${RUNNER_TEMP}/sparkle.tar.xz" -C "${RUNNER_TEMP}/sparkle"
+
+      - name: Sign update with Sparkle EdDSA
+        env:
+          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+        run: |
+          SPARKLE_KEY_FILE="${RUNNER_TEMP}/sparkle_private_key"
+          echo "${SPARKLE_KEY}" > "${SPARKLE_KEY_FILE}"
+          SIG_OUTPUT=$("${RUNNER_TEMP}/sparkle/bin/sign_update" "${ARTIFACT_NAME}" --ed-key-file "${SPARKLE_KEY_FILE}" 2>&1)
+          rm -f "${SPARKLE_KEY_FILE}"
+          echo "SPARKLE_SIG=$(echo "${SIG_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
+          echo "SPARKLE_LENGTH=$(echo "${SIG_OUTPUT}" | grep -o 'length="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
+
       - name: Create release with generated notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -205,34 +224,12 @@ jobs:
           python3 .github/format-release-notes.py \
             "${RUNNER_TEMP}/raw_notes.md" "${TAG}" \
             > "${RUNNER_TEMP}/formatted_notes.md"
-          gh release edit "${TAG}" \
-            --repo "${REPOSITORY}" \
-            --notes-file "${RUNNER_TEMP}/formatted_notes.md"
-
-      - name: Download Sparkle
-        run: |
-          curl -L -o "${RUNNER_TEMP}/sparkle.tar.xz" \
-            "https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz"
-          mkdir -p "${RUNNER_TEMP}/sparkle"
-          tar xf "${RUNNER_TEMP}/sparkle.tar.xz" -C "${RUNNER_TEMP}/sparkle"
-
-      - name: Sign update with Sparkle EdDSA
-        env:
-          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
-        run: |
-          SPARKLE_KEY_FILE="${RUNNER_TEMP}/sparkle_private_key"
-          echo "${SPARKLE_KEY}" > "${SPARKLE_KEY_FILE}"
-          SIG_OUTPUT=$("${RUNNER_TEMP}/sparkle/bin/sign_update" "${ARTIFACT_NAME}" --ed-key-file "${SPARKLE_KEY_FILE}" 2>&1)
-          rm -f "${SPARKLE_KEY_FILE}"
-          echo "SPARKLE_SIG=$(echo "${SIG_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
-          echo "SPARKLE_LENGTH=$(echo "${SIG_OUTPUT}" | grep -o 'length="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
-
-      - name: Generate HTML release notes
-        run: |
           python3 .github/format-release-notes.py \
             "${RUNNER_TEMP}/raw_notes.md" "${TAG}" --html \
             > "${RUNNER_TEMP}/release_notes.html"
+          gh release edit "${TAG}" \
+            --repo "${REPOSITORY}" \
+            --notes-file "${RUNNER_TEMP}/formatted_notes.md"
 
       - name: Update appcast
         env:
