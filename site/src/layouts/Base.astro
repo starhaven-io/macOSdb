@@ -1,0 +1,76 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'A catalog of open-source components in every macOS release since macOS 11 Big Sur.' } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/" class="site-title">macOSdb</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer>
+      <p>Data licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>. Code licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a>.</p>
+      <p><a href="https://github.com/p-linnane/macOSdb">GitHub</a></p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  header {
+    border-bottom: 1px solid var(--color-border);
+    padding: 1rem 2rem;
+  }
+
+  nav {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .site-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .site-title:hover {
+    text-decoration: none;
+    opacity: 0.8;
+  }
+
+  main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  footer {
+    border-top: 1px solid var(--color-border);
+    padding: 2rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    max-width: var(--max-width);
+    margin: 4rem auto 0;
+  }
+
+  footer p {
+    margin-bottom: 0.25rem;
+  }
+</style>

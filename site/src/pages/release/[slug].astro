@@ -1,0 +1,272 @@
+---
+import Base from '../../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+export function getStaticPaths() {
+  const dataDir = path.resolve('..', 'data');
+  const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'releases.json'), 'utf-8'));
+
+  return releases.map((release: any) => {
+    const releaseData = JSON.parse(
+      fs.readFileSync(path.join(dataDir, release.dataFile), 'utf-8')
+    );
+    return {
+      params: { slug: `${release.osVersion}-${release.buildNumber}` },
+      props: { release, releaseData },
+    };
+  });
+}
+
+interface Props {
+  release: any;
+  releaseData: any;
+}
+
+const { release, releaseData } = Astro.props;
+
+function displayName(r: any): string {
+  let name = `macOS ${r.osVersion} ${r.releaseName}`;
+  if (r.isBeta && r.betaNumber) {
+    name += ` beta ${r.betaNumber}`;
+  } else if (r.isRC) {
+    name += ' RC';
+  }
+  return name;
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+const components = [...releaseData.components].sort((a: any, b: any) =>
+  a.name.localeCompare(b.name)
+);
+
+// Group kernels by chip family (M1, M2, etc.)
+const chipFamilies: Record<string, any[]> = {};
+for (const kernel of releaseData.kernels) {
+  for (const dc of kernel.deviceChips || []) {
+    const family = dc.chip;
+    if (!chipFamilies[family]) chipFamilies[family] = [];
+    if (!chipFamilies[family].some((d: any) => d.device === dc.device)) {
+      chipFamilies[family].push(dc);
+    }
+  }
+}
+
+const title = displayName(release);
+const darwinVersion = releaseData.kernels?.[0]?.darwinVersion;
+const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
+---
+
+<Base title={`${title} — macOSdb`} description={`Components and hardware support for ${title}`}>
+  <nav class="breadcrumb">
+    <a href="/">macOSdb</a> &rsaquo; {title}
+  </nav>
+
+  <header class="release-header">
+    <h1>{title}</h1>
+    <div class="meta">
+      <span>Build <code>{release.buildNumber}</code></span>
+      <span>{formatDate(release.releaseDate)}</span>
+      {release.isBeta && <span class="badge badge-beta">Beta</span>}
+      {release.isRC && <span class="badge badge-rc">RC</span>}
+    </div>
+  </header>
+
+  {(darwinVersion || xnuVersion) && (
+    <section class="kernel-info">
+      <h2>Kernel</h2>
+      <dl>
+        {darwinVersion && (
+          <>
+            <dt>Darwin</dt>
+            <dd>{darwinVersion}</dd>
+          </>
+        )}
+        {xnuVersion && (
+          <>
+            <dt>XNU</dt>
+            <dd>{xnuVersion}</dd>
+          </>
+        )}
+      </dl>
+    </section>
+  )}
+
+  <section class="components">
+    <h2>Components</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Version</th>
+          <th>Source</th>
+          <th>Path</th>
+        </tr>
+      </thead>
+      <tbody>
+        {components.map((comp: any) => (
+          <tr>
+            <td class="comp-name">{comp.name}</td>
+            <td><code>{comp.version}</code></td>
+            <td>
+              <span class={`source source-${comp.source}`}>
+                {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+              </span>
+            </td>
+            <td class="comp-path"><code>{comp.path}</code></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  {Object.keys(chipFamilies).length > 0 && (
+    <section class="hardware">
+      <h2>Hardware Support</h2>
+      <div class="chip-grid">
+        {Object.entries(chipFamilies).map(([chip, devices]) => (
+          <div class="chip-card">
+            <h3>{chip}</h3>
+            <ul>
+              {devices.map((d: any) => (
+                <li>{d.device}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .release-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .release-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    color: var(--color-text-secondary);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .badge-beta {
+    background: color-mix(in srgb, var(--color-badge-beta) 15%, transparent);
+    color: var(--color-badge-beta);
+  }
+
+  .badge-rc {
+    background: color-mix(in srgb, var(--color-badge-rc) 15%, transparent);
+    color: var(--color-badge-rc);
+  }
+
+  .kernel-info {
+    margin-bottom: 2.5rem;
+  }
+
+  .kernel-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .kernel-info dl {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .kernel-info dt {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .kernel-info dd {
+    margin-left: 0;
+    font-family: var(--font-mono);
+  }
+
+  section h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .components {
+    margin-bottom: 2.5rem;
+  }
+
+  .comp-name {
+    font-weight: 500;
+  }
+
+  .comp-path code {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+  }
+
+  .source {
+    font-size: 0.8rem;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+  }
+
+  .chip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .chip-card {
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .chip-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .chip-card ul {
+    list-style: none;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .chip-card li {
+    padding: 0.15rem 0;
+  }
+</style>
