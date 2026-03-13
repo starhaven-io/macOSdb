@@ -85,7 +85,10 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     }
 
     public var displayName: String {
-        "macOS \(osVersion) \(releaseName)"
+        if let betaLabel {
+            return "macOS \(osVersion) \(releaseName) \(betaLabel)"
+        }
+        return "macOS \(osVersion) \(releaseName)"
     }
 
     public func component(named name: String) -> Component? {
