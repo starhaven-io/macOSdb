@@ -38,6 +38,114 @@
     "releaseName" : "Sequoia"
   },
   {
+    "buildNumber" : "24G84",
+    "dataFile" : "releases/15/macOS-15.6-24G84.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.6",
+    "releaseDate" : "2025-07-29",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24F74",
+    "dataFile" : "releases/15/macOS-15.5-24F74.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.5",
+    "releaseDate" : "2025-05-12",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24E263",
+    "dataFile" : "releases/15/macOS-15.4.1-24E263.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.4.1",
+    "releaseDate" : "2025-04-16",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24E248",
+    "dataFile" : "releases/15/macOS-15.4-24E248.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.4",
+    "releaseDate" : "2025-03-31",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24D81",
+    "dataFile" : "releases/15/macOS-15.3.2-24D81.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.3.2",
+    "releaseDate" : "2025-03-11",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24D70",
+    "dataFile" : "releases/15/macOS-15.3.1-24D70.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.3.1",
+    "releaseDate" : "2025-02-10",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24D60",
+    "dataFile" : "releases/15/macOS-15.3-24D60.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.3",
+    "releaseDate" : "2025-01-27",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24C101",
+    "dataFile" : "releases/15/macOS-15.2-24C101.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.2",
+    "releaseDate" : "2024-12-11",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24B91",
+    "dataFile" : "releases/15/macOS-15.1.1-24B91.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.1.1",
+    "releaseDate" : "2024-11-19",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24B83",
+    "dataFile" : "releases/15/macOS-15.1-24B83.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.1",
+    "releaseDate" : "2024-10-28",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24A348",
+    "dataFile" : "releases/15/macOS-15.0.1-24A348.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.0.1",
+    "releaseDate" : "2024-10-03",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24A335",
+    "dataFile" : "releases/15/macOS-15.0-24A335.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "releaseDate" : "2024-09-16",
+    "releaseName" : "Sequoia"
+  },
+  {
     "buildNumber" : "23G93",
     "dataFile" : "releases/14/macOS-14.6.1-23G93.json",
     "isBeta" : false,
