@@ -29,6 +29,60 @@
     "releaseName" : "Tahoe"
   },
   {
+    "buildNumber" : "25D2128",
+    "dataFile" : "releases/26/macOS-26.3.1-25D2128.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.3.1",
+    "releaseDate" : "2026-03-04",
+    "releaseName" : "Tahoe"
+  },
+  {
+    "buildNumber" : "25D125",
+    "dataFile" : "releases/26/macOS-26.3-25D125.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.3",
+    "releaseDate" : "2026-02-11",
+    "releaseName" : "Tahoe"
+  },
+  {
+    "buildNumber" : "25C56",
+    "dataFile" : "releases/26/macOS-26.2-25C56.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.2",
+    "releaseDate" : "2025-12-12",
+    "releaseName" : "Tahoe"
+  },
+  {
+    "buildNumber" : "25B78",
+    "dataFile" : "releases/26/macOS-26.1-25B78.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.1",
+    "releaseDate" : "2025-11-03",
+    "releaseName" : "Tahoe"
+  },
+  {
+    "buildNumber" : "25A362",
+    "dataFile" : "releases/26/macOS-26.0.1-25A362.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.0.1",
+    "releaseDate" : "2025-09-29",
+    "releaseName" : "Tahoe"
+  },
+  {
+    "buildNumber" : "25A354",
+    "dataFile" : "releases/26/macOS-26.0-25A354.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.0",
+    "releaseDate" : "2025-09-15",
+    "releaseName" : "Tahoe"
+  },
+  {
     "buildNumber" : "24G90",
     "dataFile" : "releases/15/macOS-15.6.1-24G90.json",
     "isBeta" : false,
