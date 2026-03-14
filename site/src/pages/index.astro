@@ -1,0 +1,139 @@
+---
+import Base from '../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const dataDir = path.resolve('..', 'data');
+const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'releases.json'), 'utf-8'));
+
+// Group by major version, derive release names from the data
+const grouped: Record<string, typeof releases> = {};
+const releaseNames: Record<string, string> = {};
+for (const release of releases) {
+  const major = release.osVersion.split('.')[0];
+  if (!grouped[major]) grouped[major] = [];
+  grouped[major].push(release);
+  if (release.releaseName) releaseNames[major] = release.releaseName;
+}
+
+// Sort major versions descending
+const majorVersions = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function displayName(release: any): string {
+  let name = `macOS ${release.osVersion}`;
+  if (release.isBeta && release.betaNumber) {
+    name += ` beta ${release.betaNumber}`;
+  } else if (release.isRC) {
+    name += ' RC';
+  }
+  return name;
+}
+
+function releaseSlug(release: any): string {
+  return `${release.osVersion}-${release.buildNumber}`;
+}
+---
+
+<Base title="macOSdb — macOS Component Database">
+  <div class="hero">
+    <h1>macOSdb</h1>
+    <p>A catalog of open-source components in every macOS release since macOS 11 Big Sur.</p>
+  </div>
+
+  {majorVersions.map((major) => (
+    <section class="version-group">
+      <h2>macOS {major} {releaseNames[major] || ''}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Release</th>
+            <th>Build</th>
+            <th>Date</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {grouped[major].map((release: any) => (
+            <tr>
+              <td>
+                <a href={`/release/${releaseSlug(release)}/`}>
+                  {displayName(release)}
+                </a>
+              </td>
+              <td><code>{release.buildNumber}</code></td>
+              <td>{formatDate(release.releaseDate)}</td>
+              <td>
+                {release.isBeta ? (
+                  <span class="badge badge-beta">Beta</span>
+                ) : release.isRC ? (
+                  <span class="badge badge-rc">RC</span>
+                ) : (
+                  <span class="badge badge-release">Release</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  ))}
+</Base>
+
+<style>
+  .hero {
+    margin-bottom: 3rem;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--color-text-secondary);
+  }
+
+  .version-group {
+    margin-bottom: 3rem;
+  }
+
+  .version-group h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .badge-beta {
+    background: color-mix(in srgb, var(--color-badge-beta) 15%, transparent);
+    color: var(--color-badge-beta);
+  }
+
+  .badge-rc {
+    background: color-mix(in srgb, var(--color-badge-rc) 15%, transparent);
+    color: var(--color-badge-rc);
+  }
+
+  .badge-release {
+    background: color-mix(in srgb, var(--color-text) 8%, transparent);
+    color: var(--color-text-secondary);
+  }
+</style>
