@@ -34,7 +34,8 @@ public actor IPSWScanner {
         isBeta: Bool? = nil,
         betaNumber: Int? = nil,
         isRC: Bool = false,
-        rcNumber: Int? = nil
+        rcNumber: Int? = nil,
+        isDeviceSpecific: Bool = false
     ) async throws -> Release {
         let startTime = Date()
 
@@ -77,6 +78,7 @@ public actor IPSWScanner {
                 betaNumber: betaNumber,
                 isRC: isRC,
                 rcNumber: rcNumber,
+                isDeviceSpecific: isDeviceSpecific,
                 kernels: kernels,
                 components: components
             )
@@ -149,39 +151,6 @@ public actor IPSWScanner {
             devices: kernel.devices,
             deviceChips: deviceChips
         )
-    }
-
-    private func deduplicateKernels(_ kernels: [KernelInfo]) -> [KernelInfo] {
-        var seen: [String: Int] = [:]
-        var result: [KernelInfo] = []
-
-        for kernel in kernels {
-            if let existingIndex = seen[kernel.arch] {
-                let existing = result[existingIndex]
-                var mergedDevices = existing.devices
-                for device in kernel.devices where !mergedDevices.contains(device) {
-                    mergedDevices.append(device)
-                }
-                var mergedDeviceChips = existing.deviceChips ?? []
-                for dc in kernel.deviceChips ?? [] where !mergedDeviceChips.contains(dc) {
-                    mergedDeviceChips.append(dc)
-                }
-                result[existingIndex] = KernelInfo(
-                    file: existing.file,
-                    darwinVersion: existing.darwinVersion,
-                    xnuVersion: existing.xnuVersion,
-                    arch: existing.arch,
-                    chip: existing.chip,
-                    devices: mergedDevices,
-                    deviceChips: mergedDeviceChips.isEmpty ? nil : mergedDeviceChips
-                )
-            } else {
-                seen[kernel.arch] = result.count
-                result.append(kernel)
-            }
-        }
-
-        return result
     }
 
     // MARK: - AEA decryption, DMG mounting, and component extraction
@@ -384,6 +353,41 @@ public actor IPSWScanner {
     private func sendVerbose(_ message: String) {
         onVerbose?(message)
     }
+}
+
+// MARK: - Kernel deduplication
+
+private func deduplicateKernels(_ kernels: [KernelInfo]) -> [KernelInfo] {
+    var seen: [String: Int] = [:]
+    var result: [KernelInfo] = []
+
+    for kernel in kernels {
+        if let existingIndex = seen[kernel.arch] {
+            let existing = result[existingIndex]
+            var mergedDevices = existing.devices
+            for device in kernel.devices where !mergedDevices.contains(device) {
+                mergedDevices.append(device)
+            }
+            var mergedDeviceChips = existing.deviceChips ?? []
+            for dc in kernel.deviceChips ?? [] where !mergedDeviceChips.contains(dc) {
+                mergedDeviceChips.append(dc)
+            }
+            result[existingIndex] = KernelInfo(
+                file: existing.file,
+                darwinVersion: existing.darwinVersion,
+                xnuVersion: existing.xnuVersion,
+                arch: existing.arch,
+                chip: existing.chip,
+                devices: mergedDevices,
+                deviceChips: mergedDeviceChips.isEmpty ? nil : mergedDeviceChips
+            )
+        } else {
+            seen[kernel.arch] = result.count
+            result.append(kernel)
+        }
+    }
+
+    return result
 }
 
 // MARK: - dyld cache helpers

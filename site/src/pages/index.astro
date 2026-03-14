@@ -88,6 +88,7 @@ function releaseSlug(release: any): string {
                   ) : (
                     <span class="badge badge-release">Release</span>
                   )}
+                  {release.isDeviceSpecific && <span class="badge badge-device">Device Specific</span>}
                 </td>
               </tr>
             ))}
@@ -146,6 +147,11 @@ function releaseSlug(release: any): string {
   .badge-release {
     background: color-mix(in srgb, var(--color-text) 8%, transparent);
     color: var(--color-text-secondary);
+  }
+
+  .badge-device {
+    background: color-mix(in srgb, purple 15%, transparent);
+    color: purple;
   }
 
   .filter-bar {

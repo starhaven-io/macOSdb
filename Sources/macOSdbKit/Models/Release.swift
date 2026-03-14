@@ -16,6 +16,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     public let betaNumber: Int?
     public let isRC: Bool
     public let rcNumber: Int?
+    public let isDeviceSpecific: Bool
     public let kernels: [KernelInfo]
     public let components: [Component]
 
@@ -31,6 +32,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         betaNumber: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
+        isDeviceSpecific: Bool = false,
         kernels: [KernelInfo] = [],
         components: [Component] = []
     ) {
@@ -45,6 +47,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         self.betaNumber = betaNumber
         self.isRC = isRC
         self.rcNumber = rcNumber
+        self.isDeviceSpecific = isDeviceSpecific
         self.kernels = kernels
         self.components = components
     }
@@ -111,6 +114,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
+        isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
         kernels = try container.decodeIfPresent([KernelInfo].self, forKey: .kernels) ?? []
         components = try container.decodeIfPresent([Component].self, forKey: .components) ?? []
     }
@@ -153,6 +157,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
     public let betaNumber: Int?
     public let isRC: Bool
     public let rcNumber: Int?
+    public let isDeviceSpecific: Bool
     public let dataFile: String
 
     public init(
@@ -164,6 +169,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         betaNumber: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
+        isDeviceSpecific: Bool = false,
         dataFile: String
     ) {
         self.osVersion = osVersion
@@ -174,6 +180,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         self.betaNumber = betaNumber
         self.isRC = isRC
         self.rcNumber = rcNumber
+        self.isDeviceSpecific = isDeviceSpecific
         self.dataFile = dataFile
     }
 
@@ -187,6 +194,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
+        isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
         dataFile = try container.decode(String.self, forKey: .dataFile)
     }
 }
