@@ -14,6 +14,10 @@ test:
 lint:
     swiftlint --strict
 
+# Validate JSON data files
+lint-json:
+    find data -name '*.json' -type f -exec jq empty {} +
+
 # Audit GitHub Actions workflows
 audit:
     zizmor .github/workflows/
@@ -63,4 +67,4 @@ site-install:
     cd site && npm install
 
 # Run all checks (lint, test, site formatting, site build)
-check: lint test audit site-format-check site-build
+check: lint lint-json test audit site-format-check site-build
