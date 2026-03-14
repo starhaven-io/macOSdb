@@ -10,6 +10,10 @@
   --color-badge-rc: #248a3d;
   --color-table-header: #f5f5f7;
   --color-table-stripe: #fafafa;
+  --color-upgraded: #248a3d;
+  --color-downgraded: #bf5700;
+  --color-added: #0066cc;
+  --color-removed: #cc0000;
   --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
   --max-width: 960px;
@@ -28,6 +32,10 @@
     --color-badge-rc: #30d158;
     --color-table-header: #2d2d2f;
     --color-table-stripe: #252527;
+    --color-upgraded: #30d158;
+    --color-downgraded: #ff9f0a;
+    --color-added: #2997ff;
+    --color-removed: #ff453a;
   }
 }
 
