@@ -40,9 +40,13 @@ const releaseOptions = releases.map((r: any) => ({
       <label for="from-select">From</label>
       <select id="from-select">
         <option value="">Select a release…</option>
-        {releaseOptions.map((opt: any, i: number) => (
-          <option value={opt.key} selected={i === 1}>{opt.label}</option>
-        ))}
+        {
+          releaseOptions.map((opt: any, i: number) => (
+            <option value={opt.key} selected={i === 1}>
+              {opt.label}
+            </option>
+          ))
+        }
       </select>
     </div>
     <span class="arrow">→</span>
@@ -50,9 +54,13 @@ const releaseOptions = releases.map((r: any) => ({
       <label for="to-select">To</label>
       <select id="to-select">
         <option value="">Select a release…</option>
-        {releaseOptions.map((opt: any, i: number) => (
-          <option value={opt.key} selected={i === 0}>{opt.label}</option>
-        ))}
+        {
+          releaseOptions.map((opt: any, i: number) => (
+            <option value={opt.key} selected={i === 0}>
+              {opt.label}
+            </option>
+          ))
+        }
       </select>
     </div>
     <button id="compare-btn" type="button">Compare</button>
@@ -128,7 +136,10 @@ const releaseOptions = releases.map((r: any) => ({
   function parseVersion(version: string): number[] {
     const cleaned = version.replace(/\s*\(.*\)/, '').trim();
     return cleaned.split('.').flatMap((segment) => {
-      return segment.split(/[^0-9]+/).filter(Boolean).map(Number);
+      return segment
+        .split(/[^0-9]+/)
+        .filter(Boolean)
+        .map(Number);
     });
   }
 
@@ -197,24 +208,24 @@ const releaseOptions = releases.map((r: any) => ({
       downgraded > 0 ? `<span class="badge badge-downgraded">${downgraded} downgraded</span>` : '',
       added.length > 0 ? `<span class="badge badge-added">${added.length} added</span>` : '',
       removed.length > 0 ? `<span class="badge badge-removed">${removed.length} removed</span>` : '',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     renderTable(changes);
 
     if (added.length > 0) {
       addedSection.classList.remove('hidden');
-      addedBody.innerHTML = added.map((c) =>
-        `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`
-      ).join('');
+      addedBody.innerHTML = added.map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`).join('');
     } else {
       addedSection.classList.add('hidden');
     }
 
     if (removed.length > 0) {
       removedSection.classList.remove('hidden');
-      removedBody.innerHTML = removed.map((c) =>
-        `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`
-      ).join('');
+      removedBody.innerHTML = removed
+        .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
+        .join('');
     } else {
       removedSection.classList.add('hidden');
     }
@@ -227,18 +238,19 @@ const releaseOptions = releases.map((r: any) => ({
     const showChangedOnly = changedOnly.checked;
     const filtered = showChangedOnly ? changes.filter((c) => c.direction !== 'unchanged') : changes;
 
-    comparisonBody.innerHTML = filtered.map((c) => {
-      const statusClass = `status-${c.direction}`;
-      const statusLabel = c.direction === 'upgraded' ? '↑ Upgraded'
-        : c.direction === 'downgraded' ? '↓ Downgraded'
-        : '— Unchanged';
-      return `<tr class="${statusClass}">
+    comparisonBody.innerHTML = filtered
+      .map((c) => {
+        const statusClass = `status-${c.direction}`;
+        const statusLabel =
+          c.direction === 'upgraded' ? '↑ Upgraded' : c.direction === 'downgraded' ? '↓ Downgraded' : '— Unchanged';
+        return `<tr class="${statusClass}">
         <td>${c.name}</td>
         <td><code>${c.from}</code></td>
         <td><code>${c.to}</code></td>
         <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
       </tr>`;
-    }).join('');
+      })
+      .join('');
   }
 
   compareBtn.addEventListener('click', runComparison);

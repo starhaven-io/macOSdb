@@ -8,9 +8,7 @@ export function getStaticPaths() {
   const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'releases.json'), 'utf-8'));
 
   return releases.map((release: any) => {
-    const releaseData = JSON.parse(
-      fs.readFileSync(path.join(dataDir, release.dataFile), 'utf-8')
-    );
+    const releaseData = JSON.parse(fs.readFileSync(path.join(dataDir, release.dataFile), 'utf-8'));
     return {
       params: { slug: `${release.osVersion}-${release.buildNumber}` },
       props: { release, releaseData },
@@ -43,9 +41,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-const components = [...releaseData.components].sort((a: any, b: any) =>
-  a.name.localeCompare(b.name)
-);
+const components = [...releaseData.components].sort((a: any, b: any) => a.name.localeCompare(b.name));
 
 // Group kernels by chip family (M1, M2, etc.)
 const chipFamilies: Record<string, any[]> = {};
@@ -79,25 +75,27 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     </div>
   </header>
 
-  {(darwinVersion || xnuVersion) && (
-    <section class="kernel-info">
-      <h2>Kernel</h2>
-      <dl>
-        {darwinVersion && (
-          <>
-            <dt>Darwin</dt>
-            <dd>{darwinVersion}</dd>
-          </>
-        )}
-        {xnuVersion && (
-          <>
-            <dt>XNU</dt>
-            <dd>{xnuVersion}</dd>
-          </>
-        )}
-      </dl>
-    </section>
-  )}
+  {
+    (darwinVersion || xnuVersion) && (
+      <section class="kernel-info">
+        <h2>Kernel</h2>
+        <dl>
+          {darwinVersion && (
+            <>
+              <dt>Darwin</dt>
+              <dd>{darwinVersion}</dd>
+            </>
+          )}
+          {xnuVersion && (
+            <>
+              <dt>XNU</dt>
+              <dd>{xnuVersion}</dd>
+            </>
+          )}
+        </dl>
+      </section>
+    )
+  }
 
   <section class="components">
     <h2>Components</h2>
@@ -111,39 +109,47 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
         </tr>
       </thead>
       <tbody>
-        {components.map((comp: any) => (
-          <tr>
-            <td class="comp-name">{comp.name}</td>
-            <td><code>{comp.version}</code></td>
-            <td>
-              <span class={`source source-${comp.source}`}>
-                {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-              </span>
-            </td>
-            <td class="comp-path"><code>{comp.path}</code></td>
-          </tr>
-        ))}
+        {
+          components.map((comp: any) => (
+            <tr>
+              <td class="comp-name">{comp.name}</td>
+              <td>
+                <code>{comp.version}</code>
+              </td>
+              <td>
+                <span class={`source source-${comp.source}`}>
+                  {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+                </span>
+              </td>
+              <td class="comp-path">
+                <code>{comp.path}</code>
+              </td>
+            </tr>
+          ))
+        }
       </tbody>
     </table>
   </section>
 
-  {Object.keys(chipFamilies).length > 0 && (
-    <section class="hardware">
-      <h2>Hardware Support</h2>
-      <div class="chip-grid">
-        {Object.entries(chipFamilies).map(([chip, devices]) => (
-          <div class="chip-card">
-            <h3>{chip}</h3>
-            <ul>
-              {devices.map((d: any) => (
-                <li>{d.device}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
-  )}
+  {
+    Object.keys(chipFamilies).length > 0 && (
+      <section class="hardware">
+        <h2>Hardware Support</h2>
+        <div class="chip-grid">
+          {Object.entries(chipFamilies).map(([chip, devices]) => (
+            <div class="chip-card">
+              <h3>{chip}</h3>
+              <ul>
+                {devices.map((d: any) => (
+                  <li>{d.device}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
 </Base>
 
 <style>

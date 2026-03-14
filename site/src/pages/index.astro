@@ -48,43 +48,47 @@ function releaseSlug(release: any): string {
     <p>A catalog of open-source components in every macOS release since macOS 11 Big Sur.</p>
   </div>
 
-  {majorVersions.map((major) => (
-    <section class="version-group">
-      <h2>macOS {major} {releaseNames[major] || ''}</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Release</th>
-            <th>Build</th>
-            <th>Date</th>
-            <th>Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {grouped[major].map((release: any) => (
+  {
+    majorVersions.map((major) => (
+      <section class="version-group">
+        <h2>
+          macOS {major} {releaseNames[major] || ''}
+        </h2>
+        <table>
+          <thead>
             <tr>
-              <td>
-                <a href={`/release/${releaseSlug(release)}/`}>
-                  {displayName(release)}
-                </a>
-              </td>
-              <td><code>{release.buildNumber}</code></td>
-              <td>{formatDate(release.releaseDate)}</td>
-              <td>
-                {release.isBeta ? (
-                  <span class="badge badge-beta">Beta</span>
-                ) : release.isRC ? (
-                  <span class="badge badge-rc">RC</span>
-                ) : (
-                  <span class="badge badge-release">Release</span>
-                )}
-              </td>
+              <th>Release</th>
+              <th>Build</th>
+              <th>Date</th>
+              <th>Type</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
-  ))}
+          </thead>
+          <tbody>
+            {grouped[major].map((release: any) => (
+              <tr>
+                <td>
+                  <a href={`/release/${releaseSlug(release)}/`}>{displayName(release)}</a>
+                </td>
+                <td>
+                  <code>{release.buildNumber}</code>
+                </td>
+                <td>{formatDate(release.releaseDate)}</td>
+                <td>
+                  {release.isBeta ? (
+                    <span class="badge badge-beta">Beta</span>
+                  ) : release.isRC ? (
+                    <span class="badge badge-rc">RC</span>
+                  ) : (
+                    <span class="badge badge-release">Release</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    ))
+  }
 </Base>
 
 <style>
