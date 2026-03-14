@@ -18,5 +18,8 @@ xcuserdata/
 # Editors
 .vscode/
 
+# Appcast (lives on the appcast branch, not main)
+appcast.xml
+
 # Claude Code
 .claude/
