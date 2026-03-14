@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_11.4_20F71_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2021SpringFCS/fullrestores/071-00710/AB478B0E-D78C-4DFE-9BDA-5497969A5272/UniversalMac_11.4_20F71_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

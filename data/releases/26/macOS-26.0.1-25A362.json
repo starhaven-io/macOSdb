@@ -111,6 +111,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_26.0.1_25A362_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2025FallFCS/fullrestores/093-50898/60AE7E97-3E60-441B-9B34-E603C694C5C1/UniversalMac_26.0.1_25A362_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

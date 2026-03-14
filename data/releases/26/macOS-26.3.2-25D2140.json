@@ -111,6 +111,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_26.3.2_25D2140_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2026WinterFCS/fullrestores/047-94879/40A2B65E-4E49-4EAA-8BEC-62A305007488/UniversalMac_26.3.2_25D2140_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

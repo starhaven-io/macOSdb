@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_14.5_23F79_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2024SpringFCS/fullrestores/062-01897/C874907B-9F82-4109-87EB-6B3C9BF1507D/UniversalMac_14.5_23F79_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

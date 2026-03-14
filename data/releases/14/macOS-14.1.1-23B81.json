@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_14.1.1_23B81_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023FallFCS/fullrestores/042-89681/55BD14DB-5535-4203-9359-E2C070E43FBE/UniversalMac_14.1.1_23B81_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

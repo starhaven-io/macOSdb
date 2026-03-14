@@ -112,6 +112,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_26.2_25C5037j_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2025FallSeed/fullrestores/089-37244/F3E98428-E443-4226-849D-48649C50B10B/UniversalMac_26.2_25C5037j_Restore.ipsw",
   "isBeta" : true,
   "isRC" : false,
   "kernels" : [

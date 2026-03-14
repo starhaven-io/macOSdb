@@ -112,6 +112,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_26.3_25D5101c_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2026WinterSeed/fullrestores/047-11932/34528828-0245-4624-9D72-AFB752B2BEA2/UniversalMac_26.3_25D5101c_Restore.ipsw",
   "isBeta" : true,
   "isRC" : false,
   "kernels" : [

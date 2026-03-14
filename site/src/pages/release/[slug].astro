@@ -72,6 +72,14 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
       <span>{formatDate(release.releaseDate)}</span>
       {release.isBeta && <span class="badge badge-beta">Beta</span>}
       {release.isRC && <span class="badge badge-rc">RC</span>}
+      {release.isDeviceSpecific && <span class="badge badge-device">Device Specific</span>}
+      {
+        releaseData.ipswURL && (
+          <a href={releaseData.ipswURL} class="ipsw-link">
+            Download IPSW
+          </a>
+        )
+      }
     </div>
   </header>
 
@@ -192,6 +200,16 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
   .badge-rc {
     background: color-mix(in srgb, var(--color-badge-rc) 15%, transparent);
     color: var(--color-badge-rc);
+  }
+
+  .badge-device {
+    background: color-mix(in srgb, purple 15%, transparent);
+    color: purple;
+  }
+
+  .ipsw-link {
+    font-size: 0.85rem;
+    color: var(--color-link);
   }
 
   .kernel-info {

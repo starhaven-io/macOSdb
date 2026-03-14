@@ -9,12 +9,14 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     public let releaseName: String
     public let releaseDate: String?
     public let ipswFile: String?
-    /// Bump when scanner logic changes in a way that would produce different output.
+    public let ipswURL: String?
+    /// Kept in sync with the app's MARKETING_VERSION.
     public let scannerVersion: String?
     public let isBeta: Bool
     public let betaNumber: Int?
     public let isRC: Bool
     public let rcNumber: Int?
+    public let isDeviceSpecific: Bool
     public let kernels: [KernelInfo]
     public let components: [Component]
 
@@ -24,11 +26,13 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         releaseName: String,
         releaseDate: String? = nil,
         ipswFile: String? = nil,
+        ipswURL: String? = nil,
         scannerVersion: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
+        isDeviceSpecific: Bool = false,
         kernels: [KernelInfo] = [],
         components: [Component] = []
     ) {
@@ -37,11 +41,13 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         self.releaseName = releaseName
         self.releaseDate = releaseDate
         self.ipswFile = ipswFile
+        self.ipswURL = ipswURL
         self.scannerVersion = scannerVersion
         self.isBeta = isBeta
         self.betaNumber = betaNumber
         self.isRC = isRC
         self.rcNumber = rcNumber
+        self.isDeviceSpecific = isDeviceSpecific
         self.kernels = kernels
         self.components = components
     }
@@ -102,11 +108,13 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         releaseName = try container.decode(String.self, forKey: .releaseName)
         releaseDate = try container.decodeIfPresent(String.self, forKey: .releaseDate)
         ipswFile = try container.decodeIfPresent(String.self, forKey: .ipswFile)
+        ipswURL = try container.decodeIfPresent(String.self, forKey: .ipswURL)
         scannerVersion = try container.decodeIfPresent(String.self, forKey: .scannerVersion)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
+        isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
         kernels = try container.decodeIfPresent([KernelInfo].self, forKey: .kernels) ?? []
         components = try container.decodeIfPresent([Component].self, forKey: .components) ?? []
     }
@@ -149,6 +157,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
     public let betaNumber: Int?
     public let isRC: Bool
     public let rcNumber: Int?
+    public let isDeviceSpecific: Bool
     public let dataFile: String
 
     public init(
@@ -160,6 +169,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         betaNumber: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
+        isDeviceSpecific: Bool = false,
         dataFile: String
     ) {
         self.osVersion = osVersion
@@ -170,6 +180,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         self.betaNumber = betaNumber
         self.isRC = isRC
         self.rcNumber = rcNumber
+        self.isDeviceSpecific = isDeviceSpecific
         self.dataFile = dataFile
     }
 
@@ -183,6 +194,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
+        isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
         dataFile = try container.decode(String.self, forKey: .dataFile)
     }
 }

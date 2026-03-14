@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_11.5.2_20G95_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2021SummerFCS/fullrestores/071-78715/CFEE4AA0-C104-479B-BDE1-3BFA1DFE710C/UniversalMac_11.5.2_20G95_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

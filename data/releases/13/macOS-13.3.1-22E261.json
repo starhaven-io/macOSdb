@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_13.3.1_22E261_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023WinterFCS/fullrestores/032-66602/418BC37A-FCD9-400A-B4FA-022A19576CD4/UniversalMac_13.3.1_22E261_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

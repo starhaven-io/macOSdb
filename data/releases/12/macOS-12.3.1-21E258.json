@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_12.3.1_21E258_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SpringFCS/fullrestores/002-79219/851BEDF0-19DB-4040-B765-0F4089D1530D/UniversalMac_12.3.1_21E258_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

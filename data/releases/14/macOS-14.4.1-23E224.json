@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_14.4.1_23E224_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2024WinterFCS/fullrestores/052-77579/4569734E-120C-4F31-AD08-FC1FF825D059/UniversalMac_14.4.1_23E224_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

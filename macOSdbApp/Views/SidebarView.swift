@@ -134,6 +134,13 @@ private struct ReleaseRow: View {
                         .fontWeight(.medium)
                         .foregroundStyle(.green)
                 }
+
+                if release.isDeviceSpecific {
+                    Text("Device Specific")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.purple)
+                }
             }
 
             HStack(spacing: 8) {

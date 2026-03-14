@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_13.5.1_22G90_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-25658/2D6BE8DB-5549-4F85-8C54-39FC23BABC68/UniversalMac_13.5.1_22G90_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

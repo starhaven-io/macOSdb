@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_13.6_22G120_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023FallFCS/fullrestores/042-55833/C0830847-A2F8-458F-B680-967991820931/UniversalMac_13.6_22G120_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

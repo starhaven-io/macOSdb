@@ -105,6 +105,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_12.5_21G72_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SummerFCS/fullrestores/012-42731/BD9917E0-262C-41C5-A69F-AC316A534A39/UniversalMac_12.5_21G72_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [

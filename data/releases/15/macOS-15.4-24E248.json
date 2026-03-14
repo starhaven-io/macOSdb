@@ -111,6 +111,7 @@
     }
   ],
   "ipswFile" : "UniversalMac_15.4_24E248_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2025SpringFCS/fullrestores/082-16517/AACDDC33-9683-4431-98AF-F04EF7C15EE3/UniversalMac_15.4_24E248_Restore.ipsw",
   "isBeta" : false,
   "isRC" : false,
   "kernels" : [
