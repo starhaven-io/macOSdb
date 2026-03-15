@@ -1,59 +1,59 @@
 {
-  "buildNumber" : "20G165",
+  "buildNumber" : "24D2082",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.64.1"
+      "version" : "8.7.1"
     },
     {
       "name" : "httpd",
       "path" : "/usr/sbin/httpd",
       "source" : "filesystem",
-      "version" : "2.4.48"
+      "version" : "2.4.62"
     },
     {
       "name" : "libbz2 (bzip2)",
       "path" : "/usr/lib/libbz2.1.0.dylib",
       "source" : "dyldCache",
-      "version" : "1.0.6"
+      "version" : "1.0.8"
     },
     {
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.64.1"
+      "version" : "8.7.1"
     },
     {
       "name" : "libexpat",
       "path" : "/usr/lib/libexpat.1.dylib",
       "source" : "dyldCache",
-      "version" : "2.4.1"
+      "version" : "2.6.3"
     },
     {
       "name" : "libncurses",
       "path" : "/usr/lib/libncurses.5.4.dylib",
       "source" : "dyldCache",
-      "version" : "5.7.20081102"
+      "version" : "6.0.20150808"
     },
     {
       "name" : "libpcap",
       "path" : "/usr/lib/libpcap.A.dylib",
       "source" : "dyldCache",
-      "version" : "1.9.1"
+      "version" : "1.10.1"
     },
     {
       "name" : "LibreSSL",
       "path" : "/usr/bin/openssl",
       "source" : "filesystem",
-      "version" : "2.8.3"
+      "version" : "3.3.6"
     },
     {
       "name" : "libsqlite3",
       "path" : "/usr/lib/libsqlite3.dylib",
       "source" : "dyldCache",
-      "version" : "3.32.3"
+      "version" : "3.43.2"
     },
     {
       "name" : "libssl (LibreSSL)",
@@ -65,31 +65,31 @@
       "name" : "libxml2",
       "path" : "/usr/lib/libxml2.2.dylib",
       "source" : "dyldCache",
-      "version" : "2.9.4"
+      "version" : "2.10.45"
     },
     {
       "name" : "OpenSSH",
       "path" : "/usr/bin/ssh",
       "source" : "filesystem",
-      "version" : "8.1p1"
+      "version" : "9.8p1"
     },
     {
       "name" : "Ruby",
       "path" : "/usr/bin/ruby",
       "source" : "filesystem",
-      "version" : "2.6.3"
+      "version" : "2.6.10"
     },
     {
       "name" : "SQLite",
       "path" : "/usr/bin/sqlite3",
       "source" : "filesystem",
-      "version" : "3.32.3"
+      "version" : "3.43.2"
     },
     {
       "name" : "vim",
       "path" : "/usr/bin/vim",
       "source" : "filesystem",
-      "version" : "8.2"
+      "version" : "9.1"
     },
     {
       "name" : "zip",
@@ -101,53 +101,71 @@
       "name" : "zsh",
       "path" : "/bin/zsh",
       "source" : "filesystem",
-      "version" : "5.8"
+      "version" : "5.9"
     }
   ],
-  "ipswFile" : "UniversalMac_11.6_20G165_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2021FallFCS/fullrestores/071-97388/C361BF5E-0E01-47E5-8D30-5990BC3C9E29/UniversalMac_11.6_20G165_Restore.ipsw",
+  "ipswFile" : "UniversalMac_15.3.2_24D2082_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2025WinterFCS/fullrestores/082-04090/64618943-2D74-423D-8493-DE066DF1ADD8/UniversalMac_15.3.2_24D2082_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : true,
   "isRC" : false,
   "kernels" : [
     {
-      "arch" : "ARM64_T8101",
-      "chip" : "M1",
-      "darwinVersion" : "20.6.0",
+      "arch" : "ARM64_T6031",
+      "chip" : "M3 Max",
+      "darwinVersion" : "24.3.0",
       "deviceChips" : [
         {
-          "chip" : "M1",
-          "device" : "MacBookAir10,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "MacBookPro17,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "Macmini9,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "iMac21,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "iMac21,2"
+          "chip" : "M3 Ultra",
+          "device" : "Mac15,14"
         }
       ],
       "devices" : [
-        "MacBookAir10,1",
-        "MacBookPro17,1",
-        "Macmini9,1",
-        "iMac21,1",
-        "iMac21,2"
+        "Mac15,14"
       ],
-      "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "7195.141.6"
+      "file" : "kernelcache.release.mac15j",
+      "xnuVersion" : "11215.81.4"
+    },
+    {
+      "arch" : "ARM64_T8132",
+      "chip" : "M4",
+      "darwinVersion" : "24.3.0",
+      "deviceChips" : [
+        {
+          "chip" : "M4",
+          "device" : "Mac16,12"
+        },
+        {
+          "chip" : "M4",
+          "device" : "Mac16,13"
+        }
+      ],
+      "devices" : [
+        "Mac16,12",
+        "Mac16,13"
+      ],
+      "file" : "kernelcache.release.mac16g",
+      "xnuVersion" : "11215.81.4"
+    },
+    {
+      "arch" : "ARM64_T6041",
+      "chip" : "M4 Max",
+      "darwinVersion" : "24.3.0",
+      "deviceChips" : [
+        {
+          "chip" : "M4 Max",
+          "device" : "Mac16,9"
+        }
+      ],
+      "devices" : [
+        "Mac16,9"
+      ],
+      "file" : "kernelcache.release.mac16j",
+      "xnuVersion" : "11215.81.4"
     }
   ],
-  "osVersion" : "11.6",
-  "releaseDate" : "2021-09-13",
-  "releaseName" : "Big Sur",
-  "scannerVersion" : "1.0.0"
+  "osVersion" : "15.3.2",
+  "releaseDate" : "2025-03-11",
+  "releaseName" : "Sequoia",
+  "scannerVersion" : "1.2.2"
 }

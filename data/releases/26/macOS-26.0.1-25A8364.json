@@ -1,59 +1,59 @@
 {
-  "buildNumber" : "20G165",
+  "buildNumber" : "25A8364",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.64.1"
+      "version" : "8.7.1"
     },
     {
       "name" : "httpd",
       "path" : "/usr/sbin/httpd",
       "source" : "filesystem",
-      "version" : "2.4.48"
+      "version" : "2.4.62"
     },
     {
       "name" : "libbz2 (bzip2)",
       "path" : "/usr/lib/libbz2.1.0.dylib",
       "source" : "dyldCache",
-      "version" : "1.0.6"
+      "version" : "1.0.8"
     },
     {
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.64.1"
+      "version" : "8.7.1"
     },
     {
       "name" : "libexpat",
       "path" : "/usr/lib/libexpat.1.dylib",
       "source" : "dyldCache",
-      "version" : "2.4.1"
+      "version" : "2.7.1"
     },
     {
       "name" : "libncurses",
       "path" : "/usr/lib/libncurses.5.4.dylib",
       "source" : "dyldCache",
-      "version" : "5.7.20081102"
+      "version" : "6.0.20150808"
     },
     {
       "name" : "libpcap",
       "path" : "/usr/lib/libpcap.A.dylib",
       "source" : "dyldCache",
-      "version" : "1.9.1"
+      "version" : "1.10.1"
     },
     {
       "name" : "LibreSSL",
       "path" : "/usr/bin/openssl",
       "source" : "filesystem",
-      "version" : "2.8.3"
+      "version" : "3.3.6"
     },
     {
       "name" : "libsqlite3",
       "path" : "/usr/lib/libsqlite3.dylib",
       "source" : "dyldCache",
-      "version" : "3.32.3"
+      "version" : "3.51.0"
     },
     {
       "name" : "libssl (LibreSSL)",
@@ -65,31 +65,37 @@
       "name" : "libxml2",
       "path" : "/usr/lib/libxml2.2.dylib",
       "source" : "dyldCache",
-      "version" : "2.9.4"
+      "version" : "2.10.10"
     },
     {
       "name" : "OpenSSH",
       "path" : "/usr/bin/ssh",
       "source" : "filesystem",
-      "version" : "8.1p1"
+      "version" : "10.0p2"
+    },
+    {
+      "name" : "rsync",
+      "path" : "/usr/bin/rsync",
+      "source" : "filesystem",
+      "version" : "2.6.9"
     },
     {
       "name" : "Ruby",
       "path" : "/usr/bin/ruby",
       "source" : "filesystem",
-      "version" : "2.6.3"
+      "version" : "2.6.10"
     },
     {
       "name" : "SQLite",
       "path" : "/usr/bin/sqlite3",
       "source" : "filesystem",
-      "version" : "3.32.3"
+      "version" : "3.51.0"
     },
     {
       "name" : "vim",
       "path" : "/usr/bin/vim",
       "source" : "filesystem",
-      "version" : "8.2"
+      "version" : "9.1"
     },
     {
       "name" : "zip",
@@ -101,53 +107,34 @@
       "name" : "zsh",
       "path" : "/bin/zsh",
       "source" : "filesystem",
-      "version" : "5.8"
+      "version" : "5.9"
     }
   ],
-  "ipswFile" : "UniversalMac_11.6_20G165_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2021FallFCS/fullrestores/071-97388/C361BF5E-0E01-47E5-8D30-5990BC3C9E29/UniversalMac_11.6_20G165_Restore.ipsw",
+  "ipswFile" : "UniversalMac_26.0.1_25A8364_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2025FallFCS/fullrestores/093-49300/3AC98479-C75E-46E8-8AF4-1DDB5EAE564D/UniversalMac_26.0.1_25A8364_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : true,
   "isRC" : false,
   "kernels" : [
     {
-      "arch" : "ARM64_T8101",
-      "chip" : "M1",
-      "darwinVersion" : "20.6.0",
+      "arch" : "ARM64_T8142",
+      "chip" : "M5",
+      "darwinVersion" : "25.0.0",
       "deviceChips" : [
         {
-          "chip" : "M1",
-          "device" : "MacBookAir10,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "MacBookPro17,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "Macmini9,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "iMac21,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "iMac21,2"
+          "chip" : "M5",
+          "device" : "Mac17,2"
         }
       ],
       "devices" : [
-        "MacBookAir10,1",
-        "MacBookPro17,1",
-        "Macmini9,1",
-        "iMac21,1",
-        "iMac21,2"
+        "Mac17,2"
       ],
-      "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "7195.141.6"
+      "file" : "kernelcache.release.mac17g",
+      "xnuVersion" : "12377.1.9"
     }
   ],
-  "osVersion" : "11.6",
-  "releaseDate" : "2021-09-13",
-  "releaseName" : "Big Sur",
-  "scannerVersion" : "1.0.0"
+  "osVersion" : "26.0.1",
+  "releaseDate" : "2025-10-15",
+  "releaseName" : "Tahoe",
+  "scannerVersion" : "1.2.2"
 }
