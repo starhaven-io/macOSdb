@@ -1,17 +1,17 @@
 {
-  "buildNumber" : "21A559",
+  "buildNumber" : "24B2091",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.77.0"
+      "version" : "8.7.1"
     },
     {
       "name" : "httpd",
       "path" : "/usr/sbin/httpd",
       "source" : "filesystem",
-      "version" : "2.4.48"
+      "version" : "2.4.62"
     },
     {
       "name" : "libbz2 (bzip2)",
@@ -23,37 +23,37 @@
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.77.0"
+      "version" : "8.7.1"
     },
     {
       "name" : "libexpat",
       "path" : "/usr/lib/libexpat.1.dylib",
       "source" : "dyldCache",
-      "version" : "2.4.1"
+      "version" : "2.6.1"
     },
     {
       "name" : "libncurses",
       "path" : "/usr/lib/libncurses.5.4.dylib",
       "source" : "dyldCache",
-      "version" : "5.7.20081102"
+      "version" : "6.0.20150808"
     },
     {
       "name" : "libpcap",
       "path" : "/usr/lib/libpcap.A.dylib",
       "source" : "dyldCache",
-      "version" : "1.9.1"
+      "version" : "1.10.1"
     },
     {
       "name" : "LibreSSL",
       "path" : "/usr/bin/openssl",
       "source" : "filesystem",
-      "version" : "2.8.3"
+      "version" : "3.3.6"
     },
     {
       "name" : "libsqlite3",
       "path" : "/usr/lib/libsqlite3.dylib",
       "source" : "dyldCache",
-      "version" : "3.36.0"
+      "version" : "3.43.2"
     },
     {
       "name" : "libssl (LibreSSL)",
@@ -65,31 +65,31 @@
       "name" : "libxml2",
       "path" : "/usr/lib/libxml2.2.dylib",
       "source" : "dyldCache",
-      "version" : "2.9.4"
+      "version" : "2.10.10"
     },
     {
       "name" : "OpenSSH",
       "path" : "/usr/bin/ssh",
       "source" : "filesystem",
-      "version" : "8.6p1"
+      "version" : "9.8p1"
     },
     {
       "name" : "Ruby",
       "path" : "/usr/bin/ruby",
       "source" : "filesystem",
-      "version" : "2.6.8"
+      "version" : "2.6.10"
     },
     {
       "name" : "SQLite",
       "path" : "/usr/bin/sqlite3",
       "source" : "filesystem",
-      "version" : "3.36.0"
+      "version" : "3.43.2"
     },
     {
       "name" : "vim",
       "path" : "/usr/bin/vim",
       "source" : "filesystem",
-      "version" : "8.2"
+      "version" : "9.0"
     },
     {
       "name" : "zip",
@@ -101,95 +101,86 @@
       "name" : "zsh",
       "path" : "/bin/zsh",
       "source" : "filesystem",
-      "version" : "5.8"
+      "version" : "5.9"
     }
   ],
-  "ipswFile" : "UniversalMac_12.0.1_21A559_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2021FCSFall/fullrestores/002-23780/D3417F21-41BD-4DDF-9135-FA5A129AF6AF/UniversalMac_12.0.1_21A559_Restore.ipsw",
+  "ipswFile" : "UniversalMac_15.1.1_24B2091_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2024FallFCS/fullrestores/072-29960/5EEC3C20-D7CB-4DD1-9CE4-7C177F531A41/UniversalMac_15.1.1_24B2091_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : true,
   "isRC" : false,
   "kernels" : [
     {
-      "arch" : "ARM64_T8101",
-      "chip" : "M1",
-      "darwinVersion" : "21.1.0",
+      "arch" : "ARM64_T8132",
+      "chip" : "M4",
+      "darwinVersion" : "24.1.0",
       "deviceChips" : [
         {
-          "chip" : "M1",
-          "device" : "MacBookAir10,1"
+          "chip" : "M4",
+          "device" : "Mac16,1"
         },
         {
-          "chip" : "M1",
-          "device" : "MacBookPro17,1"
+          "chip" : "M4",
+          "device" : "Mac16,10"
         },
         {
-          "chip" : "M1",
-          "device" : "Macmini9,1"
+          "chip" : "M4",
+          "device" : "Mac16,2"
         },
         {
-          "chip" : "M1",
-          "device" : "iMac21,1"
-        },
-        {
-          "chip" : "M1",
-          "device" : "iMac21,2"
+          "chip" : "M4",
+          "device" : "Mac16,3"
         }
       ],
       "devices" : [
-        "MacBookAir10,1",
-        "MacBookPro17,1",
-        "Macmini9,1",
-        "iMac21,1",
-        "iMac21,2"
+        "Mac16,1",
+        "Mac16,10",
+        "Mac16,2",
+        "Mac16,3"
       ],
-      "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8019.41.5"
+      "file" : "kernelcache.release.mac16g",
+      "xnuVersion" : "11215.41.3"
     },
     {
-      "arch" : "ARM64_T6000",
-      "chip" : "M1 Pro",
-      "darwinVersion" : "21.1.0",
+      "arch" : "ARM64_T6041",
+      "chip" : "M4 Max",
+      "darwinVersion" : "24.1.0",
       "deviceChips" : [
         {
-          "chip" : "M1 Max",
-          "device" : "Mac13,1"
+          "chip" : "M4 Pro",
+          "device" : "Mac16,11"
         },
         {
-          "chip" : "M1 Ultra",
-          "device" : "Mac13,2"
+          "chip" : "M4 Max",
+          "device" : "Mac16,5"
         },
         {
-          "chip" : "M1 Pro",
-          "device" : "MacBookPro18,1"
+          "chip" : "M4 Max",
+          "device" : "Mac16,6"
         },
         {
-          "chip" : "M1 Max",
-          "device" : "MacBookPro18,2"
+          "chip" : "M4 Pro",
+          "device" : "Mac16,7"
         },
         {
-          "chip" : "M1 Pro",
-          "device" : "MacBookPro18,3"
-        },
-        {
-          "chip" : "M1 Max",
-          "device" : "MacBookPro18,4"
+          "chip" : "M4 Pro",
+          "device" : "Mac16,8"
         }
       ],
       "devices" : [
-        "Mac13,1",
-        "Mac13,2",
-        "MacBookPro18,1",
-        "MacBookPro18,2",
-        "MacBookPro18,3",
-        "MacBookPro18,4"
+        "Mac16,11",
+        "Mac16,5",
+        "Mac16,6",
+        "Mac16,7",
+        "Mac16,8"
       ],
-      "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8019.41.5"
+      "file" : "kernelcache.release.mac16j",
+      "xnuVersion" : "11215.41.3"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "21.1.0",
+      "darwinVersion" : "24.1.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -200,11 +191,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8019.41.5"
+      "xnuVersion" : "11215.41.3"
     }
   ],
-  "osVersion" : "12.0.1",
-  "releaseDate" : "2021-10-25",
-  "releaseName" : "Monterey",
-  "scannerVersion" : "1.0.0"
+  "osVersion" : "15.1.1",
+  "releaseDate" : "2024-11-19",
+  "releaseName" : "Sequoia",
+  "scannerVersion" : "1.2.2"
 }
