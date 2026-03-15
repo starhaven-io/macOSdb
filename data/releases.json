@@ -43,6 +43,7 @@
     "buildNumber" : "25D2140",
     "dataFile" : "releases/26/macOS-26.3.2-25D2140.json",
     "isBeta" : false,
+    "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "26.3.2",
     "releaseDate" : "2026-03-10",

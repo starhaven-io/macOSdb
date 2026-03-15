@@ -8,6 +8,7 @@
   --color-link-hover: #0055b3;
   --color-badge-beta: #bf5700;
   --color-badge-rc: #248a3d;
+  --color-badge-device: #5856d6;
   --color-table-header: #f5f5f7;
   --color-table-stripe: #fafafa;
   --color-upgraded: #248a3d;
@@ -30,6 +31,7 @@
     --color-link-hover: #5ab4ff;
     --color-badge-beta: #ff9f0a;
     --color-badge-rc: #30d158;
+    --color-badge-device: #7d7aff;
     --color-table-header: #2d2d2f;
     --color-table-stripe: #252527;
     --color-upgraded: #30d158;

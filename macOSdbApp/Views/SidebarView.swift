@@ -139,7 +139,7 @@ private struct ReleaseRow: View {
                     Text("Device Specific")
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(.indigo)
                 }
             }
 
