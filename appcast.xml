@@ -3,16 +3,27 @@
     <channel>
         <title>macOSdb</title>
         <item>
-            <title>1.2.4</title>
-            <pubDate>Sat, 14 Mar 2026 03:14:02 +0000</pubDate>
-            <sparkle:version>7</sparkle:version>
-            <sparkle:shortVersionString>1.2.4</sparkle:shortVersionString>
+            <title>1.3.0</title>
+            <pubDate>Sun, 15 Mar 2026 02:24:07 +0000</pubDate>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<h2>Fixes</h2>
+            <description><![CDATA[<h2>What&#x27;s New</h2>
 <ul>
-  <li>add appcast.xml to .gitignore</li>
+  <li>add pre-release filter toggle to index page</li>
+  <li>add IPSW download URLs and device-specific build support</li>
+  <li>add macOS 26.0 Tahoe beta and RC releases</li>
+</ul>
+<h2>Fixes</h2>
+<ul>
+  <li>replace String(format: %s) with native padding to fix segfault</li>
+  <li>correct macOS 15.2 release date</li>
+</ul>
+<h2>Documentation</h2>
+<ul>
+  <li>update CLAUDE.md and README for site, justfile, and workflow changes</li>
 </ul>]]></description>
-            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.2.4/macOSdb-1.2.4.zip" length="2695895" type="application/octet-stream" sparkle:edSignature="gRdsvRW5mvKWURKxln0aD7c+a6iz5E0rPJcCfv2+j3j+l0WYwKzQ8gIxSAxc9JlYGvqyyby2CGVcKWHeS23mAA=="/>
+            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.3.0/macOSdb-1.3.0.zip" length="2699924" type="application/octet-stream" sparkle:edSignature="cVCPFN0Tn9QoDoqxpCl4lerso5Qu82wICddqHnRo4/QzqQOsActYmhD9N6WHVAdYScgzCYS8/X/v67+lUtbKAw=="/>
         </item>
     </channel>
 </rss>
