@@ -1,5 +1,15 @@
 [
   {
+    "buildNumber" : "25E243",
+    "dataFile" : "releases/26/macOS-26.4-25E243.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "26.4",
+    "releaseDate" : "2026-03-18",
+    "releaseName" : "Tahoe"
+  },
+  {
     "betaNumber" : 4,
     "buildNumber" : "25E5233c",
     "dataFile" : "releases/26/macOS-26.4-25E5233c.json",
