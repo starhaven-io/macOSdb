@@ -62,6 +62,12 @@ function releaseSlug(release: any): string {
           macOS {major} {releaseNames[major] || ''}
         </h2>
         <table>
+          <colgroup>
+            <col style="width: 35%" />
+            <col style="width: 20%" />
+            <col style="width: 25%" />
+            <col style="width: 20%" />
+          </colgroup>
           <thead>
             <tr>
               <th>Release</th>
@@ -124,6 +130,10 @@ function releaseSlug(release: any): string {
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--color-border);
+  }
+
+  .version-group table {
+    table-layout: fixed;
   }
 
   .badge {
