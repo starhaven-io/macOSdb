@@ -62,45 +62,45 @@ function releaseSlug(release: any): string {
           macOS {major} {releaseNames[major] || ''}
         </h2>
         <div class="table-wrapper">
-        <table>
-          <colgroup>
-            <col style="width: 30%" />
-            <col style="width: 18%" />
-            <col style="width: 22%" />
-            <col style="width: 30%" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Release</th>
-              <th>Build</th>
-              <th>Date</th>
-              <th>Type</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grouped[major].map((release: any) => (
-              <tr data-type={release.isBeta ? 'beta' : release.isRC ? 'rc' : 'release'}>
-                <td>
-                  <a href={`/release/${releaseSlug(release)}/`}>{displayName(release)}</a>
-                </td>
-                <td>
-                  <code>{release.buildNumber}</code>
-                </td>
-                <td>{formatDate(release.releaseDate)}</td>
-                <td>
-                  {release.isBeta ? (
-                    <span class="badge badge-beta">Beta</span>
-                  ) : release.isRC ? (
-                    <span class="badge badge-rc">RC</span>
-                  ) : (
-                    <span class="badge badge-release">Release</span>
-                  )}
-                  {release.isDeviceSpecific && <span class="badge badge-device">Device Specific</span>}
-                </td>
+          <table>
+            <colgroup>
+              <col style="width: 30%" />
+              <col style="width: 18%" />
+              <col style="width: 22%" />
+              <col style="width: 30%" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Release</th>
+                <th>Build</th>
+                <th>Date</th>
+                <th>Type</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {grouped[major].map((release: any) => (
+                <tr data-type={release.isBeta ? 'beta' : release.isRC ? 'rc' : 'release'}>
+                  <td>
+                    <a href={`/release/${releaseSlug(release)}/`}>{displayName(release)}</a>
+                  </td>
+                  <td>
+                    <code>{release.buildNumber}</code>
+                  </td>
+                  <td>{formatDate(release.releaseDate)}</td>
+                  <td>
+                    {release.isBeta ? (
+                      <span class="badge badge-beta">Beta</span>
+                    ) : release.isRC ? (
+                      <span class="badge badge-rc">RC</span>
+                    ) : (
+                      <span class="badge badge-release">Release</span>
+                    )}
+                    {release.isDeviceSpecific && <span class="badge badge-device">Device Specific</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     ))
@@ -190,7 +190,10 @@ function releaseSlug(release: any): string {
     color: var(--color-text-secondary);
     cursor: pointer;
     user-select: none;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      border-color 0.15s;
   }
 
   .filter-btn:hover {
