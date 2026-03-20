@@ -49,10 +49,10 @@ function releaseSlug(release: any): string {
   </div>
 
   <div class="filter-bar">
-    <label class="toggle-label">
-      <input type="checkbox" id="show-prereleases" />
-      Show pre-releases
-    </label>
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="release">Release</button>
+    <button class="filter-btn" data-filter="beta">Beta</button>
+    <button class="filter-btn" data-filter="rc">RC</button>
   </div>
 
   {
@@ -61,12 +61,13 @@ function releaseSlug(release: any): string {
         <h2>
           macOS {major} {releaseNames[major] || ''}
         </h2>
+        <div class="table-wrapper">
         <table>
           <colgroup>
-            <col style="width: 35%" />
-            <col style="width: 20%" />
-            <col style="width: 25%" />
-            <col style="width: 20%" />
+            <col style="width: 30%" />
+            <col style="width: 18%" />
+            <col style="width: 22%" />
+            <col style="width: 30%" />
           </colgroup>
           <thead>
             <tr>
@@ -78,7 +79,7 @@ function releaseSlug(release: any): string {
           </thead>
           <tbody>
             {grouped[major].map((release: any) => (
-              <tr data-prerelease={release.isBeta || release.isRC ? 'true' : undefined}>
+              <tr data-type={release.isBeta ? 'beta' : release.isRC ? 'rc' : 'release'}>
                 <td>
                   <a href={`/release/${releaseSlug(release)}/`}>{displayName(release)}</a>
                 </td>
@@ -100,6 +101,7 @@ function releaseSlug(release: any): string {
             ))}
           </tbody>
         </table>
+        </div>
       </section>
     ))
   }
@@ -132,8 +134,14 @@ function releaseSlug(release: any): string {
     border-bottom: 2px solid var(--color-border);
   }
 
+  .version-group .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .version-group table {
     table-layout: fixed;
+    min-width: 500px;
   }
 
   .badge {
@@ -142,6 +150,7 @@ function releaseSlug(release: any): string {
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 600;
+    white-space: nowrap;
   }
 
   .badge-beta {
@@ -165,45 +174,63 @@ function releaseSlug(release: any): string {
   }
 
   .filter-bar {
+    display: flex;
+    gap: 0.5rem;
     margin-bottom: 2rem;
   }
 
-  .toggle-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.95rem;
+  .filter-btn {
+    font-family: var(--font-system);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.35em 0.9em;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
     user-select: none;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
 
-  .toggle-label input {
-    cursor: pointer;
+  .filter-btn:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
   }
 
-  tr[data-prerelease].hidden {
+  .filter-btn.active {
+    background: var(--color-link);
+    color: #fff;
+    border-color: var(--color-link);
+  }
+
+  tr.filtered {
     display: none;
   }
 </style>
 
 <script>
-  const checkbox = document.getElementById('show-prereleases') as HTMLInputElement;
-  const key = 'macosdb-show-prereleases';
+  const key = 'macosdb-type-filter';
+  const buttons = document.querySelectorAll('.filter-btn') as NodeListOf<HTMLButtonElement>;
+  const rows = document.querySelectorAll('tr[data-type]') as NodeListOf<HTMLTableRowElement>;
 
-  function apply(show: boolean) {
-    document.querySelectorAll('tr[data-prerelease]').forEach((row) => {
-      row.classList.toggle('hidden', !show);
+  function apply(filter: string) {
+    rows.forEach((row) => {
+      row.classList.toggle('filtered', filter !== 'all' && row.dataset.type !== filter);
+    });
+    buttons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.filter === filter);
     });
   }
 
-  const saved = localStorage.getItem(key);
-  const show = saved !== 'false';
-  checkbox.checked = show;
-  apply(show);
+  const saved = localStorage.getItem(key) || 'all';
+  apply(saved);
 
-  checkbox.addEventListener('change', () => {
-    localStorage.setItem(key, String(checkbox.checked));
-    apply(checkbox.checked);
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter!;
+      localStorage.setItem(key, filter);
+      apply(filter);
+    });
   });
 </script>
