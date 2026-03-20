@@ -157,10 +157,20 @@ const releaseOptions = releases.map((r: any) => ({
     return 'unchanged';
   }
 
+  function updateURL() {
+    const params = new URLSearchParams();
+    if (fromSelect.value) params.set('from', fromSelect.value);
+    if (toSelect.value) params.set('to', toSelect.value);
+    const url = `${window.location.pathname}?${params.toString()}`;
+    history.replaceState(null, '', url);
+  }
+
   function runComparison() {
     const fromKey = fromSelect.value;
     const toKey = toSelect.value;
     if (!fromKey || !toKey) return;
+
+    updateURL();
 
     const fromComponents = releaseData[fromKey] || [];
     const toComponents = releaseData[toKey] || [];
@@ -259,7 +269,13 @@ const releaseOptions = releases.map((r: any) => ({
     if (changes) renderTable(changes);
   });
 
-  // Auto-compare on load if defaults are set
+  // Apply URL params if present, otherwise use defaults
+  const params = new URLSearchParams(window.location.search);
+  const paramFrom = params.get('from');
+  const paramTo = params.get('to');
+  if (paramFrom) fromSelect.value = paramFrom;
+  if (paramTo) toSelect.value = paramTo;
+
   if (fromSelect.value && toSelect.value) {
     runComparison();
   }

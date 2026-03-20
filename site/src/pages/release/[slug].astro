@@ -7,11 +7,13 @@ export function getStaticPaths() {
   const dataDir = path.resolve('..', 'data');
   const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'releases.json'), 'utf-8'));
 
-  return releases.map((release: any) => {
+  return releases.map((release: any, i: number) => {
     const releaseData = JSON.parse(fs.readFileSync(path.join(dataDir, release.dataFile), 'utf-8'));
+    const prev = i < releases.length - 1 ? releases[i + 1] : null;
+    const previousSlug = prev ? `${prev.osVersion}-${prev.buildNumber}` : null;
     return {
       params: { slug: `${release.osVersion}-${release.buildNumber}` },
-      props: { release, releaseData },
+      props: { release, releaseData, previousSlug },
     };
   });
 }
@@ -19,9 +21,11 @@ export function getStaticPaths() {
 interface Props {
   release: any;
   releaseData: any;
+  previousSlug: string | null;
 }
 
-const { release, releaseData } = Astro.props;
+const { release, releaseData, previousSlug } = Astro.props;
+const currentSlug = `${release.osVersion}-${release.buildNumber}`;
 
 function displayName(r: any): string {
   let name = `macOS ${r.osVersion} ${r.releaseName}`;
@@ -77,6 +81,13 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
         releaseData.ipswURL && (
           <a href={releaseData.ipswURL} class="ipsw-link">
             Download IPSW
+          </a>
+        )
+      }
+      {
+        previousSlug && (
+          <a href={`/compare/?from=${previousSlug}&to=${currentSlug}`} class="compare-link">
+            Compare with previous
           </a>
         )
       }
@@ -207,7 +218,8 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     color: var(--color-badge-device);
   }
 
-  .ipsw-link {
+  .ipsw-link,
+  .compare-link {
     font-size: 0.85rem;
     color: var(--color-link);
   }
