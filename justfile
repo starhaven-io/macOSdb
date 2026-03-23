@@ -1,6 +1,9 @@
-# Clean Swift build artifacts
+# Clean build artifacts
 clean:
     swift package clean
+    xcodebuild clean \
+        -project macOSdb.xcodeproj \
+        -scheme macOSdb
 
 # Build the Swift package
 build:
