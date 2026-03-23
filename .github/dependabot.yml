@@ -1,15 +1,43 @@
 version: 2
 updates:
-  - package-ecosystem: github-actions
-    directory: /
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: daily
+      interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
-  - package-ecosystem: npm
-    directory: /site
+  - package-ecosystem: "npm"
+    directory: "/site"
     schedule:
-      interval: weekly
+      interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "swift"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      swift-dependencies:
+        patterns:
+          - "*"
