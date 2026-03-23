@@ -14,7 +14,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "astro": "^6.0.4"
+    "astro": "^6.0.5"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
