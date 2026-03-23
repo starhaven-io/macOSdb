@@ -6,9 +6,6 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
-    commit-message:
-      prefix: "chore"
-      include: "scope"
     groups:
       github-actions:
         patterns:
@@ -20,9 +17,6 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
-    commit-message:
-      prefix: "chore"
-      include: "scope"
     groups:
       npm-dependencies:
         patterns:
@@ -34,9 +28,6 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
-    commit-message:
-      prefix: "chore"
-      include: "scope"
     groups:
       swift-dependencies:
         patterns:
