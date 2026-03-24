@@ -20,7 +20,9 @@ jobs:
   build:
     name: Build
     runs-on: macos-latest
-    environment: release
+    environment:
+      name: release
+      deployment: false
     outputs:
       tag: ${{ steps.version.outputs.tag }}
       build_number: ${{ steps.version.outputs.build_number }}
@@ -148,7 +150,9 @@ jobs:
     name: Release
     needs: build
     runs-on: macos-latest
-    environment: release
+    environment:
+      name: release
+      deployment: false
     permissions:
       contents: write # required to create GitHub releases
     env:
