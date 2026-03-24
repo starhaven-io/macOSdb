@@ -49,7 +49,9 @@ jobs:
   scan:
     name: Scan
     runs-on: scanner
-    environment: scan
+    environment:
+      name: scan
+      deployment: false
     permissions:
       contents: write # required to push branches
       pull-requests: write # required to create PRs
@@ -77,12 +79,14 @@ jobs:
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
         run: |
+          set +x
           if [[ -f "${IPSW_FILE}" ]]; then
             echo "IPSW already cached at ${IPSW_FILE}, skipping download"
           else
             TOTAL=$(curl -sSLI "${IPSW_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
             TOTAL_MB=$(( TOTAL / 1048576 ))
-            echo "Downloading IPSW ($(awk "BEGIN {printf \"%.1f\", ${TOTAL_MB}/1024}") GB)..."
+            TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
+            echo "Downloading IPSW (${TOTAL_GB:0:-1}.${TOTAL_GB: -1} GB)..."
             curl -sSL -o "${IPSW_FILE}.part" "${IPSW_URL}" &
             CURL_PID=$!
             while kill -0 "${CURL_PID}" 2>/dev/null; do
