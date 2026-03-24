@@ -436,6 +436,50 @@
     "releaseName" : "Sequoia"
   },
   {
+    "betaNumber" : 4,
+    "buildNumber" : "24F5068b",
+    "dataFile" : "releases/15/macOS-15.5-24F5068b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.5",
+    "releaseDate" : "2025-04-28",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "24F5053j",
+    "dataFile" : "releases/15/macOS-15.5-24F5053j.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.5",
+    "releaseDate" : "2025-04-21",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "24F5053f",
+    "dataFile" : "releases/15/macOS-15.5-24F5053f.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.5",
+    "releaseDate" : "2025-04-14",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "24F5042g",
+    "dataFile" : "releases/15/macOS-15.5-24F5042g.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.5",
+    "releaseDate" : "2025-04-02",
+    "releaseName" : "Sequoia"
+  },
+  {
     "buildNumber" : "24E263",
     "dataFile" : "releases/15/macOS-15.4.1-24E263.json",
     "isBeta" : false,
