@@ -211,7 +211,10 @@ extension Release: Comparable {
             return lhs.patchVersion < rhs.patchVersion
         }
         // Within same version: releases > RCs > betas
-        return lhs.prereleaseRank < rhs.prereleaseRank
+        if lhs.prereleaseRank != rhs.prereleaseRank {
+            return lhs.prereleaseRank < rhs.prereleaseRank
+        }
+        return lhs.buildNumber < rhs.buildNumber
     }
 
     private var prereleaseRank: (Int, Int) {
