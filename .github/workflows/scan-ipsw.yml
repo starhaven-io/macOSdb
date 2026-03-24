@@ -49,6 +49,7 @@ jobs:
   scan:
     name: Scan
     runs-on: scanner
+    environment: scan
     permissions:
       contents: write # required to push branches
       pull-requests: write # required to create PRs
@@ -156,14 +157,25 @@ jobs:
           echo "SCAN_BRANCH=${BRANCH}" >> "${GITHUB_ENV}"
           echo "SCAN_BASENAME=${BASENAME}" >> "${GITHUB_ENV}"
 
+      - name: Set up commit signing
+        env:
+          SSH_SIGNING_KEY: ${{ secrets.SSH_SIGNING_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_SIGNING_KEY}" > ~/.ssh/signing_key
+          chmod 600 ~/.ssh/signing_key
+          git config --global gpg.format ssh
+          git config --global user.signingkey ~/.ssh/signing_key
+          git config --global commit.gpgsign true
+
       - name: Create branch and commit
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git"
+          git config user.name "fuyunohoshi"
+          git config user.email "165941061+fuyunohoshi@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${REPOSITORY}.git"
           git checkout -b "${SCAN_BRANCH}"
           git add data/
           git commit -m "feat(data): add ${SCAN_BASENAME}"
@@ -171,7 +183,7 @@ jobs:
 
       - name: Create pull request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
           IPSW_URL: ${{ inputs.ipsw_url }}
           RELEASE_DATE: ${{ inputs.release_date }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
