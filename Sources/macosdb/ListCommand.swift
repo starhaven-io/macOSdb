@@ -21,7 +21,10 @@ struct ListCommand: AsyncParsableCommand {
         var entries = index.sorted { lhs, rhs in
             let lhsParts = lhs.osVersion.split(separator: ".").compactMap { Int($0) }
             let rhsParts = rhs.osVersion.split(separator: ".").compactMap { Int($0) }
-            return lhsParts.lexicographicallyPrecedes(rhsParts)
+            if lhsParts != rhsParts {
+                return lhsParts.lexicographicallyPrecedes(rhsParts)
+            }
+            return lhs.buildNumber < rhs.buildNumber
         }
 
         if let major {

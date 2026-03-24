@@ -95,6 +95,17 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(older < newer)
     }
 
+    @Test("Release sorting — same version different builds is deterministic")
+    func releaseSortingSameVersion() {
+        let buildA = Release(osVersion: "15.1.1", buildNumber: "24B2091", releaseName: "Sequoia")
+        let buildB = Release(osVersion: "15.1.1", buildNumber: "24B91", releaseName: "Sequoia")
+        #expect(buildA < buildB)
+        #expect(!(buildB < buildA))
+        // Verify sorted order is stable
+        let sorted = [buildB, buildA].sorted()
+        #expect(sorted.map(\.buildNumber) == ["24B2091", "24B91"])
+    }
+
     @Test("Release component lookup by name")
     func releaseComponentLookup() {
         let release = Release(
