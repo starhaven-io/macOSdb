@@ -1,12 +1,12 @@
 {
-  "betaNumber" : 2,
-  "buildNumber" : "22A5286j",
+  "betaNumber" : 3,
+  "buildNumber" : "22A5295h",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.79.1"
+      "version" : "7.83.1"
     },
     {
       "name" : "httpd",
@@ -24,7 +24,7 @@
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.79.1"
+      "version" : "7.83.1"
     },
     {
       "name" : "libexpat",
@@ -78,7 +78,7 @@
       "name" : "Ruby",
       "path" : "/usr/bin/ruby",
       "source" : "filesystem",
-      "version" : "2.6.9"
+      "version" : "2.6.10"
     },
     {
       "name" : "SQLite",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_13.0_22A5286j_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-30346/9DD787A7-044B-4650-86D4-84E80B6B9C36/UniversalMac_13.0_22A5286j_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.0_22A5295h_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-34274/130176F5-C4CB-4664-A2F0-F29CA1281694/UniversalMac_13.0_22A5295h_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -145,7 +145,7 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8792.0.92.121.3"
+      "xnuVersion" : "8792.0.134.131.2"
     },
     {
       "arch" : "ARM64_T6000",
@@ -186,7 +186,7 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8792.0.92.121.3"
+      "xnuVersion" : "8792.0.134.131.2"
     },
     {
       "arch" : "ARM64_T8112",
@@ -217,7 +217,7 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8792.0.92.121.3"
+      "xnuVersion" : "8792.0.134.131.2"
     },
     {
       "arch" : "ARM64_VMAPPLE",
@@ -233,11 +233,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8792.0.92.121.3"
+      "xnuVersion" : "8792.0.134.131.2"
     }
   ],
   "osVersion" : "13.0",
-  "releaseDate" : "2022-06-22",
+  "releaseDate" : "2022-07-06",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
