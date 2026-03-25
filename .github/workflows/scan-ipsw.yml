@@ -204,5 +204,24 @@ jobs:
             --title "feat(data): add ${SCAN_BASENAME}" \
             --body "${BODY}"
 
+      - name: Auto-merge pull request
+        timeout-minutes: 30
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          gh pr merge "${SCAN_BRANCH}" --squash --auto --delete-branch
+          echo "Waiting for PR to merge..."
+          while true; do
+            STATE=$(gh pr view "${SCAN_BRANCH}" --json state -q .state)
+            if [[ "${STATE}" == "MERGED" ]]; then
+              echo "PR merged successfully"
+              break
+            elif [[ "${STATE}" == "CLOSED" ]]; then
+              echo "::error::PR was closed without merging"
+              exit 1
+            fi
+            sleep 30
+          done
+
       - name: Clean up IPSW
         run: rm -f "${IPSW_FILE}"
