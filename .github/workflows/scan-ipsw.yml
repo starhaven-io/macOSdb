@@ -201,7 +201,7 @@ jobs:
             cp "${f}" "${STASH_DIR}/${f}"
           done
           git fetch origin main
-          git checkout -B "${SCAN_BRANCH}" origin/main
+          git checkout -f -B "${SCAN_BRANCH}" origin/main
           echo "${SCAN_FILES}" | while read -r f; do
             cp "${STASH_DIR}/${f}" "${f}"
           done
