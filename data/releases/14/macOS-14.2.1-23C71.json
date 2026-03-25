@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_14.2.1_23C71_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2023FallFCS/fullrestores/052-22662/ECE59A41-DACC-4CA5-AB23-FDED1A4567DE/UniversalMac_14.2.1_23C71_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -365,6 +366,5 @@
   ],
   "osVersion" : "14.2.1",
   "releaseDate" : "2023-12-19",
-  "releaseName" : "Sonoma",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sonoma"
 }

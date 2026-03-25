@@ -113,6 +113,7 @@
   "ipswFile" : "UniversalMac_15.4_24E248_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025SpringFCS/fullrestores/082-16517/AACDDC33-9683-4431-98AF-F04EF7C15EE3/UniversalMac_15.4_24E248_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -468,6 +469,5 @@
   ],
   "osVersion" : "15.4",
   "releaseDate" : "2025-03-31",
-  "releaseName" : "Sequoia",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sequoia"
 }

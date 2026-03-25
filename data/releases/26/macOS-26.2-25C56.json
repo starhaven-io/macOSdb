@@ -113,6 +113,7 @@
   "ipswFile" : "UniversalMac_26.2_25C56_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025FallFCS/fullrestores/093-37399/E144C918-CF99-4BBC-B1D0-3E739B9A3F2D/UniversalMac_26.2_25C56_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -484,6 +485,5 @@
   ],
   "osVersion" : "26.2",
   "releaseDate" : "2025-12-12",
-  "releaseName" : "Tahoe",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Tahoe"
 }

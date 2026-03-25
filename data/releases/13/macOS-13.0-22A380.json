@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_13.0_22A380_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2022FallFCS/fullrestores/012-92188/2C38BCD1-2BFF-4A10-B358-94E8E28BE805/UniversalMac_13.0_22A380_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -236,6 +237,5 @@
   ],
   "osVersion" : "13.0",
   "releaseDate" : "2022-10-24",
-  "releaseName" : "Ventura",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Ventura"
 }

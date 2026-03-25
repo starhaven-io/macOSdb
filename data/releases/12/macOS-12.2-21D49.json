@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_12.2_21D49_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2022WinterFCS/fullrestores/002-57044/F1C9CC9E-BE-49E2-82F9-C7BBBBCC42F8/UniversalMac_12.2_21D49_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -205,6 +206,5 @@
   ],
   "osVersion" : "12.2",
   "releaseDate" : "2022-01-26",
-  "releaseName" : "Monterey",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Monterey"
 }

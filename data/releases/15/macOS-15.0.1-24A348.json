@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_15.0.1_24A348_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2024FallFCS/fullrestores/072-01423/566E5B4E-1100-4643-91B3-131247351844/UniversalMac_15.0.1_24A348_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -375,6 +376,5 @@
   ],
   "osVersion" : "15.0.1",
   "releaseDate" : "2024-10-03",
-  "releaseName" : "Sequoia",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sequoia"
 }
