@@ -1,6 +1,6 @@
 {
-  "betaNumber" : 11,
-  "buildNumber" : "22A5373b",
+  "betaNumber" : 10,
+  "buildNumber" : "22A5365d",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_13.0_22A5373b_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-84563/2FC38C63-3213-4BB6-8E41-2B066332CBE6/UniversalMac_13.0_22A5373b_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.0_22A5365d_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-83054/16ECAA12-3A1B-4663-B49B-B1563ECD4314/UniversalMac_13.0_22A5365d_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -145,7 +145,7 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8792.41.7"
+      "xnuVersion" : "8792.41.6"
     },
     {
       "arch" : "ARM64_T6000",
@@ -186,7 +186,7 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8792.41.7"
+      "xnuVersion" : "8792.41.6"
     },
     {
       "arch" : "ARM64_T8112",
@@ -217,7 +217,7 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8792.41.7"
+      "xnuVersion" : "8792.41.6"
     },
     {
       "arch" : "ARM64_VMAPPLE",
@@ -233,11 +233,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8792.41.7"
+      "xnuVersion" : "8792.41.6"
     }
   ],
   "osVersion" : "13.0",
-  "releaseDate" : "2022-10-11",
+  "releaseDate" : "2022-10-04",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
