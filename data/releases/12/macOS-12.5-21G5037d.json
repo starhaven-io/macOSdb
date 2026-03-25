@@ -1,6 +1,6 @@
 {
-  "betaNumber" : 3,
-  "buildNumber" : "21F5063e",
+  "betaNumber" : 2,
+  "buildNumber" : "21G5037d",
   "components" : [
     {
       "name" : "curl",
@@ -66,7 +66,7 @@
       "name" : "libxml2",
       "path" : "/usr/lib/libxml2.2.dylib",
       "source" : "dyldCache",
-      "version" : "2.10.4"
+      "version" : "2.9.4"
     },
     {
       "name" : "OpenSSH",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_12.4_21F5063e_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022SpringSeed/fullrestores/002-90009/DA6BD192-1698-48B3-AB6D-9D3A045ED1B1/UniversalMac_12.4_21F5063e_Restore.ipsw",
+  "ipswFile" : "UniversalMac_12.5_21G5037d_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/012-10648/1CC63FC5-5A22-4A5A-9A7B-C19C8C4A6731/UniversalMac_12.5_21G5037d_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -114,7 +114,7 @@
     {
       "arch" : "ARM64_T8101",
       "chip" : "M1",
-      "darwinVersion" : "21.5.0",
+      "darwinVersion" : "21.6.0",
       "deviceChips" : [
         {
           "chip" : "M1",
@@ -145,12 +145,12 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8020.120.68.131.2"
+      "xnuVersion" : "8020.140.30.121.1"
     },
     {
       "arch" : "ARM64_T6000",
       "chip" : "M1 Pro",
-      "darwinVersion" : "21.5.0",
+      "darwinVersion" : "21.6.0",
       "deviceChips" : [
         {
           "chip" : "M1 Max",
@@ -186,12 +186,12 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8020.120.68.131.2"
+      "xnuVersion" : "8020.140.30.121.1"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "21.5.0",
+      "darwinVersion" : "21.6.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -202,11 +202,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8020.120.68.131.2"
+      "xnuVersion" : "8020.140.30.121.1"
     }
   ],
-  "osVersion" : "12.4",
-  "releaseDate" : "2022-04-26",
+  "osVersion" : "12.5",
+  "releaseDate" : "2022-05-31",
   "releaseName" : "Monterey",
   "scannerVersion" : "1.2.2"
 }
