@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_12.3_21E230_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2022SpringFCS/fullrestores/071-08757/74A4F2A1-C747-43F9-A22A-C0AD5FB4ECB6/UniversalMac_12.3_21E230_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -276,6 +277,5 @@
   ],
   "osVersion" : "12.3",
   "releaseDate" : "2022-03-14",
-  "releaseName" : "Monterey",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Monterey"
 }

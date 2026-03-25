@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_13.5.1_22G90_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2023SummerFCS/fullrestores/042-25658/2D6BE8DB-5549-4F85-8C54-39FC23BABC68/UniversalMac_13.5.1_22G90_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -287,6 +288,5 @@
   ],
   "osVersion" : "13.5.1",
   "releaseDate" : "2023-08-17",
-  "releaseName" : "Ventura",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Ventura"
 }

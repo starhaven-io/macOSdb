@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_12.0.1_21A559_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021FCSFall/fullrestores/002-23780/D3417F21-41BD-4DDF-9135-FA5A129AF6AF/UniversalMac_12.0.1_21A559_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -205,6 +206,5 @@
   ],
   "osVersion" : "12.0.1",
   "releaseDate" : "2021-10-25",
-  "releaseName" : "Monterey",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Monterey"
 }

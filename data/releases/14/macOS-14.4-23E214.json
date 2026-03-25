@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_14.4_23E214_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2024WinterFCS/fullrestores/052-61990/47F0DD06-1106-4F2E-9CD6-AE6B361A0EC6/UniversalMac_14.4_23E214_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -375,6 +376,5 @@
   ],
   "osVersion" : "14.4",
   "releaseDate" : "2024-03-07",
-  "releaseName" : "Sonoma",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sonoma"
 }

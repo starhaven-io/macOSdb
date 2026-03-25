@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_15.3.2_24D81_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025WinterFCS/fullrestores/082-01504/828B8EF9-8134-49D5-B24A-0BA504FC5ECC/UniversalMac_15.3.2_24D81_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -442,6 +443,5 @@
   ],
   "osVersion" : "15.3.2",
   "releaseDate" : "2025-03-11",
-  "releaseName" : "Sequoia",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sequoia"
 }

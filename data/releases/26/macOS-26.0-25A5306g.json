@@ -114,6 +114,7 @@
   "ipswFile" : "UniversalMac_26.0_25A5306g_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025SummerSeed/fullrestores/082-72248/F32F08F8-FC66-4D24-847B-F03C6CF7C410/UniversalMac_26.0_25A5306g_Restore.ipsw",
   "isBeta" : true,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -469,6 +470,5 @@
   ],
   "osVersion" : "26.0",
   "releaseDate" : "2025-07-07",
-  "releaseName" : "Tahoe",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Tahoe"
 }

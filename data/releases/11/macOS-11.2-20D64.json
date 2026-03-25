@@ -107,15 +107,14 @@
   "ipswFile" : "UniversalMac_11.2_20D64_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021WinterFCS/fullrestores/071-00846/DCCBFDF4-4B4E-4628-A843-F8755C863FB0/UniversalMac_11.2_20D64_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.3.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.81.3"
     },
@@ -158,6 +157,5 @@
   ],
   "osVersion" : "11.2",
   "releaseDate" : "2021-02-01",
-  "releaseName" : "Big Sur",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Big Sur"
 }

@@ -113,6 +113,7 @@
   "ipswFile" : "UniversalMac_15.6_24G84_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025SummerFCS/fullrestores/082-08674/51294E4D-A273-44BE-A280-A69FC347FB87/UniversalMac_15.6_24G84_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -468,6 +469,5 @@
   ],
   "osVersion" : "15.6",
   "releaseDate" : "2025-07-29",
-  "releaseName" : "Sequoia",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sequoia"
 }

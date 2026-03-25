@@ -107,15 +107,14 @@
   "ipswFile" : "UniversalMac_11.0.1_20B29_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2020FallFCS/fullrestores/001-79706/93A4C43C-2B45-47AF-84EA-794F8886B85C/UniversalMac_11.0.1_20B29_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.1.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.50.7"
     },
@@ -158,6 +157,5 @@
   ],
   "osVersion" : "11.0.1",
   "releaseDate" : "2020-11-18",
-  "releaseName" : "Big Sur",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Big Sur"
 }

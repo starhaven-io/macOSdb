@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_11.5.2_20G95_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021SummerFCS/fullrestores/071-78715/CFEE4AA0-C104-479B-BDE1-3BFA1DFE710C/UniversalMac_11.5.2_20G95_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -148,6 +149,5 @@
   ],
   "osVersion" : "11.5.2",
   "releaseDate" : "2021-08-11",
-  "releaseName" : "Big Sur",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Big Sur"
 }

@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_11.3.1_20E241_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021SpringFCS/fullrestores/071-32411/2A29A9DC-01C7-4A50-A6C4-9705269F780D/UniversalMac_11.3.1_20E241_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -148,6 +149,5 @@
   ],
   "osVersion" : "11.3.1",
   "releaseDate" : "2021-05-03",
-  "releaseName" : "Big Sur",
-  "scannerVersion" : "1.0.0"
+  "releaseName" : "Big Sur"
 }

@@ -107,6 +107,7 @@
   "ipswFile" : "UniversalMac_14.6_23G80_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2024SummerFCS/fullrestores/052-69922/F5DA2B64-25EB-4370-9E89-FA5689859796/UniversalMac_14.6_23G80_Restore.ipsw",
   "isBeta" : false,
+  "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
@@ -375,6 +376,5 @@
   ],
   "osVersion" : "14.6",
   "releaseDate" : "2024-07-29",
-  "releaseName" : "Sonoma",
-  "scannerVersion" : "1.2.2"
+  "releaseName" : "Sonoma"
 }
