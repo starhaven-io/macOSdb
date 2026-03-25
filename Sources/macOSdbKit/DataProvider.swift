@@ -97,6 +97,7 @@ public actor DataProvider {
     public func clearCache() {
         cachedIndex = nil
         cachedReleases.removeAll()
+        URLCache.shared.removeAllCachedResponses()
     }
 
     private func validateResponse(_ response: URLResponse, url: URL) throws {
