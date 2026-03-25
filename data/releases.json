@@ -1276,6 +1276,16 @@
     "releaseName" : "Monterey"
   },
   {
+    "buildNumber" : "21G69",
+    "dataFile" : "releases/12/macOS-12.5-21G69.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "12.5",
+    "releaseDate" : "2022-07-12",
+    "releaseName" : "Monterey"
+  },
+  {
     "betaNumber" : 5,
     "buildNumber" : "21G5063a",
     "dataFile" : "releases/12/macOS-12.5-21G5063a.json",
