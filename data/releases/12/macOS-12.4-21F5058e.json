@@ -1,6 +1,6 @@
 {
-  "betaNumber" : 1,
-  "buildNumber" : "21F5048e",
+  "betaNumber" : 2,
+  "buildNumber" : "21F5058e",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_12.4_21F5048e_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022SpringSeed/fullrestores/002-85721/A21FF659-8493-4A16-A989-2C3141F48D8C/UniversalMac_12.4_21F5048e_Restore.ipsw",
+  "ipswFile" : "UniversalMac_12.4_21F5058e_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SpringSeed/fullrestores/002-87587/BC2EBE80-F0F4-4B56-BCDC-340E0AD8E985/UniversalMac_12.4_21F5058e_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -145,7 +145,7 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8020.120.43.111.1"
+      "xnuVersion" : "8020.120.51.121.3"
     },
     {
       "arch" : "ARM64_T6000",
@@ -186,7 +186,7 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8020.120.43.111.1"
+      "xnuVersion" : "8020.120.51.121.3"
     },
     {
       "arch" : "ARM64_VMAPPLE",
@@ -202,11 +202,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8020.120.43.111.1"
+      "xnuVersion" : "8020.120.51.121.3"
     }
   ],
   "osVersion" : "12.4",
-  "releaseDate" : "2022-04-05",
+  "releaseDate" : "2022-04-19",
   "releaseName" : "Monterey",
   "scannerVersion" : "1.2.2"
 }
