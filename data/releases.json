@@ -1066,6 +1066,17 @@
     "releaseName" : "Monterey"
   },
   {
+    "betaNumber" : 1,
+    "buildNumber" : "21F5048e",
+    "dataFile" : "releases/12/macOS-12.4-21F5048e.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "releaseDate" : "2022-04-05",
+    "releaseName" : "Monterey"
+  },
+  {
     "buildNumber" : "21E258",
     "dataFile" : "releases/12/macOS-12.3.1-21E258.json",
     "isBeta" : false,
