@@ -1,6 +1,6 @@
 {
-  "betaNumber" : 3,
-  "buildNumber" : "22E5236f",
+  "betaNumber" : 2,
+  "buildNumber" : "22E5230e",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.9"
     }
   ],
-  "ipswFile" : "UniversalMac_13.3_22E5236f_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2023WinterSeed/fullrestores/032-60411/1DDA996F-B620-4770-8FFE-87AB2043784D/UniversalMac_13.3_22E5236f_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.3_22E5230e_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023WinterSeed/fullrestores/032-54760/AE02E378-FD59-474D-93AB-C52617103C72/UniversalMac_13.3_22E5230e_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -145,7 +145,7 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8796.100.772.505.2"
+      "xnuVersion" : "8796.100.763.505.1"
     },
     {
       "arch" : "ARM64_T6000",
@@ -186,7 +186,7 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8796.100.772.505.2"
+      "xnuVersion" : "8796.100.763.505.1"
     },
     {
       "arch" : "ARM64_T8112",
@@ -217,7 +217,7 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8796.100.772.505.2"
+      "xnuVersion" : "8796.100.763.505.1"
     },
     {
       "arch" : "ARM64_T6020",
@@ -268,7 +268,7 @@
         "Mac14,14"
       ],
       "file" : "kernelcache.release.mac14j",
-      "xnuVersion" : "8796.100.772.505.2"
+      "xnuVersion" : "8796.100.763.505.1"
     },
     {
       "arch" : "ARM64_VMAPPLE",
@@ -284,11 +284,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8796.100.772.505.2"
+      "xnuVersion" : "8796.100.763.505.1"
     }
   ],
   "osVersion" : "13.3",
-  "releaseDate" : "2023-03-07",
+  "releaseDate" : "2023-02-28",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
