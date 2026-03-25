@@ -1,0 +1,294 @@
+{
+  "betaNumber" : 2,
+  "buildNumber" : "23A5276g",
+  "components" : [
+    {
+      "name" : "curl",
+      "path" : "/usr/bin/curl",
+      "source" : "filesystem",
+      "version" : "8.0.1"
+    },
+    {
+      "name" : "httpd",
+      "path" : "/usr/sbin/httpd",
+      "source" : "filesystem",
+      "version" : "2.4.56"
+    },
+    {
+      "name" : "libbz2 (bzip2)",
+      "path" : "/usr/lib/libbz2.1.0.dylib",
+      "source" : "dyldCache",
+      "version" : "1.0.8"
+    },
+    {
+      "name" : "libcurl",
+      "path" : "/usr/lib/libcurl.4.dylib",
+      "source" : "dyldCache",
+      "version" : "8.0.1"
+    },
+    {
+      "name" : "libexpat",
+      "path" : "/usr/lib/libexpat.1.dylib",
+      "source" : "dyldCache",
+      "version" : "2.5.0"
+    },
+    {
+      "name" : "libncurses",
+      "path" : "/usr/lib/libncurses.5.4.dylib",
+      "source" : "dyldCache",
+      "version" : "6.0.20150808"
+    },
+    {
+      "name" : "libpcap",
+      "path" : "/usr/lib/libpcap.A.dylib",
+      "source" : "dyldCache",
+      "version" : "1.10.1"
+    },
+    {
+      "name" : "LibreSSL",
+      "path" : "/usr/bin/openssl",
+      "source" : "filesystem",
+      "version" : "3.3.6"
+    },
+    {
+      "name" : "libsqlite3",
+      "path" : "/usr/lib/libsqlite3.dylib",
+      "source" : "dyldCache",
+      "version" : "3.39.5"
+    },
+    {
+      "name" : "libssl (LibreSSL)",
+      "path" : "/usr/lib/libssl.35.dylib",
+      "source" : "dyldCache",
+      "version" : "2.2.9"
+    },
+    {
+      "name" : "libxml2",
+      "path" : "/usr/lib/libxml2.2.dylib",
+      "source" : "dyldCache",
+      "version" : "2.10.10"
+    },
+    {
+      "name" : "OpenSSH",
+      "path" : "/usr/bin/ssh",
+      "source" : "filesystem",
+      "version" : "9.3p1"
+    },
+    {
+      "name" : "Ruby",
+      "path" : "/usr/bin/ruby",
+      "source" : "filesystem",
+      "version" : "2.6.10"
+    },
+    {
+      "name" : "SQLite",
+      "path" : "/usr/bin/sqlite3",
+      "source" : "filesystem",
+      "version" : "3.39.5"
+    },
+    {
+      "name" : "vim",
+      "path" : "/usr/bin/vim",
+      "source" : "filesystem",
+      "version" : "9.0"
+    },
+    {
+      "name" : "zip",
+      "path" : "/usr/bin/zip",
+      "source" : "filesystem",
+      "version" : "2.0"
+    },
+    {
+      "name" : "zsh",
+      "path" : "/bin/zsh",
+      "source" : "filesystem",
+      "version" : "5.9"
+    }
+  ],
+  "ipswFile" : "UniversalMac_14.0_23A5276g_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023SummerSeed/fullrestores/032-95861/67600C59-8516-4A46-B9D7-4007D395CEF5/UniversalMac_14.0_23A5276g_Restore.ipsw",
+  "isBeta" : true,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+    {
+      "arch" : "ARM64_T8103",
+      "chip" : "M1",
+      "darwinVersion" : "23.0.0",
+      "deviceChips" : [
+        {
+          "chip" : "M1",
+          "device" : "MacBookAir10,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "MacBookPro17,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "Macmini9,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "iMac21,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "iMac21,2"
+        }
+      ],
+      "devices" : [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ],
+      "file" : "kernelcache.release.mac13g",
+      "xnuVersion" : "10002.0.116.505.3"
+    },
+    {
+      "arch" : "ARM64_T6000",
+      "chip" : "M1 Pro",
+      "darwinVersion" : "23.0.0",
+      "deviceChips" : [
+        {
+          "chip" : "M1 Max",
+          "device" : "Mac13,1"
+        },
+        {
+          "chip" : "M1 Ultra",
+          "device" : "Mac13,2"
+        },
+        {
+          "chip" : "M1 Pro",
+          "device" : "MacBookPro18,1"
+        },
+        {
+          "chip" : "M1 Max",
+          "device" : "MacBookPro18,2"
+        },
+        {
+          "chip" : "M1 Pro",
+          "device" : "MacBookPro18,3"
+        },
+        {
+          "chip" : "M1 Max",
+          "device" : "MacBookPro18,4"
+        }
+      ],
+      "devices" : [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ],
+      "file" : "kernelcache.release.mac13j",
+      "xnuVersion" : "10002.0.116.505.3"
+    },
+    {
+      "arch" : "ARM64_T8112",
+      "chip" : "M2",
+      "darwinVersion" : "23.0.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2",
+          "device" : "Mac14,15"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,2"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,3"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,7"
+        }
+      ],
+      "devices" : [
+        "Mac14,15",
+        "Mac14,2",
+        "Mac14,3",
+        "Mac14,7"
+      ],
+      "file" : "kernelcache.release.mac14g",
+      "xnuVersion" : "10002.0.116.505.3"
+    },
+    {
+      "arch" : "ARM64_T6020",
+      "chip" : "M2 Pro",
+      "darwinVersion" : "23.0.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,10"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,12"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,13"
+        },
+        {
+          "chip" : "M2 Ultra",
+          "device" : "Mac14,14"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,5"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,6"
+        },
+        {
+          "chip" : "M2 Ultra",
+          "device" : "Mac14,8"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,9"
+        }
+      ],
+      "devices" : [
+        "Mac14,10",
+        "Mac14,12",
+        "Mac14,13",
+        "Mac14,14",
+        "Mac14,5",
+        "Mac14,6",
+        "Mac14,8",
+        "Mac14,9"
+      ],
+      "file" : "kernelcache.release.mac14j",
+      "xnuVersion" : "10002.0.116.505.3"
+    },
+    {
+      "arch" : "ARM64_VMAPPLE",
+      "chip" : "Virtual Mac",
+      "darwinVersion" : "23.0.0",
+      "deviceChips" : [
+        {
+          "chip" : "Virtual Mac",
+          "device" : "VirtualMac2,1"
+        }
+      ],
+      "devices" : [
+        "VirtualMac2,1"
+      ],
+      "file" : "kernelcache.release.vma2",
+      "xnuVersion" : "10002.0.116.505.3"
+    }
+  ],
+  "osVersion" : "14.0",
+  "releaseDate" : "2023-06-21",
+  "releaseName" : "Sonoma",
+  "scannerVersion" : "1.2.2"
+}
