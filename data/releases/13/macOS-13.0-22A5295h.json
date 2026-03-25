@@ -1,6 +1,6 @@
 {
   "betaNumber" : 3,
-  "buildNumber" : "22A5295i",
+  "buildNumber" : "22A5295h",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_13.0_22A5295i_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-38309/6EDC76A0-4432-4C64-83C5-F43C885A75D6/UniversalMac_13.0_22A5295i_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.0_22A5295h_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-34274/130176F5-C4CB-4664-A2F0-F29CA1281694/UniversalMac_13.0_22A5295h_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -237,7 +237,7 @@
     }
   ],
   "osVersion" : "13.0",
-  "releaseDate" : "2022-07-11",
+  "releaseDate" : "2022-07-06",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
