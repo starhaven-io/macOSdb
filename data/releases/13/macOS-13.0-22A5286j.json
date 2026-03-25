@@ -1,18 +1,18 @@
 {
   "betaNumber" : 2,
-  "buildNumber" : "22C5044e",
+  "buildNumber" : "22A5286j",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.85.0"
+      "version" : "7.79.1"
     },
     {
       "name" : "httpd",
       "path" : "/usr/sbin/httpd",
       "source" : "filesystem",
-      "version" : "2.4.54"
+      "version" : "2.4.53"
     },
     {
       "name" : "libbz2 (bzip2)",
@@ -24,13 +24,13 @@
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.85.0"
+      "version" : "7.79.1"
     },
     {
       "name" : "libexpat",
       "path" : "/usr/lib/libexpat.1.dylib",
       "source" : "dyldCache",
-      "version" : "2.4.8"
+      "version" : "2.4.1"
     },
     {
       "name" : "libncurses",
@@ -54,7 +54,7 @@
       "name" : "libsqlite3",
       "path" : "/usr/lib/libsqlite3.dylib",
       "source" : "dyldCache",
-      "version" : "3.39.5"
+      "version" : "3.37.0"
     },
     {
       "name" : "libssl (LibreSSL)",
@@ -72,25 +72,25 @@
       "name" : "OpenSSH",
       "path" : "/usr/bin/ssh",
       "source" : "filesystem",
-      "version" : "9.0p1"
+      "version" : "8.6p1"
     },
     {
       "name" : "Ruby",
       "path" : "/usr/bin/ruby",
       "source" : "filesystem",
-      "version" : "2.6.10"
+      "version" : "2.6.9"
     },
     {
       "name" : "SQLite",
       "path" : "/usr/bin/sqlite3",
       "source" : "filesystem",
-      "version" : "3.39.5"
+      "version" : "3.37.0"
     },
     {
       "name" : "vim",
       "path" : "/usr/bin/vim",
       "source" : "filesystem",
-      "version" : "9.0"
+      "version" : "8.2"
     },
     {
       "name" : "zip",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_13.1_22C5044e_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/032-02019/670C9BA6-67EB-4AE6-A02E-88976F6F3118/UniversalMac_13.1_22C5044e_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.0_22A5286j_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-30346/9DD787A7-044B-4650-86D4-84E80B6B9C36/UniversalMac_13.0_22A5286j_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -114,7 +114,7 @@
     {
       "arch" : "ARM64_T8103",
       "chip" : "M1",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "M1",
@@ -145,12 +145,12 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8792.60.51"
+      "xnuVersion" : "8792.0.92.121.3"
     },
     {
       "arch" : "ARM64_T6000",
       "chip" : "M1 Pro",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "M1 Max",
@@ -186,12 +186,12 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8792.60.51"
+      "xnuVersion" : "8792.0.92.121.3"
     },
     {
       "arch" : "ARM64_T8112",
       "chip" : "M2",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "M2",
@@ -217,12 +217,12 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8792.60.51"
+      "xnuVersion" : "8792.0.92.121.3"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -233,11 +233,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8792.60.51"
+      "xnuVersion" : "8792.0.92.121.3"
     }
   ],
-  "osVersion" : "13.1",
-  "releaseDate" : "2022-11-08",
+  "osVersion" : "13.0",
+  "releaseDate" : "2022-06-22",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
