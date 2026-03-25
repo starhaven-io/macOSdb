@@ -1025,25 +1025,25 @@
     "releaseName" : "Monterey"
   },
   {
-    "betaNumber" : 3,
-    "buildNumber" : "21G5046c",
-    "dataFile" : "releases/12/macOS-12.5-21G5046c.json",
+    "betaNumber" : 4,
+    "buildNumber" : "21G5056b",
+    "dataFile" : "releases/12/macOS-12.5-21G5056b.json",
     "isBeta" : true,
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
-    "releaseDate" : "2022-06-14",
+    "releaseDate" : "2022-06-24",
     "releaseName" : "Monterey"
   },
   {
-    "betaNumber" : 1,
-    "buildNumber" : "21G5027d",
-    "dataFile" : "releases/12/macOS-12.5-21G5027d.json",
+    "betaNumber" : 2,
+    "buildNumber" : "21G5037d",
+    "dataFile" : "releases/12/macOS-12.5-21G5037d.json",
     "isBeta" : true,
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
-    "releaseDate" : "2022-05-18",
+    "releaseDate" : "2022-05-31",
     "releaseName" : "Monterey"
   },
   {
@@ -1077,14 +1077,14 @@
     "releaseName" : "Monterey"
   },
   {
-    "betaNumber" : 3,
-    "buildNumber" : "21F5063e",
-    "dataFile" : "releases/12/macOS-12.4-21F5063e.json",
+    "betaNumber" : 4,
+    "buildNumber" : "21F5071b",
+    "dataFile" : "releases/12/macOS-12.4-21F5071b.json",
     "isBeta" : true,
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.4",
-    "releaseDate" : "2022-04-26",
+    "releaseDate" : "2022-05-03",
     "releaseName" : "Monterey"
   },
   {
@@ -1096,6 +1096,17 @@
     "isRC" : false,
     "osVersion" : "12.4",
     "releaseDate" : "2022-04-19",
+    "releaseName" : "Monterey"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "21F5048e",
+    "dataFile" : "releases/12/macOS-12.4-21F5048e.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "releaseDate" : "2022-04-05",
     "releaseName" : "Monterey"
   },
   {

@@ -1,6 +1,6 @@
 {
-  "betaNumber" : 1,
-  "buildNumber" : "21G5027d",
+  "betaNumber" : 4,
+  "buildNumber" : "21G5056b",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_12.5_21G5027d_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/002-93712/5F234425-6096-43FC-B518-1E9D7B4D0254/UniversalMac_12.5_21G5027d_Restore.ipsw",
+  "ipswFile" : "UniversalMac_12.5_21G5056b_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/012-26441/AE0AC638-2773-49D3-BF84-950B10BF39E9/UniversalMac_12.5_21G5056b_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -145,7 +145,7 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8020.140.20.0.4"
+      "xnuVersion" : "8020.140.41"
     },
     {
       "arch" : "ARM64_T6000",
@@ -186,7 +186,38 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8020.140.20.0.4"
+      "xnuVersion" : "8020.140.41"
+    },
+    {
+      "arch" : "ARM64_T8110",
+      "chip" : "M2",
+      "darwinVersion" : "21.6.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2",
+          "device" : "Mac14,2"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,3"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,7"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,15"
+        }
+      ],
+      "devices" : [
+        "Mac14,2",
+        "Mac14,3",
+        "Mac14,7",
+        "Mac14,15"
+      ],
+      "file" : "kernelcache.release.mac14g",
+      "xnuVersion" : "8020.140.41"
     },
     {
       "arch" : "ARM64_VMAPPLE",
@@ -202,11 +233,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8020.140.20.0.4"
+      "xnuVersion" : "8020.140.41"
     }
   ],
   "osVersion" : "12.5",
-  "releaseDate" : "2022-05-18",
+  "releaseDate" : "2022-06-24",
   "releaseName" : "Monterey",
   "scannerVersion" : "1.2.2"
 }
