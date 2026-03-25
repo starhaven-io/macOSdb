@@ -1,18 +1,18 @@
 {
-  "betaNumber" : 1,
-  "buildNumber" : "22C5033e",
+  "betaNumber" : 3,
+  "buildNumber" : "22A5295h",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.84.0"
+      "version" : "7.83.1"
     },
     {
       "name" : "httpd",
       "path" : "/usr/sbin/httpd",
       "source" : "filesystem",
-      "version" : "2.4.54"
+      "version" : "2.4.53"
     },
     {
       "name" : "libbz2 (bzip2)",
@@ -24,13 +24,13 @@
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.84.0"
+      "version" : "7.83.1"
     },
     {
       "name" : "libexpat",
       "path" : "/usr/lib/libexpat.1.dylib",
       "source" : "dyldCache",
-      "version" : "2.4.8"
+      "version" : "2.4.1"
     },
     {
       "name" : "libncurses",
@@ -54,7 +54,7 @@
       "name" : "libsqlite3",
       "path" : "/usr/lib/libsqlite3.dylib",
       "source" : "dyldCache",
-      "version" : "3.39.4"
+      "version" : "3.37.0"
     },
     {
       "name" : "libssl (LibreSSL)",
@@ -72,7 +72,7 @@
       "name" : "OpenSSH",
       "path" : "/usr/bin/ssh",
       "source" : "filesystem",
-      "version" : "9.0p1"
+      "version" : "8.6p1"
     },
     {
       "name" : "Ruby",
@@ -84,13 +84,13 @@
       "name" : "SQLite",
       "path" : "/usr/bin/sqlite3",
       "source" : "filesystem",
-      "version" : "3.39.4"
+      "version" : "3.37.0"
     },
     {
       "name" : "vim",
       "path" : "/usr/bin/vim",
       "source" : "filesystem",
-      "version" : "9.0"
+      "version" : "8.2"
     },
     {
       "name" : "zip",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_13.1_22C5033e_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/012-82062/10E6B723-51B8-4B2C-BA3B-12A18ED4E719/UniversalMac_13.1_22C5033e_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.0_22A5295h_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022SummerSeed/fullrestores/012-34274/130176F5-C4CB-4664-A2F0-F29CA1281694/UniversalMac_13.0_22A5295h_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -114,7 +114,7 @@
     {
       "arch" : "ARM64_T8103",
       "chip" : "M1",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "M1",
@@ -145,12 +145,12 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8792.60.32.0.1"
+      "xnuVersion" : "8792.0.134.131.2"
     },
     {
       "arch" : "ARM64_T6000",
       "chip" : "M1 Pro",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "M1 Max",
@@ -186,12 +186,12 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8792.60.32.0.1"
+      "xnuVersion" : "8792.0.134.131.2"
     },
     {
       "arch" : "ARM64_T8112",
       "chip" : "M2",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "M2",
@@ -217,12 +217,12 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8792.60.32.0.1"
+      "xnuVersion" : "8792.0.134.131.2"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "22.2.0",
+      "darwinVersion" : "22.0.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -233,11 +233,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8792.60.32.0.1"
+      "xnuVersion" : "8792.0.134.131.2"
     }
   ],
-  "osVersion" : "13.1",
-  "releaseDate" : "2022-10-25",
+  "osVersion" : "13.0",
+  "releaseDate" : "2022-07-06",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
