@@ -19,7 +19,7 @@ macOSdb/
 ├── macOSdb.xcodeproj/                     # Xcode project (builds app target with bundled CLI)
 ├── Package.swift                          # SPM: macOSdbKit lib + standalone macosdb CLI
 ├── Sources/
-│   ├── macOSdbKit/                        # Shared library (19 files)
+│   ├── macOSdbKit/                        # Shared library (21 files)
 │   │   ├── Models/                        # Release, Component, KernelInfo, ChipFamily, DeviceRegistry, VersionComparison
 │   │   ├── Scanner/                       # IPSW scanning pipeline (11 files)
 │   │   ├── DataProvider.swift             # Fetch JSON from HTTPS (GitHub raw) or local files
@@ -47,7 +47,7 @@ macOSdb/
 │   ├── astro.config.mjs
 │   └── package.json
 ├── Tests/
-│   └── macOSdbKitTests/                   # Swift Testing (6 test files, 93 tests)
+│   └── macOSdbKitTests/                   # Swift Testing (6 test files, 94 tests)
 │       └── Fixtures/                      # Test data (sample release JSON)
 ├── data/                                  # Pre-built JSON (committed, CC-BY-4.0)
 │   ├── LICENSE                            # CC-BY-4.0 license for data
@@ -55,7 +55,7 @@ macOSdb/
 │   └── releases/{major}/                  # Per-release JSON (macOS-{version}-{build}.json)
 ├── justfile                               # Task runner (just clean/build/test/lint/site-dev/check)
 ├── .github/
-│   ├── workflows/                         # CI: build, swiftlint, conventional-commits, codeql, zizmor, json-lint, deploy-site, release
+│   ├── workflows/                         # CI: build, check, conventional-commits, codeql, zizmor, scan-ipsw, deploy-site, release
 │   ├── format-release-notes.py            # Formats GitHub auto-generated notes by Conventional Commits type
 │   ├── dependabot.yml                     # Dependabot for GitHub Actions
 │   └── FUNDING.yml                        # GitHub Sponsors
@@ -155,16 +155,30 @@ macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia,
 ## CI workflows (.github/workflows/)
 
 - **build.yml** — Test on PR with Thread Sanitizer and Address Sanitizer (parallel jobs, xcodebuild)
-- **swiftlint.yml** — Lint on PR (brew install swiftlint, --strict)
+- **check.yml** — Unified PR checks: runs `just check` (lint, test, site build)
 - **conventional-commits.yml** — Validate PR titles and commit messages match Conventional Commits format
-- **json-lint.yml** — Validate JSON data files on PR
 - **codeql.yml** — CodeQL security analysis for Swift
 - **zizmor.yml** — GitHub Actions security audit (SARIF output, uploaded to Security tab)
+- **scan-ipsw.yml** — Self-hosted IPSW scanning workflow
 - **deploy-site.yml** — Build and deploy Astro site to GitHub Pages
-- **release.yml** — Manual dispatch: build, sign (Developer ID), notarize, create GitHub release with formatted notes
+- **release.yml** — Manual dispatch: build, sign (Developer ID), notarize, create GitHub release with formatted notes and Sparkle appcast update
 
 ## Commit conventions
 
 Conventional Commits format: `type(scope): description`
 
 Common types: `feat`, `fix`, `refactor`, `docs`, `ci`, `chore`
+
+All commits must:
+- Use `git commit -s` for DCO sign-off
+- Include a `Co-authored-by: Claude Opus 4.6 <noreply@anthropic.com>` trailer when authored with Claude
+
+## Git workflow
+
+- Never commit directly to main — always create a feature branch and open a PR
+- Version bumps follow the pattern: bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.pbxproj`, commit as `chore: bump version to X.Y.Z (build N)`, open a PR
+- Releases are cut by triggering the Release workflow dispatch after the version bump PR is merged — the workflow reads `MARKETING_VERSION` from the Xcode project and creates the tag automatically
+
+## PR conventions
+
+- PR descriptions should contain only a summary of the changes — no test plan sections, no bot attribution, no "Generated with Claude Code" footers
