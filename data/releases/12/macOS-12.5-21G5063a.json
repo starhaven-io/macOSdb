@@ -1,6 +1,6 @@
 {
-  "betaNumber" : 4,
-  "buildNumber" : "21G5056b",
+  "betaNumber" : 5,
+  "buildNumber" : "21G5063a",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_12.5_21G5056b_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/012-26441/AE0AC638-2773-49D3-BF84-950B10BF39E9/UniversalMac_12.5_21G5056b_Restore.ipsw",
+  "ipswFile" : "UniversalMac_12.5_21G5063a_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/012-36748/52342C55-6598-4A86-AAB8-8901145792C8/UniversalMac_12.5_21G5063a_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -237,7 +237,7 @@
     }
   ],
   "osVersion" : "12.5",
-  "releaseDate" : "2022-06-24",
+  "releaseDate" : "2022-07-05",
   "releaseName" : "Monterey",
   "scannerVersion" : "1.2.2"
 }

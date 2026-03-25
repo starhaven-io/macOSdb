@@ -1,6 +1,6 @@
 {
   "betaNumber" : 1,
-  "buildNumber" : "21F5048e",
+  "buildNumber" : "21G5027d",
   "components" : [
     {
       "name" : "curl",
@@ -105,8 +105,8 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_12.4_21F5048e_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022SpringSeed/fullrestores/002-85721/A21FF659-8493-4A16-A989-2C3141F48D8C/UniversalMac_12.4_21F5048e_Restore.ipsw",
+  "ipswFile" : "UniversalMac_12.5_21G5027d_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2022FallSeed/fullrestores/002-93712/5F234425-6096-43FC-B518-1E9D7B4D0254/UniversalMac_12.5_21G5027d_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -114,7 +114,7 @@
     {
       "arch" : "ARM64_T8101",
       "chip" : "M1",
-      "darwinVersion" : "21.5.0",
+      "darwinVersion" : "21.6.0",
       "deviceChips" : [
         {
           "chip" : "M1",
@@ -145,12 +145,12 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8020.120.43.111.1"
+      "xnuVersion" : "8020.140.20.0.4"
     },
     {
       "arch" : "ARM64_T6000",
       "chip" : "M1 Pro",
-      "darwinVersion" : "21.5.0",
+      "darwinVersion" : "21.6.0",
       "deviceChips" : [
         {
           "chip" : "M1 Max",
@@ -186,12 +186,12 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8020.120.43.111.1"
+      "xnuVersion" : "8020.140.20.0.4"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "21.5.0",
+      "darwinVersion" : "21.6.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -202,11 +202,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8020.120.43.111.1"
+      "xnuVersion" : "8020.140.20.0.4"
     }
   ],
-  "osVersion" : "12.4",
-  "releaseDate" : "2022-04-05",
+  "osVersion" : "12.5",
+  "releaseDate" : "2022-05-18",
   "releaseName" : "Monterey",
   "scannerVersion" : "1.2.2"
 }
