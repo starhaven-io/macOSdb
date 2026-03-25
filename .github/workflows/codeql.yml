@@ -5,16 +5,16 @@ on:
     branches:
       - main
     paths:
-      - "**/*.swift"
+      - "Sources/**"
+      - "macOSdbApp/**"
       - "Package.swift"
       - "Package.resolved"
-      - "macOSdb.xcodeproj/**"
   pull_request:
     paths:
-      - "**/*.swift"
+      - "Sources/**"
+      - "macOSdbApp/**"
       - "Package.swift"
       - "Package.resolved"
-      - "macOSdb.xcodeproj/**"
       - ".github/workflows/codeql.yml"
 
 concurrency:
