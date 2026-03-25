@@ -102,9 +102,9 @@ jobs:
             mv "${IPSW_FILE}.part" "${IPSW_FILE}"
           fi
 
-      - name: Cache CLI build
+      - name: Restore CLI build cache
         id: cache-cli
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: .build/release/macosdb
           key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
@@ -112,6 +112,13 @@ jobs:
       - name: Build CLI
         if: steps.cache-cli.outputs.cache-hit != 'true'
         run: swift build -c release --product macosdb
+
+      - name: Save CLI build cache
+        if: steps.cache-cli.outputs.cache-hit != 'true'
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: .build/release/macosdb
+          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
 
       - name: Scan IPSW
         env:
