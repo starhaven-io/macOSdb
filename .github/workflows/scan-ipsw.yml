@@ -193,10 +193,20 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${REPOSITORY}.git"
-          # Fetch latest main so this commit sits on top of any previously merged scan PRs
+          SCAN_FILES=$(git ls-files --others --modified --exclude-standard 'data/')
+          TMPDIR=$(mktemp -d)
+          echo "${SCAN_FILES}" | while read -r f; do
+            mkdir -p "${TMPDIR}/$(dirname "${f}")"
+            cp "${f}" "${TMPDIR}/${f}"
+          done
           git fetch origin main
-          git reset --soft origin/main
+          git checkout origin/main -- data/
+          git reset origin/main
           git checkout -b "${SCAN_BRANCH}"
+          echo "${SCAN_FILES}" | while read -r f; do
+            cp "${TMPDIR}/${f}" "${f}"
+          done
+          rm -rf "${TMPDIR}"
           git add data/
           git commit -m "feat(data): add ${SCAN_BASENAME}"
           git push -u origin "${SCAN_BRANCH}"
