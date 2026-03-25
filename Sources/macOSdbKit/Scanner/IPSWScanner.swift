@@ -73,7 +73,7 @@ public actor IPSWScanner {
                 releaseDate: releaseDate,
                 ipswFile: ipswPath.lastPathComponent,
                 ipswURL: ipswURL,
-                scannerVersion: scannerVersion,
+
                 isBeta: resolvedBeta,
                 betaNumber: betaNumber,
                 isRC: isRC,

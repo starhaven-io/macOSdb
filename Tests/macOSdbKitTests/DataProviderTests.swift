@@ -33,7 +33,6 @@ struct DataProviderTests {
             buildNumber: "24G90",
             releaseName: "Sequoia",
             releaseDate: "2025-07-07",
-            scannerVersion: "1.0.0",
             kernels: [
                 KernelInfo(
                     file: "kernelcache.release.Mac16,1",
@@ -57,7 +56,6 @@ struct DataProviderTests {
         #expect(decoded.osVersion == release.osVersion)
         #expect(decoded.buildNumber == release.buildNumber)
         #expect(decoded.releaseName == "Sequoia")
-        #expect(decoded.scannerVersion == "1.0.0")
         #expect(decoded.kernels.count == 1)
         #expect(decoded.components.count == 2)
         #expect(decoded.kernels[0].chip == "M4")

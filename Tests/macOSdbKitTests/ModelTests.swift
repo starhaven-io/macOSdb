@@ -48,8 +48,6 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(release.patchVersion == 1)
         #expect(!release.components.isEmpty)
         #expect(!release.kernels.isEmpty)
-        #expect(release.scannerVersion == "1.0.0")
-
         // Verify deviceChips decoded — T6041 kernel has mixed M4 Pro/Max
         let t6041Kernel = release.kernels.first { $0.arch == "ARM64_T6041" }
         #expect(t6041Kernel != nil)
