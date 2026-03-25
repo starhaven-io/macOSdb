@@ -1,0 +1,243 @@
+{
+  "betaNumber" : 2,
+  "buildNumber" : "22D5038i",
+  "components" : [
+    {
+      "name" : "curl",
+      "path" : "/usr/bin/curl",
+      "source" : "filesystem",
+      "version" : "7.86.0"
+    },
+    {
+      "name" : "httpd",
+      "path" : "/usr/sbin/httpd",
+      "source" : "filesystem",
+      "version" : "2.4.54"
+    },
+    {
+      "name" : "libbz2 (bzip2)",
+      "path" : "/usr/lib/libbz2.1.0.dylib",
+      "source" : "dyldCache",
+      "version" : "1.0.8"
+    },
+    {
+      "name" : "libcurl",
+      "path" : "/usr/lib/libcurl.4.dylib",
+      "source" : "dyldCache",
+      "version" : "7.86.0"
+    },
+    {
+      "name" : "libexpat",
+      "path" : "/usr/lib/libexpat.1.dylib",
+      "source" : "dyldCache",
+      "version" : "2.4.8"
+    },
+    {
+      "name" : "libncurses",
+      "path" : "/usr/lib/libncurses.5.4.dylib",
+      "source" : "dyldCache",
+      "version" : "5.7.20081102"
+    },
+    {
+      "name" : "libpcap",
+      "path" : "/usr/lib/libpcap.A.dylib",
+      "source" : "dyldCache",
+      "version" : "1.10.1"
+    },
+    {
+      "name" : "LibreSSL",
+      "path" : "/usr/bin/openssl",
+      "source" : "filesystem",
+      "version" : "3.3.6"
+    },
+    {
+      "name" : "libsqlite3",
+      "path" : "/usr/lib/libsqlite3.dylib",
+      "source" : "dyldCache",
+      "version" : "3.39.5"
+    },
+    {
+      "name" : "libssl (LibreSSL)",
+      "path" : "/usr/lib/libssl.35.dylib",
+      "source" : "dyldCache",
+      "version" : "2.2.9"
+    },
+    {
+      "name" : "libxml2",
+      "path" : "/usr/lib/libxml2.2.dylib",
+      "source" : "dyldCache",
+      "version" : "2.9.13"
+    },
+    {
+      "name" : "OpenSSH",
+      "path" : "/usr/bin/ssh",
+      "source" : "filesystem",
+      "version" : "9.0p1"
+    },
+    {
+      "name" : "Ruby",
+      "path" : "/usr/bin/ruby",
+      "source" : "filesystem",
+      "version" : "2.6.10"
+    },
+    {
+      "name" : "SQLite",
+      "path" : "/usr/bin/sqlite3",
+      "source" : "filesystem",
+      "version" : "3.39.5"
+    },
+    {
+      "name" : "vim",
+      "path" : "/usr/bin/vim",
+      "source" : "filesystem",
+      "version" : "9.0"
+    },
+    {
+      "name" : "zip",
+      "path" : "/usr/bin/zip",
+      "source" : "filesystem",
+      "version" : "2.0"
+    },
+    {
+      "name" : "zsh",
+      "path" : "/bin/zsh",
+      "source" : "filesystem",
+      "version" : "5.8"
+    }
+  ],
+  "ipswFile" : "UniversalMac_13.2_22D5038i_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023WinterSeed/fullrestores/032-33181/62ECE236-5806-4136-AD08-EDC026FD80A5/UniversalMac_13.2_22D5038i_Restore.ipsw",
+  "isBeta" : true,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+    {
+      "arch" : "ARM64_T8103",
+      "chip" : "M1",
+      "darwinVersion" : "22.3.0",
+      "deviceChips" : [
+        {
+          "chip" : "M1",
+          "device" : "MacBookAir10,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "MacBookPro17,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "Macmini9,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "iMac21,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "iMac21,2"
+        }
+      ],
+      "devices" : [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ],
+      "file" : "kernelcache.release.mac13g",
+      "xnuVersion" : "8792.80.25.121.4"
+    },
+    {
+      "arch" : "ARM64_T6000",
+      "chip" : "M1 Pro",
+      "darwinVersion" : "22.3.0",
+      "deviceChips" : [
+        {
+          "chip" : "M1 Max",
+          "device" : "Mac13,1"
+        },
+        {
+          "chip" : "M1 Ultra",
+          "device" : "Mac13,2"
+        },
+        {
+          "chip" : "M1 Pro",
+          "device" : "MacBookPro18,1"
+        },
+        {
+          "chip" : "M1 Max",
+          "device" : "MacBookPro18,2"
+        },
+        {
+          "chip" : "M1 Pro",
+          "device" : "MacBookPro18,3"
+        },
+        {
+          "chip" : "M1 Max",
+          "device" : "MacBookPro18,4"
+        }
+      ],
+      "devices" : [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ],
+      "file" : "kernelcache.release.mac13j",
+      "xnuVersion" : "8792.80.25.121.4"
+    },
+    {
+      "arch" : "ARM64_T8112",
+      "chip" : "M2",
+      "darwinVersion" : "22.3.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2",
+          "device" : "Mac14,2"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,3"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,7"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,15"
+        }
+      ],
+      "devices" : [
+        "Mac14,2",
+        "Mac14,3",
+        "Mac14,7",
+        "Mac14,15"
+      ],
+      "file" : "kernelcache.release.mac14g",
+      "xnuVersion" : "8792.80.25.121.4"
+    },
+    {
+      "arch" : "ARM64_VMAPPLE",
+      "chip" : "Virtual Mac",
+      "darwinVersion" : "22.3.0",
+      "deviceChips" : [
+        {
+          "chip" : "Virtual Mac",
+          "device" : "VirtualMac2,1"
+        }
+      ],
+      "devices" : [
+        "VirtualMac2,1"
+      ],
+      "file" : "kernelcache.release.vma2",
+      "xnuVersion" : "8792.80.25.121.4"
+    }
+  ],
+  "osVersion" : "13.2",
+  "releaseDate" : "2023-01-10",
+  "releaseName" : "Ventura",
+  "scannerVersion" : "1.2.2"
+}

@@ -926,6 +926,17 @@
     "releaseName" : "Ventura"
   },
   {
+    "buildNumber" : "22F63",
+    "dataFile" : "releases/13/macOS-13.4-22F63.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "13.4",
+    "rcNumber" : 2,
+    "releaseDate" : "2023-05-11",
+    "releaseName" : "Ventura"
+  },
+  {
     "buildNumber" : "22F62",
     "dataFile" : "releases/13/macOS-13.4-22F62.json",
     "isBeta" : false,
@@ -933,6 +944,17 @@
     "isRC" : true,
     "osVersion" : "13.4",
     "releaseDate" : "2023-05-09",
+    "releaseName" : "Ventura"
+  },
+  {
+    "betaNumber" : 4,
+    "buildNumber" : "22F5059b",
+    "dataFile" : "releases/13/macOS-13.4-22F5059b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.4",
+    "releaseDate" : "2023-05-02",
     "releaseName" : "Ventura"
   },
   {
@@ -944,6 +966,17 @@
     "isRC" : false,
     "osVersion" : "13.4",
     "releaseDate" : "2023-04-25",
+    "releaseName" : "Ventura"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "22F5037d",
+    "dataFile" : "releases/13/macOS-13.4-22F5037d.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.4",
+    "releaseDate" : "2023-04-11",
     "releaseName" : "Ventura"
   },
   {
@@ -978,6 +1011,17 @@
     "releaseName" : "Ventura"
   },
   {
+    "betaNumber" : 4,
+    "buildNumber" : "22E5246b",
+    "dataFile" : "releases/13/macOS-13.3-22E5246b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.3",
+    "releaseDate" : "2023-03-15",
+    "releaseName" : "Ventura"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "22E5236f",
     "dataFile" : "releases/13/macOS-13.3-22E5236f.json",
@@ -986,6 +1030,17 @@
     "isRC" : false,
     "osVersion" : "13.3",
     "releaseDate" : "2023-03-07",
+    "releaseName" : "Ventura"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "22E5230e",
+    "dataFile" : "releases/13/macOS-13.3-22E5230e.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.3",
+    "releaseDate" : "2023-02-28",
     "releaseName" : "Ventura"
   },
   {
@@ -1020,6 +1075,17 @@
     "releaseName" : "Ventura"
   },
   {
+    "betaNumber" : 2,
+    "buildNumber" : "22D5038i",
+    "dataFile" : "releases/13/macOS-13.2-22D5038i.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.2",
+    "releaseDate" : "2023-01-10",
+    "releaseName" : "Ventura"
+  },
+  {
     "betaNumber" : 1,
     "buildNumber" : "22D5027d",
     "dataFile" : "releases/13/macOS-13.2-22D5027d.json",
@@ -1041,6 +1107,17 @@
     "releaseName" : "Ventura"
   },
   {
+    "betaNumber" : 4,
+    "buildNumber" : "22C5059b",
+    "dataFile" : "releases/13/macOS-13.1-22C5059b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.1",
+    "releaseDate" : "2022-12-01",
+    "releaseName" : "Ventura"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "22C5050e",
     "dataFile" : "releases/13/macOS-13.1-22C5050e.json",
@@ -1049,6 +1126,17 @@
     "isRC" : false,
     "osVersion" : "13.1",
     "releaseDate" : "2022-11-15",
+    "releaseName" : "Ventura"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "22C5044e",
+    "dataFile" : "releases/13/macOS-13.1-22C5044e.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.1",
+    "releaseDate" : "2022-11-08",
     "releaseName" : "Ventura"
   },
   {
@@ -1083,6 +1171,16 @@
     "releaseName" : "Ventura"
   },
   {
+    "buildNumber" : "22A379",
+    "dataFile" : "releases/13/macOS-13.0-22A379.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "13.0",
+    "releaseDate" : "2022-10-18",
+    "releaseName" : "Ventura"
+  },
+  {
     "betaNumber" : 11,
     "buildNumber" : "22A5373b",
     "dataFile" : "releases/13/macOS-13.0-22A5373b.json",
@@ -1094,6 +1192,17 @@
     "releaseName" : "Ventura"
   },
   {
+    "betaNumber" : 10,
+    "buildNumber" : "22A5365d",
+    "dataFile" : "releases/13/macOS-13.0-22A5365d.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "releaseDate" : "2022-10-04",
+    "releaseName" : "Ventura"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "22A5295i",
     "dataFile" : "releases/13/macOS-13.0-22A5295i.json",
@@ -1102,6 +1211,17 @@
     "isRC" : false,
     "osVersion" : "13.0",
     "releaseDate" : "2022-07-11",
+    "releaseName" : "Ventura"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "22A5295h",
+    "dataFile" : "releases/13/macOS-13.0-22A5295h.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "releaseDate" : "2022-07-06",
     "releaseName" : "Ventura"
   },
   {
@@ -1167,6 +1287,17 @@
     "releaseName" : "Monterey"
   },
   {
+    "betaNumber" : 4,
+    "buildNumber" : "21G5056b",
+    "dataFile" : "releases/12/macOS-12.5-21G5056b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "releaseDate" : "2022-06-24",
+    "releaseName" : "Monterey"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "21G5046c",
     "dataFile" : "releases/12/macOS-12.5-21G5046c.json",
@@ -1175,6 +1306,17 @@
     "isRC" : false,
     "osVersion" : "12.5",
     "releaseDate" : "2022-06-14",
+    "releaseName" : "Monterey"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "21G5037d",
+    "dataFile" : "releases/12/macOS-12.5-21G5037d.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "releaseDate" : "2022-05-31",
     "releaseName" : "Monterey"
   },
   {
@@ -1219,6 +1361,17 @@
     "releaseName" : "Monterey"
   },
   {
+    "betaNumber" : 4,
+    "buildNumber" : "21F5071b",
+    "dataFile" : "releases/12/macOS-12.4-21F5071b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "releaseDate" : "2022-05-03",
+    "releaseName" : "Monterey"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "21F5063e",
     "dataFile" : "releases/12/macOS-12.4-21F5063e.json",
@@ -1238,6 +1391,17 @@
     "isRC" : false,
     "osVersion" : "12.4",
     "releaseDate" : "2022-04-19",
+    "releaseName" : "Monterey"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "21F5048e",
+    "dataFile" : "releases/12/macOS-12.4-21F5048e.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "releaseDate" : "2022-04-05",
     "releaseName" : "Monterey"
   },
   {
