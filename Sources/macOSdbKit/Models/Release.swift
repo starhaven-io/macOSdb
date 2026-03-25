@@ -10,8 +10,6 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     public let releaseDate: String?
     public let ipswFile: String?
     public let ipswURL: String?
-    /// Kept in sync with the app's MARKETING_VERSION.
-    public let scannerVersion: String?
     public let isBeta: Bool
     public let betaNumber: Int?
     public let isRC: Bool
@@ -27,7 +25,6 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         releaseDate: String? = nil,
         ipswFile: String? = nil,
         ipswURL: String? = nil,
-        scannerVersion: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         isRC: Bool = false,
@@ -42,7 +39,6 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         self.releaseDate = releaseDate
         self.ipswFile = ipswFile
         self.ipswURL = ipswURL
-        self.scannerVersion = scannerVersion
         self.isBeta = isBeta
         self.betaNumber = betaNumber
         self.isRC = isRC
@@ -109,7 +105,6 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         releaseDate = try container.decodeIfPresent(String.self, forKey: .releaseDate)
         ipswFile = try container.decodeIfPresent(String.self, forKey: .ipswFile)
         ipswURL = try container.decodeIfPresent(String.self, forKey: .ipswURL)
-        scannerVersion = try container.decodeIfPresent(String.self, forKey: .scannerVersion)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false

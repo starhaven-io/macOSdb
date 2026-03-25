@@ -58,7 +58,7 @@ struct ScanCommand: AsyncParsableCommand {
             throw ExitCode.failure
         }
 
-        printStatus("macosdb scanner (v\(scannerVersion))")
+        printStatus("macosdb scanner")
         printStatus("IPSW: \(ipswURL.lastPathComponent)")
         printStatus("")
 
@@ -131,7 +131,8 @@ struct ScanCommand: AsyncParsableCommand {
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        let jsonData = try encoder.encode(release)
+        var jsonData = try encoder.encode(release)
+        jsonData.append(contentsOf: [0x0A]) // trailing newline
 
         let outputDir = output.map { URL(fileURLWithPath: $0) }
             ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -199,7 +200,8 @@ struct ScanCommand: AsyncParsableCommand {
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        let indexData = try encoder.encode(entries)
+        var indexData = try encoder.encode(entries)
+        indexData.append(contentsOf: [0x0A]) // trailing newline
         try indexData.write(to: indexPath)
 
         printStatus("Updated index: \(indexPath.path) (\(entries.count) releases)")
