@@ -4,12 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const dataDir = path.resolve('..', 'data');
-const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'releases.json'), 'utf-8'));
+const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8'));
 
 // Build a map of release key → components for embedding
 const releaseData: Record<string, any[]> = {};
 for (const release of releases) {
-  const filePath = path.join(dataDir, release.dataFile);
+  const filePath = path.join(dataDir, 'macos', release.dataFile);
   const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   const key = `${release.osVersion}-${release.buildNumber}`;
   releaseData[key] = data.components;

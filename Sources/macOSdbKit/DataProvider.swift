@@ -7,7 +7,7 @@ public actor DataProvider {
     private let baseURL: URL
     private let session: URLSession
 
-    private var cachedIndex: [ReleaseIndexEntry]?
+    private var cachedIndexes: [ProductType: [ReleaseIndexEntry]] = [:]
     private var cachedReleases: [String: Release] = [:]
 
     public init(baseURL: URL, session: URLSession = .shared) {
@@ -21,22 +21,25 @@ public actor DataProvider {
         self.session = .shared
     }
 
-    public func fetchReleaseIndex() async throws -> [ReleaseIndexEntry] {
-        if let cached = cachedIndex {
+    /// Fetches the release index for the given product type.
+    public func fetchReleaseIndex(for productType: ProductType = .macOS) async throws -> [ReleaseIndexEntry] {
+        if let cached = cachedIndexes[productType] {
             return cached
         }
 
-        let url = baseURL.appendingPathComponent("releases.json")
-        Self.logger.debug("Fetching release index from \(url)")
+        let indexPath = "\(productType.dataDirectory)/releases.json"
+
+        let url = baseURL.appendingPathComponent(indexPath)
+        Self.logger.debug("Fetching \(productType.displayName) release index from \(url)")
 
         let (data, response) = try await session.data(from: url)
         try validateResponse(response, url: url)
 
         let decoder = JSONDecoder()
         let index = try decoder.decode([ReleaseIndexEntry].self, from: data)
-        cachedIndex = index
+        cachedIndexes[productType] = index
 
-        Self.logger.info("Loaded \(index.count) releases from index")
+        Self.logger.info("Loaded \(index.count) \(productType.displayName) releases from index")
         return index
     }
 
@@ -45,7 +48,8 @@ public actor DataProvider {
             return cached
         }
 
-        let url = baseURL.appendingPathComponent(entry.dataFile)
+        let relativePath = "\(entry.resolvedProductType.dataDirectory)/\(entry.dataFile)"
+        let url = baseURL.appendingPathComponent(relativePath)
         Self.logger.debug("Fetching release data from \(url)")
 
         let (data, response) = try await session.data(from: url)
@@ -59,8 +63,8 @@ public actor DataProvider {
         return release
     }
 
-    public func fetchAllReleases() async throws -> [Release] {
-        let index = try await fetchReleaseIndex()
+    public func fetchAllReleases(for productType: ProductType = .macOS) async throws -> [Release] {
+        let index = try await fetchReleaseIndex(for: productType)
 
         return await withTaskGroup(of: Release?.self, returning: [Release].self) { group in
             for entry in index {
@@ -86,8 +90,8 @@ public actor DataProvider {
         }
     }
 
-    public func findRelease(osVersion: String) async throws -> Release? {
-        let index = try await fetchReleaseIndex()
+    public func findRelease(osVersion: String, productType: ProductType = .macOS) async throws -> Release? {
+        let index = try await fetchReleaseIndex(for: productType)
         guard let entry = index.first(where: { $0.osVersion == osVersion }) else {
             return nil
         }
@@ -95,7 +99,7 @@ public actor DataProvider {
     }
 
     public func clearCache() {
-        cachedIndex = nil
+        cachedIndexes.removeAll()
         cachedReleases.removeAll()
         URLCache.shared.removeAllCachedResponses()
     }

@@ -1,15 +1,20 @@
 import Foundation
 
-/// A macOS release with its extracted open source component versions.
+/// A release with its extracted open source component versions.
+///
+/// Supports macOS (IPSW firmware) and Xcode (.xip).
 public struct Release: Codable, Identifiable, Hashable, Sendable {
     public var id: String { buildNumber }
 
+    public let productType: ProductType?
     public let osVersion: String
     public let buildNumber: String
     public let releaseName: String
     public let releaseDate: String?
     public let ipswFile: String?
     public let ipswURL: String?
+    public let sourceFile: String?
+    public let sourceURL: String?
     public let isBeta: Bool
     public let betaNumber: Int?
     public let isRC: Bool
@@ -17,28 +22,36 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     public let isDeviceSpecific: Bool
     public let kernels: [KernelInfo]
     public let components: [Component]
+    public let sdks: [SDKInfo]?
 
     public init(
+        productType: ProductType? = .macOS,
         osVersion: String,
         buildNumber: String,
         releaseName: String,
         releaseDate: String? = nil,
         ipswFile: String? = nil,
         ipswURL: String? = nil,
+        sourceFile: String? = nil,
+        sourceURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
         isDeviceSpecific: Bool = false,
         kernels: [KernelInfo] = [],
-        components: [Component] = []
+        components: [Component] = [],
+        sdks: [SDKInfo]? = nil
     ) {
+        self.productType = productType
         self.osVersion = osVersion
         self.buildNumber = buildNumber
         self.releaseName = releaseName
         self.releaseDate = releaseDate
         self.ipswFile = ipswFile
         self.ipswURL = ipswURL
+        self.sourceFile = sourceFile
+        self.sourceURL = sourceURL
         self.isBeta = isBeta
         self.betaNumber = betaNumber
         self.isRC = isRC
@@ -46,6 +59,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         self.isDeviceSpecific = isDeviceSpecific
         self.kernels = kernels
         self.components = components
+        self.sdks = sdks
     }
 
     public var majorVersion: Int {
@@ -86,11 +100,23 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
             }
     }
 
+    /// The resolved product type, defaulting to `.macOS` for backward compatibility with existing JSON.
+    public var resolvedProductType: ProductType {
+        productType ?? .macOS
+    }
+
     public var displayName: String {
-        if let betaLabel {
-            return "macOS \(osVersion) \(releaseName) \(betaLabel)"
+        let prefix: String
+        switch resolvedProductType {
+        case .macOS:
+            prefix = "macOS \(osVersion) \(releaseName)"
+        case .xcode:
+            prefix = "Xcode \(osVersion)"
         }
-        return "macOS \(osVersion) \(releaseName)"
+        if let betaLabel {
+            return "\(prefix) \(betaLabel)"
+        }
+        return prefix
     }
 
     public func component(named name: String) -> Component? {
@@ -99,12 +125,15 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        productType = try container.decodeIfPresent(ProductType.self, forKey: .productType)
         osVersion = try container.decode(String.self, forKey: .osVersion)
         buildNumber = try container.decode(String.self, forKey: .buildNumber)
         releaseName = try container.decode(String.self, forKey: .releaseName)
         releaseDate = try container.decodeIfPresent(String.self, forKey: .releaseDate)
         ipswFile = try container.decodeIfPresent(String.self, forKey: .ipswFile)
         ipswURL = try container.decodeIfPresent(String.self, forKey: .ipswURL)
+        sourceFile = try container.decodeIfPresent(String.self, forKey: .sourceFile)
+        sourceURL = try container.decodeIfPresent(String.self, forKey: .sourceURL)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
@@ -112,6 +141,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
         kernels = try container.decodeIfPresent([KernelInfo].self, forKey: .kernels) ?? []
         components = try container.decodeIfPresent([Component].self, forKey: .components) ?? []
+        sdks = try container.decodeIfPresent([SDKInfo].self, forKey: .sdks)
     }
 }
 
@@ -144,6 +174,7 @@ extension Release {
 public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
     public var id: String { buildNumber }
 
+    public let productType: ProductType?
     public let osVersion: String
     public let buildNumber: String
     public let releaseName: String
@@ -155,7 +186,13 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
     public let isDeviceSpecific: Bool
     public let dataFile: String
 
+    /// The resolved product type, defaulting to `.macOS` for backward compatibility with existing JSON.
+    public var resolvedProductType: ProductType {
+        productType ?? .macOS
+    }
+
     public init(
+        productType: ProductType? = .macOS,
         osVersion: String,
         buildNumber: String,
         releaseName: String,
@@ -167,6 +204,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         isDeviceSpecific: Bool = false,
         dataFile: String
     ) {
+        self.productType = productType
         self.osVersion = osVersion
         self.buildNumber = buildNumber
         self.releaseName = releaseName
@@ -181,6 +219,7 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        productType = try container.decodeIfPresent(ProductType.self, forKey: .productType)
         osVersion = try container.decode(String.self, forKey: .osVersion)
         buildNumber = try container.decode(String.self, forKey: .buildNumber)
         releaseName = try container.decode(String.self, forKey: .releaseName)

@@ -1,0 +1,57 @@
+{
+  "buildNumber" : "17C529",
+  "components" : [
+    {
+      "name" : "Apple Clang",
+      "path" : "/usr/bin/clang",
+      "source" : "filesystem",
+      "version" : "17.0.0"
+    },
+    {
+      "name" : "Git",
+      "path" : "/usr/bin/git",
+      "source" : "filesystem",
+      "version" : "2.50.1"
+    },
+    {
+      "name" : "ld",
+      "path" : "/usr/bin/ld",
+      "source" : "filesystem",
+      "version" : "1230.1"
+    },
+    {
+      "name" : "lldb",
+      "path" : "/Contents/SharedFrameworks/LLDB.framework/LLDB",
+      "source" : "filesystem",
+      "version" : "1703.0.236.103"
+    },
+    {
+      "name" : "Python",
+      "path" : "/Library/Frameworks/Python3.framework/Versions/Current/lib/libpython3.9.dylib",
+      "source" : "filesystem",
+      "version" : "3.9.6"
+    },
+    {
+      "name" : "Swift",
+      "path" : "/usr/bin/swift-frontend",
+      "source" : "filesystem",
+      "version" : "6.2.4"
+    }
+  ],
+  "isBeta" : false,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+
+  ],
+  "osVersion" : "26.3",
+  "productType" : "Xcode",
+  "releaseDate" : "2026-02-26",
+  "releaseName" : "Xcode 26.3",
+  "sdks" : [
+    {
+      "sdkVersion" : "26.2"
+    }
+  ],
+  "sourceFile" : "Xcode_26.3_Apple_silicon.xip"
+}

@@ -14,8 +14,8 @@ import re
 import sys
 from pathlib import Path
 
-DATA = Path("data/releases")
-INDEX = Path("data/releases.json")
+DATA = Path("data/macos/releases")
+INDEX = Path("data/macos/releases.json")
 
 REQUIRED_FIELDS = [
     "buildNumber", "osVersion", "releaseDate", "releaseName",
@@ -91,7 +91,7 @@ def validate_releases(catalog):
 def validate_index(catalog):
     """Validate releases.json index against individual release files."""
     if not INDEX.exists():
-        error("data/releases.json not found")
+        error(f"{INDEX} not found")
         return
 
     try:
@@ -110,14 +110,14 @@ def validate_index(catalog):
             error(f"index/{b}: missing fields: {', '.join(missing)}")
 
         data_file = entry.get("dataFile", "")
-        if data_file and not (Path("data") / data_file).exists():
+        if data_file and not (DATA.parent / data_file).exists():
             error(f"index/{b}: dataFile '{data_file}' does not exist")
 
     catalog_builds = set(catalog.keys())
     index_build_set = set(index_builds.keys())
 
     for build in sorted(catalog_builds - index_build_set):
-        error(f"{build}: in data/releases/ but missing from releases.json")
+        error(f"{build}: in {DATA} but missing from releases.json")
     for build in sorted(index_build_set - catalog_builds):
         error(f"{build}: in releases.json but no matching JSON file")
 
@@ -132,7 +132,7 @@ def validate_index(catalog):
 
 def main():
     if not DATA.exists():
-        print("ERROR: data/releases/ not found. Run from repo root.", file=sys.stderr)
+        print(f"ERROR: {DATA} not found. Run from repo root.", file=sys.stderr)
         sys.exit(1)
 
     catalog = {}

@@ -30,6 +30,16 @@ private func stripPrefix(_ prefixes: [String]) -> @Sendable (String) -> String {
 
 private let identity: @Sendable (String) -> String = { $0 }
 
+/// Strips " (Apple Git-NNN)" or " (Apple Git-NNN.N)" suffix to extract the upstream Git version.
+private func stripAppleGitSuffix() -> @Sendable (String) -> String {
+    { raw in
+        if let range = raw.range(of: #" \(Apple Git-[0-9]+[0-9.]*\)"#, options: .regularExpression) {
+            return String(raw[raw.startIndex..<range.lowerBound])
+        }
+        return raw
+    }
+}
+
 // MARK: - Filesystem component definitions
 
 public let filesystemComponents: [ComponentDefinition] = [
@@ -211,5 +221,76 @@ public let dyldCacheComponents: [ComponentDefinition] = [
 
         normalize: identity,
         strategy: .integerDecode
+    )
+]
+
+// MARK: - Toolchain component definitions (Xcode)
+
+/// Components found in the Xcode toolchain.
+/// Paths are relative to the toolchain root (e.g. `XcodeDefault.xctoolchain/`).
+public let toolchainComponents: [ComponentDefinition] = [
+    ComponentDefinition(
+        name: "Apple Clang",
+        path: "usr/bin/clang",
+        source: .filesystem,
+        // All versions embed "LLVM X.Y.Z" (e.g. "LLVM 13.0.0", "LLVM 21.0.0")
+        pattern: #"LLVM [0-9]+\.[0-9]+\.[0-9]+"#,
+
+        normalize: stripPrefix(["LLVM "]),
+        strategy: .regex
+    ),
+    ComponentDefinition(
+        name: "Swift",
+        // swift is a driver; swift-frontend has the actual version string
+        path: "usr/bin/swift-frontend",
+        source: .filesystem,
+        // Embeds "Swift version X.Y[.Z]" (e.g. "Swift version 6.3", "Swift version 5.5.2")
+        pattern: #"Swift version [0-9]+\.[0-9]+(?:\.[0-9]+)?"#,
+
+        normalize: stripPrefix(["Swift version "]),
+        strategy: .regex
+    ),
+    ComponentDefinition(
+        name: "ld",
+        path: "usr/bin/ld",
+        source: .filesystem,
+        // Older: "PROJECT:ld64-711", newer: "PROJECT:ld-1230.1", transitional: "PROJECT:dyld-1022.1"
+        pattern: #"PROJECT:(?:dyld|ld64|ld)-[0-9]+[0-9.]*"#,
+
+        normalize: stripPrefix(["PROJECT:dyld-", "PROJECT:ld64-", "PROJECT:ld-"]),
+        strategy: .regex
+    )
+]
+
+/// Components found in the Xcode Developer directory.
+/// Paths are relative to the Developer root.
+public let developerComponents: [ComponentDefinition] = [
+    ComponentDefinition(
+        name: "Git",
+        path: "usr/bin/git",
+        source: .filesystem,
+        // Embeds "X.Y.Z (Apple Git-NNN)" or "X.Y.Z (Apple Git-NNN.N)" — extract upstream version
+        pattern: #"[0-9]+\.[0-9]+\.[0-9]+ \(Apple Git-[0-9]+[0-9.]*\)"#,
+
+        normalize: stripAppleGitSuffix(),
+        strategy: .regex
+    )
+]
+
+// MARK: - Framework component definitions (Xcode)
+
+/// Components found in frameworks bundled with Xcode.
+/// Paths are relative to Xcode.app.
+public let frameworkComponents: [ComponentDefinition] = [
+    ComponentDefinition(
+        name: "lldb",
+        // Xcode: Contents/SharedFrameworks/LLDB.framework/LLDB
+        path: "Contents/SharedFrameworks/LLDB.framework/LLDB",
+        source: .filesystem,
+        // Embeds "lldb-2100.0.16.4" style version strings
+        pattern: #"lldb-[0-9]+\.[0-9]+[0-9.]*"#,
+
+        normalize: stripPrefix(["lldb-"]),
+        strategy: .regex
     )
 ]

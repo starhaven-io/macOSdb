@@ -47,12 +47,16 @@ macOSdb/
 │   ├── astro.config.mjs
 │   └── package.json
 ├── Tests/
-│   └── macOSdbKitTests/                   # Swift Testing (6 test files, 94 tests)
+│   └── macOSdbKitTests/                   # Swift Testing (8 test files, 131 tests)
 │       └── Fixtures/                      # Test data (sample release JSON)
 ├── data/                                  # Pre-built JSON (committed, CC-BY-4.0)
 │   ├── LICENSE                            # CC-BY-4.0 license for data
-│   ├── releases.json                      # Index file (sorted newest first)
-│   └── releases/{major}/                  # Per-release JSON (macOS-{version}-{build}.json)
+│   ├── macos/                             # macOS release data
+│   │   ├── releases.json                  # Index file (sorted newest first)
+│   │   └── releases/{major}/              # Per-release JSON (macOS-{version}-{build}.json)
+│   └── xcode/                             # Xcode release data
+│       ├── releases.json
+│       └── releases/{major}/              # Per-release JSON (Xcode-{version}-{build}.json)
 ├── scripts/
 │   ├── format-release-notes.py            # Formats GitHub auto-generated notes by Conventional Commits type
 │   └── lint-json.py                       # JSON schema validation for data files (used by just lint-json)
@@ -131,8 +135,10 @@ Astro static site that presents release data on the web. Reads JSON from `data/`
 
 ### Data format
 
-- `data/releases.json` — index listing all releases with metadata, sorted newest first
-- `data/releases/{major}/macOS-{version}-{build}.json` — per-release data with kernels and components arrays
+- `data/{product}/releases.json` — index listing all releases with metadata, sorted newest first
+- `data/{product}/releases/{major}/{Prefix}-{version}-{build}.json` — per-release data
+
+Product directories: `macos`, `xcode`. File prefixes: `macOS`, `Xcode`.
 
 macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia, 26=Tahoe
 

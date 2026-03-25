@@ -5,10 +5,10 @@ import macOSdbKit
 struct ScanCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "scan",
-        abstract: "Scan an IPSW firmware file and extract component versions."
+        abstract: "Scan an IPSW or Xcode .xip and extract component versions."
     )
 
-    @Argument(help: "Path to the .ipsw file to scan.")
+    @Argument(help: "Path to the archive file (.ipsw, .dmg, or .xip) to scan.")
     var ipswPath: String
 
     @Option(name: .shortAndLong, help: "Output directory for the JSON file (default: current directory).")
@@ -51,17 +51,32 @@ struct ScanCommand: AsyncParsableCommand {
     }
 
     func run() async throws {
-        let ipswURL = URL(fileURLWithPath: ipswPath)
+        let archiveURL = URL(fileURLWithPath: ipswPath)
 
-        guard FileManager.default.fileExists(atPath: ipswURL.path) else {
-            printError("IPSW file not found: \(ipswPath)")
+        guard FileManager.default.fileExists(atPath: archiveURL.path) else {
+            printError("Archive not found: \(ipswPath)")
             throw ExitCode.failure
         }
 
         printStatus("macosdb scanner")
-        printStatus("IPSW: \(ipswURL.lastPathComponent)")
+        printStatus("Archive: \(archiveURL.lastPathComponent)")
         printStatus("")
 
+        let release: Release
+
+        switch archiveURL.pathExtension.lowercased() {
+        case "xip":
+            release = try await scanXcode(archiveURL: archiveURL)
+        default:
+            release = try await scanIPSW(archiveURL: archiveURL)
+        }
+
+        try writeOutput(release: release)
+    }
+
+    // MARK: - IPSW scan pipeline
+
+    private func scanIPSW(archiveURL: URL) async throws -> Release {
         let scanner = IPSWScanner()
         await configureProgress(scanner)
         if verbose {
@@ -70,43 +85,9 @@ struct ScanCommand: AsyncParsableCommand {
             }
         }
 
-        let release = try await performScan(scanner: scanner, ipswURL: ipswURL)
-        try writeOutput(release: release)
-    }
-
-    // MARK: - Scan pipeline
-
-    private func configureProgress(_ scanner: IPSWScanner) async {
-        await scanner.setProgress { progress in
-            switch progress {
-            case .extractingIPSW:
-                printStatus("Extracting IPSW archive...")
-            case .parsingKernels(let count):
-                printStatus("Parsing \(count) kernelcache files...")
-            case .decryptingAEA:
-                printStatus("Decrypting AEA (fetching key from Apple)...")
-            case .mountingDMG:
-                printStatus("Mounting system DMG...")
-            case .mountingCryptex:
-                printStatus("Mounting cryptex DMG...")
-            case .scanningFilesystem(let name, let current, let total):
-                printStatus("  [\(current)/\(total)] \(name)")
-            case .scanningDyldCache(let name, let current, let total):
-                printStatus("  [\(current)/\(total)] \(name) (dyld cache)")
-            case .unmountingDMG:
-                printStatus("Unmounting DMG...")
-            case .assemblingResults:
-                printStatus("Assembling results...")
-            case .complete:
-                break
-            }
-        }
-    }
-
-    private func performScan(scanner: IPSWScanner, ipswURL: URL) async throws -> Release {
         do {
             return try await scanner.scan(
-                ipswPath: ipswURL,
+                ipswPath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
                 ipswURL: ipswDownloadURL,
@@ -122,12 +103,92 @@ struct ScanCommand: AsyncParsableCommand {
         }
     }
 
+    // MARK: - Xcode scan pipeline
+
+    private func scanXcode(archiveURL: URL) async throws -> Release {
+        let scanner = XcodeScanner()
+        await configureProgress(scanner)
+        if verbose {
+            await scanner.setVerbose { message in
+                self.printStatus("[verbose] \(message)")
+            }
+        }
+
+        do {
+            return try await scanner.scan(
+                xipPath: archiveURL,
+                releaseName: releaseName,
+                releaseDate: releaseDate,
+                sourceURL: ipswDownloadURL,
+                isBeta: beta || betaNumber != nil,
+                betaNumber: betaNumber,
+                isRC: rc || rcNumber != nil,
+                rcNumber: rcNumber
+            )
+        } catch {
+            printError("Xcode scan failed: \(error.localizedDescription)")
+            throw ExitCode.failure
+        }
+    }
+
+    // MARK: - Progress configuration
+
+    private func configureProgress(_ scanner: IPSWScanner) async {
+        await scanner.setProgress { progress in
+            self.printProgress(progress)
+        }
+    }
+
+    private func configureProgress(_ scanner: XcodeScanner) async {
+        await scanner.setProgress { progress in
+            self.printProgress(progress)
+        }
+    }
+
+    private func printProgress(_ progress: ScanProgress) {
+        switch progress {
+        case .extractingIPSW:
+            printStatus("Extracting IPSW archive...")
+        case .parsingKernels(let count):
+            printStatus("Parsing \(count) kernelcache files...")
+        case .decryptingAEA:
+            printStatus("Decrypting AEA (fetching key from Apple)...")
+        case .mountingDMG:
+            printStatus("Mounting DMG...")
+        case .mountingCryptex:
+            printStatus("Mounting cryptex DMG...")
+        case .scanningFilesystem(let name, let current, let total):
+            printStatus("  [\(current)/\(total)] \(name)")
+        case .scanningDyldCache(let name, let current, let total):
+            printStatus("  [\(current)/\(total)] \(name) (dyld cache)")
+        case .unmountingDMG:
+            printStatus("Unmounting DMG...")
+        case .assemblingResults:
+            printStatus("Assembling results...")
+        case .complete:
+            break
+        case .extractingXIP:
+            printStatus("Extracting XIP archive...")
+        case .scanningToolchain(let name, let current, let total):
+            printStatus("  [\(current)/\(total)] \(name) (toolchain)")
+        case .parsingSDKMetadata:
+            printStatus("Parsing SDK metadata...")
+        }
+    }
+
     private func writeOutput(release: Release) throws {
+        let productType = release.resolvedProductType
+
         printStatus("")
         printStatus("=== Results ===")
         printStatus("Release: \(release.displayName) (\(release.buildNumber))")
-        printStatus("Kernels: \(release.kernels.count)")
+        if !release.kernels.isEmpty {
+            printStatus("Kernels: \(release.kernels.count)")
+        }
         printStatus("Components: \(release.components.count)")
+        if let sdks = release.sdks {
+            printStatus("SDKs: \(sdks.map(\.sdkVersion).joined(separator: ", "))")
+        }
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
@@ -136,7 +197,7 @@ struct ScanCommand: AsyncParsableCommand {
 
         let outputDir = output.map { URL(fileURLWithPath: $0) }
             ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let filename = "macOS-\(release.osVersion)-\(release.buildNumber).json"
+        let filename = "\(productType.filePrefix)-\(release.osVersion)-\(release.buildNumber).json"
         let majorVersion = release.osVersion.split(separator: ".").first.map(String.init) ?? release.osVersion
         let versionDir = outputDir.appendingPathComponent(majorVersion)
         try FileManager.default.createDirectory(at: versionDir, withIntermediateDirectories: true)
@@ -154,10 +215,11 @@ struct ScanCommand: AsyncParsableCommand {
     // MARK: - Index management
 
     private func updateReleasesIndex(release: Release, outputDir: URL) throws {
+        let productType = release.resolvedProductType
         // Index lives alongside the output directory (e.g. data/releases.json for data/releases/)
         // because dataFile paths include the output directory name (e.g. "releases/15/...")
         let indexPath = outputDir.deletingLastPathComponent().appendingPathComponent("releases.json")
-        let filename = "macOS-\(release.osVersion)-\(release.buildNumber).json"
+        let filename = "\(productType.filePrefix)-\(release.osVersion)-\(release.buildNumber).json"
         let majorVersion = release.osVersion.split(separator: ".").first.map(String.init) ?? release.osVersion
 
         var entries: [ReleaseIndexEntry] = []
@@ -170,6 +232,7 @@ struct ScanCommand: AsyncParsableCommand {
         entries.removeAll { $0.buildNumber == release.buildNumber }
 
         let entry = ReleaseIndexEntry(
+            productType: productType,
             osVersion: release.osVersion,
             buildNumber: release.buildNumber,
             releaseName: release.releaseName,
@@ -217,6 +280,16 @@ struct ScanCommand: AsyncParsableCommand {
 }
 
 extension IPSWScanner {
+    func setProgress(_ callback: @escaping @Sendable (ScanProgress) -> Void) {
+        self.onProgress = callback
+    }
+
+    func setVerbose(_ callback: @escaping @Sendable (String) -> Void) {
+        self.onVerbose = callback
+    }
+}
+
+extension XcodeScanner {
     func setProgress(_ callback: @escaping @Sendable (ScanProgress) -> Void) {
         self.onProgress = callback
     }

@@ -1,0 +1,57 @@
+{
+  "buildNumber" : "16C5032a",
+  "components" : [
+    {
+      "name" : "Apple Clang",
+      "path" : "/usr/bin/clang",
+      "source" : "filesystem",
+      "version" : "16.0.0"
+    },
+    {
+      "name" : "Git",
+      "path" : "/usr/bin/git",
+      "source" : "filesystem",
+      "version" : "2.39.5"
+    },
+    {
+      "name" : "ld",
+      "path" : "/usr/bin/ld",
+      "source" : "filesystem",
+      "version" : "1115.7.3"
+    },
+    {
+      "name" : "lldb",
+      "path" : "/Contents/SharedFrameworks/LLDB.framework/LLDB",
+      "source" : "filesystem",
+      "version" : "1600.0.39.109"
+    },
+    {
+      "name" : "Python",
+      "path" : "/Library/Frameworks/Python3.framework/Versions/Current/lib/libpython3.9.dylib",
+      "source" : "filesystem",
+      "version" : "3.9.6"
+    },
+    {
+      "name" : "Swift",
+      "path" : "/usr/bin/swift-frontend",
+      "source" : "filesystem",
+      "version" : "6.0.3"
+    }
+  ],
+  "isBeta" : false,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+
+  ],
+  "osVersion" : "16.2",
+  "productType" : "Xcode",
+  "releaseDate" : "2024-12-11",
+  "releaseName" : "Xcode 16.2",
+  "sdks" : [
+    {
+      "sdkVersion" : "15.2"
+    }
+  ],
+  "sourceFile" : "Xcode_16.2.xip"
+}

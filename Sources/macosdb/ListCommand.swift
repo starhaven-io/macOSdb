@@ -5,18 +5,22 @@ import macOSdbKit
 struct ListCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "list",
-        abstract: "List known macOS releases."
+        abstract: "List known releases."
     )
 
-    @Option(name: .long, help: "Filter by major macOS version (e.g. 15).")
+    @Option(name: .long, help: "Product type: macOS or Xcode (default: macOS).")
+    var product: String?
+
+    @Option(name: .long, help: "Filter by major version (e.g. 15).")
     var major: Int?
 
     @Option(name: .long, help: "Base URL for release data (default: GitHub).")
     var dataURL: String?
 
     func run() async throws {
+        let productType = parseProductType(product)
         let provider = makeDataProvider(dataURL: dataURL)
-        let index = try await provider.fetchReleaseIndex()
+        let index = try await provider.fetchReleaseIndex(for: productType)
 
         var entries = index.sorted { lhs, rhs in
             let lhsParts = lhs.osVersion.split(separator: ".").compactMap { Int($0) }
