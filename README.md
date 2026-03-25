@@ -88,7 +88,7 @@ macOSdbApp/             SwiftUI app (NavigationSplitView, MVVM with @Observable)
   Bootstrap/            Entry point with CLI symlink dispatch
   Resources/            Asset catalog (app icon)
 site/                   Astro static site (browse data on the web)
-Tests/                  Swift Testing (93 tests)
+Tests/                  Swift Testing (94 tests)
 data/                   Pre-built release JSON (CC-BY-4.0)
 ```
 
@@ -122,6 +122,10 @@ just site-install   # Install npm dependencies
 just site-dev       # Start dev server
 just site-build     # Production build
 ```
+
+## Contributing
+
+Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format and include a DCO sign-off (`git commit -s`).
 
 ## Acknowledgements
 
