@@ -100,8 +100,11 @@ A [justfile](https://github.com/casey/just) provides common tasks:
 just build          # Build the Swift package
 just test           # Run Swift tests
 just lint           # Run SwiftLint (--strict)
+just lint-json      # Validate JSON data files
+just audit          # Audit GitHub Actions workflows
 just build-app      # Build the app with xcodebuild
-just check          # Run all checks (lint, test, site build)
+just test-xcode     # Run tests with xcodebuild (matches CI)
+just check          # Run all checks (lint, lint-json, test, audit, site format check, site build)
 ```
 
 Or run commands directly:
@@ -118,9 +121,12 @@ swiftlint
 The `site/` directory contains an [Astro](https://astro.build) static site:
 
 ```bash
-just site-install   # Install npm dependencies
-just site-dev       # Start dev server
-just site-build     # Production build
+just site-install       # Install npm dependencies
+just site-dev           # Start dev server
+just site-build         # Production build
+just site-preview       # Preview the built site
+just site-format        # Format site files with Prettier
+just site-format-check  # Check site formatting
 ```
 
 ## Contributing

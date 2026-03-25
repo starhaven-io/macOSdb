@@ -19,7 +19,7 @@ macOSdb/
 ├── macOSdb.xcodeproj/                     # Xcode project (builds app target with bundled CLI)
 ├── Package.swift                          # SPM: macOSdbKit lib + standalone macosdb CLI
 ├── Sources/
-│   ├── macOSdbKit/                        # Shared library (21 files)
+│   ├── macOSdbKit/                        # Shared library (19 files)
 │   │   ├── Models/                        # Release, Component, KernelInfo, ChipFamily, DeviceRegistry, VersionComparison
 │   │   ├── Scanner/                       # IPSW scanning pipeline (11 files)
 │   │   ├── DataProvider.swift             # Fetch JSON from HTTPS (GitHub raw) or local files
@@ -53,10 +53,11 @@ macOSdb/
 │   ├── LICENSE                            # CC-BY-4.0 license for data
 │   ├── releases.json                      # Index file (sorted newest first)
 │   └── releases/{major}/                  # Per-release JSON (macOS-{version}-{build}.json)
-├── justfile                               # Task runner (just clean/build/test/lint/site-dev/check)
+├── justfile                               # Task runner (just clean/build/test/lint/check and more)
 ├── .github/
 │   ├── workflows/                         # CI: build, check, conventional-commits, codeql, zizmor, scan-ipsw, deploy-site, release
 │   ├── format-release-notes.py            # Formats GitHub auto-generated notes by Conventional Commits type
+│   ├── appcast-template.xml               # Sparkle appcast template for auto-updates
 │   ├── dependabot.yml                     # Dependabot for GitHub Actions
 │   └── FUNDING.yml                        # GitHub Sponsors
 ├── LICENSE                                # GPL-3.0-only
@@ -135,7 +136,7 @@ macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia,
 
 ## Code style and conventions
 
-- SwiftLint with 60+ opt-in rules (see `.swiftlint.yml`)
+- SwiftLint with 60 opt-in rules (see `.swiftlint.yml`)
 - Line length: warning at 150, error at 200
 - Function body length: warning at 60, error at 100
 - Swift 6 approachable concurrency: `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, `SWIFT_APPROACHABLE_CONCURRENCY = YES`
@@ -155,7 +156,7 @@ macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia,
 ## CI workflows (.github/workflows/)
 
 - **build.yml** — Test on PR with Thread Sanitizer and Address Sanitizer (parallel jobs, xcodebuild)
-- **check.yml** — Unified PR checks: runs `just check` (lint, test, site build)
+- **check.yml** — Unified PR checks: runs `just check` (lint, lint-json, test, audit, site format check, site build)
 - **conventional-commits.yml** — Validate PR titles and commit messages match Conventional Commits format
 - **codeql.yml** — CodeQL security analysis for Swift
 - **zizmor.yml** — GitHub Actions security audit (SARIF output, uploaded to Security tab)
