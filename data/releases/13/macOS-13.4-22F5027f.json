@@ -1,12 +1,12 @@
 {
-  "betaNumber" : 2,
-  "buildNumber" : "22D5038i",
+  "betaNumber" : 1,
+  "buildNumber" : "22F5027f",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.86.0"
+      "version" : "7.87.0"
     },
     {
       "name" : "httpd",
@@ -24,13 +24,13 @@
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.86.0"
+      "version" : "7.87.0"
     },
     {
       "name" : "libexpat",
       "path" : "/usr/lib/libexpat.1.dylib",
       "source" : "dyldCache",
-      "version" : "2.4.8"
+      "version" : "2.5.0"
     },
     {
       "name" : "libncurses",
@@ -102,11 +102,11 @@
       "name" : "zsh",
       "path" : "/bin/zsh",
       "source" : "filesystem",
-      "version" : "5.8"
+      "version" : "5.9"
     }
   ],
-  "ipswFile" : "UniversalMac_13.2_22D5038i_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2023WinterSeed/fullrestores/032-33181/62ECE236-5806-4136-AD08-EDC026FD80A5/UniversalMac_13.2_22D5038i_Restore.ipsw",
+  "ipswFile" : "UniversalMac_13.4_22F5027f_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023SpringSeed/fullrestores/032-69187/B11709E0-1CF5-4460-A069-D12E1243E2AD/UniversalMac_13.4_22F5027f_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
@@ -114,7 +114,7 @@
     {
       "arch" : "ARM64_T8103",
       "chip" : "M1",
-      "darwinVersion" : "22.3.0",
+      "darwinVersion" : "22.5.0",
       "deviceChips" : [
         {
           "chip" : "M1",
@@ -145,12 +145,12 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8792.80.25.121.4"
+      "xnuVersion" : "8796.120.16"
     },
     {
       "arch" : "ARM64_T6000",
       "chip" : "M1 Pro",
-      "darwinVersion" : "22.3.0",
+      "darwinVersion" : "22.5.0",
       "deviceChips" : [
         {
           "chip" : "M1 Max",
@@ -186,12 +186,12 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8792.80.25.121.4"
+      "xnuVersion" : "8796.120.16"
     },
     {
       "arch" : "ARM64_T8112",
       "chip" : "M2",
-      "darwinVersion" : "22.3.0",
+      "darwinVersion" : "22.5.0",
       "deviceChips" : [
         {
           "chip" : "M2",
@@ -217,12 +217,63 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8792.80.25.121.4"
+      "xnuVersion" : "8796.120.16"
+    },
+    {
+      "arch" : "ARM64_T6020",
+      "chip" : "M2 Pro",
+      "darwinVersion" : "22.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,5"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,6"
+        },
+        {
+          "chip" : "M2 Ultra",
+          "device" : "Mac14,8"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,9"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,10"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,12"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,13"
+        },
+        {
+          "chip" : "M2 Ultra",
+          "device" : "Mac14,14"
+        }
+      ],
+      "devices" : [
+        "Mac14,5",
+        "Mac14,6",
+        "Mac14,8",
+        "Mac14,9",
+        "Mac14,10",
+        "Mac14,12",
+        "Mac14,13",
+        "Mac14,14"
+      ],
+      "file" : "kernelcache.release.mac14j",
+      "xnuVersion" : "8796.120.16"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "22.3.0",
+      "darwinVersion" : "22.5.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -233,11 +284,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8792.80.25.121.4"
+      "xnuVersion" : "8796.120.16"
     }
   ],
-  "osVersion" : "13.2",
-  "releaseDate" : "2023-01-10",
+  "osVersion" : "13.4",
+  "releaseDate" : "2023-03-28",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
