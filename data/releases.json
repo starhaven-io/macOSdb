@@ -985,6 +985,17 @@
     "releaseName" : "Ventura"
   },
   {
+    "betaNumber" : 2,
+    "buildNumber" : "22A5286j",
+    "dataFile" : "releases/13/macOS-13.0-22A5286j.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "releaseDate" : "2022-06-22",
+    "releaseName" : "Ventura"
+  },
+  {
     "buildNumber" : "21G217",
     "dataFile" : "releases/12/macOS-12.6.1-21G217.json",
     "isBeta" : false,
