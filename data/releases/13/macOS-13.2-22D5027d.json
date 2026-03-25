@@ -1,11 +1,12 @@
 {
-  "buildNumber" : "22A379",
+  "betaNumber" : 1,
+  "buildNumber" : "22D5027d",
   "components" : [
     {
       "name" : "curl",
       "path" : "/usr/bin/curl",
       "source" : "filesystem",
-      "version" : "7.84.0"
+      "version" : "7.86.0"
     },
     {
       "name" : "httpd",
@@ -23,7 +24,7 @@
       "name" : "libcurl",
       "path" : "/usr/lib/libcurl.4.dylib",
       "source" : "dyldCache",
-      "version" : "7.84.0"
+      "version" : "7.86.0"
     },
     {
       "name" : "libexpat",
@@ -53,7 +54,7 @@
       "name" : "libsqlite3",
       "path" : "/usr/lib/libsqlite3.dylib",
       "source" : "dyldCache",
-      "version" : "3.39.4"
+      "version" : "3.39.5"
     },
     {
       "name" : "libssl (LibreSSL)",
@@ -83,7 +84,7 @@
       "name" : "SQLite",
       "path" : "/usr/bin/sqlite3",
       "source" : "filesystem",
-      "version" : "3.39.4"
+      "version" : "3.39.5"
     },
     {
       "name" : "vim",
@@ -104,16 +105,16 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "UniversalMac_13.0_22A379_Restore.ipsw",
-  "ipswURL" : "https://updates.cdn-apple.com/2022FallFCS/fullrestores/071-08994/1118ADF4-1CC9-4554-9333-B1F64CF0C820/UniversalMac_13.0_22A379_Restore.ipsw",
-  "isBeta" : false,
+  "ipswFile" : "UniversalMac_13.2_22D5027d_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2023WinterSeed/fullrestores/032-12640/6B472BA3-E678-4251-92D1-7AA23B66F53E/UniversalMac_13.2_22D5027d_Restore.ipsw",
+  "isBeta" : true,
   "isDeviceSpecific" : false,
-  "isRC" : true,
+  "isRC" : false,
   "kernels" : [
     {
       "arch" : "ARM64_T8103",
       "chip" : "M1",
-      "darwinVersion" : "22.1.0",
+      "darwinVersion" : "22.3.0",
       "deviceChips" : [
         {
           "chip" : "M1",
@@ -144,12 +145,12 @@
         "iMac21,2"
       ],
       "file" : "kernelcache.release.mac13g",
-      "xnuVersion" : "8792.41.9"
+      "xnuVersion" : "8792.80.21.0.2"
     },
     {
       "arch" : "ARM64_T6000",
       "chip" : "M1 Pro",
-      "darwinVersion" : "22.1.0",
+      "darwinVersion" : "22.3.0",
       "deviceChips" : [
         {
           "chip" : "M1 Max",
@@ -185,12 +186,12 @@
         "MacBookPro18,4"
       ],
       "file" : "kernelcache.release.mac13j",
-      "xnuVersion" : "8792.41.9"
+      "xnuVersion" : "8792.80.21.0.2"
     },
     {
       "arch" : "ARM64_T8112",
       "chip" : "M2",
-      "darwinVersion" : "22.1.0",
+      "darwinVersion" : "22.3.0",
       "deviceChips" : [
         {
           "chip" : "M2",
@@ -216,12 +217,12 @@
         "Mac14,15"
       ],
       "file" : "kernelcache.release.mac14g",
-      "xnuVersion" : "8792.41.9"
+      "xnuVersion" : "8792.80.21.0.2"
     },
     {
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
-      "darwinVersion" : "22.1.0",
+      "darwinVersion" : "22.3.0",
       "deviceChips" : [
         {
           "chip" : "Virtual Mac",
@@ -232,11 +233,11 @@
         "VirtualMac2,1"
       ],
       "file" : "kernelcache.release.vma2",
-      "xnuVersion" : "8792.41.9"
+      "xnuVersion" : "8792.80.21.0.2"
     }
   ],
-  "osVersion" : "13.0",
-  "releaseDate" : "2022-10-18",
+  "osVersion" : "13.2",
+  "releaseDate" : "2022-12-14",
   "releaseName" : "Ventura",
   "scannerVersion" : "1.2.2"
 }
