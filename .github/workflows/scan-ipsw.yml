@@ -83,11 +83,11 @@ jobs:
           if [[ -f "${IPSW_FILE}" ]]; then
             echo "IPSW already cached at ${IPSW_FILE}, skipping download"
           else
-            TOTAL=$(curl -sSLI "${IPSW_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
+            TOTAL=$(curl -sSLI --retry 5 --retry-connrefused "${IPSW_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
             TOTAL_MB=$(( TOTAL / 1048576 ))
             TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
             echo "Downloading IPSW ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
-            curl -sSL -o "${IPSW_FILE}.part" "${IPSW_URL}" &
+            curl -sSL --retry 10 --retry-delay 10 --retry-connrefused -C - -o "${IPSW_FILE}.part" "${IPSW_URL}" &
             CURL_PID=$!
             while kill -0 "${CURL_PID}" 2>/dev/null; do
               if [[ -f "${IPSW_FILE}.part" ]]; then
@@ -186,6 +186,9 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${REPOSITORY}.git"
+          # Fetch latest main so this commit sits on top of any previously merged scan PRs
+          git fetch origin main
+          git reset --soft origin/main
           git checkout -b "${SCAN_BRANCH}"
           git add data/
           git commit -m "feat(data): add ${SCAN_BASENAME}"
