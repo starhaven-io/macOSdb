@@ -165,6 +165,8 @@ jobs:
         env:
           SSH_SIGNING_KEY: ${{ secrets.SSH_SIGNING_KEY }}
         run: |
+          git config user.name "fuyunohoshi"
+          git config user.email "165941061+fuyunohoshi@users.noreply.github.com"
           eval $(ssh-agent)
           echo "SSH_AUTH_SOCK=${SSH_AUTH_SOCK}" >> "${GITHUB_ENV}"
           echo "SSH_AGENT_PID=${SSH_AGENT_PID}" >> "${GITHUB_ENV}"
@@ -183,8 +185,6 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          git config user.name "fuyunohoshi"
-          git config user.email "165941061+fuyunohoshi@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${REPOSITORY}.git"
           git checkout -b "${SCAN_BRANCH}"
           git add data/
