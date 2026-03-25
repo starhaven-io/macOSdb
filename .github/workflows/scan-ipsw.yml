@@ -195,17 +195,17 @@ jobs:
         run: |
           git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${REPOSITORY}.git"
           SCAN_FILES=$(git ls-files --others --modified --exclude-standard 'data/')
-          TMPDIR=$(mktemp -d)
+          STASH_DIR=$(mktemp -d)
           echo "${SCAN_FILES}" | while read -r f; do
-            mkdir -p "${TMPDIR}/$(dirname "${f}")"
-            cp "${f}" "${TMPDIR}/${f}"
+            mkdir -p "${STASH_DIR}/$(dirname "${f}")"
+            cp "${f}" "${STASH_DIR}/${f}"
           done
           git fetch origin main
           git checkout -B "${SCAN_BRANCH}" origin/main
           echo "${SCAN_FILES}" | while read -r f; do
-            cp "${TMPDIR}/${f}" "${f}"
+            cp "${STASH_DIR}/${f}" "${f}"
           done
-          rm -rf "${TMPDIR}"
+          rm -rf "${STASH_DIR}"
           git add data/
           git commit -m "feat(data): add ${SCAN_BASENAME}"
           git push -u origin "${SCAN_BRANCH}"
