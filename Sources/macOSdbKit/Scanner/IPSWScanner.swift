@@ -64,7 +64,7 @@ public actor IPSWScanner {
                 forMajorVersion: Int(extraction.osVersion.split(separator: ".").first ?? "") ?? 0
             )
 
-            let resolvedBeta = isBeta ?? BuildNumber.isBeta(extraction.buildNumber)
+            let resolvedBeta = isRC ? false : (isBeta ?? BuildNumber.isBeta(extraction.buildNumber))
 
             release = Release(
                 osVersion: extraction.osVersion,
