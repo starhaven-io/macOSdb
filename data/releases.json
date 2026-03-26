@@ -2316,6 +2316,17 @@
     "releaseName" : "Big Sur"
   },
   {
+    "betaNumber" : 1,
+    "buildNumber" : "20C5048k",
+    "dataFile" : "releases/11/macOS-11.1-20C5048k.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "11.1",
+    "releaseDate" : "2020-11-17",
+    "releaseName" : "Big Sur"
+  },
+  {
     "buildNumber" : "20B29",
     "dataFile" : "releases/11/macOS-11.0.1-20B29.json",
     "isBeta" : false,
@@ -2323,6 +2334,16 @@
     "isRC" : false,
     "osVersion" : "11.0.1",
     "releaseDate" : "2020-11-18",
+    "releaseName" : "Big Sur"
+  },
+  {
+    "buildNumber" : "20B5022a",
+    "dataFile" : "releases/11/macOS-11.0.1-20B5022a.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "11.0.1",
+    "releaseDate" : "2020-11-05",
     "releaseName" : "Big Sur"
   },
   {
@@ -2334,16 +2355,6 @@
     "osVersion" : "11.0.1",
     "rcNumber" : 2,
     "releaseDate" : "2020-11-10",
-    "releaseName" : "Big Sur"
-  },
-  {
-    "buildNumber" : "20B5022a",
-    "dataFile" : "releases/11/macOS-11.0.1-20B5022a.json",
-    "isBeta" : false,
-    "isDeviceSpecific" : false,
-    "isRC" : true,
-    "osVersion" : "11.0.1",
-    "releaseDate" : "2020-11-05",
     "releaseName" : "Big Sur"
   },
   {
