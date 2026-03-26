@@ -100,7 +100,7 @@ jobs:
           VERSION=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_([0-9.]+)_.*/\1/')
           BUILD=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_[0-9.]+_([^_]+)_.*/\1/')
           MAJOR=${VERSION%%.*}
-          IPSW_DIR="/Volumes/macOS Archive/macOS/${MAJOR}"
+          IPSW_DIR="/Volumes/macOS-Archive/macOS/${MAJOR}"
           mkdir -p "${IPSW_DIR}"
           IPSW_FILE="${IPSW_DIR}/macOS-${VERSION}-${BUILD}.ipsw"
           echo "IPSW_FILE=${IPSW_FILE}" >> "${GITHUB_ENV}"
