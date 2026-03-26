@@ -581,6 +581,17 @@
     "releaseName" : "Sequoia"
   },
   {
+    "betaNumber" : 3,
+    "buildNumber" : "24C5079e",
+    "dataFile" : "releases/15/macOS-15.2-24C5079e.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.2",
+    "releaseDate" : "2024-11-11",
+    "releaseName" : "Sequoia"
+  },
+  {
     "betaNumber" : 2,
     "buildNumber" : "24C5073e",
     "dataFile" : "releases/15/macOS-15.2-24C5073e.json",
