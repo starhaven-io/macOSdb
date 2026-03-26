@@ -755,6 +755,17 @@
     "releaseName" : "Sonoma"
   },
   {
+    "betaNumber" : 1,
+    "buildNumber" : "23D5033f",
+    "dataFile" : "releases/14/macOS-14.3-23D5033f.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "14.3",
+    "releaseDate" : "2023-12-12",
+    "releaseName" : "Sonoma"
+  },
+  {
     "buildNumber" : "23C71",
     "dataFile" : "releases/14/macOS-14.2.1-23C71.json",
     "isBeta" : false,
