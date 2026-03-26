@@ -663,6 +663,17 @@
     "releaseName" : "Sequoia"
   },
   {
+    "betaNumber" : 3,
+    "buildNumber" : "24A5289g",
+    "dataFile" : "releases/15/macOS-15.0-24A5289g.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "releaseDate" : "2024-07-10",
+    "releaseName" : "Sequoia"
+  },
+  {
     "betaNumber" : 2,
     "buildNumber" : "24A5279h",
     "dataFile" : "releases/15/macOS-15.0-24A5279h.json",
