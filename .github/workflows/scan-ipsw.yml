@@ -92,13 +92,17 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${REPOSITORY}.git"
 
-      - name: Resolve IPSW filename
+      - name: Resolve IPSW path
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
         run: |
-          IPSW_DIR="${HOME}/ipsw-cache"
+          ORIG_NAME=$(basename "${IPSW_URL%%\?*}")
+          VERSION=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_([0-9.]+)_.*/\1/')
+          BUILD=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_[0-9.]+_([^_]+)_.*/\1/')
+          MAJOR=${VERSION%%.*}
+          IPSW_DIR="/Volumes/macOS Archive/macOS/${MAJOR}"
           mkdir -p "${IPSW_DIR}"
-          IPSW_FILE="${IPSW_DIR}/$(basename "${IPSW_URL%%\?*}")"
+          IPSW_FILE="${IPSW_DIR}/macOS-${VERSION}-${BUILD}.ipsw"
           echo "IPSW_FILE=${IPSW_FILE}" >> "${GITHUB_ENV}"
 
       - name: Download IPSW
@@ -127,6 +131,13 @@ jobs:
             wait "${CURL_PID}"
             mv "${IPSW_FILE}.part" "${IPSW_FILE}"
           fi
+
+      - name: Set IPSW modification time to release date
+        env:
+          RELEASE_DATE: ${{ inputs.release_date }}
+        run: |
+          TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
+          touch -t "${TOUCH_DATE}" "${IPSW_FILE}"
 
       - name: Restore CLI build cache
         id: cache-cli
@@ -229,6 +240,3 @@ jobs:
             fi
             sleep 30
           done
-
-      - name: Clean up IPSW
-        run: rm -f "${IPSW_FILE}"
