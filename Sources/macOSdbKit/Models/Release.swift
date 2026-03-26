@@ -214,7 +214,7 @@ extension Release: Comparable {
 
     private var prereleaseRank: (Int, Int) {
         if isBeta { return (0, betaNumber ?? 0) }
-        if isRC { return (1, 0) }
+        if isRC { return (1, rcNumber ?? 0) }
         return (2, 0)
     }
 }
