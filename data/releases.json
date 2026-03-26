@@ -705,6 +705,17 @@
     "releaseName" : "Sonoma"
   },
   {
+    "betaNumber" : 2,
+    "buildNumber" : "23G5061b",
+    "dataFile" : "releases/14/macOS-14.6-23G5061b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "14.6",
+    "releaseDate" : "2024-07-01",
+    "releaseName" : "Sonoma"
+  },
+  {
     "betaNumber" : 1,
     "buildNumber" : "23G5052d",
     "dataFile" : "releases/14/macOS-14.6-23G5052d.json",
