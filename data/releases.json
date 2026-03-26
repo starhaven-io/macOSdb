@@ -2266,6 +2266,17 @@
     "releaseName" : "Big Sur"
   },
   {
+    "betaNumber" : 2,
+    "buildNumber" : "20E5186d",
+    "dataFile" : "releases/11/macOS-11.3-20E5186d.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "11.3",
+    "releaseDate" : "2021-02-17",
+    "releaseName" : "Big Sur"
+  },
+  {
     "betaNumber" : 1,
     "buildNumber" : "20E5172i",
     "dataFile" : "releases/11/macOS-11.3-20E5172i.json",
