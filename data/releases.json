@@ -2236,6 +2236,17 @@
     "releaseName" : "Big Sur"
   },
   {
+    "betaNumber" : 5,
+    "buildNumber" : "20G5065a",
+    "dataFile" : "releases/11/macOS-11.5-20G5065a.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "11.5",
+    "releaseDate" : "2021-07-08",
+    "releaseName" : "Big Sur"
+  },
+  {
     "betaNumber" : 4,
     "buildNumber" : "20G5052c",
     "dataFile" : "releases/11/macOS-11.5-20G5052c.json",
