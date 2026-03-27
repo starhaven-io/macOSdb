@@ -2196,6 +2196,16 @@
     "releaseName" : "Monterey"
   },
   {
+    "buildNumber" : "21A558",
+    "dataFile" : "releases/12/macOS-12.0.1-21A558.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "12.0.1",
+    "releaseDate" : "2021-10-18",
+    "releaseName" : "Monterey"
+  },
+  {
     "betaNumber" : 10,
     "buildNumber" : "21A5552a",
     "dataFile" : "releases/12/macOS-12.0-21A5552a.json",
