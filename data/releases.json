@@ -2672,6 +2672,17 @@
     "releaseName" : "Big Sur"
   },
   {
+    "betaNumber" : 5,
+    "buildNumber" : "20A5354i",
+    "dataFile" : "releases/11/macOS-11.0-20A5354i.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "11.0",
+    "releaseDate" : "2020-08-19",
+    "releaseName" : "Big Sur"
+  },
+  {
     "betaNumber" : 4,
     "buildNumber" : "20A5343i",
     "dataFile" : "releases/11/macOS-11.0-20A5343i.json",
