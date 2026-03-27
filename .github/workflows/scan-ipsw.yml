@@ -117,7 +117,7 @@ jobs:
             TOTAL_MB=$(( TOTAL / 1048576 ))
             TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
             echo "Downloading IPSW ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
-            curl -sSL --retry 10 --retry-delay 10 --retry-connrefused -C - -o "${IPSW_FILE}.part" "${IPSW_URL}" &
+            curl -sSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o "${IPSW_FILE}.part" "${IPSW_URL}" &
             CURL_PID=$!
             while kill -0 "${CURL_PID}" 2>/dev/null; do
               if [[ -f "${IPSW_FILE}.part" ]]; then
