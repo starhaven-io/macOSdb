@@ -105,7 +105,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-12.0-21A5543b.ipsw",
+  "ipswFile" : "UniversalMac_12.0_21A5543b_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021SummerSeed/fullrestores/002-12797/682E85F3-78D2-4425-8774-C0950CD5EB8E/UniversalMac_12.0_21A5543b_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,

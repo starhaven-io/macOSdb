@@ -105,7 +105,7 @@
       "version" : "5.9"
     }
   ],
-  "ipswFile" : "macOS-15.3-24D5055b.ipsw",
+  "ipswFile" : "UniversalMac_15.3_24D5055b_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025WinterSeed/fullrestores/072-61910/64022727-D907-4A4F-963E-CADF5C74E1A7/UniversalMac_15.3_24D5055b_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,

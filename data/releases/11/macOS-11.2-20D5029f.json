@@ -105,7 +105,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-11.2-20D5029f.ipsw",
+  "ipswFile" : "UniversalMac_11.2_20D5029f_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2020WinterSeed/fullrestores/001-89550/88BAD68B-6B51-45E3-BDCC-0DCD3F00564D/UniversalMac_11.2_20D5029f_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
@@ -115,9 +115,7 @@
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.3.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.80.16.111.1"
     },
