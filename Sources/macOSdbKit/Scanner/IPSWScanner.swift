@@ -71,7 +71,7 @@ public actor IPSWScanner {
                 buildNumber: extraction.buildNumber,
                 releaseName: resolvedName,
                 releaseDate: releaseDate,
-                ipswFile: ipswPath.lastPathComponent,
+                ipswFile: ipswURL.flatMap { URL(string: $0)?.lastPathComponent } ?? ipswPath.lastPathComponent,
                 ipswURL: ipswURL,
 
                 isBeta: resolvedBeta,
