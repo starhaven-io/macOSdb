@@ -2196,6 +2196,17 @@
     "releaseName" : "Monterey"
   },
   {
+    "betaNumber" : 2,
+    "buildNumber" : "21A5268h",
+    "dataFile" : "releases/12/macOS-12.0-21A5268h.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "releaseDate" : "2021-06-28",
+    "releaseName" : "Monterey"
+  },
+  {
     "buildNumber" : "20G165",
     "dataFile" : "releases/11/macOS-11.6-20G165.json",
     "isBeta" : false,
