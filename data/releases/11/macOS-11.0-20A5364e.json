@@ -1,0 +1,128 @@
+{
+  "betaNumber" : 6,
+  "buildNumber" : "20A5364e",
+  "components" : [
+    {
+      "name" : "curl",
+      "path" : "/usr/bin/curl",
+      "source" : "filesystem",
+      "version" : "7.64.1"
+    },
+    {
+      "name" : "httpd",
+      "path" : "/usr/sbin/httpd",
+      "source" : "filesystem",
+      "version" : "2.4.43"
+    },
+    {
+      "name" : "libbz2 (bzip2)",
+      "path" : "/usr/lib/libbz2.1.0.dylib",
+      "source" : "dyldCache",
+      "version" : "1.0.6"
+    },
+    {
+      "name" : "libcurl",
+      "path" : "/usr/lib/libcurl.4.dylib",
+      "source" : "dyldCache",
+      "version" : "7.64.1"
+    },
+    {
+      "name" : "libexpat",
+      "path" : "/usr/lib/libexpat.1.dylib",
+      "source" : "dyldCache",
+      "version" : "2.2.8"
+    },
+    {
+      "name" : "libncurses",
+      "path" : "/usr/lib/libncurses.5.4.dylib",
+      "source" : "dyldCache",
+      "version" : "5.7.20081102"
+    },
+    {
+      "name" : "libpcap",
+      "path" : "/usr/lib/libpcap.A.dylib",
+      "source" : "dyldCache",
+      "version" : "1.9.1"
+    },
+    {
+      "name" : "LibreSSL",
+      "path" : "/usr/bin/openssl",
+      "source" : "filesystem",
+      "version" : "2.8.3"
+    },
+    {
+      "name" : "libsqlite3",
+      "path" : "/usr/lib/libsqlite3.dylib",
+      "source" : "dyldCache",
+      "version" : "3.32.3"
+    },
+    {
+      "name" : "libssl (LibreSSL)",
+      "path" : "/usr/lib/libssl.35.dylib",
+      "source" : "dyldCache",
+      "version" : "2.2.7"
+    },
+    {
+      "name" : "libxml2",
+      "path" : "/usr/lib/libxml2.2.dylib",
+      "source" : "dyldCache",
+      "version" : "2.9.4"
+    },
+    {
+      "name" : "OpenSSH",
+      "path" : "/usr/bin/ssh",
+      "source" : "filesystem",
+      "version" : "8.1p1"
+    },
+    {
+      "name" : "Ruby",
+      "path" : "/usr/bin/ruby",
+      "source" : "filesystem",
+      "version" : "2.6.3"
+    },
+    {
+      "name" : "SQLite",
+      "path" : "/usr/bin/sqlite3",
+      "source" : "filesystem",
+      "version" : "3.32.3"
+    },
+    {
+      "name" : "vim",
+      "path" : "/usr/bin/vim",
+      "source" : "filesystem",
+      "version" : "8.2"
+    },
+    {
+      "name" : "zip",
+      "path" : "/usr/bin/zip",
+      "source" : "filesystem",
+      "version" : "2.0"
+    },
+    {
+      "name" : "zsh",
+      "path" : "/bin/zsh",
+      "source" : "filesystem",
+      "version" : "5.8"
+    }
+  ],
+  "ipswFile" : "UniversalMac_11.0_20A5364e_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2020SummerSeed/fullrestores/001-43968/7ADB7B35-C82E-4D8C-9526-D354D686052A/UniversalMac_11.0_20A5364e_Restore.ipsw",
+  "isBeta" : true,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+    {
+      "arch" : "ARM64_T8020",
+      "chip" : "A12Z (DTK)",
+      "darwinVersion" : "20.1.0",
+      "devices" : [
+
+      ],
+      "file" : "kernelcache.release.j273",
+      "xnuVersion" : "7195.40.65.0.2"
+    }
+  ],
+  "osVersion" : "11.0",
+  "releaseDate" : "2020-09-08",
+  "releaseName" : "Big Sur"
+}
