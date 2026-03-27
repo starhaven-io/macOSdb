@@ -104,7 +104,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-12.2-21D48.ipsw",
+  "ipswFile" : "UniversalMac_12.2_21D48_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2022WinterFCS/fullrestores/002-55683/C906700F-79F2-4948-98F0-E8A7D2FB129D/UniversalMac_12.2_21D48_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,

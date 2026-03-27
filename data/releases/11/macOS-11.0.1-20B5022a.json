@@ -104,7 +104,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-11.0.1-20B5022a.ipsw",
+  "ipswFile" : "UniversalMac_11.0.1_20B5022a_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2020SummerSeed/fullrestores/001-72553/ADDF4A25-C673-43F0-816B-7DA25D4490F2/UniversalMac_11.0.1_20B5022a_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,

@@ -105,7 +105,7 @@
       "version" : "5.9"
     }
   ],
-  "ipswFile" : "macOS-14.4-23E5180j.ipsw",
+  "ipswFile" : "UniversalMac_14.4_23E5180j_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2024WinterSeed/fullrestores/052-42583/F09F735D-D3C3-4AF7-9BEC-F9C5D3B84363/UniversalMac_14.4_23E5180j_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,

@@ -104,7 +104,7 @@
       "version" : "5.9"
     }
   ],
-  "ipswFile" : "macOS-15.1-24B82.ipsw",
+  "ipswFile" : "UniversalMac_15.1_24B82_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2024FallFCS/fullrestores/062-24344/4BBFA6BD-C58F-4C82-B793-6ECA98024379/UniversalMac_15.1_24B82_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,

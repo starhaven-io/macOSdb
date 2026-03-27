@@ -105,7 +105,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-11.0-20A5343i.ipsw",
+  "ipswFile" : "UniversalMac_11.0_20A5343i_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2020SpringSeed/fullrestores/001-31135/C7C169B4-48A7-4E38-B26E-8E553B783638/UniversalMac_11.0_20A5343i_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
@@ -115,9 +115,7 @@
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.0.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.0.0.141.5"
     }

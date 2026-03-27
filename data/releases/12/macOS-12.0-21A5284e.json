@@ -105,7 +105,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-12.0-21A5284e.ipsw",
+  "ipswFile" : "UniversalMac_12.0_21A5284e_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021SummerSeed/fullrestores/071-63742/90636AD6-5E0A-4474-B652-A6A5AF4995E2/UniversalMac_12.0_21A5284e_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
@@ -151,9 +151,7 @@
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
       "darwinVersion" : "21.0.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.vma1",
       "xnuVersion" : "8019.0.46.0.4"
     }

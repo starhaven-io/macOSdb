@@ -104,7 +104,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-11.0.1-20B28.ipsw",
+  "ipswFile" : "UniversalMac_11.0.1_20B28_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2020FallSeed/fullrestores/001-55368/697AE21B-441A-4243-AD45-574DF0917A6E/UniversalMac_11.0.1_20B28_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,
@@ -114,9 +114,7 @@
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.1.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.50.7"
     },

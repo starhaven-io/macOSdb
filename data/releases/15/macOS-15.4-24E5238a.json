@@ -111,7 +111,7 @@
       "version" : "5.9"
     }
   ],
-  "ipswFile" : "macOS-15.4-24E5238a.ipsw",
+  "ipswFile" : "UniversalMac_15.4_24E5238a_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2025WinterSeed/fullrestores/082-08323/FD7D7539-514F-4F2E-AD3B-4D6D0D248706/UniversalMac_15.4_24E5238a_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,

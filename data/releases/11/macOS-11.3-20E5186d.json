@@ -105,7 +105,7 @@
       "version" : "5.8"
     }
   ],
-  "ipswFile" : "macOS-11.3-20E5186d.ipsw",
+  "ipswFile" : "UniversalMac_11.3_20E5186d_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2021WinterSeed/fullrestores/071-06983/4776B5B1-3E45-4C58-8C32-D747B1A5485A/UniversalMac_11.3_20E5186d_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
@@ -115,9 +115,7 @@
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.4.0",
-      "devices" : [
-
-      ],
+      "devices" : [],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.100.326.0.1"
     },

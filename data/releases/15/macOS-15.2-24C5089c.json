@@ -105,7 +105,7 @@
       "version" : "5.9"
     }
   ],
-  "ipswFile" : "macOS-15.2-24C5089c.ipsw",
+  "ipswFile" : "UniversalMac_15.2_24C5089c_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2024FallSeed/fullrestores/072-35468/AF95DCD4-137A-4E7D-A5D8-E12009F4B0EF/UniversalMac_15.2_24C5089c_Restore.ipsw",
   "isBeta" : true,
   "isDeviceSpecific" : false,
