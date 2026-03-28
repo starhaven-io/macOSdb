@@ -21,6 +21,78 @@ enum SDKMetadataParser {
         return SDKInfo(sdkVersion: version)
     }
 
+    // MARK: - SDK component extraction
+
+    /// Extract component versions from SDK headers and .tbd files.
+    /// `sdkUsrDir` is the `usr/` directory inside the SDK root.
+    static func extractSDKComponents(from sdkUsrDir: URL) -> [Component] {
+        var components: [Component] = []
+
+        for definition in sdkComponents {
+            let filePath = sdkUsrDir.appendingPathComponent(definition.path)
+            guard let content = try? String(contentsOf: filePath, encoding: .utf8) else {
+                logger.debug("SDK \(definition.name): file not found at \(filePath.path)")
+                continue
+            }
+
+            if let version = extractVersion(from: content, using: definition) {
+                logger.info("SDK \(definition.name): \(version)")
+                components.append(Component(
+                    name: definition.name,
+                    version: version,
+                    path: "/\(definition.path)",
+                    source: .sdk
+                ))
+            } else {
+                logger.debug("SDK \(definition.name): no version matched")
+            }
+        }
+
+        return components
+    }
+
+    private static func extractVersion(from content: String, using definition: SDKComponentDefinition) -> String? {
+        // Multi-define extraction for expat and ncurses
+        if definition.pattern.contains("|") {
+            return extractMultiDefineVersion(from: content, defines: definition.pattern)
+        }
+
+        guard let regex = try? NSRegularExpression(pattern: definition.pattern),
+              let match = regex.firstMatch(
+                in: content,
+                range: NSRange(content.startIndex..., in: content)
+              ),
+              let matchRange = Range(match.range, in: content) else {
+            return nil
+        }
+
+        return definition.normalize(String(content[matchRange]))
+    }
+
+    /// Extract version from multiple `#define NAME value` lines and join as "major.minor.patch".
+    private static func extractMultiDefineVersion(from content: String, defines: String) -> String? {
+        let names = defines.split(separator: "|").map(String.init)
+        var parts: [String] = []
+
+        for name in names {
+            let pattern = #"#\s*define\s+"# + name + #"\s+(\S+)"#
+            guard let regex = try? NSRegularExpression(pattern: pattern),
+                  let match = regex.firstMatch(
+                    in: content,
+                    range: NSRange(content.startIndex..., in: content)
+                  ),
+                  match.numberOfRanges > 1,
+                  let valueRange = Range(match.range(at: 1), in: content) else {
+                return nil
+            }
+            parts.append(String(content[valueRange]))
+        }
+
+        return parts.joined(separator: ".")
+    }
+
+    // MARK: - SDK discovery
+
     /// Find and parse all macOS SDKSettings.json files under a directory.
     /// Returns deduplicated SDKInfo sorted by version descending.
     static func findMacOSSDKs(in directory: URL) -> [SDKInfo] {
