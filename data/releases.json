@@ -2156,6 +2156,17 @@
     "releaseName" : "Monterey"
   },
   {
+    "betaNumber" : 3,
+    "buildNumber" : "21E5212f",
+    "dataFile" : "releases/12/macOS-12.3-21E5212f.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.3",
+    "releaseDate" : "2022-02-15",
+    "releaseName" : "Monterey"
+  },
+  {
     "betaNumber" : 2,
     "buildNumber" : "21E5206e",
     "dataFile" : "releases/12/macOS-12.3-21E5206e.json",
