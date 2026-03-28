@@ -20,7 +20,7 @@ permissions: {}
 jobs:
   check:
     name: just check
-    runs-on: macos-latest
+    runs-on: macos-26
     permissions:
       contents: read
     steps:

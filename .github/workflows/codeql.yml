@@ -30,7 +30,7 @@ permissions: {}
 jobs:
   analyze:
     name: Analyze (Swift)
-    runs-on: macos-latest
+    runs-on: macos-26
     permissions:
       contents: read
       security-events: write # required to upload SARIF results
