@@ -19,7 +19,7 @@ env:
 jobs:
   build:
     name: Build
-    runs-on: macos-latest
+    runs-on: macos-26
     environment:
       name: release
       deployment: false
@@ -149,7 +149,7 @@ jobs:
   release:
     name: Release
     needs: build
-    runs-on: macos-latest
+    runs-on: macos-26
     environment:
       name: release
       deployment: false
