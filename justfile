@@ -19,7 +19,7 @@ lint:
 
 # Validate JSON data files
 lint-json:
-    find data -name '*.json' -type f -exec jq empty {} +
+    python3 scripts/lint-json.py
 
 # Audit GitHub Actions workflows
 audit:
