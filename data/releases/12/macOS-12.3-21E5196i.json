@@ -106,6 +106,7 @@
   ],
   "ipswFile" : "UniversalMac_12.3_21E5196i_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2022WinterSeed/fullrestores/002-59521/A51A8FB8-F6C3-47E3-AC02-A370AAF53C57/UniversalMac_12.3_21E5196i_Restore.ipsw",
+  "betaNumber" : 1,
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
