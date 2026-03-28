@@ -1581,6 +1581,16 @@
     "releaseName" : "Ventura"
   },
   {
+    "buildNumber" : "22F2073",
+    "dataFile" : "releases/13/macOS-13.4-22F2073.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.4",
+    "releaseDate" : "2023-06-05",
+    "releaseName" : "Ventura"
+  },
+  {
     "buildNumber" : "22F63",
     "dataFile" : "releases/13/macOS-13.4-22F63.json",
     "isBeta" : false,
