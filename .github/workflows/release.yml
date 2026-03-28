@@ -225,10 +225,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          python3 .github/format-release-notes.py \
+          python3 scripts/format-release-notes.py \
             "${RUNNER_TEMP}/raw_notes.md" "${TAG}" \
             > "${RUNNER_TEMP}/formatted_notes.md"
-          python3 .github/format-release-notes.py \
+          python3 scripts/format-release-notes.py \
             "${RUNNER_TEMP}/raw_notes.md" "${TAG}" --html \
             > "${RUNNER_TEMP}/release_notes.html"
           gh release edit "${TAG}" \

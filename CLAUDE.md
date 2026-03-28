@@ -53,10 +53,12 @@ macOSdb/
 │   ├── LICENSE                            # CC-BY-4.0 license for data
 │   ├── releases.json                      # Index file (sorted newest first)
 │   └── releases/{major}/                  # Per-release JSON (macOS-{version}-{build}.json)
+├── scripts/
+│   ├── format-release-notes.py            # Formats GitHub auto-generated notes by Conventional Commits type
+│   └── lint-json.py                       # JSON schema validation for data files (used by just lint-json)
 ├── justfile                               # Task runner (just clean/build/test/lint/check and more)
 ├── .github/
 │   ├── workflows/                         # CI: build, check, conventional-commits, codeql, zizmor, scan-ipsw, deploy-site, release
-│   ├── format-release-notes.py            # Formats GitHub auto-generated notes by Conventional Commits type
 │   ├── appcast-template.xml               # Sparkle appcast template for auto-updates
 │   ├── dependabot.yml                     # Dependabot for GitHub Actions
 │   └── FUNDING.yml                        # GitHub Sponsors
