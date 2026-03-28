@@ -2672,6 +2672,17 @@
     "releaseName" : "Big Sur"
   },
   {
+    "betaNumber" : 9,
+    "buildNumber" : "20A5384c",
+    "dataFile" : "releases/11/macOS-11.0-20A5384c.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "11.0",
+    "releaseDate" : "2020-09-29",
+    "releaseName" : "Big Sur"
+  },
+  {
     "betaNumber" : 8,
     "buildNumber" : "20A5374i",
     "dataFile" : "releases/11/macOS-11.0-20A5374i.json",
