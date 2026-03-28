@@ -251,9 +251,16 @@ public let toolchainComponents: [ComponentDefinition] = [
         name: "Swift",
         path: "usr/bin/swift-frontend",
         source: .filesystem,
-        pattern: #"swiftlang-[0-9]+\.[0-9]+[0-9.]*"#,
+        // Newer Xcodes: "swiftlang-6.3.0.123.5"; older: "Swift version 5.5.2"
+        // swiftlang major < 100 = real version; >= 100 = Apple project number (e.g. 1300.0.47.5)
+        pattern: #"swiftlang-[0-9]{1,2}\.[0-9]+[0-9.]*|Swift version [0-9]+\.[0-9]+(?:\.[0-9]+)?"#,
 
-        normalize: stripPrefix(["swiftlang-"]),
+        normalize: { raw in
+            if raw.hasPrefix("swiftlang-") {
+                return String(raw.dropFirst("swiftlang-".count))
+            }
+            return String(raw.dropFirst("Swift version ".count))
+        },
         strategy: .regex
     ),
     ComponentDefinition(

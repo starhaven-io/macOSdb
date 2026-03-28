@@ -284,11 +284,11 @@ struct ScannerConfigTests {
         #expect(cctools.normalize("cctools-973") == "973")
     }
 
-    @Test("Swift normalization strips prefix")
+    @Test("Swift normalization strips prefix for both formats")
     func swiftNormalization() {
         let swift = toolchainComponents.first { $0.name == "Swift" }!
         #expect(swift.normalize("swiftlang-6.3.0.123.5") == "6.3.0.123.5")
-        #expect(swift.normalize("swiftlang-5.5.2.3.1") == "5.5.2.3.1")
+        #expect(swift.normalize("Swift version 5.5.2") == "5.5.2")
     }
 
     @Test("ld normalization strips PROJECT prefix for both ld and ld64")
@@ -350,7 +350,7 @@ struct ScannerConfigTests {
             TestCase(name: "Apple Clang", input: "clang-2100.0.123.102", expected: "clang-2100.0.123.102"),
             TestCase(name: "cctools", input: "cctools-1040", expected: "cctools-1040"),
             TestCase(name: "Swift", input: "swiftlang-6.3.0.123.5", expected: "swiftlang-6.3.0.123.5"),
-            TestCase(name: "Swift", input: "swiftlang-5.5.2.3.1", expected: "swiftlang-5.5.2.3.1"),
+            TestCase(name: "Swift", input: "Swift version 5.5.2", expected: "Swift version 5.5.2"),
             TestCase(name: "ld", input: "PROJECT:ld64-711.1", expected: "PROJECT:ld64-711.1"),
             TestCase(name: "ld", input: "PROJECT:ld-1230.1", expected: "PROJECT:ld-1230.1"),
             TestCase(name: "ld", input: "PROJECT:dyld-1022.1", expected: "PROJECT:dyld-1022.1"),

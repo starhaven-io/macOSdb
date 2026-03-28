@@ -127,6 +127,22 @@ struct ComponentExtractorTests {
         #expect(component?.version == "6.3.0.123.5")
     }
 
+    @Test("Extract Swift version falls back to Swift version prefix for older Xcodes")
+    func extractSwiftFallback() {
+        var bytes: [UInt8] = [0x00]
+        // Older Xcodes have swiftlang-1300.x.y (Apple project number) — pattern skips these
+        bytes.append(contentsOf: "swiftlang-1300.0.47.5".utf8)
+        bytes.append(0x00)
+        bytes.append(contentsOf: "Swift version 5.5.2".utf8)
+        bytes.append(0x00)
+
+        let data = Data(bytes)
+        let def = toolchainComponents.first { $0.name == "Swift" }!
+        let component = ComponentExtractor.extract(from: data, using: def)
+
+        #expect(component?.version == "5.5.2")
+    }
+
     @Test("Extract ld version — modern format")
     func extractLdModern() {
         var bytes: [UInt8] = [0x00]

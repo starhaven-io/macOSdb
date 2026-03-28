@@ -290,8 +290,8 @@ public actor XcodeScanner {
                     name: "Python",
                     path: relativePath,
                     source: .filesystem,
-                    // Match "3.x.y" — CPython 3.x version embedded in libpython dylib
-                    pattern: #"3\.[0-9]+\.[0-9]+"#,
+                    // Match "3.x.y" where x >= 2 — avoids "3.0.0" false positives from format versions
+                    pattern: #"3\.[2-9][0-9]*\.[0-9]+"#,
                     normalize: { $0 },
                     strategy: .regex
                 )
