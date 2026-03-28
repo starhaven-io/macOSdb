@@ -3,88 +3,64 @@
     <channel>
         <title>macOSdb</title>
         <item>
-            <title>1.5.1</title>
-            <pubDate>Thu, 26 Mar 2026 23:13:05 +0000</pubDate>
-            <sparkle:version>11</sparkle:version>
-            <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
+            <title>1.6.0</title>
+            <pubDate>Sat, 28 Mar 2026 02:59:05 +0000</pubDate>
+            <sparkle:version>12</sparkle:version>
+            <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <description><![CDATA[<h2>What&#x27;s New</h2>
 <ul>
-  <li>add macOS-13.0-22A5311f</li>
-  <li>add macOS-13.0-22A5331f</li>
-  <li>add macOS-14.0-23A5286g</li>
-  <li>add macOS-14.0-23A5286i</li>
-  <li>add macOS-14.0-23A5301h</li>
-  <li>add macOS-14.0-23A5312d</li>
-  <li>add macOS-14.0-23A5328b</li>
-  <li>add macOS-14.0-23A5337a</li>
-  <li>add macOS-14.0-23A339</li>
-  <li>add macOS-14.1-23B5046f</li>
-  <li>add macOS-14.1-23B5056e</li>
-  <li>add macOS-14.1-23B5067a</li>
-  <li>add macOS-14.1-23B73</li>
-  <li>add macOS-14.2-23C5030f</li>
-  <li>add macOS-14.2-23C5041e</li>
-  <li>add macOS-14.2-23C5047e</li>
-  <li>add macOS-14.2-23C5055b</li>
-  <li>add macOS-14.2-23C63</li>
-  <li>add macOS-14.3-23D5033f</li>
-  <li>add macOS-14.3-23D5043d</li>
-  <li>add macOS-14.3-23D5051b</li>
-  <li>add macOS-14.4-23E5191e</li>
-  <li>add macOS-14.4-23E5196e</li>
-  <li>add macOS-14.4-23E5205c</li>
-  <li>add macOS-14.4-23E5211a</li>
-  <li>add macOS-14.5-23F5049f</li>
-  <li>add macOS-14.5-23F5059e</li>
-  <li>add macOS-14.5-23F5064f</li>
-  <li>add macOS-14.5-23F5074a</li>
-  <li>add macOS-14.6-23G5052d</li>
-  <li>add macOS-14.6-23G5061b</li>
-  <li>add macOS-14.6-23G5066c</li>
-  <li>add macOS-14.6-23G5075b</li>
-  <li>add macOS-15.0-24A5289g</li>
-  <li>add macOS-15.0-24A5309e</li>
-  <li>add macOS-15.0-24A5320a</li>
-  <li>add macOS-15.0-24A5327a</li>
-  <li>add macOS-15.0-24A5331b</li>
-  <li>add macOS-15.1-24B5035e</li>
-  <li>archive IPSWs with structured paths and release dates</li>
-  <li>add macOS-15.1-24B5046f</li>
-  <li>add macOS-15.1-24B5055e</li>
-  <li>add macOS-14.4-23E5180j</li>
-  <li>add macOS-15.1-24B5070a</li>
-  <li>add macOS-15.1-24B82</li>
-  <li>add macOS-15.2-24C5073e</li>
-  <li>add macOS-15.2-24C5079e</li>
-  <li>add macOS-15.2-24C5089c</li>
-  <li>add macOS-15.2-24C98</li>
-  <li>add macOS-15.2-24C100</li>
-  <li>add macOS-15.3-24D5034f</li>
-  <li>add macOS-15.3-24D5040f</li>
-  <li>add macOS-15.3-24D5055b</li>
-  <li>add macOS-15.4-24E5206s</li>
-  <li>add macOS-15.4-24E5222f</li>
-  <li>add macOS-15.4-24E5228e</li>
-  <li>add macOS-15.4-24E5238a</li>
-  <li>add macOS-11.0.1-20B5012d</li>
-  <li>add macOS-11.0.1-20B5022a</li>
-  <li>add macOS-11.0.1-20B28</li>
-  <li>add macOS-11.1-20C5048k</li>
-  <li>add macOS-11.1-20C5061b</li>
-  <li>add macOS-11.2-20D5029f</li>
-  <li>add macOS-11.2-20D5042d</li>
-  <li>add macOS-11.2-20D53</li>
-  <li>add macOS-11.2-20D62</li>
-  <li>add macOS-11.3-20E5172i</li>
+  <li>add macOS-11.3-20E5186d</li>
+  <li>add macOS-11.5-20G5052c</li>
+  <li>add macOS-11.5-20G5065a</li>
+  <li>add macOS-11.5-20G70</li>
+  <li>add macOS-12.0-21A5268h</li>
+  <li>add macOS-12.0-21A5284e</li>
+  <li>add macOS-12.0-21A5294g</li>
+  <li>add macOS-12.0-21A5304g</li>
+  <li>add macOS-12.0-21A5506j</li>
+  <li>add macOS-12.0-21A5522h</li>
+  <li>add macOS-12.0-21A5534d</li>
+  <li>add macOS-12.0-21A5543b</li>
+  <li>add macOS-12.0-21A5552a</li>
+  <li>add macOS-12.0.1-21A558</li>
+  <li>add macOS-12.1-21C5031d</li>
+  <li>add macOS-12.1-21C5039b</li>
+  <li>add macOS-12.1-21C5045a</li>
+  <li>add macOS-12.1-21C51</li>
+  <li>add macOS-12.2-21D5025f</li>
+  <li>add macOS-12.2-21D5039d</li>
+  <li>add macOS-12.2-21D48</li>
+  <li>add macOS-12.1-21C5021h</li>
+  <li>add validate command for IPSW integrity and hash sidecars</li>
+  <li>add macOS-11.0-20A5343i</li>
+  <li>add macOS-11.0-20A5354i</li>
+  <li>add macOS-11.0-20A5364e</li>
+  <li>add macOS-11.0-20A5374g</li>
+  <li>add macOS-11.0-20A5374i</li>
+  <li>add macOS-11.0-20A5384c</li>
+  <li>add macOS-11.0-20A5395g</li>
+  <li>add macOS-12.3-21E5196i</li>
+  <li>add macOS-12.3-21E5206e</li>
+  <li>add macOS-12.3-21E5212f</li>
+  <li>add macOS-12.3-21E5222a</li>
+  <li>add macOS-12.3-21E5227a</li>
+  <li>add release counts and device-specific toggle to sidebar</li>
+  <li>add macOS-13.0-22A5266r</li>
+  <li>add macOS-13.4-22F2073</li>
 </ul>
 <h2>Fixes</h2>
 <ul>
-  <li>use hyphenated volume name for IPSW archive path</li>
-  <li>prevent RC builds from being flagged as beta</li>
-  <li>sort RC builds by rcNumber within same version</li>
+  <li>retry curl on partial transfer errors (exit 18)</li>
+  <li>correct ipswFile to Apple filename and fix 3 corrupted URLs</li>
+  <li>derive ipswFile from ipswURL instead of local path</li>
+  <li>add missing betaNumber to macOS 12.3 beta 1 (21E5196i)</li>
+</ul>
+<h2>Under the Hood</h2>
+<ul>
+  <li>add scripts/ directory with lint-json and format-release-notes</li>
 </ul>]]></description>
-            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.5.1/macOSdb-1.5.1.zip" length="2699312" type="application/octet-stream" sparkle:edSignature="ddWg0u9eaLY5ex+ilkerPd6kb9e155k21Rgg840bYDyyRYNmZPWv/10KdPreAk0zbdEPka4lfI2ndjNoy8QkAg=="/>
+            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.6.0/macOSdb-1.6.0.zip" length="2701578" type="application/octet-stream" sparkle:edSignature="wEv+8ErkMRUPU5zKSRCQHiKPei8Gxa+vkAe6iPxzb7aVchv6jz0cWK0yd6hFwR+oVm0JtuiE/U9BBJU6sqT1Ag=="/>
         </item>
     </channel>
 </rss>
