@@ -45,13 +45,15 @@ public actor XcodeScanner {
             // Phase 4: Extract toolchain and framework components
             var components = extractToolchainComponents(from: xcodeApp)
             components.append(contentsOf: extractFrameworkComponents(from: xcodeApp))
+
+            // Phase 5: Parse SDK metadata and extract SDK components
+            sendProgress(.parsingSDKMetadata)
+            let sdks = parseSDKMetadata(from: xcodeApp)
+            let sdkComponents = extractSDKComponents(from: xcodeApp)
+            components.append(contentsOf: sdkComponents)
             components.sort {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
-
-            // Phase 5: Parse SDK metadata
-            sendProgress(.parsingSDKMetadata)
-            let sdks = parseSDKMetadata(from: xcodeApp)
 
             // Phase 6: Assemble the Release
             sendProgress(.assemblingResults)
@@ -311,6 +313,17 @@ public actor XcodeScanner {
             "Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs"
         )
         return SDKMetadataParser.findMacOSSDKs(in: sdksDir)
+    }
+
+    private func extractSDKComponents(from xcodeApp: URL) -> [Component] {
+        let sdkUsrDir = xcodeApp.appendingPathComponent(
+            "Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr"
+        )
+        guard FileManager.default.fileExists(atPath: sdkUsrDir.path) else {
+            sendVerbose("SDK usr/ directory not found")
+            return []
+        }
+        return SDKMetadataParser.extractSDKComponents(from: sdkUsrDir)
     }
 
     // MARK: - Cleanup

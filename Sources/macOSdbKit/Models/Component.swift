@@ -29,4 +29,5 @@ public struct Component: Codable, Identifiable, Hashable, Sendable {
 public enum ComponentSource: String, Codable, Hashable, Sendable {
     case filesystem
     case dyldCache
+    case sdk
 }
