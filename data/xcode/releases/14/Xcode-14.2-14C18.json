@@ -1,0 +1,57 @@
+{
+  "buildNumber" : "14C18",
+  "components" : [
+    {
+      "name" : "Apple Clang",
+      "path" : "/usr/bin/clang",
+      "source" : "filesystem",
+      "version" : "14.0.0"
+    },
+    {
+      "name" : "Git",
+      "path" : "/usr/bin/git",
+      "source" : "filesystem",
+      "version" : "2.37.1"
+    },
+    {
+      "name" : "ld",
+      "path" : "/usr/bin/ld",
+      "source" : "filesystem",
+      "version" : "820.1"
+    },
+    {
+      "name" : "lldb",
+      "path" : "/Contents/SharedFrameworks/LLDB.framework/LLDB",
+      "source" : "filesystem",
+      "version" : "1400.0.38.17"
+    },
+    {
+      "name" : "Python",
+      "path" : "/Library/Frameworks/Python3.framework/Versions/Current/lib/libpython3.9.dylib",
+      "source" : "filesystem",
+      "version" : "3.9.6"
+    },
+    {
+      "name" : "Swift",
+      "path" : "/usr/bin/swift-frontend",
+      "source" : "filesystem",
+      "version" : "5.7.2"
+    }
+  ],
+  "isBeta" : false,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+
+  ],
+  "osVersion" : "14.2",
+  "productType" : "Xcode",
+  "releaseDate" : "2022-12-13",
+  "releaseName" : "Xcode 14.2",
+  "sdks" : [
+    {
+      "sdkVersion" : "13.1"
+    }
+  ],
+  "sourceFile" : "Xcode_14.2.xip"
+}

@@ -31,7 +31,7 @@ struct SidebarView: View {
                         }
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("macOS \(group.major) \(group.name)")
+                            Text(sidebarGroupLabel(group))
                                 .font(.callout)
                             Text(groupCountLabel(for: group))
                                 .font(.caption)
@@ -52,8 +52,20 @@ struct SidebarView: View {
         .onAppear {
             initializeExpansionIfNeeded()
         }
+        .id(appState.selectedProduct)
         .listStyle(.sidebar)
         .navigationTitle("macOSdb")
+        .safeAreaInset(edge: .top) {
+            Picker("Product", selection: productBinding) {
+                ForEach(ProductType.allCases, id: \.self) { product in
+                    Text(product.displayName).tag(product)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+        }
         .safeAreaInset(edge: .bottom) {
             if appState.isComparing {
                 Text("Select a release to compare with")
@@ -97,6 +109,15 @@ struct SidebarView: View {
         guard !hasInitializedExpansion, !appState.releasesByMajorVersion.isEmpty else { return }
         expandedGroups = Set(appState.releasesByMajorVersion.map(\.major))
         hasInitializedExpansion = true
+    }
+
+    private func sidebarGroupLabel(_ group: AppState.MajorVersionGroup) -> String {
+        switch appState.selectedProduct {
+        case .macOS:
+            return "macOS \(group.major) \(group.name)"
+        case .xcode:
+            return "Xcode \(group.major)"
+        }
     }
 
     private var selectionBinding: Binding<Release?> {
@@ -147,6 +168,13 @@ struct SidebarView: View {
             set: { appState.showDeviceSpecific = $0 }
         )
     }
+
+    private var productBinding: Binding<ProductType> {
+        Binding(
+            get: { appState.selectedProduct },
+            set: { appState.switchProduct($0) }
+        )
+    }
 }
 
 // MARK: - Release Row
@@ -154,10 +182,17 @@ struct SidebarView: View {
 private struct ReleaseRow: View {
     let release: Release
 
+    private var versionLabel: String {
+        switch release.resolvedProductType {
+        case .macOS: "macOS \(release.osVersion)"
+        case .xcode: "Xcode \(release.osVersion)"
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
-                Text("macOS \(release.osVersion)")
+                Text(versionLabel)
                     .font(.body)
                     .fontWeight(.medium)
 

@@ -12,6 +12,10 @@ public enum ScanProgress: Sendable {
     case unmountingDMG
     case assemblingResults
     case complete
+    // Xcode-specific phases
+    case extractingXIP
+    case scanningToolchain(component: String, current: Int, total: Int)
+    case parsingSDKMetadata
 }
 
 public actor IPSWScanner {
@@ -67,6 +71,7 @@ public actor IPSWScanner {
             let resolvedBeta = isRC ? false : (isBeta ?? BuildNumber.isBeta(extraction.buildNumber))
 
             release = Release(
+                productType: .macOS,
                 osVersion: extraction.osVersion,
                 buildNumber: extraction.buildNumber,
                 releaseName: resolvedName,

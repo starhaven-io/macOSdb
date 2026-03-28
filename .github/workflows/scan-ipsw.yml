@@ -65,7 +65,7 @@ jobs:
           fetch-depth: 0
 
       - name: Clean workspace
-        run: git clean -fdx data/releases/
+        run: git clean -fdx data/macos/releases/
 
       - name: Set up commit signing
         env:
@@ -174,7 +174,7 @@ jobs:
         run: |
           SCAN_ARGS=(
             "${IPSW_FILE}"
-            --output data/releases
+            --output data/macos/releases
             --release-date "${RELEASE_DATE}"
             --update-index
             --verbose
@@ -199,7 +199,7 @@ jobs:
 
       - name: Commit and push
         run: |
-          NEW_FILE=$(git ls-files --others --exclude-standard 'data/releases/')
+          NEW_FILE=$(git ls-files --others --exclude-standard 'data/macos/releases/')
           BASENAME=$(basename "${NEW_FILE}" .json)
           BRANCH="feat/data-${BASENAME}"
           git branch -m "${BRANCH}"

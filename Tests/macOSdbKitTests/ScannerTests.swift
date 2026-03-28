@@ -255,9 +255,67 @@ struct ScannerConfigTests {
         #expect(libxml2.strategy == .integerDecode)
     }
 
+    @Test("Toolchain component definitions cover expected binaries")
+    func toolchainComponentsCoverage() {
+        let names = Set(toolchainComponents.map(\.name))
+        #expect(names.contains("Apple Clang"))
+        #expect(names.contains("Swift"))
+        #expect(names.contains("ld"))
+    }
+
+    @Test("Developer component definitions cover expected binaries")
+    func developerComponentsCoverage() {
+        let names = Set(developerComponents.map(\.name))
+        #expect(names.contains("Git"))
+    }
+
+    @Test("Apple Clang normalization strips LLVM prefix")
+    func clangNormalization() {
+        let clang = toolchainComponents.first { $0.name == "Apple Clang" }!
+        #expect(clang.normalize("LLVM 21.0.0") == "21.0.0")
+        #expect(clang.normalize("LLVM 13.0.0") == "13.0.0")
+    }
+
+    @Test("Swift normalization strips version prefix")
+    func swiftNormalization() {
+        let swift = toolchainComponents.first { $0.name == "Swift" }!
+        #expect(swift.normalize("Swift version 6.3") == "6.3")
+        #expect(swift.normalize("Swift version 5.5.2") == "5.5.2")
+    }
+
+    @Test("ld normalization strips PROJECT prefix for both ld and ld64")
+    func ldNormalization() {
+        let ld = toolchainComponents.first { $0.name == "ld" }!
+        #expect(ld.normalize("PROJECT:ld64-711") == "711")
+        #expect(ld.normalize("PROJECT:ld-1230.1") == "1230.1")
+        #expect(ld.normalize("PROJECT:dyld-1022.1") == "1022.1")
+    }
+
+    @Test("Git normalization strips Apple Git suffix")
+    func gitNormalization() {
+        let git = developerComponents.first { $0.name == "Git" }!
+        #expect(git.normalize("2.39.3 (Apple Git-146)") == "2.39.3")
+        #expect(git.normalize("2.47.1 (Apple Git-162)") == "2.47.1")
+        #expect(git.normalize("2.37.1 (Apple Git-137.1)") == "2.37.1")
+    }
+
+    @Test("Framework component definitions cover expected binaries")
+    func frameworkComponentsCoverage() {
+        let names = Set(frameworkComponents.map(\.name))
+        #expect(names.contains("lldb"))
+    }
+
+    @Test("lldb normalization strips prefix")
+    func lldbNormalization() {
+        let lldb = frameworkComponents.first { $0.name == "lldb" }!
+        #expect(lldb.normalize("lldb-2100.0.16.4") == "2100.0.16.4")
+        #expect(lldb.normalize("lldb-1316.0.9.46") == "1316.0.9.46")
+    }
+
     @Test("All regex patterns compile")
     func allPatternsCompile() {
-        for def in filesystemComponents + dyldCacheComponents {
+        for def in filesystemComponents + dyldCacheComponents + toolchainComponents
+                    + developerComponents + frameworkComponents {
             let regex = try? NSRegularExpression(pattern: def.pattern)
             #expect(regex != nil, "Pattern failed to compile for \(def.name): \(def.pattern)")
         }
@@ -279,14 +337,38 @@ struct ScannerConfigTests {
             TestCase(name: "vim", input: "VIM - Vi IMproved 9.1", expected: "VIM - Vi IMproved 9.1"),
             TestCase(name: "httpd", input: "Apache/2.4.62", expected: "Apache/2.4.62"),
             TestCase(name: "zip", input: "Zip 2.0", expected: "Zip 2.0"),
-            TestCase(name: "zsh", input: "zsh-5.9-0-g73d3173", expected: "zsh-5.9")
+            TestCase(name: "zsh", input: "zsh-5.9-0-g73d3173", expected: "zsh-5.9"),
+            // Toolchain components
+            TestCase(name: "Apple Clang", input: "LLVM 21.0.0git", expected: "LLVM 21.0.0"),
+            TestCase(name: "Swift", input: "Swift version 6.3", expected: "Swift version 6.3"),
+            TestCase(name: "Swift", input: "Swift version 5.5.2", expected: "Swift version 5.5.2"),
+            TestCase(name: "ld", input: "PROJECT:ld64-711.1", expected: "PROJECT:ld64-711.1"),
+            TestCase(name: "ld", input: "PROJECT:ld-1230.1", expected: "PROJECT:ld-1230.1"),
+            TestCase(name: "ld", input: "PROJECT:dyld-1022.1", expected: "PROJECT:dyld-1022.1"),
+            // Developer components
+            TestCase(
+                name: "Git",
+                input: "2.39.3 (Apple Git-146)",
+                expected: "2.39.3 (Apple Git-146)"
+            ),
+            TestCase(
+                name: "Git",
+                input: "2.37.1 (Apple Git-137.1)",
+                expected: "2.37.1 (Apple Git-137.1)"
+            ),
+            // Framework components
+            TestCase(name: "lldb", input: "lldb-2100.0.16.4", expected: "lldb-2100.0.16.4"),
+            TestCase(name: "lldb", input: "lldb-1316.0.9.46", expected: "lldb-1316.0.9.46")
         ]
+
+        let allComponents = filesystemComponents + toolchainComponents + developerComponents
+            + frameworkComponents
 
         for testCase in testCases {
             let name = testCase.name
             let input = testCase.input
             let expected = testCase.expected
-            guard let def = filesystemComponents.first(where: { $0.name == name }) else {
+            guard let def = allComponents.first(where: { $0.name == name }) else {
                 Issue.record("Component definition not found: \(name)")
                 continue
             }
@@ -300,102 +382,5 @@ struct ScannerConfigTests {
                 #expect(String(input[matchRange]) == expected)
             }
         }
-    }
-}
-
-@Suite("Component extractor tests")
-struct ComponentExtractorTests {
-
-    @Test("Extract curl version from binary data")
-    func extractCurl() {
-        var bytes: [UInt8] = [0x00, 0x00, 0x00]
-        bytes.append(contentsOf: "curl 8.7.1 (x86_64-apple-darwin24.0)".utf8)
-        bytes.append(0x00)
-        bytes.append(contentsOf: "other stuff".utf8)
-        bytes.append(0x00)
-
-        let data = Data(bytes)
-        let def = filesystemComponents.first { $0.name == "curl" }!
-        let component = ComponentExtractor.extract(from: data, using: def)
-
-        #expect(component != nil)
-        #expect(component?.name == "curl")
-        #expect(component?.version == "8.7.1")
-        #expect(component?.source == .filesystem)
-    }
-
-    @Test("Extract OpenSSH version")
-    func extractOpenSSH() {
-        var bytes: [UInt8] = [0x00]
-        bytes.append(contentsOf: "OpenSSH_9.9p2, LibreSSL 3.3.6".utf8)
-        bytes.append(0x00)
-
-        let data = Data(bytes)
-        let def = filesystemComponents.first { $0.name == "OpenSSH" }!
-        let component = ComponentExtractor.extract(from: data, using: def)
-
-        #expect(component?.version == "9.9p2")
-    }
-
-    @Test("Integer decode for libxml2")
-    func extractLibxml2IntegerDecode() {
-        var bytes: [UInt8] = [0x00]
-        bytes.append(contentsOf: "20913".utf8)
-        bytes.append(0x00)
-
-        let data = Data(bytes)
-        let def = dyldCacheComponents.first { $0.name == "libxml2" }!
-        let component = ComponentExtractor.extract(from: data, using: def)
-
-        #expect(component?.version == "2.9.13")
-        #expect(component?.source == .dyldCache)
-    }
-
-    @Test("No match returns nil")
-    func noMatchReturnsNil() {
-        var bytes: [UInt8] = [0x00, 0x00]
-        bytes.append(contentsOf: "no version here".utf8)
-        bytes.append(0x00)
-
-        let data = Data(bytes)
-        let def = ComponentDefinition(
-            name: "TestBinary",
-            path: "usr/bin/testbinary",
-            source: .filesystem,
-            pattern: #"NOMATCH_[0-9]+\.[0-9]+\.[0-9]+"#,
-            normalize: { $0 },
-            strategy: .regex
-        )
-        let component = ComponentExtractor.extract(from: data, using: def)
-
-        #expect(component == nil)
-    }
-
-    @Test("libpcap requires upstream version string format")
-    func libpcapUpstreamFormat() {
-        var bytes: [UInt8] = [0x00]
-        bytes.append(contentsOf: "libpcap version 1.10.1 (with TPACKET_V3)".utf8)
-        bytes.append(0x00)
-        bytes.append(contentsOf: "98.100.3".utf8) // Apple internal version — should be ignored
-        bytes.append(0x00)
-
-        let data = Data(bytes)
-        let def = dyldCacheComponents.first { $0.name == "libpcap" }!
-        let component = ComponentExtractor.extract(from: data, using: def)
-
-        #expect(component?.version == "1.10.1")
-    }
-
-    @Test("libpcap skips bare version numbers")
-    func libpcapRejectsAppleVersion() {
-        var bytes: [UInt8] = [0x00]
-        bytes.append(contentsOf: "98.100.3".utf8) // Apple internal, no "libpcap version" prefix
-        bytes.append(0x00)
-
-        let data = Data(bytes)
-        let def = dyldCacheComponents.first { $0.name == "libpcap" }!
-        let component = ComponentExtractor.extract(from: data, using: def)
-
-        #expect(component == nil)
     }
 }

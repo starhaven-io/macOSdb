@@ -1,0 +1,57 @@
+{
+  "buildNumber" : "13C100",
+  "components" : [
+    {
+      "name" : "Apple Clang",
+      "path" : "/usr/bin/clang",
+      "source" : "filesystem",
+      "version" : "13.0.0"
+    },
+    {
+      "name" : "Git",
+      "path" : "/usr/bin/git",
+      "source" : "filesystem",
+      "version" : "2.32.0"
+    },
+    {
+      "name" : "ld",
+      "path" : "/usr/bin/ld",
+      "source" : "filesystem",
+      "version" : "711"
+    },
+    {
+      "name" : "lldb",
+      "path" : "/Contents/SharedFrameworks/LLDB.framework/LLDB",
+      "source" : "filesystem",
+      "version" : "1300.0.42.3"
+    },
+    {
+      "name" : "Python",
+      "path" : "/Library/Frameworks/Python3.framework/Versions/Current/lib/libpython3.8.dylib",
+      "source" : "filesystem",
+      "version" : "3.0.0"
+    },
+    {
+      "name" : "Swift",
+      "path" : "/usr/bin/swift-frontend",
+      "source" : "filesystem",
+      "version" : "5.5.2"
+    }
+  ],
+  "isBeta" : false,
+  "isDeviceSpecific" : false,
+  "isRC" : false,
+  "kernels" : [
+
+  ],
+  "osVersion" : "13.2.1",
+  "productType" : "Xcode",
+  "releaseDate" : "2021-12-17",
+  "releaseName" : "Xcode 13.2.1",
+  "sdks" : [
+    {
+      "sdkVersion" : "12.1"
+    }
+  ],
+  "sourceFile" : "Xcode_13.2.1.xip"
+}

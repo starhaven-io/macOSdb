@@ -20,7 +20,7 @@ struct ContentView: View {
                 ContentUnavailableView(
                     "Select a Release",
                     systemImage: "apple.logo",
-                    description: Text("Choose a macOS release from the sidebar to view its open source components.")
+                    description: Text("Choose a release from the sidebar to view its components.")
                 )
             }
         }

@@ -12,15 +12,20 @@ struct ReleaseDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     releaseHeader(release)
+                    if let sdks = release.sdks, !sdks.isEmpty {
+                        sdkSection(sdks)
+                    }
                     componentTable(release)
                     if !release.kernels.isEmpty {
                         kernelSection(release)
                     }
-                    chipSection(release)
+                    if release.resolvedProductType == .macOS {
+                        chipSection(release)
+                    }
                 }
                 .padding()
             }
-            .navigationTitle("macOS \(release.osVersion)")
+            .navigationTitle(release.displayName)
         }
     }
 
@@ -42,10 +47,12 @@ struct ReleaseDetailView: View {
                     "\(release.components.count) components",
                     systemImage: "shippingbox"
                 )
-                Label(
-                    "\(release.supportedChips.count) chip families",
-                    systemImage: "cpu"
-                )
+                if release.resolvedProductType == .macOS {
+                    Label(
+                        "\(release.supportedChips.count) chip families",
+                        systemImage: "cpu"
+                    )
+                }
                 if release.isDeviceSpecific {
                     Label("Device Specific", systemImage: "desktopcomputer")
                 }
@@ -54,9 +61,45 @@ struct ReleaseDetailView: View {
                         Label("IPSW", systemImage: "arrow.down.circle")
                     }
                 }
+                if let urlString = release.sourceURL, let url = URL(string: urlString) {
+                    Link(destination: url) {
+                        Label("Download", systemImage: "arrow.down.circle")
+                    }
+                }
+                if let counterpart = counterpartProduct(for: release) {
+                    Button {
+                        appState.navigateToCounterpart(release, in: counterpart)
+                    } label: {
+                        Label(counterpart.displayName, systemImage: "arrow.triangle.swap")
+                    }
+                }
             }
             .font(.callout)
             .foregroundStyle(.secondary)
+        }
+    }
+
+    private func counterpartProduct(for release: Release) -> ProductType? {
+        switch release.resolvedProductType {
+        case .macOS, .xcode: nil
+        }
+    }
+
+    // MARK: - SDK Info
+
+    @ViewBuilder
+    private func sdkSection(_ sdks: [SDKInfo]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("macOS SDKs")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            ForEach(sdks) { sdk in
+                Label("SDK \(sdk.sdkVersion)", systemImage: "sdcard")
+                    .font(.headline)
+                    .padding(12)
+                    .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
+            }
         }
     }
 

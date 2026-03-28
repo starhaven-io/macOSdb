@@ -5,14 +5,17 @@ import macOSdbKit
 struct CompareCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "compare",
-        abstract: "Compare components between two macOS releases."
+        abstract: "Compare components between two releases."
     )
 
-    @Argument(help: "First (older) macOS version (e.g. 15.1).")
+    @Argument(help: "First (older) version (e.g. 15.1).")
     var fromVersion: String
 
-    @Argument(help: "Second (newer) macOS version (e.g. 15.2).")
+    @Argument(help: "Second (newer) version (e.g. 15.2).")
     var toVersion: String
+
+    @Option(name: .long, help: "Product type: macOS or Xcode (default: macOS).")
+    var product: String?
 
     @Flag(name: .long, help: "Only show components that changed.")
     var changed = false
@@ -21,23 +24,24 @@ struct CompareCommand: AsyncParsableCommand {
     var dataURL: String?
 
     func run() async throws {
+        let productType = parseProductType(product)
         let provider = makeDataProvider(dataURL: dataURL)
 
-        async let fromRelease = provider.findRelease(osVersion: fromVersion)
-        async let toRelease = provider.findRelease(osVersion: toVersion)
+        async let fromRelease = provider.findRelease(osVersion: fromVersion, productType: productType)
+        async let toRelease = provider.findRelease(osVersion: toVersion, productType: productType)
 
         guard let from = try await fromRelease else {
-            print("Release macOS \(fromVersion) not found.")
+            print("\(productType.displayName) \(fromVersion) not found.")
             throw ExitCode.failure
         }
         guard let toRel = try await toRelease else {
-            print("Release macOS \(toVersion) not found.")
+            print("\(productType.displayName) \(toVersion) not found.")
             throw ExitCode.failure
         }
 
         let comparison = VersionComparer.compare(from: from, to: toRel)
 
-        print("Comparing macOS \(from.osVersion) → \(toRel.osVersion)")
+        print("Comparing \(from.displayName) → \(toRel.displayName)")
         print(comparison.summary)
         print("")
 

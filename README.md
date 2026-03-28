@@ -56,7 +56,7 @@ macosdb compare 15.1 15.2 --changed
 
 # Scan an IPSW to produce release JSON
 macosdb scan ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \
-  --output data/releases --release-date 2024-12-11 --update-index --verbose
+  --output data/macos/releases --release-date 2024-12-11 --update-index --verbose
 ```
 
 ## How scanning works
@@ -72,10 +72,11 @@ The scanner extracts component versions from Apple's IPSW firmware images throug
 
 ## Data format
 
-Release data is stored as JSON files in `data/`:
+Release data is stored as JSON files in `data/`, organized by product type:
 
-- `data/releases.json` — index of all releases with version, build number, name, and date
-- `data/releases/{major}/macOS-{version}-{build}.json` — full release data including kernels and components
+- `data/macos/releases.json` — index of all macOS releases
+- `data/macos/releases/{major}/macOS-{version}-{build}.json` — full release data including kernels and components
+- `data/xcode/` — same structure for Xcode releases
 
 Data is fetched at runtime via HTTPS from GitHub raw URLs, so the app and CLI work without a local clone.
 

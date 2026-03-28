@@ -10,6 +10,10 @@ public enum ScannerError: LocalizedError {
     case componentExtractionFailed(name: String, reason: String)
     case metadataExtractionFailed(reason: String)
     case aeaDecryptionFailed(reason: String)
+    case archiveNotFound(path: String)
+    case xipExtractionFailed(reason: String)
+    case xcodeAppNotFound(reason: String)
+    case versionPlistNotFound(reason: String)
 
     public var errorDescription: String? {
         switch self {
@@ -31,6 +35,14 @@ public enum ScannerError: LocalizedError {
             "Failed to extract IPSW metadata: \(reason)"
         case .aeaDecryptionFailed(let reason):
             "AEA decryption failed: \(reason)"
+        case .archiveNotFound(let path):
+            "Archive not found: \(path)"
+        case .xipExtractionFailed(let reason):
+            "Failed to extract XIP archive: \(reason)"
+        case .xcodeAppNotFound(let reason):
+            "Xcode.app not found in extracted archive: \(reason)"
+        case .versionPlistNotFound(let reason):
+            "Version plist not found: \(reason)"
         }
     }
 }
