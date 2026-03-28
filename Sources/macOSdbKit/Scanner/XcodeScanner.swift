@@ -37,9 +37,10 @@ public actor XcodeScanner {
             let xcodeApp = try findXcodeApp(in: expandedDir)
             Self.logger.info("Found Xcode.app: \(xcodeApp.path)")
 
-            // Phase 3: Extract version metadata from version.plist
+            // Phase 3: Extract version metadata
             let (osVersion, buildNumber) = try extractVersionMetadata(from: xcodeApp)
             let resolvedName = releaseName ?? "Xcode \(osVersion)"
+            let minOS = extractMinimumOSVersion(from: xcodeApp)
             sendVerbose("Xcode version: \(osVersion) (\(buildNumber))")
 
             // Phase 4: Extract toolchain and framework components
@@ -70,7 +71,8 @@ public actor XcodeScanner {
                 isRC: isRC,
                 rcNumber: rcNumber,
                 components: components,
-                sdks: sdks.isEmpty ? nil : sdks
+                sdks: sdks.isEmpty ? nil : sdks,
+                minimumOSVersion: minOS
             )
         } catch {
             cleanup(expandedDir)
@@ -142,6 +144,17 @@ public actor XcodeScanner {
     }
 
     // MARK: - Version metadata
+
+    private func extractMinimumOSVersion(from xcodeApp: URL) -> String? {
+        let infoPlist = xcodeApp.appendingPathComponent("Contents/Info.plist")
+        guard let data = try? Data(contentsOf: infoPlist),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil)
+                  as? [String: Any],
+              let minOS = plist["LSMinimumSystemVersion"] as? String else {
+            return nil
+        }
+        return minOS
+    }
 
     private func extractVersionMetadata(from xcodeApp: URL) throws -> (osVersion: String, buildNumber: String) {
         let versionPlist = xcodeApp.appendingPathComponent("Contents/version.plist")
