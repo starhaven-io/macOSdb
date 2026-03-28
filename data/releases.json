@@ -1584,7 +1584,7 @@
     "buildNumber" : "22F2073",
     "dataFile" : "releases/13/macOS-13.4-22F2073.json",
     "isBeta" : false,
-    "isDeviceSpecific" : false,
+    "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "13.4",
     "releaseDate" : "2023-06-05",
