@@ -259,6 +259,7 @@ struct ScannerConfigTests {
     func toolchainComponentsCoverage() {
         let names = Set(toolchainComponents.map(\.name))
         #expect(names.contains("Apple Clang"))
+        #expect(names.contains("cctools"))
         #expect(names.contains("Swift"))
         #expect(names.contains("ld"))
     }
@@ -269,18 +270,25 @@ struct ScannerConfigTests {
         #expect(names.contains("Git"))
     }
 
-    @Test("Apple Clang normalization strips LLVM prefix")
+    @Test("Apple Clang normalization strips prefix")
     func clangNormalization() {
         let clang = toolchainComponents.first { $0.name == "Apple Clang" }!
-        #expect(clang.normalize("LLVM 21.0.0") == "21.0.0")
-        #expect(clang.normalize("LLVM 13.0.0") == "13.0.0")
+        #expect(clang.normalize("clang-2100.0.123.102") == "2100.0.123.102")
+        #expect(clang.normalize("clang-1300.0.29.30") == "1300.0.29.30")
     }
 
-    @Test("Swift normalization strips version prefix")
+    @Test("cctools normalization strips prefix")
+    func cctoolsNormalization() {
+        let cctools = toolchainComponents.first { $0.name == "cctools" }!
+        #expect(cctools.normalize("cctools-1040") == "1040")
+        #expect(cctools.normalize("cctools-973") == "973")
+    }
+
+    @Test("Swift normalization strips prefix")
     func swiftNormalization() {
         let swift = toolchainComponents.first { $0.name == "Swift" }!
-        #expect(swift.normalize("Swift version 6.3") == "6.3")
-        #expect(swift.normalize("Swift version 5.5.2") == "5.5.2")
+        #expect(swift.normalize("swiftlang-6.3.0.123.5") == "6.3.0.123.5")
+        #expect(swift.normalize("swiftlang-5.5.2.3.1") == "5.5.2.3.1")
     }
 
     @Test("ld normalization strips PROJECT prefix for both ld and ld64")
@@ -339,9 +347,10 @@ struct ScannerConfigTests {
             TestCase(name: "zip", input: "Zip 2.0", expected: "Zip 2.0"),
             TestCase(name: "zsh", input: "zsh-5.9-0-g73d3173", expected: "zsh-5.9"),
             // Toolchain components
-            TestCase(name: "Apple Clang", input: "LLVM 21.0.0git", expected: "LLVM 21.0.0"),
-            TestCase(name: "Swift", input: "Swift version 6.3", expected: "Swift version 6.3"),
-            TestCase(name: "Swift", input: "Swift version 5.5.2", expected: "Swift version 5.5.2"),
+            TestCase(name: "Apple Clang", input: "clang-2100.0.123.102", expected: "clang-2100.0.123.102"),
+            TestCase(name: "cctools", input: "cctools-1040", expected: "cctools-1040"),
+            TestCase(name: "Swift", input: "swiftlang-6.3.0.123.5", expected: "swiftlang-6.3.0.123.5"),
+            TestCase(name: "Swift", input: "swiftlang-5.5.2.3.1", expected: "swiftlang-5.5.2.3.1"),
             TestCase(name: "ld", input: "PROJECT:ld64-711.1", expected: "PROJECT:ld64-711.1"),
             TestCase(name: "ld", input: "PROJECT:ld-1230.1", expected: "PROJECT:ld-1230.1"),
             TestCase(name: "ld", input: "PROJECT:dyld-1022.1", expected: "PROJECT:dyld-1022.1"),

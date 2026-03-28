@@ -89,7 +89,7 @@ struct ComponentExtractorTests {
     @Test("Extract Apple Clang version from binary data")
     func extractClang() {
         var bytes: [UInt8] = [0x00, 0x00]
-        bytes.append(contentsOf: "Apple clang version 16.0.0 (clang-1600.0.26.6) LLVM 21.0.0git".utf8)
+        bytes.append(contentsOf: "clang-2100.0.123.102".utf8)
         bytes.append(0x00)
 
         let data = Data(bytes)
@@ -97,20 +97,34 @@ struct ComponentExtractorTests {
         let component = ComponentExtractor.extract(from: data, using: def)
 
         #expect(component?.name == "Apple Clang")
-        #expect(component?.version == "21.0.0")
+        #expect(component?.version == "2100.0.123.102")
+    }
+
+    @Test("Extract cctools version from binary data")
+    func extractCctools() {
+        var bytes: [UInt8] = [0x00]
+        bytes.append(contentsOf: "cctools-1040".utf8)
+        bytes.append(0x00)
+
+        let data = Data(bytes)
+        let def = toolchainComponents.first { $0.name == "cctools" }!
+        let component = ComponentExtractor.extract(from: data, using: def)
+
+        #expect(component?.name == "cctools")
+        #expect(component?.version == "1040")
     }
 
     @Test("Extract Swift version from binary data")
     func extractSwift() {
         var bytes: [UInt8] = [0x00]
-        bytes.append(contentsOf: "Swift version 6.3 (swiftlang-6.3.0.5.1 clang-1700.0.13.3)".utf8)
+        bytes.append(contentsOf: "swiftlang-6.3.0.123.5".utf8)
         bytes.append(0x00)
 
         let data = Data(bytes)
         let def = toolchainComponents.first { $0.name == "Swift" }!
         let component = ComponentExtractor.extract(from: data, using: def)
 
-        #expect(component?.version == "6.3")
+        #expect(component?.version == "6.3.0.123.5")
     }
 
     @Test("Extract ld version — modern format")

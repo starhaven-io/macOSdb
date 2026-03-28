@@ -233,21 +233,27 @@ public let toolchainComponents: [ComponentDefinition] = [
         name: "Apple Clang",
         path: "usr/bin/clang",
         source: .filesystem,
-        // All versions embed "LLVM X.Y.Z" (e.g. "LLVM 13.0.0", "LLVM 21.0.0")
-        pattern: #"LLVM [0-9]+\.[0-9]+\.[0-9]+"#,
+        pattern: #"clang-[0-9]+[0-9.]*"#,
 
-        normalize: stripPrefix(["LLVM "]),
+        normalize: stripPrefix(["clang-"]),
         strategy: .regex
     ),
     ComponentDefinition(
         name: "Swift",
-        // swift is a driver; swift-frontend has the actual version string
         path: "usr/bin/swift-frontend",
         source: .filesystem,
-        // Embeds "Swift version X.Y[.Z]" (e.g. "Swift version 6.3", "Swift version 5.5.2")
-        pattern: #"Swift version [0-9]+\.[0-9]+(?:\.[0-9]+)?"#,
+        pattern: #"swiftlang-[0-9]+\.[0-9]+[0-9.]*"#,
 
-        normalize: stripPrefix(["Swift version "]),
+        normalize: stripPrefix(["swiftlang-"]),
+        strategy: .regex
+    ),
+    ComponentDefinition(
+        name: "cctools",
+        path: "usr/bin/otool",
+        source: .filesystem,
+        pattern: #"cctools-[0-9]+"#,
+
+        normalize: stripPrefix(["cctools-"]),
         strategy: .regex
     ),
     ComponentDefinition(

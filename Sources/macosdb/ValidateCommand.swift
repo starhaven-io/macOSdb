@@ -34,25 +34,43 @@ struct ValidateCommand: AsyncParsableCommand {
 
         printStatus("Validating \(targets.count) IPSW(s)...\n")
 
-        var passed = 0
+        var hashed = 0
+        var skipped = 0
         var failed = 0
 
         for url in targets {
-            let ok = await process(url)
-            ok ? (passed += 1) : (failed += 1)
+            let result = await process(url)
+            switch result {
+            case .hashed: hashed += 1
+            case .skipped: skipped += 1
+            case .failed: failed += 1
+            }
         }
 
-        printStatus("\n\(passed) passed\(failed > 0 ? ", \(failed) failed" : "")  (\(targets.count) total)")
+        let parts = [
+            hashed > 0 ? "\(hashed) hashed" : nil,
+            skipped > 0 ? "\(skipped) already verified" : nil,
+            failed > 0 ? "\(failed) failed" : nil
+        ].compactMap { $0 }
+        printStatus("\n\(parts.joined(separator: ", "))  (\(targets.count) total)")
 
         if failed > 0 {
             throw ExitCode.failure
         }
     }
 
-    @discardableResult
-    private func process(_ url: URL) async -> Bool {
+    private enum ProcessResult { case hashed, skipped, failed }
+
+    private func process(_ url: URL) async -> ProcessResult {
         let sizeGB = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize)
             .map { String(format: "%.1f GB", Double($0) / 1e9) } ?? "unknown size"
+
+        let sidecar = url.appendingPathExtension("sha256")
+
+        if sidecar.isReadableFile && !rehash {
+            printStatus("\(url.lastPathComponent)  (\(sizeGB))  ✓ already verified")
+            return .skipped
+        }
 
         printStatus("\(url.lastPathComponent)  (\(sizeGB))")
 
@@ -61,37 +79,22 @@ struct ValidateCommand: AsyncParsableCommand {
             printStatus("  ✓ Valid ZIP  (\(entryCount) entries)")
         } catch {
             printStatus("  ✗ Invalid ZIP: \(error.localizedDescription)")
-            return false
+            return .failed
         }
 
-        let sidecar = url.appendingPathExtension("sha256")
         do {
             let digest = try await hashFile(url)
-
-            if sidecar.isReadableFile && !rehash {
-                let existing = (try? String(contentsOf: sidecar, encoding: .utf8))?
-                    .split(separator: " ").first.map(String.init) ?? ""
-                if existing == digest {
-                    printStatus("  ✓ sha256: \(digest)")
-                } else {
-                    printStatus("  ✗ Hash mismatch!")
-                    printStatus("    expected: \(existing)")
-                    printStatus("    actual:   \(digest)")
-                    return false
-                }
-            } else {
-                let line = "\(digest)  \(url.lastPathComponent)\n"
-                try line.write(to: sidecar, atomically: true, encoding: .utf8)
-                matchMtime(of: sidecar, to: url)
-                printStatus("  ✓ sha256: \(digest)")
-                printStatus("    → \(sidecar.lastPathComponent)")
-            }
+            let line = "\(digest)  \(url.lastPathComponent)\n"
+            try line.write(to: sidecar, atomically: true, encoding: .utf8)
+            matchMtime(of: sidecar, to: url)
+            printStatus("  ✓ sha256: \(digest)")
+            printStatus("    → \(sidecar.lastPathComponent)")
         } catch {
             printStatus("  ✗ Hashing failed: \(error.localizedDescription)")
-            return false
+            return .failed
         }
 
-        return true
+        return .hashed
     }
 
     private func validateZIP(at url: URL) throws -> Int {
