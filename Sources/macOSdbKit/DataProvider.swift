@@ -15,9 +15,9 @@ public actor DataProvider {
         self.session = session
     }
 
-    public init(owner: String = "p-linnane", repo: String = "macOSdb", branch: String = "main") {
+    public init() {
         // swiftlint:disable:next force_unwrapping
-        self.baseURL = URL(string: "https://raw.githubusercontent.com/\(owner)/\(repo)/\(branch)/data/")!
+        self.baseURL = URL(string: "https://macosdb.com/api/v1/")!
         self.session = .shared
     }
 
