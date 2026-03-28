@@ -17,6 +17,7 @@ final class AppState {
     var searchText = ""
     var isComparing = false
     var showBetas = true
+    var showDeviceSpecific = false
 
     // MARK: - Derived
 
@@ -28,7 +29,9 @@ final class AppState {
     }
 
     var releasesByMajorVersion: [MajorVersionGroup] {
-        let filtered = showBetas ? releases : releases.filter { !$0.isPrerelease }
+        let filtered = releases.filter { release in
+            (showBetas || !release.isPrerelease) && (showDeviceSpecific || !release.isDeviceSpecific)
+        }
         let grouped = Dictionary(grouping: filtered) { $0.majorVersion }
         return grouped.keys.sorted(by: >).compactMap { major in
             guard let releases = grouped[major] else { return nil }

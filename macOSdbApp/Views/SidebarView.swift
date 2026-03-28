@@ -30,9 +30,13 @@ struct SidebarView: View {
                                 .tag(release)
                         }
                     } label: {
-                        Text("macOS \(group.major) \(group.name)")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("macOS \(group.major) \(group.name)")
+                                .font(.callout)
+                            Text(groupCountLabel(for: group))
+                                .font(.caption)
+                        }
+                        .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -59,13 +63,19 @@ struct SidebarView: View {
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                     .padding(8)
             } else {
-                Toggle("Show pre-releases", isOn: showBetasBinding)
-                    .toggleStyle(.checkbox)
-                    .font(.callout)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.bar)
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("Show pre-releases", isOn: showBetasBinding)
+                        .toggleStyle(.checkbox)
+                    Toggle("Show device specific", isOn: showDeviceSpecificBinding)
+                        .toggleStyle(.checkbox)
+                    Text(totalCountLabel)
+                        .foregroundStyle(.tertiary)
+                }
+                .font(.callout)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.bar)
             }
         }
     }
@@ -103,10 +113,38 @@ struct SidebarView: View {
         )
     }
 
+    private func groupCountLabel(for group: AppState.MajorVersionGroup) -> String {
+        let total = group.releases.count
+        let preRelease = group.releases.filter(\.isPrerelease).count
+        let stable = total - preRelease
+        if preRelease > 0 {
+            return "\(stable) stable, \(preRelease) pre-release, \(total) total"
+        }
+        return "\(stable) stable"
+    }
+
+    private var totalCountLabel: String {
+        let groups = appState.releasesByMajorVersion
+        let total = groups.reduce(0) { $0 + $1.releases.count }
+        let preRelease = groups.reduce(0) { $0 + $1.releases.filter(\.isPrerelease).count }
+        let stable = total - preRelease
+        if preRelease > 0 {
+            return "\(stable) stable, \(preRelease) pre-release, \(total) total"
+        }
+        return "\(stable) stable"
+    }
+
     private var showBetasBinding: Binding<Bool> {
         Binding(
             get: { appState.showBetas },
             set: { appState.showBetas = $0 }
+        )
+    }
+
+    private var showDeviceSpecificBinding: Binding<Bool> {
+        Binding(
+            get: { appState.showDeviceSpecific },
+            set: { appState.showDeviceSpecific = $0 }
         )
     }
 }
