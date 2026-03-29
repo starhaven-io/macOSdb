@@ -188,6 +188,7 @@
     }
   ],
   "osVersion" : "13.4",
+  "productType" : "macOS",
   "releaseDate" : "2023-06-05",
   "releaseName" : "Ventura"
 }

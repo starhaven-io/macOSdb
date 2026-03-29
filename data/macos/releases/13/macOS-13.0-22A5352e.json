@@ -231,6 +231,7 @@
     }
   ],
   "osVersion" : "13.0",
+  "productType" : "macOS",
   "releaseDate" : "2022-09-20",
   "releaseName" : "Ventura"
 }
