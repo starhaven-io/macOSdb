@@ -109,7 +109,9 @@
       "arch" : "ARM64_T8020",
       "chip" : "A12Z (DTK)",
       "darwinVersion" : "20.4.0",
-      "devices" : [],
+      "devices" : [
+
+      ],
       "file" : "kernelcache.release.j273",
       "xnuVersion" : "7195.100.326.0.1"
     },
@@ -148,9 +150,20 @@
       ],
       "file" : "kernelcache.release.mac13g",
       "xnuVersion" : "7195.100.326.0.1"
+    },
+    {
+      "arch" : "ARM64_T8020",
+      "chip" : "A12Z (DTK)",
+      "darwinVersion" : "20.4.0",
+      "devices" : [
+
+      ],
+      "file" : "kernelcache.release.t485",
+      "xnuVersion" : "7195.100.326.0.1"
     }
   ],
   "osVersion" : "11.3",
+  "productType" : "macOS",
   "releaseDate" : "2021-02-17",
   "releaseName" : "Big Sur"
 }
