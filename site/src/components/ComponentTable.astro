@@ -1,4 +1,6 @@
 ---
+import { componentSlug } from '../lib/utils';
+
 interface Component {
   name: string;
   version?: string | null;
@@ -29,7 +31,9 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
       {
         sorted.map((comp) => (
           <tr>
-            <td class="comp-name">{comp.name}</td>
+            <td class="comp-name">
+              <a href={`/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
+            </td>
             <td>
               <code>{comp.version}</code>
             </td>
@@ -51,6 +55,13 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
 <style>
   .components {
     margin-bottom: 2.5rem;
+  }
+
+  .components h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
   }
 
   .comp-name {

@@ -133,6 +133,19 @@ tbody tr:hover {
   background: color-mix(in srgb, var(--color-link) 6%, var(--color-bg));
 }
 
+/* JS-managed striping for filtered tables */
+table.js-stripe tbody tr:nth-child(even) {
+  background: transparent;
+}
+
+table.js-stripe tbody tr.stripe {
+  background: var(--color-table-stripe);
+}
+
+table.js-stripe tbody tr.stripe:hover {
+  background: color-mix(in srgb, var(--color-link) 6%, var(--color-bg));
+}
+
 @media (max-width: 640px) {
   th,
   td {
