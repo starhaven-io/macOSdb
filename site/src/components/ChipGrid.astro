@@ -1,0 +1,74 @@
+---
+interface Kernel {
+  deviceChips?: { device: string; chip: string }[];
+}
+
+interface Props {
+  kernels: Kernel[];
+}
+
+const { kernels } = Astro.props;
+
+const chipFamilies: Record<string, { device: string; chip: string }[]> = {};
+for (const kernel of kernels) {
+  for (const dc of kernel.deviceChips || []) {
+    if (!chipFamilies[dc.chip]) chipFamilies[dc.chip] = [];
+    if (!chipFamilies[dc.chip].some((d) => d.device === dc.device)) {
+      chipFamilies[dc.chip].push(dc);
+    }
+  }
+}
+
+const hasChips = Object.keys(chipFamilies).length > 0;
+---
+
+{
+  hasChips && (
+    <section class="hardware">
+      <h2>Hardware Support</h2>
+      <div class="chip-grid">
+        {Object.entries(chipFamilies).map(([chip, devices]) => (
+          <div class="chip-card">
+            <h3>{chip}</h3>
+            <ul>
+              {devices.map((d) => (
+                <li>{d.device}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .chip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .chip-card {
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .chip-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .chip-card ul {
+    list-style: none;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .chip-card li {
+    padding: 0.15rem 0;
+  }
+</style>

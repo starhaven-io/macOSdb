@@ -1,0 +1,86 @@
+import { defineCollection } from 'astro:content';
+import { file } from 'astro/loaders';
+import { z } from 'astro/zod';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const releaseIndexEntrySchema = z.object({
+  id: z.string(),
+  buildNumber: z.string(),
+  osVersion: z.string(),
+  releaseName: z.string(),
+  releaseDate: z.string(),
+  isBeta: z.boolean(),
+  isRC: z.boolean(),
+  isDeviceSpecific: z.boolean(),
+  betaNumber: z.number().optional(),
+  rcNumber: z.number().optional(),
+  dataFile: z.string(),
+});
+
+const componentSchema = z.object({
+  name: z.string(),
+  version: z.string().nullable().optional(),
+  path: z.string(),
+  source: z.enum(['filesystem', 'dyldCache', 'sdk']),
+});
+
+const deviceChipSchema = z.object({
+  device: z.string(),
+  chip: z.string(),
+});
+
+const kernelSchema = z.object({
+  file: z.string(),
+  darwinVersion: z.string(),
+  xnuVersion: z.string().nullable().optional(),
+  arch: z.string(),
+  chip: z.string(),
+  devices: z.array(z.string()),
+  deviceChips: z.array(deviceChipSchema).optional(),
+});
+
+const releaseDetailSchema = z.object({
+  id: z.string(),
+  buildNumber: z.string(),
+  osVersion: z.string(),
+  releaseName: z.string(),
+  releaseDate: z.string().optional(),
+  isBeta: z.boolean(),
+  isRC: z.boolean(),
+  isDeviceSpecific: z.boolean().optional(),
+  betaNumber: z.number().optional(),
+  rcNumber: z.number().optional(),
+  ipswFile: z.string().optional(),
+  ipswURL: z.string().optional(),
+  components: z.array(componentSchema),
+  kernels: z.array(kernelSchema),
+});
+
+const macosReleases = defineCollection({
+  loader: file('../data/macos/releases.json', {
+    parser: (text) =>
+      JSON.parse(text).map((r: Record<string, unknown>) => ({
+        ...r,
+        id: `${r.osVersion}-${r.buildNumber}`,
+      })),
+  }),
+  schema: releaseIndexEntrySchema,
+});
+
+const macosReleaseDetails = defineCollection({
+  loader: async () => {
+    const dataDir = path.resolve('..', 'data');
+    const index = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8'));
+    return index.map((entry: Record<string, unknown>) => {
+      const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', entry.dataFile as string), 'utf-8'));
+      return {
+        id: `${entry.osVersion}-${entry.buildNumber}`,
+        ...data,
+      };
+    });
+  },
+  schema: releaseDetailSchema,
+});
+
+export const collections = { macosReleases, macosReleaseDetails };

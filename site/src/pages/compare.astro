@@ -1,33 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
-import fs from 'node:fs';
-import path from 'node:path';
+import { getCollection } from 'astro:content';
+import { displayName } from '../lib/utils';
 
-const dataDir = path.resolve('..', 'data');
-const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8'));
+const releases = await getCollection('macosReleases');
 
-// Build a map of release key → components for embedding
-const releaseData: Record<string, any[]> = {};
-for (const release of releases) {
-  const filePath = path.join(dataDir, 'macos', release.dataFile);
-  const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  const key = `${release.osVersion}-${release.buildNumber}`;
-  releaseData[key] = data.components;
-}
-
-function displayName(release: any): string {
-  let name = `macOS ${release.osVersion}`;
-  if (release.isBeta && release.betaNumber) {
-    name += ` beta ${release.betaNumber}`;
-  } else if (release.isRC) {
-    name += ' RC';
-  }
-  return name;
-}
-
-const releaseOptions = releases.map((r: any) => ({
-  key: `${r.osVersion}-${r.buildNumber}`,
-  label: `${displayName(r)} (${r.buildNumber})`,
+// Build a lookup from slug to API path for client-side fetching
+const releaseOptions = releases.map((entry) => ({
+  key: `${entry.data.osVersion}-${entry.data.buildNumber}`,
+  label: `${displayName(entry.data)} (${entry.data.buildNumber})`,
+  apiPath: entry.data.dataFile.replace(/^releases\//, '').replace(/\.json$/, ''),
 }));
 ---
 
@@ -41,22 +23,22 @@ const releaseOptions = releases.map((r: any) => ({
       <select id="from-select">
         <option value="">Select a release…</option>
         {
-          releaseOptions.map((opt: any, i: number) => (
-            <option value={opt.key} selected={i === 1}>
+          releaseOptions.map((opt) => (
+            <option value={opt.key} data-api={opt.apiPath}>
               {opt.label}
             </option>
           ))
         }
       </select>
     </div>
-    <span class="arrow">→</span>
+    <span class="arrow">&rarr;</span>
     <div class="select-group">
       <label for="to-select">To</label>
       <select id="to-select">
         <option value="">Select a release…</option>
         {
-          releaseOptions.map((opt: any, i: number) => (
-            <option value={opt.key} selected={i === 0}>
+          releaseOptions.map((opt) => (
+            <option value={opt.key} data-api={opt.apiPath}>
               {opt.label}
             </option>
           ))
@@ -114,13 +96,9 @@ const releaseOptions = releases.map((r: any) => ({
       </table>
     </div>
   </div>
-
-  <script type="application/json" id="release-data" set:html={JSON.stringify(releaseData)} />
 </Base>
 
 <script>
-  const releaseData = JSON.parse(document.getElementById('release-data')!.textContent!);
-
   const fromSelect = document.getElementById('from-select') as HTMLSelectElement;
   const toSelect = document.getElementById('to-select') as HTMLSelectElement;
   const compareBtn = document.getElementById('compare-btn') as HTMLButtonElement;
@@ -132,6 +110,25 @@ const releaseOptions = releases.map((r: any) => ({
   const addedBody = document.getElementById('added-body')!;
   const removedSection = document.getElementById('removed-section')!;
   const removedBody = document.getElementById('removed-body')!;
+
+  // Client-side cache for fetched release data
+  const releaseCache = new Map<string, any[]>();
+
+  async function fetchComponents(select: HTMLSelectElement): Promise<any[]> {
+    const key = select.value;
+    if (releaseCache.has(key)) return releaseCache.get(key)!;
+
+    const option = select.selectedOptions[0];
+    const apiPath = option?.dataset.api;
+    if (!apiPath) return [];
+
+    const response = await fetch(`/api/v1/macos/releases/${apiPath}.json`);
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    releaseCache.set(key, data.components);
+    return data.components;
+  }
 
   function parseVersion(version: string): number[] {
     const cleaned = version.replace(/\s*\(.*\)/, '').trim();
@@ -165,83 +162,94 @@ const releaseOptions = releases.map((r: any) => ({
     history.replaceState(null, '', url);
   }
 
-  function runComparison() {
+  async function runComparison() {
     const fromKey = fromSelect.value;
     const toKey = toSelect.value;
     if (!fromKey || !toKey) return;
 
     updateURL();
+    compareBtn.textContent = 'Loading…';
+    compareBtn.disabled = true;
 
-    const fromComponents = releaseData[fromKey] || [];
-    const toComponents = releaseData[toKey] || [];
+    try {
+      const [fromComponents, toComponents] = await Promise.all([
+        fetchComponents(fromSelect),
+        fetchComponents(toSelect),
+      ]);
 
-    const fromMap = new Map(fromComponents.map((c: any) => [c.name, c]));
-    const toMap = new Map(toComponents.map((c: any) => [c.name, c]));
-    const allNames = [...new Set([...fromMap.keys(), ...toMap.keys()])].sort();
+      const fromMap = new Map(fromComponents.map((c: any) => [c.name, c]));
+      const toMap = new Map(toComponents.map((c: any) => [c.name, c]));
+      const allNames = [...new Set([...fromMap.keys(), ...toMap.keys()])].sort();
 
-    const changes: { name: string; from: string; to: string; direction: string }[] = [];
-    const added: { name: string; version: string }[] = [];
-    const removed: { name: string; version: string }[] = [];
+      const changes: { name: string; from: string; to: string; direction: string }[] = [];
+      const added: { name: string; version: string }[] = [];
+      const removed: { name: string; version: string }[] = [];
 
-    for (const name of allNames) {
-      const fromComp = fromMap.get(name);
-      const toComp = toMap.get(name);
+      for (const name of allNames) {
+        const fromComp = fromMap.get(name);
+        const toComp = toMap.get(name);
 
-      if (fromComp && toComp) {
-        const fromVer = fromComp.version || '';
-        const toVer = toComp.version || '';
-        changes.push({ name, from: fromVer, to: toVer, direction: compareVersions(fromVer, toVer) });
-      } else if (!fromComp && toComp) {
-        added.push({ name, version: toComp.version || '' });
-      } else if (fromComp && !toComp) {
-        removed.push({ name, version: fromComp.version || '' });
+        if (fromComp && toComp) {
+          const fromVer = fromComp.version || '';
+          const toVer = toComp.version || '';
+          changes.push({ name, from: fromVer, to: toVer, direction: compareVersions(fromVer, toVer) });
+        } else if (!fromComp && toComp) {
+          added.push({ name, version: toComp.version || '' });
+        } else if (fromComp && !toComp) {
+          removed.push({ name, version: fromComp.version || '' });
+        }
       }
-    }
 
-    const upgraded = changes.filter((c) => c.direction === 'upgraded').length;
-    const downgraded = changes.filter((c) => c.direction === 'downgraded').length;
+      const upgraded = changes.filter((c) => c.direction === 'upgraded').length;
+      const downgraded = changes.filter((c) => c.direction === 'downgraded').length;
 
-    const hasChanges = upgraded > 0 || downgraded > 0 || added.length > 0 || removed.length > 0;
+      const hasChanges = upgraded > 0 || downgraded > 0 || added.length > 0 || removed.length > 0;
 
-    if (!hasChanges) {
-      summary.innerHTML = '<span class="no-changes">No differences found between these releases.</span>';
-      comparisonBody.innerHTML = '';
-      addedSection.classList.add('hidden');
-      removedSection.classList.add('hidden');
+      if (!hasChanges) {
+        summary.innerHTML = '<span class="no-changes">No differences found between these releases.</span>';
+        comparisonBody.innerHTML = '';
+        addedSection.classList.add('hidden');
+        removedSection.classList.add('hidden');
+        results.classList.remove('hidden');
+        (window as any).__compareChanges = changes;
+        return;
+      }
+
+      summary.innerHTML = [
+        upgraded > 0 ? `<span class="badge badge-upgraded">${upgraded} upgraded</span>` : '',
+        downgraded > 0 ? `<span class="badge badge-downgraded">${downgraded} downgraded</span>` : '',
+        added.length > 0 ? `<span class="badge badge-added">${added.length} added</span>` : '',
+        removed.length > 0 ? `<span class="badge badge-removed">${removed.length} removed</span>` : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      renderTable(changes);
+
+      if (added.length > 0) {
+        addedSection.classList.remove('hidden');
+        addedBody.innerHTML = added
+          .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
+          .join('');
+      } else {
+        addedSection.classList.add('hidden');
+      }
+
+      if (removed.length > 0) {
+        removedSection.classList.remove('hidden');
+        removedBody.innerHTML = removed
+          .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
+          .join('');
+      } else {
+        removedSection.classList.add('hidden');
+      }
+
       results.classList.remove('hidden');
       (window as any).__compareChanges = changes;
-      return;
+    } finally {
+      compareBtn.textContent = 'Compare';
+      compareBtn.disabled = false;
     }
-
-    summary.innerHTML = [
-      upgraded > 0 ? `<span class="badge badge-upgraded">${upgraded} upgraded</span>` : '',
-      downgraded > 0 ? `<span class="badge badge-downgraded">${downgraded} downgraded</span>` : '',
-      added.length > 0 ? `<span class="badge badge-added">${added.length} added</span>` : '',
-      removed.length > 0 ? `<span class="badge badge-removed">${removed.length} removed</span>` : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
-
-    renderTable(changes);
-
-    if (added.length > 0) {
-      addedSection.classList.remove('hidden');
-      addedBody.innerHTML = added.map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`).join('');
-    } else {
-      addedSection.classList.add('hidden');
-    }
-
-    if (removed.length > 0) {
-      removedSection.classList.remove('hidden');
-      removedBody.innerHTML = removed
-        .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
-        .join('');
-    } else {
-      removedSection.classList.add('hidden');
-    }
-
-    results.classList.remove('hidden');
-    (window as any).__compareChanges = changes;
   }
 
   function renderTable(changes: { name: string; from: string; to: string; direction: string }[]) {
@@ -348,6 +356,11 @@ const releaseOptions = releases.map((r: any) => ({
 
   button:hover {
     background: var(--color-link-hover);
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .hidden {

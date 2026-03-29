@@ -1,71 +1,89 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Badge from '../../components/Badge.astro';
-import fs from 'node:fs';
-import path from 'node:path';
+import ComponentTable from '../../components/ComponentTable.astro';
+import KernelInfo from '../../components/KernelInfo.astro';
+import ChipGrid from '../../components/ChipGrid.astro';
+import StructuredData from '../../components/StructuredData.astro';
+import { getCollection } from 'astro:content';
+import { formatDate, displayName, releaseSlug } from '../../lib/utils';
 
-export function getStaticPaths() {
-  const dataDir = path.resolve('..', 'data');
-  const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8'));
+export async function getStaticPaths() {
+  const releases = await getCollection('macosReleaseDetails');
+  const index = await getCollection('macosReleases');
 
-  return releases.map((release: any, i: number) => {
-    const releaseData = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', release.dataFile), 'utf-8'));
-    const prev = i < releases.length - 1 ? releases[i + 1] : null;
-    const previousSlug = prev ? `${prev.osVersion}-${prev.buildNumber}` : null;
+  return releases.map((entry, i) => {
+    const prev = i < index.length - 1 ? index[i + 1] : null;
+    const previousSlug = prev ? releaseSlug(prev.data) : null;
     return {
-      params: { slug: `${release.osVersion}-${release.buildNumber}` },
-      props: { release, releaseData, previousSlug },
+      params: { slug: `${entry.data.osVersion}-${entry.data.buildNumber}` },
+      props: { release: entry.data, previousSlug },
     };
   });
 }
 
 interface Props {
-  release: any;
-  releaseData: any;
+  release: {
+    buildNumber: string;
+    osVersion: string;
+    releaseName: string;
+    releaseDate?: string;
+    isBeta: boolean;
+    isRC: boolean;
+    isDeviceSpecific?: boolean;
+    betaNumber?: number;
+    rcNumber?: number;
+    ipswURL?: string;
+    components: { name: string; version?: string | null; path: string; source: string }[];
+    kernels: {
+      darwinVersion: string;
+      xnuVersion?: string | null;
+      deviceChips?: { device: string; chip: string }[];
+    }[];
+  };
   previousSlug: string | null;
 }
 
-const { release, releaseData, previousSlug } = Astro.props;
-const currentSlug = `${release.osVersion}-${release.buildNumber}`;
+const { release, previousSlug } = Astro.props;
+const currentSlug = releaseSlug(release);
+const title = displayName(release, true);
+const darwinVersion = release.kernels?.[0]?.darwinVersion;
+const xnuVersion = release.kernels?.[0]?.xnuVersion;
 
-function displayName(r: any): string {
-  let name = `macOS ${r.osVersion} ${r.releaseName}`;
-  if (r.isBeta && r.betaNumber) {
-    name += ` beta ${r.betaNumber}`;
-  } else if (r.isRC) {
-    name += ' RC';
-  }
-  return name;
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-const components = [...releaseData.components].sort((a: any, b: any) => a.name.localeCompare(b.name));
-
-// Group kernels by chip family (M1, M2, etc.)
-const chipFamilies: Record<string, any[]> = {};
-for (const kernel of releaseData.kernels) {
-  for (const dc of kernel.deviceChips || []) {
-    const family = dc.chip;
-    if (!chipFamilies[family]) chipFamilies[family] = [];
-    if (!chipFamilies[family].some((d: any) => d.device === dc.device)) {
-      chipFamilies[family].push(dc);
-    }
-  }
-}
-
-const title = displayName(release);
-const darwinVersion = releaseData.kernels?.[0]?.darwinVersion;
-const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: title,
+    operatingSystem: 'macOS',
+    applicationCategory: 'OperatingSystem',
+    softwareVersion: release.osVersion,
+    ...(release.releaseDate && { datePublished: release.releaseDate }),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'macOSdb',
+        item: 'https://macosdb.com/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: title,
+        item: `https://macosdb.com/release/${currentSlug}/`,
+      },
+    ],
+  },
+];
 ---
 
 <Base title={`${title} — macOSdb`} description={`Components and hardware support for ${title}`}>
+  <StructuredData slot="head" data={structuredData} />
+
   <nav class="breadcrumb">
     <a href="/">macOSdb</a> &rsaquo; {title}
   </nav>
@@ -74,13 +92,13 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     <h1>{title}</h1>
     <div class="meta">
       <span>Build <code>{release.buildNumber}</code></span>
-      <span>{formatDate(release.releaseDate)}</span>
+      {release.releaseDate && <span>{formatDate(release.releaseDate, 'long')}</span>}
       {release.isBeta && <Badge variant="beta" />}
       {release.isRC && <Badge variant="rc" />}
       {release.isDeviceSpecific && <Badge variant="device" />}
       {
-        releaseData.ipswURL && (
-          <a href={releaseData.ipswURL} class="ipsw-link">
+        release.ipswURL && (
+          <a href={release.ipswURL} class="ipsw-link">
             Download IPSW
           </a>
         )
@@ -95,81 +113,9 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     </div>
   </header>
 
-  {
-    (darwinVersion || xnuVersion) && (
-      <section class="kernel-info">
-        <h2>Kernel</h2>
-        <dl>
-          {darwinVersion && (
-            <>
-              <dt>Darwin</dt>
-              <dd>{darwinVersion}</dd>
-            </>
-          )}
-          {xnuVersion && (
-            <>
-              <dt>XNU</dt>
-              <dd>{xnuVersion}</dd>
-            </>
-          )}
-        </dl>
-      </section>
-    )
-  }
-
-  <section class="components">
-    <h2>Components</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Component</th>
-          <th>Version</th>
-          <th>Source</th>
-          <th>Path</th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          components.map((comp: any) => (
-            <tr>
-              <td class="comp-name">{comp.name}</td>
-              <td>
-                <code>{comp.version}</code>
-              </td>
-              <td>
-                <span class={`source source-${comp.source}`}>
-                  {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-                </span>
-              </td>
-              <td class="comp-path">
-                <code>{comp.path}</code>
-              </td>
-            </tr>
-          ))
-        }
-      </tbody>
-    </table>
-  </section>
-
-  {
-    Object.keys(chipFamilies).length > 0 && (
-      <section class="hardware">
-        <h2>Hardware Support</h2>
-        <div class="chip-grid">
-          {Object.entries(chipFamilies).map(([chip, devices]) => (
-            <div class="chip-card">
-              <h3>{chip}</h3>
-              <ul>
-                {devices.map((d: any) => (
-                  <li>{d.device}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </section>
-    )
-  }
+  <KernelInfo darwinVersion={darwinVersion} xnuVersion={xnuVersion} />
+  <ComponentTable components={release.components} />
+  <ChipGrid kernels={release.kernels} />
 </Base>
 
 <style>
@@ -202,85 +148,8 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     color: var(--color-link);
   }
 
-  .kernel-info {
-    margin-bottom: 2.5rem;
-  }
-
-  .kernel-info h2 {
-    font-size: 1.3rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .kernel-info dl {
-    display: flex;
-    gap: 2rem;
-  }
-
-  .kernel-info dt {
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
-  .kernel-info dd {
-    margin-left: 0;
-    font-family: var(--font-mono);
-  }
-
   section h2 {
     font-size: 1.3rem;
     margin-bottom: 1rem;
-  }
-
-  .components {
-    margin-bottom: 2.5rem;
-  }
-
-  .comp-name {
-    font-weight: 500;
-  }
-
-  .comp-path code {
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-  }
-
-  .source {
-    font-size: 0.8rem;
-    padding: 0.15em 0.5em;
-    border-radius: 4px;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-secondary);
-  }
-
-  .chip-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1rem;
-  }
-
-  .chip-card {
-    background: var(--color-bg-secondary);
-    border-radius: 8px;
-    padding: 1rem;
-    border: 1px solid var(--color-border);
-  }
-
-  .chip-card h3 {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .chip-card ul {
-    list-style: none;
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    font-family: var(--font-mono);
-  }
-
-  .chip-card li {
-    padding: 0.15rem 0;
   }
 </style>
