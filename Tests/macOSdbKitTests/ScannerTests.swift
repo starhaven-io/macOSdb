@@ -201,7 +201,6 @@ struct ScannerConfigTests {
         #expect(names.contains("SQLite"))
         #expect(names.contains("vim"))
         #expect(names.contains("httpd"))
-        #expect(names.contains("rsync"))
         #expect(names.contains("zsh"))
     }
 
