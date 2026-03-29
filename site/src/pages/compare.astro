@@ -99,194 +99,200 @@ const releaseOptions = releases.map((entry) => ({
 </Base>
 
 <script>
-  const fromSelect = document.getElementById('from-select') as HTMLSelectElement;
-  const toSelect = document.getElementById('to-select') as HTMLSelectElement;
-  const compareBtn = document.getElementById('compare-btn') as HTMLButtonElement;
-  const changedOnly = document.getElementById('changed-only') as HTMLInputElement;
-  const results = document.getElementById('results')!;
-  const summary = document.getElementById('summary')!;
-  const comparisonBody = document.getElementById('comparison-body')!;
-  const addedSection = document.getElementById('added-section')!;
-  const addedBody = document.getElementById('added-body')!;
-  const removedSection = document.getElementById('removed-section')!;
-  const removedBody = document.getElementById('removed-body')!;
-
-  // Client-side cache for fetched release data
+  // Client-side cache for fetched release data (persists across navigations)
   const releaseCache = new Map<string, any[]>();
 
-  async function fetchComponents(select: HTMLSelectElement): Promise<any[]> {
-    const key = select.value;
-    if (releaseCache.has(key)) return releaseCache.get(key)!;
+  function initCompare() {
+    const fromSelect = document.getElementById('from-select') as HTMLSelectElement;
+    const toSelect = document.getElementById('to-select') as HTMLSelectElement;
+    const compareBtn = document.getElementById('compare-btn') as HTMLButtonElement;
+    const changedOnly = document.getElementById('changed-only') as HTMLInputElement;
+    const results = document.getElementById('results')!;
+    const summary = document.getElementById('summary')!;
+    const comparisonBody = document.getElementById('comparison-body')!;
+    const addedSection = document.getElementById('added-section')!;
+    const addedBody = document.getElementById('added-body')!;
+    const removedSection = document.getElementById('removed-section')!;
+    const removedBody = document.getElementById('removed-body')!;
 
-    const option = select.selectedOptions[0];
-    const apiPath = option?.dataset.api;
-    if (!apiPath) return [];
+    if (!fromSelect) return;
 
-    const response = await fetch(`/api/v1/macos/releases/${apiPath}.json`);
-    if (!response.ok) return [];
+    async function fetchComponents(select: HTMLSelectElement): Promise<any[]> {
+      const key = select.value;
+      if (releaseCache.has(key)) return releaseCache.get(key)!;
 
-    const data = await response.json();
-    releaseCache.set(key, data.components);
-    return data.components;
-  }
+      const option = select.selectedOptions[0];
+      const apiPath = option?.dataset.api;
+      if (!apiPath) return [];
 
-  function parseVersion(version: string): number[] {
-    const cleaned = version.replace(/\s*\(.*\)/, '').trim();
-    return cleaned.split('.').flatMap((segment) => {
-      return segment
-        .split(/[^0-9]+/)
-        .filter(Boolean)
-        .map(Number);
-    });
-  }
+      const response = await fetch(`/api/v1/macos/releases/${apiPath}.json`);
+      if (!response.ok) return [];
 
-  function compareVersions(from: string, to: string): 'upgraded' | 'downgraded' | 'unchanged' {
-    const fromParts = parseVersion(from);
-    const toParts = parseVersion(to);
-    const maxLen = Math.max(fromParts.length, toParts.length);
-
-    for (let i = 0; i < maxLen; i++) {
-      const f = i < fromParts.length ? fromParts[i] : 0;
-      const t = i < toParts.length ? toParts[i] : 0;
-      if (f < t) return 'upgraded';
-      if (f > t) return 'downgraded';
+      const data = await response.json();
+      releaseCache.set(key, data.components);
+      return data.components;
     }
-    return 'unchanged';
-  }
 
-  function updateURL() {
-    const params = new URLSearchParams();
-    if (fromSelect.value) params.set('from', fromSelect.value);
-    if (toSelect.value) params.set('to', toSelect.value);
-    const url = `${window.location.pathname}?${params.toString()}`;
-    history.replaceState(null, '', url);
-  }
+    function parseVersion(version: string): number[] {
+      const cleaned = version.replace(/\s*\(.*\)/, '').trim();
+      return cleaned.split('.').flatMap((segment) => {
+        return segment
+          .split(/[^0-9]+/)
+          .filter(Boolean)
+          .map(Number);
+      });
+    }
 
-  async function runComparison() {
-    const fromKey = fromSelect.value;
-    const toKey = toSelect.value;
-    if (!fromKey || !toKey) return;
+    function compareVersions(from: string, to: string): 'upgraded' | 'downgraded' | 'unchanged' {
+      const fromParts = parseVersion(from);
+      const toParts = parseVersion(to);
+      const maxLen = Math.max(fromParts.length, toParts.length);
 
-    updateURL();
-    compareBtn.textContent = 'Loading…';
-    compareBtn.disabled = true;
-
-    try {
-      const [fromComponents, toComponents] = await Promise.all([
-        fetchComponents(fromSelect),
-        fetchComponents(toSelect),
-      ]);
-
-      const fromMap = new Map(fromComponents.map((c: any) => [c.name, c]));
-      const toMap = new Map(toComponents.map((c: any) => [c.name, c]));
-      const allNames = [...new Set([...fromMap.keys(), ...toMap.keys()])].sort();
-
-      const changes: { name: string; from: string; to: string; direction: string }[] = [];
-      const added: { name: string; version: string }[] = [];
-      const removed: { name: string; version: string }[] = [];
-
-      for (const name of allNames) {
-        const fromComp = fromMap.get(name);
-        const toComp = toMap.get(name);
-
-        if (fromComp && toComp) {
-          const fromVer = fromComp.version || '';
-          const toVer = toComp.version || '';
-          changes.push({ name, from: fromVer, to: toVer, direction: compareVersions(fromVer, toVer) });
-        } else if (!fromComp && toComp) {
-          added.push({ name, version: toComp.version || '' });
-        } else if (fromComp && !toComp) {
-          removed.push({ name, version: fromComp.version || '' });
-        }
+      for (let i = 0; i < maxLen; i++) {
+        const f = i < fromParts.length ? fromParts[i] : 0;
+        const t = i < toParts.length ? toParts[i] : 0;
+        if (f < t) return 'upgraded';
+        if (f > t) return 'downgraded';
       }
+      return 'unchanged';
+    }
 
-      const upgraded = changes.filter((c) => c.direction === 'upgraded').length;
-      const downgraded = changes.filter((c) => c.direction === 'downgraded').length;
+    function updateURL() {
+      const params = new URLSearchParams();
+      if (fromSelect.value) params.set('from', fromSelect.value);
+      if (toSelect.value) params.set('to', toSelect.value);
+      const url = `${window.location.pathname}?${params.toString()}`;
+      history.replaceState(null, '', url);
+    }
 
-      const hasChanges = upgraded > 0 || downgraded > 0 || added.length > 0 || removed.length > 0;
+    async function runComparison() {
+      const fromKey = fromSelect.value;
+      const toKey = toSelect.value;
+      if (!fromKey || !toKey) return;
 
-      if (!hasChanges) {
-        summary.innerHTML = '<span class="no-changes">No differences found between these releases.</span>';
-        comparisonBody.innerHTML = '';
-        addedSection.classList.add('hidden');
-        removedSection.classList.add('hidden');
+      updateURL();
+      compareBtn.textContent = 'Loading…';
+      compareBtn.disabled = true;
+
+      try {
+        const [fromComponents, toComponents] = await Promise.all([
+          fetchComponents(fromSelect),
+          fetchComponents(toSelect),
+        ]);
+
+        const fromMap = new Map(fromComponents.map((c: any) => [c.name, c]));
+        const toMap = new Map(toComponents.map((c: any) => [c.name, c]));
+        const allNames = [...new Set([...fromMap.keys(), ...toMap.keys()])].sort();
+
+        const changes: { name: string; from: string; to: string; direction: string }[] = [];
+        const added: { name: string; version: string }[] = [];
+        const removed: { name: string; version: string }[] = [];
+
+        for (const name of allNames) {
+          const fromComp = fromMap.get(name);
+          const toComp = toMap.get(name);
+
+          if (fromComp && toComp) {
+            const fromVer = fromComp.version || '';
+            const toVer = toComp.version || '';
+            changes.push({ name, from: fromVer, to: toVer, direction: compareVersions(fromVer, toVer) });
+          } else if (!fromComp && toComp) {
+            added.push({ name, version: toComp.version || '' });
+          } else if (fromComp && !toComp) {
+            removed.push({ name, version: fromComp.version || '' });
+          }
+        }
+
+        const upgraded = changes.filter((c) => c.direction === 'upgraded').length;
+        const downgraded = changes.filter((c) => c.direction === 'downgraded').length;
+
+        const hasChanges = upgraded > 0 || downgraded > 0 || added.length > 0 || removed.length > 0;
+
+        if (!hasChanges) {
+          summary.innerHTML = '<span class="no-changes">No differences found between these releases.</span>';
+          comparisonBody.innerHTML = '';
+          addedSection.classList.add('hidden');
+          removedSection.classList.add('hidden');
+          results.classList.remove('hidden');
+          (window as any).__compareChanges = changes;
+          return;
+        }
+
+        summary.innerHTML = [
+          upgraded > 0 ? `<span class="badge badge-upgraded">${upgraded} upgraded</span>` : '',
+          downgraded > 0 ? `<span class="badge badge-downgraded">${downgraded} downgraded</span>` : '',
+          added.length > 0 ? `<span class="badge badge-added">${added.length} added</span>` : '',
+          removed.length > 0 ? `<span class="badge badge-removed">${removed.length} removed</span>` : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        renderTable(changes);
+
+        if (added.length > 0) {
+          addedSection.classList.remove('hidden');
+          addedBody.innerHTML = added
+            .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
+            .join('');
+        } else {
+          addedSection.classList.add('hidden');
+        }
+
+        if (removed.length > 0) {
+          removedSection.classList.remove('hidden');
+          removedBody.innerHTML = removed
+            .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
+            .join('');
+        } else {
+          removedSection.classList.add('hidden');
+        }
+
         results.classList.remove('hidden');
         (window as any).__compareChanges = changes;
-        return;
+      } finally {
+        compareBtn.textContent = 'Compare';
+        compareBtn.disabled = false;
       }
-
-      summary.innerHTML = [
-        upgraded > 0 ? `<span class="badge badge-upgraded">${upgraded} upgraded</span>` : '',
-        downgraded > 0 ? `<span class="badge badge-downgraded">${downgraded} downgraded</span>` : '',
-        added.length > 0 ? `<span class="badge badge-added">${added.length} added</span>` : '',
-        removed.length > 0 ? `<span class="badge badge-removed">${removed.length} removed</span>` : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
-
-      renderTable(changes);
-
-      if (added.length > 0) {
-        addedSection.classList.remove('hidden');
-        addedBody.innerHTML = added
-          .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
-          .join('');
-      } else {
-        addedSection.classList.add('hidden');
-      }
-
-      if (removed.length > 0) {
-        removedSection.classList.remove('hidden');
-        removedBody.innerHTML = removed
-          .map((c) => `<tr><td>${c.name}</td><td><code>${c.version}</code></td></tr>`)
-          .join('');
-      } else {
-        removedSection.classList.add('hidden');
-      }
-
-      results.classList.remove('hidden');
-      (window as any).__compareChanges = changes;
-    } finally {
-      compareBtn.textContent = 'Compare';
-      compareBtn.disabled = false;
     }
-  }
 
-  function renderTable(changes: { name: string; from: string; to: string; direction: string }[]) {
-    const showChangedOnly = changedOnly.checked;
-    const filtered = showChangedOnly ? changes.filter((c) => c.direction !== 'unchanged') : changes;
+    function renderTable(changes: { name: string; from: string; to: string; direction: string }[]) {
+      const showChangedOnly = changedOnly.checked;
+      const filtered = showChangedOnly ? changes.filter((c) => c.direction !== 'unchanged') : changes;
 
-    comparisonBody.innerHTML = filtered
-      .map((c) => {
-        const statusClass = `status-${c.direction}`;
-        const statusLabel =
-          c.direction === 'upgraded' ? '↑ Upgraded' : c.direction === 'downgraded' ? '↓ Downgraded' : '— Unchanged';
-        return `<tr class="${statusClass}">
+      comparisonBody.innerHTML = filtered
+        .map((c) => {
+          const statusClass = `status-${c.direction}`;
+          const statusLabel =
+            c.direction === 'upgraded' ? '↑ Upgraded' : c.direction === 'downgraded' ? '↓ Downgraded' : '— Unchanged';
+          return `<tr class="${statusClass}">
         <td>${c.name}</td>
         <td><code>${c.from}</code></td>
         <td><code>${c.to}</code></td>
         <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
       </tr>`;
-      })
-      .join('');
+        })
+        .join('');
+    }
+
+    compareBtn.addEventListener('click', runComparison);
+    changedOnly.addEventListener('change', () => {
+      const changes = (window as any).__compareChanges;
+      if (changes) renderTable(changes);
+    });
+
+    // Apply URL params if present, otherwise use defaults
+    const params = new URLSearchParams(window.location.search);
+    const paramFrom = params.get('from');
+    const paramTo = params.get('to');
+    if (paramFrom) fromSelect.value = paramFrom;
+    if (paramTo) toSelect.value = paramTo;
+
+    if (fromSelect.value && toSelect.value) {
+      runComparison();
+    }
   }
 
-  compareBtn.addEventListener('click', runComparison);
-  changedOnly.addEventListener('change', () => {
-    const changes = (window as any).__compareChanges;
-    if (changes) renderTable(changes);
-  });
-
-  // Apply URL params if present, otherwise use defaults
-  const params = new URLSearchParams(window.location.search);
-  const paramFrom = params.get('from');
-  const paramTo = params.get('to');
-  if (paramFrom) fromSelect.value = paramFrom;
-  if (paramTo) toSelect.value = paramTo;
-
-  if (fromSelect.value && toSelect.value) {
-    runComparison();
-  }
+  document.addEventListener('astro:page-load', initCompare);
 </script>
 
 <style>

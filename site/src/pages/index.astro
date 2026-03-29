@@ -173,27 +173,33 @@ const websiteSchema = {
 </style>
 
 <script>
-  const key = 'macosdb-type-filter';
-  const buttons = document.querySelectorAll('.filter-btn') as NodeListOf<HTMLButtonElement>;
-  const rows = document.querySelectorAll('tr[data-type]') as NodeListOf<HTMLTableRowElement>;
+  function init() {
+    const key = 'macosdb-type-filter';
+    const buttons = document.querySelectorAll('.filter-btn') as NodeListOf<HTMLButtonElement>;
+    const rows = document.querySelectorAll('tr[data-type]') as NodeListOf<HTMLTableRowElement>;
 
-  function apply(filter: string) {
-    rows.forEach((row) => {
-      row.classList.toggle('filtered', filter !== 'all' && row.dataset.type !== filter);
-    });
+    if (!buttons.length) return;
+
+    function apply(filter: string) {
+      rows.forEach((row) => {
+        row.classList.toggle('filtered', filter !== 'all' && row.dataset.type !== filter);
+      });
+      buttons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+    }
+
+    const saved = localStorage.getItem(key) || 'all';
+    apply(saved);
+
     buttons.forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.filter === filter);
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter!;
+        localStorage.setItem(key, filter);
+        apply(filter);
+      });
     });
   }
 
-  const saved = localStorage.getItem(key) || 'all';
-  apply(saved);
-
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const filter = btn.dataset.filter!;
-      localStorage.setItem(key, filter);
-      apply(filter);
-    });
-  });
+  document.addEventListener('astro:page-load', init);
 </script>
