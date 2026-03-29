@@ -1,0 +1,48 @@
+---
+interface Props {
+  variant: 'beta' | 'rc' | 'release' | 'device';
+  label?: string;
+}
+
+const defaultLabels: Record<Props['variant'], string> = {
+  beta: 'Beta',
+  rc: 'RC',
+  release: 'Release',
+  device: 'Device Specific',
+};
+
+const { variant, label } = Astro.props;
+---
+
+<span class={`badge badge-${variant}`}>{label ?? defaultLabels[variant]}</span>
+
+<style>
+  .badge {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-beta {
+    background: color-mix(in srgb, var(--color-badge-beta) 15%, transparent);
+    color: var(--color-badge-beta);
+  }
+
+  .badge-rc {
+    background: color-mix(in srgb, var(--color-badge-rc) 15%, transparent);
+    color: var(--color-badge-rc);
+  }
+
+  .badge-release {
+    background: color-mix(in srgb, var(--color-text) 8%, transparent);
+    color: var(--color-text-secondary);
+  }
+
+  .badge-device {
+    background: color-mix(in srgb, var(--color-badge-device) 15%, transparent);
+    color: var(--color-badge-device);
+  }
+</style>

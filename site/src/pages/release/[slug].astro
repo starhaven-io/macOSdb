@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Badge from '../../components/Badge.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -74,9 +75,9 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     <div class="meta">
       <span>Build <code>{release.buildNumber}</code></span>
       <span>{formatDate(release.releaseDate)}</span>
-      {release.isBeta && <span class="badge badge-beta">Beta</span>}
-      {release.isRC && <span class="badge badge-rc">RC</span>}
-      {release.isDeviceSpecific && <span class="badge badge-device">Device Specific</span>}
+      {release.isBeta && <Badge variant="beta" />}
+      {release.isRC && <Badge variant="rc" />}
+      {release.isDeviceSpecific && <Badge variant="device" />}
       {
         releaseData.ipswURL && (
           <a href={releaseData.ipswURL} class="ipsw-link">
@@ -193,29 +194,6 @@ const xnuVersion = releaseData.kernels?.[0]?.xnuVersion;
     gap: 1.5rem;
     align-items: center;
     color: var(--color-text-secondary);
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 0.15em 0.6em;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .badge-beta {
-    background: color-mix(in srgb, var(--color-badge-beta) 15%, transparent);
-    color: var(--color-badge-beta);
-  }
-
-  .badge-rc {
-    background: color-mix(in srgb, var(--color-badge-rc) 15%, transparent);
-    color: var(--color-badge-rc);
-  }
-
-  .badge-device {
-    background: color-mix(in srgb, var(--color-badge-device) 15%, transparent);
-    color: var(--color-badge-device);
   }
 
   .ipsw-link,
