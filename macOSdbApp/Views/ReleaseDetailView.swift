@@ -149,6 +149,7 @@ struct ReleaseDetailView: View {
     @ViewBuilder
     private func kernelSection(_ release: Release) -> some View {
         let grouped = groupKernels(release.kernels).sorted { lhs, rhs in
+            if lhs.isDevelopment != rhs.isDevelopment { return !lhs.isDevelopment }
             let lhsOrder = lhs.chipFamily?.series.sortOrder ?? -1
             let rhsOrder = rhs.chipFamily?.series.sortOrder ?? -1
             if lhsOrder != rhsOrder { return lhsOrder > rhsOrder }
