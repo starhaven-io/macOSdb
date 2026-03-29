@@ -65,7 +65,7 @@
       "name" : "libxml2",
       "path" : "/usr/lib/libxml2.2.dylib",
       "source" : "dyldCache",
-      "version" : "2.10.10"
+      "version" : "2.9.13"
     },
     {
       "name" : "OpenSSH",
@@ -359,6 +359,7 @@
     }
   ],
   "osVersion" : "14.3.1",
+  "productType" : "macOS",
   "releaseDate" : "2024-02-08",
   "releaseName" : "Sonoma"
 }

@@ -964,6 +964,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.6.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-07",
     "releaseName" : "Sonoma"
   },
@@ -974,6 +975,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.6",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-29",
     "releaseName" : "Sonoma"
   },
@@ -985,6 +987,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.6",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-16",
     "releaseName" : "Sonoma"
   },
@@ -996,6 +999,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.6",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-09",
     "releaseName" : "Sonoma"
   },
@@ -1007,6 +1011,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.6",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-01",
     "releaseName" : "Sonoma"
   },
@@ -1018,6 +1023,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.6",
+    "productType" : "macOS",
     "releaseDate" : "2024-06-17",
     "releaseName" : "Sonoma"
   },
@@ -1028,6 +1034,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.5",
+    "productType" : "macOS",
     "releaseDate" : "2024-05-13",
     "releaseName" : "Sonoma"
   },
@@ -1039,6 +1046,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.5",
+    "productType" : "macOS",
     "releaseDate" : "2024-04-30",
     "releaseName" : "Sonoma"
   },
@@ -1050,6 +1058,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.5",
+    "productType" : "macOS",
     "releaseDate" : "2024-04-23",
     "releaseName" : "Sonoma"
   },
@@ -1061,6 +1070,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.5",
+    "productType" : "macOS",
     "releaseDate" : "2024-04-16",
     "releaseName" : "Sonoma"
   },
@@ -1072,6 +1082,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.5",
+    "productType" : "macOS",
     "releaseDate" : "2024-04-02",
     "releaseName" : "Sonoma"
   },
@@ -1082,6 +1093,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-03-25",
     "releaseName" : "Sonoma"
   },
@@ -1092,6 +1104,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4",
+    "productType" : "macOS",
     "releaseDate" : "2024-03-07",
     "releaseName" : "Sonoma"
   },
@@ -1103,6 +1116,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4",
+    "productType" : "macOS",
     "releaseDate" : "2024-02-27",
     "releaseName" : "Sonoma"
   },
@@ -1114,6 +1128,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4",
+    "productType" : "macOS",
     "releaseDate" : "2024-02-20",
     "releaseName" : "Sonoma"
   },
@@ -1125,6 +1140,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4",
+    "productType" : "macOS",
     "releaseDate" : "2024-02-13",
     "releaseName" : "Sonoma"
   },
@@ -1136,6 +1152,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4",
+    "productType" : "macOS",
     "releaseDate" : "2024-02-06",
     "releaseName" : "Sonoma"
   },
@@ -1147,6 +1164,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.4",
+    "productType" : "macOS",
     "releaseDate" : "2024-01-29",
     "releaseName" : "Sonoma"
   },
@@ -1157,6 +1175,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.3.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-02-08",
     "releaseName" : "Sonoma"
   },
@@ -1167,6 +1186,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.3",
+    "productType" : "macOS",
     "releaseDate" : "2024-01-22",
     "releaseName" : "Sonoma"
   },
@@ -1178,6 +1198,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.3",
+    "productType" : "macOS",
     "releaseDate" : "2024-01-09",
     "releaseName" : "Sonoma"
   },
@@ -1189,6 +1210,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.3",
+    "productType" : "macOS",
     "releaseDate" : "2024-01-03",
     "releaseName" : "Sonoma"
   },
@@ -1200,6 +1222,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.3",
+    "productType" : "macOS",
     "releaseDate" : "2023-12-12",
     "releaseName" : "Sonoma"
   },
@@ -1210,6 +1233,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.2.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-12-19",
     "releaseName" : "Sonoma"
   },
@@ -1220,6 +1244,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-12-11",
     "releaseName" : "Sonoma"
   },
@@ -1230,6 +1255,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "14.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-12-05",
     "releaseName" : "Sonoma"
   },
@@ -1241,6 +1267,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-28",
     "releaseName" : "Sonoma"
   },
@@ -1252,6 +1279,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-14",
     "releaseName" : "Sonoma"
   },
@@ -1263,6 +1291,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-09",
     "releaseName" : "Sonoma"
   },
@@ -1274,6 +1303,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-10-26",
     "releaseName" : "Sonoma"
   },
@@ -1284,6 +1314,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.1.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-30",
     "releaseName" : "Sonoma"
   },
@@ -1294,6 +1325,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "14.1.2",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-30",
     "releaseName" : "Sonoma"
   },
@@ -1304,6 +1336,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.1.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-07",
     "releaseName" : "Sonoma"
   },
@@ -1314,6 +1347,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "14.1.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-07",
     "releaseName" : "Sonoma"
   },
@@ -1324,6 +1358,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-10-25",
     "releaseName" : "Sonoma"
   },
@@ -1334,6 +1369,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "14.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-11-01",
     "releaseName" : "Sonoma"
   },
@@ -1344,6 +1380,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "14.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-10-17",
     "releaseName" : "Sonoma"
   },
@@ -1355,6 +1392,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-10-10",
     "releaseName" : "Sonoma"
   },
@@ -1366,6 +1404,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-10-03",
     "releaseName" : "Sonoma"
   },
@@ -1377,6 +1416,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.1",
+    "productType" : "macOS",
     "releaseDate" : "2023-09-27",
     "releaseName" : "Sonoma"
   },
@@ -1387,6 +1427,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-09-26",
     "releaseName" : "Sonoma"
   },
@@ -1397,6 +1438,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-09-12",
     "releaseName" : "Sonoma"
   },
@@ -1408,6 +1450,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-08-30",
     "releaseName" : "Sonoma"
   },
@@ -1419,6 +1462,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-08-22",
     "releaseName" : "Sonoma"
   },
@@ -1430,6 +1474,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-08-08",
     "releaseName" : "Sonoma"
   },
@@ -1441,6 +1486,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-07-31",
     "releaseName" : "Sonoma"
   },
@@ -1452,6 +1498,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-07-25",
     "releaseName" : "Sonoma"
   },
@@ -1463,6 +1510,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-07-11",
     "releaseName" : "Sonoma"
   },
@@ -1474,6 +1522,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-07-05",
     "releaseName" : "Sonoma"
   },
@@ -1485,6 +1534,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-06-21",
     "releaseName" : "Sonoma"
   },
@@ -1496,6 +1546,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "14.0",
+    "productType" : "macOS",
     "releaseDate" : "2023-06-05",
     "releaseName" : "Sonoma"
   },
