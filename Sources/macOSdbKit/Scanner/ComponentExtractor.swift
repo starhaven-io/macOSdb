@@ -22,7 +22,10 @@ public enum ComponentExtractor {
         from data: Data,
         using definition: ComponentDefinition
     ) -> Component? {
-        guard let rawMatch = BinaryStringScanner.findFirst(in: data, matching: definition.pattern) else {
+        let minLength = definition.minLength ?? BinaryStringScanner.defaultMinLength
+        guard let rawMatch = BinaryStringScanner.findFirst(
+            in: data, matching: definition.pattern, minLength: minLength
+        ) else {
             logger.debug("\(definition.name): no version found")
             return nil
         }
@@ -44,7 +47,8 @@ public enum ComponentExtractor {
         from data: Data,
         using definition: ComponentDefinition
     ) -> Component? {
-        let matches = BinaryStringScanner.findAll(in: data, matching: definition.pattern)
+        let minLength = definition.minLength ?? BinaryStringScanner.defaultMinLength
+        let matches = BinaryStringScanner.findAll(in: data, matching: definition.pattern, minLength: minLength)
         let uniqueMatches = Array(Set(matches)).sorted()
 
         // Take the last (highest) match — typically the actual version
