@@ -39,6 +39,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
     <title>{title}</title>
     <ClientRouter />
+    <slot name="head" />
   </head>
   <body>
     <header>

@@ -14,7 +14,7 @@ const defaultLabels: Record<Props['variant'], string> = {
 const { variant, label } = Astro.props;
 ---
 
-<span class={`badge badge-${variant}`}>{label ?? defaultLabels[variant]}</span>
+<span class:list={['badge', `badge-${variant}`]}>{label ?? defaultLabels[variant]}</span>
 
 <style>
   .badge {

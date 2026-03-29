@@ -1,0 +1,59 @@
+---
+interface Props {
+  darwinVersion?: string;
+  xnuVersion?: string | null;
+}
+
+const { darwinVersion, xnuVersion } = Astro.props;
+---
+
+{
+  (darwinVersion || xnuVersion) && (
+    <section class="kernel-info">
+      <h2>Kernel</h2>
+      <dl>
+        {darwinVersion && (
+          <>
+            <dt>Darwin</dt>
+            <dd>{darwinVersion}</dd>
+          </>
+        )}
+        {xnuVersion && (
+          <>
+            <dt>XNU</dt>
+            <dd>{xnuVersion}</dd>
+          </>
+        )}
+      </dl>
+    </section>
+  )
+}
+
+<style>
+  .kernel-info {
+    margin-bottom: 2.5rem;
+  }
+
+  .kernel-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .kernel-info dl {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .kernel-info dt {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .kernel-info dd {
+    margin-left: 0;
+    font-family: var(--font-mono);
+  }
+</style>
