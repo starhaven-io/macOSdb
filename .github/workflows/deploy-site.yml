@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read # required to checkout repository
     steps:
@@ -47,7 +47,7 @@ jobs:
   deploy:
     name: Deploy
     needs: build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       pages: write # required to deploy to GitHub Pages
       id-token: write # required to verify deployment origin
