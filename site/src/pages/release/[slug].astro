@@ -90,13 +90,13 @@ const structuredData = [
 >
   <StructuredData slot="head" data={structuredData} />
 
-  <nav class="breadcrumb">
+  <nav class="breadcrumb" data-pagefind-ignore>
     <a href="/">macOSdb</a> &rsaquo; {title}
   </nav>
 
   <header class="release-header">
-    <h1>{title}</h1>
-    <div class="meta">
+    <h1 data-pagefind-weight="2">{title}</h1>
+    <div class="meta" data-pagefind-ignore>
       <span>Build <code>{release.buildNumber}</code></span>
       {release.releaseDate && <span>{formatDate(release.releaseDate, 'long')}</span>}
       {release.isBeta && <Badge variant="beta" />}

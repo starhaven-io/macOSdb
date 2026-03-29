@@ -132,10 +132,6 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
     --pagefind-ui-font: var(--font-system);
   }
 
-  .search-wrapper :global(.pagefind-ui__search-input) {
-    color: var(--color-text);
-  }
-
   .search-wrapper :global(.pagefind-ui__form) {
     position: static;
   }
@@ -182,7 +178,7 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
 
   .search-wrapper :global(.pagefind-ui__drawer) {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     right: 0;
     width: 500px;
     max-height: 70vh;
@@ -190,9 +186,21 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
     z-index: 100;
-    padding: 0.5rem;
+    padding: 0.75rem;
+    animation: searchDropdown 0.15s ease-out;
+  }
+
+  @keyframes searchDropdown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .github-link {
