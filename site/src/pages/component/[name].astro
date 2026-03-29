@@ -5,6 +5,15 @@ import StructuredData from '../../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
 import { formatDate, displayName, releaseSlug, componentSlug, compareVersions } from '../../lib/utils';
 
+interface VersionEntry {
+  firstRelease: string;
+  firstReleaseSlug: string;
+  firstReleaseDate: string;
+  firstReleaseBeta: boolean;
+  firstReleaseRC: boolean;
+  oldestDate: number;
+}
+
 interface VersionChange {
   version: string;
   firstRelease: string;
@@ -18,56 +27,59 @@ interface VersionChange {
 export async function getStaticPaths() {
   const allReleases = await getCollection('macosReleaseDetails');
 
-  // Sort by osVersion descending (major.minor.patch), then by date within the same version
-  const releases = allReleases.sort((a, b) => {
-    const aParts = a.data.osVersion.split('.').map(Number);
-    const bParts = b.data.osVersion.split('.').map(Number);
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-      const av = aParts[i] ?? 0;
-      const bv = bParts[i] ?? 0;
-      if (bv !== av) return bv - av;
-    }
-    return new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime();
-  });
+  // For each component, group by component version and track the oldest release that introduced it.
+  const componentMeta: Map<string, { name: string; source: string; path: string }> = new Map();
+  const componentVersions: Map<string, Map<string, VersionEntry>> = new Map();
 
-  // Collect version history per component
-  const componentMap: Map<string, { name: string; source: string; path: string; changes: VersionChange[] }> = new Map();
-
-  for (const release of releases) {
+  for (const release of allReleases) {
+    const releaseDate = new Date(release.data.releaseDate ?? '').getTime();
     for (const comp of release.data.components) {
       const slug = componentSlug(comp.name);
-      if (!componentMap.has(slug)) {
-        componentMap.set(slug, { name: comp.name, source: comp.source, path: comp.path, changes: [] });
+      const version = comp.version ?? '';
+
+      if (!componentMeta.has(slug)) {
+        componentMeta.set(slug, { name: comp.name, source: comp.source, path: comp.path });
+      }
+      if (!componentVersions.has(slug)) {
+        componentVersions.set(slug, new Map());
       }
 
-      const entry = componentMap.get(slug)!;
-      const version = comp.version ?? '';
-      const lastChange = entry.changes[entry.changes.length - 1];
-
-      if (!lastChange || lastChange.version !== version) {
-        entry.changes.push({
-          version,
+      const vmap = componentVersions.get(slug)!;
+      const existing = vmap.get(version);
+      if (!existing || releaseDate < existing.oldestDate) {
+        vmap.set(version, {
           firstRelease: displayName(release.data, true),
           firstReleaseSlug: releaseSlug(release.data),
           firstReleaseDate: release.data.releaseDate ?? '',
           firstReleaseBeta: release.data.isBeta,
           firstReleaseRC: release.data.isRC,
-          direction: '',
+          oldestDate: releaseDate,
         });
-
-        // Set direction on the *previous* entry (newer version) now that we know what it upgraded from
-        if (lastChange) {
-          lastChange.direction = compareVersions(version, lastChange.version);
-        }
       }
     }
   }
 
-  // Mark the oldest entry as "First tracked"
-  for (const [, data] of componentMap) {
-    if (data.changes.length > 0) {
-      data.changes[data.changes.length - 1].direction = 'added';
-    }
+  // Build sorted change list per component (component version descending).
+  const componentMap: Map<string, { name: string; source: string; path: string; changes: VersionChange[] }> = new Map();
+
+  for (const [slug, vmap] of componentVersions) {
+    const meta = componentMeta.get(slug)!;
+    const sorted = [...vmap.entries()].sort(([a], [b]) => {
+      const dir = compareVersions(a, b);
+      return dir === 'upgraded' ? 1 : dir === 'downgraded' ? -1 : 0;
+    });
+
+    const changes: VersionChange[] = sorted.map(([version, entry], i) => ({
+      version,
+      firstRelease: entry.firstRelease,
+      firstReleaseSlug: entry.firstReleaseSlug,
+      firstReleaseDate: entry.firstReleaseDate,
+      firstReleaseBeta: entry.firstReleaseBeta,
+      firstReleaseRC: entry.firstReleaseRC,
+      direction: i === sorted.length - 1 ? 'added' : compareVersions(sorted[i + 1][0], version),
+    }));
+
+    componentMap.set(slug, { name: meta.name, source: meta.source, path: meta.path, changes });
   }
 
   return [...componentMap.entries()].map(([slug, data]) => ({
