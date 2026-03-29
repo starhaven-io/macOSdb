@@ -23,6 +23,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     public let kernels: [KernelInfo]
     public let components: [Component]
     public let sdks: [SDKInfo]?
+    public let minimumOSVersion: String?
 
     public init(
         productType: ProductType? = .macOS,
@@ -41,7 +42,8 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         isDeviceSpecific: Bool = false,
         kernels: [KernelInfo] = [],
         components: [Component] = [],
-        sdks: [SDKInfo]? = nil
+        sdks: [SDKInfo]? = nil,
+        minimumOSVersion: String? = nil
     ) {
         self.productType = productType
         self.osVersion = osVersion
@@ -60,6 +62,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         self.kernels = kernels
         self.components = components
         self.sdks = sdks
+        self.minimumOSVersion = minimumOSVersion
     }
 
     public var majorVersion: Int {
@@ -142,6 +145,7 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         kernels = try container.decodeIfPresent([KernelInfo].self, forKey: .kernels) ?? []
         components = try container.decodeIfPresent([Component].self, forKey: .components) ?? []
         sdks = try container.decodeIfPresent([SDKInfo].self, forKey: .sdks)
+        minimumOSVersion = try container.decodeIfPresent(String.self, forKey: .minimumOSVersion)
     }
 }
 

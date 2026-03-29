@@ -53,6 +53,9 @@ struct ReleaseDetailView: View {
                         systemImage: "cpu"
                     )
                 }
+                if let minOS = release.minimumOSVersion {
+                    Label("Requires macOS \(minOS)", systemImage: "exclamationmark.triangle")
+                }
                 if release.isDeviceSpecific {
                     Label("Device Specific", systemImage: "desktopcomputer")
                 }

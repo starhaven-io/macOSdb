@@ -5,7 +5,25 @@
       "name" : "Apple Clang",
       "path" : "/usr/bin/clang",
       "source" : "filesystem",
-      "version" : "17.0.0"
+      "version" : "1700.6.4.2"
+    },
+    {
+      "name" : "bzip2",
+      "path" : "/lib/libbz2.1.0.tbd",
+      "source" : "sdk",
+      "version" : "1.0.8"
+    },
+    {
+      "name" : "cctools",
+      "path" : "/usr/bin/otool",
+      "source" : "filesystem",
+      "version" : "1030"
+    },
+    {
+      "name" : "expat",
+      "path" : "/include/expat.h",
+      "source" : "sdk",
+      "version" : "2.7.1"
     },
     {
       "name" : "Git",
@@ -20,10 +38,52 @@
       "version" : "1230.1"
     },
     {
+      "name" : "libcurl",
+      "path" : "/include/curl/curlver.h",
+      "source" : "sdk",
+      "version" : "8.7.1"
+    },
+    {
+      "name" : "libedit",
+      "path" : "/lib/libedit.3.tbd",
+      "source" : "sdk",
+      "version" : "3"
+    },
+    {
+      "name" : "libexslt",
+      "path" : "/include/libexslt/exsltconfig.h",
+      "source" : "sdk",
+      "version" : "0.8.20"
+    },
+    {
+      "name" : "libffi",
+      "path" : "/include/ffi/ffi.h",
+      "source" : "sdk",
+      "version" : "3.4-rc1"
+    },
+    {
+      "name" : "libxml2",
+      "path" : "/include/libxml/xmlversion.h",
+      "source" : "sdk",
+      "version" : "2.9.13"
+    },
+    {
+      "name" : "libxslt",
+      "path" : "/include/libxslt/xsltconfig.h",
+      "source" : "sdk",
+      "version" : "1.1.35"
+    },
+    {
       "name" : "lldb",
       "path" : "/Contents/SharedFrameworks/LLDB.framework/LLDB",
       "source" : "filesystem",
       "version" : "1703.0.236.103"
+    },
+    {
+      "name" : "ncurses",
+      "path" : "/include/curses.h",
+      "source" : "sdk",
+      "version" : "6.0.20150808"
     },
     {
       "name" : "Python",
@@ -32,10 +92,22 @@
       "version" : "3.9.6"
     },
     {
+      "name" : "sqlite3",
+      "path" : "/include/sqlite3.h",
+      "source" : "sdk",
+      "version" : "3.51.0"
+    },
+    {
       "name" : "Swift",
       "path" : "/usr/bin/swift-frontend",
       "source" : "filesystem",
       "version" : "6.2.4"
+    },
+    {
+      "name" : "zlib",
+      "path" : "/include/zlib.h",
+      "source" : "sdk",
+      "version" : "1.2.12"
     }
   ],
   "isBeta" : false,
@@ -44,6 +116,7 @@
   "kernels" : [
 
   ],
+  "minimumOSVersion" : "15.6",
   "osVersion" : "26.3",
   "productType" : "Xcode",
   "releaseDate" : "2026-02-26",
