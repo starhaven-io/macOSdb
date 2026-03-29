@@ -4,7 +4,8 @@ import OSLog
 public enum ComponentExtractor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "ComponentExtractor")
 
-    public static func extract(from data: Data, using definition: ComponentDefinition) -> Component? {
+    @concurrent
+    public static func extract(from data: Data, using definition: ComponentDefinition) async -> Component? {
         logger.debug("Extracting \(definition.name) from \(data.count) bytes")
 
         switch definition.strategy {

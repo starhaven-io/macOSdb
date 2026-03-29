@@ -44,8 +44,8 @@ public actor XcodeScanner {
             sendVerbose("Xcode version: \(osVersion) (\(buildNumber))")
 
             // Phase 4: Extract toolchain and framework components
-            var components = extractToolchainComponents(from: xcodeApp)
-            components.append(contentsOf: extractFrameworkComponents(from: xcodeApp))
+            var components = await extractToolchainComponents(from: xcodeApp)
+            components.append(contentsOf: await extractFrameworkComponents(from: xcodeApp))
 
             // Phase 5: Parse SDK metadata and extract SDK components
             sendProgress(.parsingSDKMetadata)
@@ -186,7 +186,7 @@ public actor XcodeScanner {
 
     // MARK: - Toolchain component extraction
 
-    private func extractToolchainComponents(from xcodeApp: URL) -> [Component] {
+    private func extractToolchainComponents(from xcodeApp: URL) async -> [Component] {
         var components: [Component] = []
         let developerDir = xcodeApp.appendingPathComponent("Contents/Developer")
         let toolchainDir = developerDir.appendingPathComponent(
@@ -209,7 +209,7 @@ public actor XcodeScanner {
                 continue
             }
 
-            if let component = ComponentExtractor.extract(from: data, using: definition) {
+            if let component = await ComponentExtractor.extract(from: data, using: definition) {
                 components.append(component)
             } else {
                 sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
@@ -230,7 +230,7 @@ public actor XcodeScanner {
                 continue
             }
 
-            if let component = ComponentExtractor.extract(from: data, using: definition) {
+            if let component = await ComponentExtractor.extract(from: data, using: definition) {
                 components.append(component)
             } else {
                 sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
@@ -247,7 +247,7 @@ public actor XcodeScanner {
 
     // MARK: - Framework component extraction
 
-    private func extractFrameworkComponents(from xcodeApp: URL) -> [Component] {
+    private func extractFrameworkComponents(from xcodeApp: URL) async -> [Component] {
         var components: [Component] = []
 
         // lldb — version is in LLDB.framework, not the lldb binary
@@ -258,7 +258,7 @@ public actor XcodeScanner {
                 continue
             }
 
-            if let component = ComponentExtractor.extract(from: data, using: definition) {
+            if let component = await ComponentExtractor.extract(from: data, using: definition) {
                 components.append(component)
             } else {
                 sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
@@ -269,14 +269,14 @@ public actor XcodeScanner {
         let pythonFramework = xcodeApp.appendingPathComponent(
             "Contents/Developer/Library/Frameworks/Python3.framework/Versions"
         )
-        if let pythonComponent = extractPythonVersion(from: pythonFramework) {
+        if let pythonComponent = await extractPythonVersion(from: pythonFramework) {
             components.append(pythonComponent)
         }
 
         return components
     }
 
-    private func extractPythonVersion(from versionsDir: URL) -> Component? {
+    private func extractPythonVersion(from versionsDir: URL) async -> Component? {
         let fileManager = FileManager.default
         guard let versions = try? fileManager.contentsOfDirectory(
             at: versionsDir, includingPropertiesForKeys: nil
@@ -309,7 +309,7 @@ public actor XcodeScanner {
                     strategy: .regex
                 )
 
-                if let component = ComponentExtractor.extract(from: data, using: definition) {
+                if let component = await ComponentExtractor.extract(from: data, using: definition) {
                     return component
                 }
             }

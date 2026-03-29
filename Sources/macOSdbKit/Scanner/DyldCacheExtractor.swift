@@ -59,7 +59,8 @@ public enum DyldCacheExtractor {
         let sourceFile: URL
     }
 
-    public static func extractDylibData(cachePath: URL, dylibPath: String) -> Data? {
+    @concurrent
+    public static func extractDylibData(cachePath: URL, dylibPath: String) async -> Data? {
         guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else {
             logger.warning("Could not open dyld cache: \(cachePath.path)")
             return nil
