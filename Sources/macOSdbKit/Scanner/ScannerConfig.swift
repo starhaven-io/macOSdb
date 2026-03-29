@@ -7,6 +7,26 @@ public struct ComponentDefinition: Sendable {
     public let pattern: String
     public let normalize: @Sendable (String) -> String
     public let strategy: ExtractionStrategy
+    /// Minimum printable-ASCII run length for binary string extraction (default: 4).
+    public let minLength: Int?
+
+    public init(
+        name: String,
+        path: String,
+        source: ComponentSource,
+        pattern: String,
+        normalize: @Sendable @escaping (String) -> String,
+        strategy: ExtractionStrategy,
+        minLength: Int? = nil
+    ) {
+        self.name = name
+        self.path = path
+        self.source = source
+        self.pattern = pattern
+        self.normalize = normalize
+        self.strategy = strategy
+        self.minLength = minLength
+    }
 }
 
 /// A component extracted from SDK text files (headers, .tbd files).
@@ -135,10 +155,12 @@ public let filesystemComponents: [ComponentDefinition] = [
         name: "zip",
         path: "usr/bin/zip",
         source: .filesystem,
-        pattern: #"Zip [0-9]+\.[0-9]+"#,
+        // Version is a standalone short string ("3.0") — needs minLength=3
+        pattern: #"^[0-9]+\.[0-9]+$"#,
 
-        normalize: stripPrefix(["Zip "]),
-        strategy: .regex
+        normalize: identity,
+        strategy: .regex,
+        minLength: 3
     ),
     ComponentDefinition(
         name: "zsh",
