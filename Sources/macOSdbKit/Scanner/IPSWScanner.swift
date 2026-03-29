@@ -53,7 +53,7 @@ public actor IPSWScanner {
             // Phase 2: Parse kernelcaches
             sendProgress(.parsingKernels(count: extraction.kernelcaches.count))
             Self.logger.info("Parsing \(extraction.kernelcaches.count) kernelcache files")
-            let kernels = parseKernels(extraction.kernelcaches, deviceMap: extraction.kernelDeviceMap)
+            let kernels = await parseKernels(extraction.kernelcaches, deviceMap: extraction.kernelDeviceMap)
 
             guard !kernels.isEmpty else {
                 throw ScannerError.noKernelcachesFound
@@ -109,27 +109,32 @@ public actor IPSWScanner {
     private func parseKernels(
         _ kernelcaches: [URL],
         deviceMap: [String: [String]]
-    ) -> [KernelInfo] {
-        var kernels: [KernelInfo] = []
-        for path in kernelcaches {
-            guard var kernel = KernelParser.parse(kernelcachePath: path) else { continue }
-            if kernel.devices.isEmpty {
-                // Try BuildManifest device map, then board codename map (normalizing dev → release)
-                let releaseKey = kernel.file.replacingOccurrences(of: ".development.", with: ".release.")
-                let devices = deviceMap[kernel.file]
-                    ?? boardCodeNameDevices[kernel.file] ?? boardCodeNameDevices[releaseKey]
-                if let devices {
-                    kernel = KernelInfo(
-                        file: kernel.file,
-                        darwinVersion: kernel.darwinVersion,
-                        xnuVersion: kernel.xnuVersion,
-                        arch: kernel.arch,
-                        chip: kernel.chip,
-                        devices: devices
-                    )
-                }
+    ) async -> [KernelInfo] {
+        let parsed = await withTaskGroup(of: KernelInfo?.self, returning: [KernelInfo].self) { group in
+            for path in kernelcaches {
+                group.addTask { await KernelParser.parse(kernelcachePath: path) }
             }
-            kernels.append(kernel)
+            var results: [KernelInfo] = []
+            for await kernel in group {
+                if let kernel { results.append(kernel) }
+            }
+            return results
+        }
+
+        let kernels = parsed.map { kernel -> KernelInfo in
+            guard kernel.devices.isEmpty else { return kernel }
+            let releaseKey = kernel.file.replacingOccurrences(of: ".development.", with: ".release.")
+            let devices = deviceMap[kernel.file]
+                ?? boardCodeNameDevices[kernel.file] ?? boardCodeNameDevices[releaseKey]
+            guard let devices else { return kernel }
+            return KernelInfo(
+                file: kernel.file,
+                darwinVersion: kernel.darwinVersion,
+                xnuVersion: kernel.xnuVersion,
+                arch: kernel.arch,
+                chip: kernel.chip,
+                devices: devices
+            )
         }
         return deduplicateKernels(kernels).map(resolveDeviceChips)
     }
@@ -183,7 +188,7 @@ public actor IPSWScanner {
         sendProgress(.mountingDMG)
         Self.logger.info("Mounting system DMG: \(systemDMG.lastPathComponent)")
         let systemMount = try await dmgMounter.mount(dmgPath: systemDMG)
-        var fsComponents = extractFilesystemComponents(mountPoint: systemMount)
+        var fsComponents = await extractFilesystemComponents(mountPoint: systemMount)
 
         let dyldComponents: [Component]
         if let cryptexDMG {
@@ -192,7 +197,7 @@ public actor IPSWScanner {
             let cryptexMount = try await dmgMounter.mount(dmgPath: cryptexDMG)
 
             // Scan filesystem components from cryptex too (macOS 13+ moved some binaries there)
-            let cryptexFsComponents = extractFilesystemComponents(mountPoint: cryptexMount)
+            let cryptexFsComponents = await extractFilesystemComponents(mountPoint: cryptexMount)
             let systemNames = Set(fsComponents.map(\.name))
             for component in cryptexFsComponents {
                 if systemNames.contains(component.name) {
@@ -202,12 +207,12 @@ public actor IPSWScanner {
                 fsComponents.append(component)
             }
 
-            dyldComponents = extractDyldCacheComponents(mountPoint: cryptexMount)
+            dyldComponents = await extractDyldCacheComponents(mountPoint: cryptexMount)
             sendProgress(.unmountingDMG)
             await dmgMounter.unmount(cryptexMount)
             await dmgMounter.unmount(systemMount)
         } else {
-            dyldComponents = extractDyldCacheComponents(mountPoint: systemMount)
+            dyldComponents = await extractDyldCacheComponents(mountPoint: systemMount)
             sendProgress(.unmountingDMG)
             await dmgMounter.unmount(systemMount)
         }
@@ -219,7 +224,7 @@ public actor IPSWScanner {
 
     private func extractFilesystemComponents(
         mountPoint: DMGMounter.MountPoint
-    ) -> [Component] {
+    ) async -> [Component] {
         var components: [Component] = []
         let total = filesystemComponents.count
 
@@ -238,7 +243,7 @@ public actor IPSWScanner {
                 continue
             }
 
-            if let component = ComponentExtractor.extract(from: data, using: definition) {
+            if let component = await ComponentExtractor.extract(from: data, using: definition) {
                 components.append(component)
             } else {
                 sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
@@ -253,7 +258,7 @@ public actor IPSWScanner {
 
     private func extractDyldCacheComponents(
         mountPoint: DMGMounter.MountPoint
-    ) -> [Component] {
+    ) async -> [Component] {
         let cachePath = findDyldCache(mountPoint: mountPoint.path)
 
         guard let cachePath else {
@@ -295,7 +300,7 @@ public actor IPSWScanner {
                     strategy: definition.strategy
                 )
 
-            guard let dylibData = DyldCacheExtractor.extractDylibData(
+            guard let dylibData = await DyldCacheExtractor.extractDylibData(
                 cachePath: cachePath,
                 dylibPath: resolvedPath
             ) else {
@@ -305,7 +310,7 @@ public actor IPSWScanner {
 
             sendVerbose("\(definition.name): extracted \(dylibData.count) bytes")
 
-            if let component = ComponentExtractor.extract(from: dylibData, using: resolvedDefinition) {
+            if let component = await ComponentExtractor.extract(from: dylibData, using: resolvedDefinition) {
                 components.append(component)
             } else {
                 sendVerbose("\(definition.name): no version pattern matched")

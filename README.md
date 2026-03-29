@@ -10,7 +10,7 @@ bash, curl, httpd, LibreSSL, OpenSSH, rsync, Ruby, SQLite, vim, zip, zsh — plu
 
 ## Installation
 
-Requires macOS 15.0+ and Apple Silicon.
+Requires macOS 15.0+ and Apple Silicon. Building from source requires Xcode 26+.
 
 ### Homebrew
 
@@ -89,7 +89,7 @@ macOSdbApp/             SwiftUI app (NavigationSplitView, MVVM with @Observable)
   Bootstrap/            Entry point with CLI symlink dispatch
   Resources/            Asset catalog (app icon)
 site/                   Astro static site (browse data on the web)
-Tests/                  Swift Testing (94 tests)
+Tests/                  Swift Testing (142 tests)
 data/                   Pre-built release JSON (CC-BY-4.0)
 ```
 

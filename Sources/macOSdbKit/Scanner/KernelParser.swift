@@ -4,7 +4,8 @@ import OSLog
 public enum KernelParser {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "KernelParser")
 
-    public static func parse(kernelcachePath: URL) -> KernelInfo? {
+    @concurrent
+    public static func parse(kernelcachePath: URL) async -> KernelInfo? {
         let filename = kernelcachePath.lastPathComponent
 
         guard let data = try? Data(contentsOf: kernelcachePath) else {
