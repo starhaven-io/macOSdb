@@ -3,7 +3,10 @@ import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { displayName } from '../lib/utils';
 
-const releases = await getCollection('macosReleases');
+const allReleases = await getCollection('macosReleases');
+const releases = allReleases.sort(
+  (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
+);
 
 // Build a lookup from slug to API path for client-side fetching
 const releaseOptions = releases.map((entry) => ({
