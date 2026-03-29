@@ -66,42 +66,30 @@ public enum KernelParser {
     // MARK: - Version extraction
 
     private static func findDarwinVersion(in strings: [String]) -> String {
-        let pattern = #"Darwin Kernel Version ([0-9]+\.[0-9]+\.[0-9]+)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return "" }
-
+        let regex = /Darwin Kernel Version (\d+\.\d+\.\d+)/
         for string in strings {
-            let range = NSRange(string.startIndex..., in: string)
-            if let match = regex.firstMatch(in: string, range: range),
-               let captureRange = Range(match.range(at: 1), in: string) {
-                return String(string[captureRange])
+            if let match = string.firstMatch(of: regex) {
+                return String(match.1)
             }
         }
         return ""
     }
 
     private static func findXNUVersion(in strings: [String]) -> String? {
-        let pattern = #"xnu-([0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)*)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
-
+        let regex = /xnu-(\d+\.\d+\.\d+(?:\.\d+)*)/
         for string in strings {
-            let range = NSRange(string.startIndex..., in: string)
-            if let match = regex.firstMatch(in: string, range: range),
-               let captureRange = Range(match.range(at: 1), in: string) {
-                return String(string[captureRange])
+            if let match = string.firstMatch(of: regex) {
+                return String(match.1)
             }
         }
         return nil
     }
 
     private static func findArchSuffix(in strings: [String]) -> String {
-        let pattern = #"RELEASE_ARM64_([A-Za-z0-9]+)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return "" }
-
+        let regex = /RELEASE_ARM64_([A-Za-z0-9]+)/
         for string in strings {
-            let range = NSRange(string.startIndex..., in: string)
-            if let match = regex.firstMatch(in: string, range: range),
-               let captureRange = Range(match.range(at: 1), in: string) {
-                return String(string[captureRange])
+            if let match = string.firstMatch(of: regex) {
+                return String(match.1)
             }
         }
         return ""
