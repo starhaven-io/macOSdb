@@ -424,23 +424,25 @@ const releaseOptions = releases.map((entry) => ({
     color: var(--color-text-secondary);
   }
 
-  .status-badge {
+  :global(.status-badge) {
     display: inline-block;
-    padding: 0.15em 0.5em;
+    padding: 0.2em 0.6em;
     border-radius: 8px;
     font-size: 0.8rem;
     font-weight: 600;
   }
 
-  .status-upgraded .status-badge {
+  :global(.status-upgraded .status-badge) {
+    background: color-mix(in srgb, var(--color-upgraded) 12%, transparent);
     color: var(--color-upgraded);
   }
 
-  .status-downgraded .status-badge {
+  :global(.status-downgraded .status-badge) {
+    background: color-mix(in srgb, var(--color-downgraded) 12%, transparent);
     color: var(--color-downgraded);
   }
 
-  .status-unchanged .status-badge {
+  :global(.status-unchanged .status-badge) {
     color: var(--color-text-secondary);
   }
 

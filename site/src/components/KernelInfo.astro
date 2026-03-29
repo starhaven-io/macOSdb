@@ -9,7 +9,7 @@ const { darwinVersion, xnuVersion } = Astro.props;
 
 {
   (darwinVersion || xnuVersion) && (
-    <section class="kernel-info">
+    <section class="kernel-info" data-pagefind-ignore>
       <h2>Kernel</h2>
       <dl>
         {darwinVersion && (

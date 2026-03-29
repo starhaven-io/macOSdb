@@ -33,12 +33,12 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
             <td>
               <code>{comp.version}</code>
             </td>
-            <td>
+            <td data-pagefind-ignore>
               <span class:list={['source', `source-${comp.source}`]}>
                 {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
               </span>
             </td>
-            <td class="comp-path">
+            <td class="comp-path" data-pagefind-ignore>
               <code>{comp.path}</code>
             </td>
           </tr>
