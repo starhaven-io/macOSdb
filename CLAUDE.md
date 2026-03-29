@@ -5,12 +5,13 @@ macOSdb is a native macOS app and CLI that catalogs which versions of open-sourc
 ## Project overview
 
 - **Platform:** macOS 15.0+ (Apple Silicon only)
-- **Language:** Swift 6.0, SwiftUI (100%)
+- **Language:** Swift 6.2, SwiftUI (100%)
 - **Architecture:** MVVM using `@Observable` and SwiftUI Environment injection
 - **Structure:** Xcode project (app + bundled CLI) + Swift Package (library, standalone CLI, tests)
 - **Bundle ID:** `io.linnane.macosdb`
 - **License:** GPL-3.0-only (code), CC-BY-4.0 (data)
 - **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction)
+- **Website:** https://macosdb.com (Astro static site, deployed to GitHub Pages)
 
 ## Repository structure
 
@@ -19,12 +20,12 @@ macOSdb/
 ├── macOSdb.xcodeproj/                     # Xcode project (builds app target with bundled CLI)
 ├── Package.swift                          # SPM: macOSdbKit lib + standalone macosdb CLI
 ├── Sources/
-│   ├── macOSdbKit/                        # Shared library (19 files)
-│   │   ├── Models/                        # Release, Component, KernelInfo, ChipFamily, DeviceRegistry, VersionComparison
-│   │   ├── Scanner/                       # IPSW scanning pipeline (11 files)
+│   ├── macOSdbKit/                        # Shared library
+│   │   ├── Models/                        # Release, Component, KernelInfo, ChipFamily, DeviceRegistry, ProductType, SDKInfo, VersionComparison
+│   │   ├── Scanner/                       # IPSW/Xcode scanning pipeline
 │   │   ├── DataProvider.swift             # Fetch JSON from HTTPS (GitHub raw) or local files
 │   │   └── VersionComparer.swift          # Diff components across releases
-│   └── macosdb/                           # CLI executable (swift-argument-parser, 6 files)
+│   └── macosdb/                           # CLI executable (swift-argument-parser)
 ├── macOSdbApp/                            # SwiftUI app sources (built by Xcode project)
 │   ├── Bootstrap/
 │   │   └── EntryPoint.swift               # @main — dispatches to app or CLI based on process name
@@ -39,15 +40,20 @@ macOSdb/
 │   │   └── ChipSupportView.swift          # Chip/device support grouped by generation
 │   └── Resources/
 │       └── Assets.xcassets/               # App icon, accent color
-├── site/                                  # Astro static site (browse data on the web)
+├── site/                                  # Astro static site (macosdb.com)
 │   ├── src/
-│   │   ├── pages/                         # index, release/[slug], compare
+│   │   ├── pages/                         # index, release/[slug], compare, components, component/[name]
+│   │   │   ├── api/v1/                    # JSON API endpoints (macos + xcode releases)
+│   │   │   └── og/                        # Dynamic Open Graph image generation
+│   │   ├── components/                    # Badge, ChipGrid, ComponentTable, KernelInfo, StructuredData
 │   │   ├── layouts/                       # Base.astro
+│   │   ├── lib/                           # utils.ts
 │   │   └── styles/                        # global.css
+│   ├── content.config.ts                  # Zod-validated content collections
 │   ├── astro.config.mjs
 │   └── package.json
 ├── Tests/
-│   └── macOSdbKitTests/                   # Swift Testing (8 test files, 131 tests)
+│   └── macOSdbKitTests/                   # Swift Testing
 │       └── Fixtures/                      # Test data (sample release JSON)
 ├── data/                                  # Pre-built JSON (committed, CC-BY-4.0)
 │   ├── LICENSE                            # CC-BY-4.0 license for data
@@ -77,7 +83,7 @@ macOSdb/
 
 The core library consumed by both the CLI and app.
 
-**Models:** `Release`, `Component`, `KernelInfo`, `ChipFamily`, `DeviceRegistry`, `VersionComparison`, `ComponentChange`
+**Models:** `ChipFamily`, `Component`, `ComponentChange`, `DeviceRegistry`, `KernelInfo`, `ProductType`, `Release`, `SDKInfo`, `VersionComparison`
 
 **DataProvider:** Actor that fetches release data from HTTPS (GitHub raw URLs) or local `data/` directory. Configurable base URL for dev/testing.
 
@@ -101,6 +107,8 @@ The core library consumed by both the CLI and app.
 - `DyldCacheExtractor` — extract dylibs from dyld_shared_cache (supports split subcaches)
 - `ComponentExtractor` — version string extraction from binaries
 - `BinaryStringScanner` — raw binary string scanning
+- `SDKMetadataParser` — parse SDK headers and metadata
+- `XcodeScanner` — scan Xcode.app bundles for toolchain/SDK component versions
 - `ScannerConfig` — component definitions (filesystem + dyld cache)
 - `ScannerError` — scanner error types
 
@@ -126,12 +134,24 @@ SwiftUI app with NavigationSplitView (default window 1000×700):
 - Compare view: side-by-side diff with color-coded summary badges
 - AppState: uses `#filePath` to find local `data/` directory, falls back to GitHub raw URLs
 - App is built by `macOSdb.xcodeproj`; macOSdbKit is added as a local SPM dependency
-- Distribution: Developer ID signed and notarized, not sandboxed
+- Distribution: Developer ID signed and notarized, Sparkle auto-updates, not sandboxed
 - Category: Utilities (`public.app-category.utilities`)
 
 ### Site (site/)
 
-Astro static site that presents release data on the web. Reads JSON from `data/` at build time. Pages: release index with pre-release filter toggle, per-release detail (`release/[slug]`), and compare view. Deployed to GitHub Pages via `deploy-site.yml`.
+Astro static site at [macosdb.com](https://macosdb.com). Reads JSON from `data/` at build time via Zod-validated content collections. Deployed to GitHub Pages via `deploy-site.yml`.
+
+**Pages:**
+- Release index with pre-release filter toggle and full-text search (Pagefind)
+- Per-release detail (`release/[slug]`) with components, kernels, chip/device support
+- Compare view for side-by-side release diffs
+- Component index and per-component pages (`component/[name]`) showing version history
+- Dynamic Open Graph images for social sharing
+- JSON-LD structured data
+
+**API:** REST endpoints at `/api/v1/` serve release data for both macOS and Xcode, mirroring the `data/` directory structure.
+
+**Components:** `Badge`, `ChipGrid`, `ComponentTable`, `KernelInfo`, `StructuredData`
 
 ### Data format
 
@@ -144,7 +164,7 @@ macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia,
 
 ## Code style and conventions
 
-- SwiftLint with 60 opt-in rules (see `.swiftlint.yml`)
+- SwiftLint with ~55 opt-in rules (see `.swiftlint.yml`)
 - Line length: warning at 150, error at 200
 - Function body length: warning at 60, error at 100
 - Swift 6 approachable concurrency: `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, `SWIFT_APPROACHABLE_CONCURRENCY = YES`
