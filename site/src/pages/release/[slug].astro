@@ -9,11 +9,13 @@ import { getCollection } from 'astro:content';
 import { formatDate, displayName, releaseSlug } from '../../lib/utils';
 
 export async function getStaticPaths() {
-  const releases = await getCollection('macosReleaseDetails');
-  const index = await getCollection('macosReleases');
+  const allReleases = await getCollection('macosReleaseDetails');
+  const releases = allReleases.sort(
+    (a, b) => new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime(),
+  );
 
   return releases.map((entry, i) => {
-    const prev = i < index.length - 1 ? index[i + 1] : null;
+    const prev = i < releases.length - 1 ? releases[i + 1] : null;
     const previousSlug = prev ? releaseSlug(prev.data) : null;
     return {
       params: { slug: `${entry.data.osVersion}-${entry.data.buildNumber}` },
@@ -81,7 +83,11 @@ const structuredData = [
 ];
 ---
 
-<Base title={`${title} — macOSdb`} description={`Components and hardware support for ${title}`}>
+<Base
+  title={`${title} — macOSdb`}
+  description={`Components and hardware support for ${title}`}
+  ogImage={`/og/${currentSlug}.png`}
+>
   <StructuredData slot="head" data={structuredData} />
 
   <nav class="breadcrumb">

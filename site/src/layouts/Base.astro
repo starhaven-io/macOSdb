@@ -1,16 +1,22 @@
 ---
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
+import Search from 'astro-pagefind/components/Search';
 
 interface Props {
   title: string;
   description?: string;
+  ogImage?: string;
 }
 
-const { title, description = 'A catalog of open-source components in every macOS release since macOS 11 Big Sur.' } =
-  Astro.props;
+const {
+  title,
+  description = 'A catalog of open-source components in every macOS release since macOS 11 Big Sur.',
+  ogImage,
+} = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined;
 ---
 
 <html lang="en">
@@ -28,6 +34,13 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
+    {ogImageURL && <meta property="og:image" content={ogImageURL} />}
+    {ogImageURL && <meta property="og:image:width" content="1200" />}
+    {ogImageURL && <meta property="og:image:height" content="630" />}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content={ogImageURL ? 'summary_large_image' : 'summary'} />
+    {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
 
     <!-- Sitemap -->
     <link rel="sitemap" href="/sitemap-index.xml" />
@@ -47,6 +60,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         <a href="/" class="site-title" transition:name="site-title">macOSdb</a>
         <div class="nav-links">
           <a href="/compare/">Compare</a>
+          <div class="search-wrapper">
+            <Search id="search" className="pagefind-ui" uiOptions={{ showImages: false, resetStyles: false }} />
+          </div>
           <a href="https://github.com/p-linnane/macOSdb" class="github-link" aria-label="GitHub repository">
             <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path
@@ -57,7 +73,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         </div>
       </nav>
     </header>
-    <main>
+    <main data-pagefind-body>
       <slot />
     </main>
     <footer>
@@ -99,6 +115,84 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   .nav-links a:hover {
     color: var(--color-text);
     text-decoration: none;
+  }
+
+  .search-wrapper {
+    position: relative;
+  }
+
+  .search-wrapper :global(.pagefind-ui) {
+    --pagefind-ui-scale: 0.7;
+    --pagefind-ui-primary: var(--color-link);
+    --pagefind-ui-text: var(--color-text);
+    --pagefind-ui-background: var(--color-bg);
+    --pagefind-ui-border: var(--color-border);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 6px;
+    --pagefind-ui-font: var(--font-system);
+  }
+
+  .search-wrapper :global(.pagefind-ui__search-input) {
+    color: var(--color-text);
+  }
+
+  .search-wrapper :global(.pagefind-ui__form) {
+    position: static;
+  }
+
+  .search-wrapper :global(.pagefind-ui__search-input) {
+    color: var(--color-text);
+    position: relative;
+    font-family: var(--font-system);
+    font-weight: 400;
+  }
+
+  .search-wrapper :global(.pagefind-ui__search-input::placeholder) {
+    color: var(--color-text-secondary);
+    opacity: 1;
+  }
+
+  .search-wrapper :global(.pagefind-ui__search-clear) {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    cursor: pointer;
+    font-size: 0;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .search-wrapper :global(.pagefind-ui__search-clear::before) {
+    content: '✕';
+    font-size: 14px;
+    color: var(--color-text-secondary);
+  }
+
+  .search-wrapper :global(.pagefind-ui__search-clear:hover::before) {
+    color: var(--color-text);
+  }
+
+  .search-wrapper :global(.pagefind-ui__drawer) {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 500px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    padding: 0.5rem;
   }
 
   .github-link {
