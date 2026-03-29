@@ -98,12 +98,6 @@
       "version" : "9.1"
     },
     {
-      "name" : "zip",
-      "path" : "/usr/bin/zip",
-      "source" : "filesystem",
-      "version" : "3.0"
-    },
-    {
       "name" : "zsh",
       "path" : "/bin/zsh",
       "source" : "filesystem",

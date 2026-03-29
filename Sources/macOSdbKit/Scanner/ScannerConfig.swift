@@ -152,17 +152,6 @@ public let filesystemComponents: [ComponentDefinition] = [
         strategy: .regex
     ),
     ComponentDefinition(
-        name: "zip",
-        path: "usr/bin/zip",
-        source: .filesystem,
-        // Version is a standalone short string ("3.0") — needs minLength=3
-        pattern: #"^[0-9]+\.[0-9]+$"#,
-
-        normalize: identity,
-        strategy: .regex,
-        minLength: 3
-    ),
-    ComponentDefinition(
         name: "zsh",
         path: "bin/zsh",
         source: .filesystem,

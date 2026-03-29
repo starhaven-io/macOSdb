@@ -197,7 +197,6 @@ struct ScannerConfigTests {
         #expect(names.contains("curl"))
         #expect(names.contains("OpenSSH"))
         #expect(names.contains("LibreSSL"))
-        #expect(names.contains("zip"))
         #expect(names.contains("Ruby"))
         #expect(names.contains("SQLite"))
         #expect(names.contains("vim"))
@@ -344,7 +343,6 @@ struct ScannerConfigTests {
             TestCase(name: "SQLite", input: "3.43.2", expected: "3.43.2"),
             TestCase(name: "vim", input: "VIM - Vi IMproved 9.1", expected: "VIM - Vi IMproved 9.1"),
             TestCase(name: "httpd", input: "Apache/2.4.62", expected: "Apache/2.4.62"),
-            TestCase(name: "zip", input: "3.0", expected: "3.0"),
             TestCase(name: "zsh", input: "zsh-5.9-0-g73d3173", expected: "zsh-5.9"),
             // Toolchain components
             TestCase(name: "Apple Clang", input: "clang-2100.0.123.102", expected: "clang-2100.0.123.102"),
