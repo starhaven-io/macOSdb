@@ -212,8 +212,5 @@ struct VersionComparerTests {
         // vim should have been upgraded from 9.0 to 9.1
         let vim = comparison.changes.first { $0.name == "vim" }
         #expect(vim?.direction == .upgraded)
-
-        // rsync was added in 15.6.1
-        #expect(comparison.addedComponents.contains { $0.name == "rsync" })
     }
 }

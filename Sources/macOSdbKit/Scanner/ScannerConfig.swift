@@ -109,21 +109,6 @@ public let filesystemComponents: [ComponentDefinition] = [
         strategy: .regex
     ),
     ComponentDefinition(
-        name: "rsync",
-        path: "usr/bin/rsync",
-        source: .filesystem,
-        pattern: #"rsync  *version [0-9]+\.[0-9]+\.[0-9]+"#,
-
-        normalize: { raw in
-            // "rsync  version 2.6.9" -> "2.6.9"
-            guard let range = raw.range(of: #"[0-9]+\.[0-9]+\.[0-9]+"#, options: .regularExpression) else {
-                return raw
-            }
-            return String(raw[range])
-        },
-        strategy: .regex
-    ),
-    ComponentDefinition(
         name: "Ruby",
         path: "usr/bin/ruby",
         source: .filesystem,

@@ -75,12 +75,6 @@
       "version" : "10.2p1"
     },
     {
-      "name" : "rsync",
-      "path" : "/usr/bin/rsync",
-      "source" : "filesystem",
-      "version" : "2.6.9"
-    },
-    {
       "name" : "Ruby",
       "path" : "/usr/bin/ruby",
       "source" : "filesystem",
