@@ -2535,6 +2535,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-07-27",
     "releaseName" : "Monterey"
   },
@@ -2546,6 +2547,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-07-14",
     "releaseName" : "Monterey"
   },
@@ -2557,6 +2559,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-06-28",
     "releaseName" : "Monterey"
   },
