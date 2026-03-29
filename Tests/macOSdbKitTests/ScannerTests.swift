@@ -323,8 +323,12 @@ struct ScannerConfigTests {
     func allPatternsCompile() {
         for def in filesystemComponents + dyldCacheComponents + toolchainComponents
                     + developerComponents + frameworkComponents {
-            let regex = try? NSRegularExpression(pattern: def.pattern)
-            #expect(regex != nil, "Pattern failed to compile for \(def.name): \(def.pattern)")
+            let swiftRegex = try? Regex(def.pattern)
+            let nsRegex = try? NSRegularExpression(pattern: def.pattern)
+            #expect(
+                swiftRegex != nil || nsRegex != nil,
+                "Pattern failed to compile for \(def.name): \(def.pattern)"
+            )
         }
     }
 
@@ -380,13 +384,12 @@ struct ScannerConfigTests {
                 continue
             }
 
-            let regex = try NSRegularExpression(pattern: def.pattern)
-            let range = NSRange(input.startIndex..., in: input)
-            let match = regex.firstMatch(in: input, range: range)
+            let regex = try Regex(def.pattern)
+            let match = input.firstMatch(of: regex)
             #expect(match != nil, "Pattern for \(name) did not match '\(input)'")
 
-            if let match, let matchRange = Range(match.range, in: input) {
-                #expect(String(input[matchRange]) == expected)
+            if let match {
+                #expect(String(input[match.range]) == expected)
             }
         }
     }

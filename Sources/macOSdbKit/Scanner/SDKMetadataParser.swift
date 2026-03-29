@@ -57,16 +57,12 @@ enum SDKMetadataParser {
             return extractMultiDefineVersion(from: content, defines: definition.pattern)
         }
 
-        guard let regex = try? NSRegularExpression(pattern: definition.pattern),
-              let match = regex.firstMatch(
-                in: content,
-                range: NSRange(content.startIndex..., in: content)
-              ),
-              let matchRange = Range(match.range, in: content) else {
+        guard let regex = try? Regex(definition.pattern),
+              let match = content.firstMatch(of: regex) else {
             return nil
         }
 
-        return definition.normalize(String(content[matchRange]))
+        return definition.normalize(String(content[match.range]))
     }
 
     /// Extract version from multiple `#define NAME value` lines and join as "major.minor.patch".
@@ -76,16 +72,16 @@ enum SDKMetadataParser {
 
         for name in names {
             let pattern = #"#\s*define\s+"# + name + #"\s+(\S+)"#
-            guard let regex = try? NSRegularExpression(pattern: pattern),
-                  let match = regex.firstMatch(
-                    in: content,
-                    range: NSRange(content.startIndex..., in: content)
-                  ),
-                  match.numberOfRanges > 1,
-                  let valueRange = Range(match.range(at: 1), in: content) else {
+            guard let regex = try? Regex(pattern),
+                  let match = content.firstMatch(of: regex),
+                  match.count > 1 else {
                 return nil
             }
-            parts.append(String(content[valueRange]))
+            if let value = match[1].substring {
+                parts.append(String(value))
+            } else {
+                return nil
+            }
         }
 
         return parts.joined(separator: ".")

@@ -37,13 +37,18 @@ public enum BinaryStringScanner {
         matching pattern: String,
         minLength: Int = defaultMinLength
     ) -> String? {
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
-
-        let strings = extractStrings(from: data, minLength: minLength)
-        for string in strings {
-            let range = NSRange(string.startIndex..., in: string)
-            if let match = regex.firstMatch(in: string, range: range) {
-                if let matchRange = Range(match.range, in: string) {
+        // Swift Regex doesn't support lookbehind; fall back to NSRegularExpression
+        if let regex = try? Regex(pattern) {
+            for string in extractStrings(from: data, minLength: minLength) {
+                if let match = string.firstMatch(of: regex) {
+                    return String(string[match.range])
+                }
+            }
+        } else if let nsRegex = try? NSRegularExpression(pattern: pattern) {
+            for string in extractStrings(from: data, minLength: minLength) {
+                let range = NSRange(string.startIndex..., in: string)
+                if let match = nsRegex.firstMatch(in: string, range: range),
+                   let matchRange = Range(match.range, in: string) {
                     return String(string[matchRange])
                 }
             }
@@ -56,15 +61,20 @@ public enum BinaryStringScanner {
         matching pattern: String,
         minLength: Int = defaultMinLength
     ) -> [String] {
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
-
         var results: [String] = []
-        let strings = extractStrings(from: data, minLength: minLength)
-        for string in strings {
-            let range = NSRange(string.startIndex..., in: string)
-            regex.enumerateMatches(in: string, range: range) { match, _, _ in
-                if let match, let matchRange = Range(match.range, in: string) {
-                    results.append(String(string[matchRange]))
+        if let regex = try? Regex(pattern) {
+            for string in extractStrings(from: data, minLength: minLength) {
+                for match in string.matches(of: regex) {
+                    results.append(String(string[match.range]))
+                }
+            }
+        } else if let nsRegex = try? NSRegularExpression(pattern: pattern) {
+            for string in extractStrings(from: data, minLength: minLength) {
+                let range = NSRange(string.startIndex..., in: string)
+                nsRegex.enumerateMatches(in: string, range: range) { match, _, _ in
+                    if let match, let matchRange = Range(match.range, in: string) {
+                        results.append(String(string[matchRange]))
+                    }
                 }
             }
         }

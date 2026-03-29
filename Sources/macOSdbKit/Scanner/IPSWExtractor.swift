@@ -80,7 +80,7 @@ public actor IPSWExtractor {
         var result = ClassifiedEntries()
         for entry in archive {
             let name = entry.path
-            let basename = (name as NSString).lastPathComponent
+            let basename = URL(fileURLWithPath: name).lastPathComponent
             if basename.hasPrefix("kernelcache") {
                 result.kernelcaches.append(entry)
             } else if name.hasSuffix(".dmg") || name.hasSuffix(".dmg.aea") {
@@ -144,7 +144,7 @@ public actor IPSWExtractor {
 
         var paths: [URL] = []
         for entry in entries {
-            let basename = (entry.path as NSString).lastPathComponent
+            let basename = URL(fileURLWithPath: entry.path).lastPathComponent
             let destPath = kernelsDir.appendingPathComponent(basename)
             _ = try archive.extract(entry, to: destPath)
             paths.append(destPath)
@@ -164,7 +164,7 @@ public actor IPSWExtractor {
         }
 
         let entryByFilename = Dictionary(
-            dmgEntries.map { ((($0.path as NSString).lastPathComponent), $0) },
+            dmgEntries.map { ((URL(fileURLWithPath: $0.path).lastPathComponent), $0) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -184,14 +184,14 @@ public actor IPSWExtractor {
             Self.logger.warning("No manifest DMG mapping; using largest DMG as system image")
         }
 
-        let systemBasename = (systemEntry.path as NSString).lastPathComponent
+        let systemBasename = URL(fileURLWithPath: systemEntry.path).lastPathComponent
         let systemPath = workDir.appendingPathComponent(systemBasename)
         Self.logger.info("Extracting system DMG: \(systemBasename) (\(systemEntry.uncompressedSize) bytes)")
         _ = try archive.extract(systemEntry, to: systemPath)
 
         var cryptexPath: URL?
         if let cryptexEntry {
-            let cryptexBasename = (cryptexEntry.path as NSString).lastPathComponent
+            let cryptexBasename = URL(fileURLWithPath: cryptexEntry.path).lastPathComponent
             let path = workDir.appendingPathComponent(cryptexBasename)
             Self.logger.info("Extracting cryptex DMG: \(cryptexBasename) (\(cryptexEntry.uncompressedSize) bytes)")
             _ = try archive.extract(cryptexEntry, to: path)
@@ -249,7 +249,7 @@ public actor IPSWExtractor {
                            let info = roleDict["Info"] as? [String: Any],
                            let filePath = info["Path"] as? String,
                            filePath.hasSuffix(".dmg") || filePath.hasSuffix(".dmg.aea") {
-                            let filename = (filePath as NSString).lastPathComponent
+                            let filename = URL(fileURLWithPath: filePath).lastPathComponent
                             dmgRoles[roleName] = filename
                         }
                     }
@@ -265,7 +265,7 @@ public actor IPSWExtractor {
                       let kernelPath = kernelInfo["Path"] as? String else {
                     continue
                 }
-                let kernelFilename = (kernelPath as NSString).lastPathComponent
+                let kernelFilename = URL(fileURLWithPath: kernelPath).lastPathComponent
                 kernelDeviceMap[kernelFilename, default: []].insert(productType)
             }
         }
@@ -304,15 +304,10 @@ public actor IPSWExtractor {
     /// Parse OS version and build from IPSW filename as a last resort.
     /// Example: "UniversalMac_15.6.1_24G90_Restore.ipsw" → ("15.6.1", "24G90")
     private func parseFromFilename(_ filename: String) -> (osVersion: String, buildNumber: String) {
-        let pattern = #"UniversalMac_([0-9]+\.[0-9]+(?:\.[0-9]+)?)_([A-Za-z0-9]+)_Restore"#
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(
-                  in: filename, range: NSRange(filename.startIndex..., in: filename)
-              ),
-              let versionRange = Range(match.range(at: 1), in: filename),
-              let buildRange = Range(match.range(at: 2), in: filename) else {
+        let regex = /UniversalMac_(\d+\.\d+(?:\.\d+)?)_([A-Za-z0-9]+)_Restore/
+        guard let match = filename.firstMatch(of: regex) else {
             return ("", "")
         }
-        return (String(filename[versionRange]), String(filename[buildRange]))
+        return (String(match.1), String(match.2))
     }
 }
