@@ -148,21 +148,21 @@ struct ReleaseDetailView: View {
 
     @ViewBuilder
     private func kernelSection(_ release: Release) -> some View {
+        let grouped = groupKernels(release.kernels).sorted { lhs, rhs in
+            let lhsOrder = lhs.chipFamily?.series.sortOrder ?? -1
+            let rhsOrder = rhs.chipFamily?.series.sortOrder ?? -1
+            if lhsOrder != rhsOrder { return lhsOrder > rhsOrder }
+            let lhsTier = lhs.chipFamily?.tier ?? .base
+            let rhsTier = rhs.chipFamily?.tier ?? .base
+            return lhsTier < rhsTier
+        }
+
         VStack(alignment: .leading, spacing: 8) {
             Text("Kernel")
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            ForEach(release.kernels.sorted { lhs, rhs in
-                let lhsChip = lhs.chipFamily
-                let rhsChip = rhs.chipFamily
-                let lhsOrder = lhsChip?.series.sortOrder ?? -1
-                let rhsOrder = rhsChip?.series.sortOrder ?? -1
-                if lhsOrder != rhsOrder { return lhsOrder > rhsOrder }
-                let lhsTier = lhsChip?.tier ?? .base
-                let rhsTier = rhsChip?.tier ?? .base
-                return lhsTier < rhsTier
-            }) { kernel in
+            ForEach(grouped) { kernel in
                 KernelCard(kernel: kernel)
             }
         }
@@ -191,10 +191,88 @@ struct ReleaseDetailView: View {
     }
 }
 
+// MARK: - Kernel Grouping
+
+private struct GroupedKernel: Identifiable {
+    var id: String { "\(chip)-\(arch)-\(darwinVersion)-\(xnuVersion ?? "")" }
+
+    let chip: String
+    let darwinVersion: String
+    let xnuVersion: String?
+    let arch: String
+    let files: [String]
+    let devices: [String]
+    let deviceChips: [DeviceChip]?
+    let isDevelopment: Bool
+
+    var chipFamily: ChipFamily? { ChipFamily.from(chipName: chip) }
+
+    var sortedChipNames: [String] {
+        guard let deviceChips, !deviceChips.isEmpty else { return [chip] }
+        let families = deviceChips.compactMap { ChipFamily.from(chipName: $0.chip) }
+        guard !families.isEmpty else { return [chip] }
+        let unique = Dictionary(grouping: families, by: { $0.displayName }).values.compactMap(\.first)
+        return unique
+            .sorted { lhs, rhs in
+                if lhs.series.sortOrder != rhs.series.sortOrder {
+                    return lhs.series.sortOrder > rhs.series.sortOrder
+                }
+                return lhs.tier < rhs.tier
+            }
+            .map { $0.displayName }
+    }
+}
+
+private func groupKernels(_ kernels: [KernelInfo]) -> [GroupedKernel] {
+    var groups: [String: GroupedKernel] = [:]
+    var order: [String] = []
+
+    for kernel in kernels {
+        let key = "\(kernel.chip)-\(kernel.arch)-\(kernel.darwinVersion)-\(kernel.xnuVersion ?? "")"
+        if var existing = groups[key] {
+            var files = existing.files
+            files.append(kernel.file)
+            var devices = existing.devices
+            for device in kernel.devices where !devices.contains(device) {
+                devices.append(device)
+            }
+            var deviceChips = existing.deviceChips ?? []
+            for dc in kernel.deviceChips ?? [] where !deviceChips.contains(dc) {
+                deviceChips.append(dc)
+            }
+            existing = GroupedKernel(
+                chip: existing.chip,
+                darwinVersion: existing.darwinVersion,
+                xnuVersion: existing.xnuVersion,
+                arch: existing.arch,
+                files: files,
+                devices: devices,
+                deviceChips: deviceChips.isEmpty ? nil : deviceChips,
+                isDevelopment: existing.isDevelopment || kernel.isDevelopment
+            )
+            groups[key] = existing
+        } else {
+            order.append(key)
+            groups[key] = GroupedKernel(
+                chip: kernel.chip,
+                darwinVersion: kernel.darwinVersion,
+                xnuVersion: kernel.xnuVersion,
+                arch: kernel.arch,
+                files: [kernel.file],
+                devices: kernel.devices,
+                deviceChips: kernel.deviceChips,
+                isDevelopment: kernel.isDevelopment
+            )
+        }
+    }
+
+    return order.compactMap { groups[$0] }
+}
+
 // MARK: - Kernel Card
 
 private struct KernelCard: View {
-    let kernel: KernelInfo
+    let kernel: GroupedKernel
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -215,6 +293,11 @@ private struct KernelCard: View {
                     Text("XNU \(xnuVersion)")
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                }
+                if kernel.files.count > 1 {
+                    Text(kernel.files.joined(separator: ", "))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                 }
             }
 
