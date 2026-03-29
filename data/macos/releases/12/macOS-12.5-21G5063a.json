@@ -231,6 +231,7 @@
     }
   ],
   "osVersion" : "12.5",
+  "productType" : "macOS",
   "releaseDate" : "2022-07-05",
   "releaseName" : "Monterey"
 }

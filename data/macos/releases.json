@@ -1876,6 +1876,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-10-24",
     "releaseName" : "Ventura"
   },
@@ -1886,6 +1887,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-10-18",
     "releaseName" : "Ventura"
   },
@@ -1974,6 +1976,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-07-27",
     "releaseName" : "Ventura"
   },
@@ -1985,6 +1988,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-07-11",
     "releaseName" : "Ventura"
   },
@@ -1996,6 +2000,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-07-06",
     "releaseName" : "Ventura"
   },
@@ -2007,6 +2012,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-06-22",
     "releaseName" : "Ventura"
   },
@@ -2018,6 +2024,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "13.0",
+    "productType" : "macOS",
     "releaseDate" : "2022-06-06",
     "releaseName" : "Ventura"
   },
@@ -2028,6 +2035,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.6.1",
+    "productType" : "macOS",
     "releaseDate" : "2022-10-24",
     "releaseName" : "Monterey"
   },
@@ -2038,6 +2046,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.6",
+    "productType" : "macOS",
     "releaseDate" : "2022-09-12",
     "releaseName" : "Monterey"
   },
@@ -2048,6 +2057,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5.1",
+    "productType" : "macOS",
     "releaseDate" : "2022-08-17",
     "releaseName" : "Monterey"
   },
@@ -2058,6 +2068,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-07-20",
     "releaseName" : "Monterey"
   },
@@ -2068,6 +2079,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-07-12",
     "releaseName" : "Monterey"
   },
@@ -2079,6 +2091,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-07-05",
     "releaseName" : "Monterey"
   },
@@ -2090,6 +2103,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-06-24",
     "releaseName" : "Monterey"
   },
@@ -2101,6 +2115,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-06-14",
     "releaseName" : "Monterey"
   },
@@ -2112,6 +2127,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-05-31",
     "releaseName" : "Monterey"
   },
@@ -2123,6 +2139,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.5",
+    "productType" : "macOS",
     "releaseDate" : "2022-05-18",
     "releaseName" : "Monterey"
   },
@@ -2133,6 +2150,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-05-16",
     "releaseName" : "Monterey"
   },
@@ -2143,6 +2161,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-06-16",
     "releaseName" : "Monterey"
   },
@@ -2153,6 +2172,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-06-14",
     "releaseName" : "Monterey"
   },
@@ -2164,6 +2184,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-05-03",
     "releaseName" : "Monterey"
   },
@@ -2175,6 +2196,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-04-26",
     "releaseName" : "Monterey"
   },
@@ -2186,6 +2208,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-04-19",
     "releaseName" : "Monterey"
   },
@@ -2197,6 +2220,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.4",
+    "productType" : "macOS",
     "releaseDate" : "2022-04-05",
     "releaseName" : "Monterey"
   },
@@ -2207,6 +2231,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3.1",
+    "productType" : "macOS",
     "releaseDate" : "2022-03-31",
     "releaseName" : "Monterey"
   },
@@ -2217,6 +2242,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3",
+    "productType" : "macOS",
     "releaseDate" : "2022-03-14",
     "releaseName" : "Monterey"
   },
@@ -2228,6 +2254,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3",
+    "productType" : "macOS",
     "releaseDate" : "2022-03-01",
     "releaseName" : "Monterey"
   },
@@ -2239,6 +2266,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3",
+    "productType" : "macOS",
     "releaseDate" : "2022-02-22",
     "releaseName" : "Monterey"
   },
@@ -2250,6 +2278,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3",
+    "productType" : "macOS",
     "releaseDate" : "2022-02-15",
     "releaseName" : "Monterey"
   },
@@ -2261,6 +2290,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3",
+    "productType" : "macOS",
     "releaseDate" : "2022-02-08",
     "releaseName" : "Monterey"
   },
@@ -2272,6 +2302,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.3",
+    "productType" : "macOS",
     "releaseDate" : "2022-01-27",
     "releaseName" : "Monterey"
   },
@@ -2282,6 +2313,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.2.1",
+    "productType" : "macOS",
     "releaseDate" : "2022-02-10",
     "releaseName" : "Monterey"
   },
@@ -2292,6 +2324,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.2",
+    "productType" : "macOS",
     "releaseDate" : "2022-01-26",
     "releaseName" : "Monterey"
   },
@@ -2302,6 +2335,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "12.2",
+    "productType" : "macOS",
     "releaseDate" : "2022-01-20",
     "releaseName" : "Monterey"
   },
@@ -2313,6 +2347,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.2",
+    "productType" : "macOS",
     "releaseDate" : "2022-01-11",
     "releaseName" : "Monterey"
   },
@@ -2324,6 +2359,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.2",
+    "productType" : "macOS",
     "releaseDate" : "2021-12-16",
     "releaseName" : "Monterey"
   },
@@ -2334,6 +2370,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-12-13",
     "releaseName" : "Monterey"
   },
@@ -2344,6 +2381,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "12.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-12-07",
     "releaseName" : "Monterey"
   },
@@ -2355,6 +2393,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-12-01",
     "releaseName" : "Monterey"
   },
@@ -2366,6 +2405,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-11-16",
     "releaseName" : "Monterey"
   },
@@ -2377,6 +2417,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-11-09",
     "releaseName" : "Monterey"
   },
@@ -2388,6 +2429,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-10-28",
     "releaseName" : "Monterey"
   },
@@ -2398,6 +2440,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-10-25",
     "releaseName" : "Monterey"
   },
@@ -2408,6 +2451,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "12.0.1",
+    "productType" : "macOS",
     "releaseDate" : "2021-10-18",
     "releaseName" : "Monterey"
   },
@@ -2419,6 +2463,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-10-13",
     "releaseName" : "Monterey"
   },
@@ -2430,6 +2475,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-10-06",
     "releaseName" : "Monterey"
   },
@@ -2441,6 +2487,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-09-28",
     "releaseName" : "Monterey"
   },
@@ -2452,6 +2499,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-09-21",
     "releaseName" : "Monterey"
   },
@@ -2463,6 +2511,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-08-30",
     "releaseName" : "Monterey"
   },
@@ -2474,6 +2523,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "12.0",
+    "productType" : "macOS",
     "releaseDate" : "2021-08-11",
     "releaseName" : "Monterey"
   },
