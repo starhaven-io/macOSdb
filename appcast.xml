@@ -3,18 +3,38 @@
     <channel>
         <title>macOSdb</title>
         <item>
-            <title>1.8.0</title>
-            <pubDate>Sun, 29 Mar 2026 00:35:48 +0000</pubDate>
-            <sparkle:version>14</sparkle:version>
-            <sparkle:shortVersionString>1.8.0</sparkle:shortVersionString>
+            <title>1.8.1</title>
+            <pubDate>Sun, 29 Mar 2026 17:16:09 +0000</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>1.8.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <description><![CDATA[<h2>What&#x27;s New</h2>
 <ul>
-  <li>add full Clang build version, cctools scanning, and resilient validate</li>
-  <li>extract SDK component versions from Xcode XIPs</li>
-  <li>fix Xcode version extraction and add minimum OS version</li>
+  <li>SEO, performance, and UX overhaul</li>
+  <li>add content collections, component extraction, and structured data</li>
+  <li>add Pagefind search, OG images, and SVG optimization</li>
+  <li>search tuning and visual polish</li>
+  <li>adopt Swift 6.2 @concurrent for scanner pipeline</li>
+  <li>add mobile responsive layout</li>
+  <li>add per-component version history pages</li>
+</ul>
+<h2>Fixes</h2>
+<ul>
+  <li>re-init scripts on view transitions</li>
+  <li>correct component history deduplication and direction labels</li>
+  <li>correct `zip` version extraction from binary</li>
+  <li>correct `libxml2` version extraction from binary</li>
+  <li>sort kernels by filename for deterministic output</li>
+  <li>read version from app bundle instead of hardcoded string</li>
+  <li>remove kernel deduplication that dropped distinct kernelcaches</li>
+</ul>
+<h2>Under the Hood</h2>
+<ul>
+  <li>modernize SwiftUI state management and surface errors</li>
+  <li>migrate to Swift Regex and remove NSString bridges</li>
+  <li>group identical kernel entries into single cards</li>
 </ul>]]></description>
-            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.8.0/macOSdb-1.8.0.zip" length="2738425" type="application/octet-stream" sparkle:edSignature="kTvPsIMTanzWWWHBe0xptBqMKVC/FjB6dH65ABbF96p+2PxkjOtkXlebTXNAbeZxGsp9UMBlKNb8zwlgM4wgCg=="/>
+            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.8.1/macOSdb-1.8.1.zip" length="2758042" type="application/octet-stream" sparkle:edSignature="9Sb6auGFtgmH5HAebjXz3AllmcSBI1HPfa1rgy4rwfGCe2opXHtQepwxi5dQEiVUNNngb+euYPBw1jo4pVtRDQ=="/>
         </item>
     </channel>
 </rss>
