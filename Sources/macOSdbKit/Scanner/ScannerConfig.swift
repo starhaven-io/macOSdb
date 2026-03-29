@@ -225,8 +225,9 @@ public let dyldCacheComponents: [ComponentDefinition] = [
         name: "libxml2",
         path: "/usr/lib/libxml2.2.dylib",
         source: .dyldCache,
-        // Matches integer version constants like 20913, 21209
-        pattern: #"2[01][0-9]{3}"#,
+        // Matches standalone integer version constants like 20913, 21209.
+        // Lookaround prevents matching substrings of larger numbers (e.g. 2147483647).
+        pattern: #"(?<!\d)2[01][0-9]{3}(?!\d)"#,
 
         normalize: identity,
         strategy: .integerDecode
