@@ -1,0 +1,252 @@
+---
+import Base from '../../layouts/Base.astro';
+import Badge from '../../components/Badge.astro';
+import StructuredData from '../../components/StructuredData.astro';
+import { getCollection } from 'astro:content';
+import { formatDate, displayName, releaseSlug, componentSlug, compareVersions } from '../../lib/utils';
+
+interface VersionChange {
+  version: string;
+  firstRelease: string;
+  firstReleaseSlug: string;
+  firstReleaseDate: string;
+  firstReleaseBeta: boolean;
+  firstReleaseRC: boolean;
+  direction: 'upgraded' | 'downgraded' | 'added' | '';
+}
+
+export async function getStaticPaths() {
+  const allReleases = await getCollection('macosReleaseDetails');
+
+  // Sort by osVersion descending (major.minor.patch), then by date within the same version
+  const releases = allReleases.sort((a, b) => {
+    const aParts = a.data.osVersion.split('.').map(Number);
+    const bParts = b.data.osVersion.split('.').map(Number);
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const av = aParts[i] ?? 0;
+      const bv = bParts[i] ?? 0;
+      if (bv !== av) return bv - av;
+    }
+    return new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime();
+  });
+
+  // Collect version history per component
+  const componentMap: Map<string, { name: string; source: string; path: string; changes: VersionChange[] }> = new Map();
+
+  for (const release of releases) {
+    for (const comp of release.data.components) {
+      const slug = componentSlug(comp.name);
+      if (!componentMap.has(slug)) {
+        componentMap.set(slug, { name: comp.name, source: comp.source, path: comp.path, changes: [] });
+      }
+
+      const entry = componentMap.get(slug)!;
+      const version = comp.version ?? '';
+      const lastChange = entry.changes[entry.changes.length - 1];
+
+      if (!lastChange || lastChange.version !== version) {
+        entry.changes.push({
+          version,
+          firstRelease: displayName(release.data, true),
+          firstReleaseSlug: releaseSlug(release.data),
+          firstReleaseDate: release.data.releaseDate ?? '',
+          firstReleaseBeta: release.data.isBeta,
+          firstReleaseRC: release.data.isRC,
+          direction: '',
+        });
+
+        // Set direction on the *previous* entry (newer version) now that we know what it upgraded from
+        if (lastChange) {
+          lastChange.direction = compareVersions(version, lastChange.version);
+        }
+      }
+    }
+  }
+
+  // Mark the oldest entry as "First tracked"
+  for (const [, data] of componentMap) {
+    if (data.changes.length > 0) {
+      data.changes[data.changes.length - 1].direction = 'added';
+    }
+  }
+
+  return [...componentMap.entries()].map(([slug, data]) => ({
+    params: { name: slug },
+    props: {
+      componentName: data.name,
+      source: data.source,
+      path: data.path,
+      changes: data.changes,
+    },
+  }));
+}
+
+interface Props {
+  componentName: string;
+  source: string;
+  path: string;
+  changes: VersionChange[];
+}
+
+const { componentName = '', source = '', path: compPath = '', changes = [] } = Astro.props;
+const latest = changes[0] ?? { version: '', direction: '' };
+const slug = componentSlug(componentName);
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: `${componentName} on macOS`,
+  description: `Version history of ${componentName} across macOS releases.`,
+  url: `https://macosdb.com/component/${slug}/`,
+};
+---
+
+<Base
+  title={`${componentName} — macOSdb`}
+  description={`Version history of ${componentName} across every macOS release.`}
+>
+  <StructuredData slot="head" data={structuredData} />
+
+  <nav class="breadcrumb" data-pagefind-ignore>
+    <a href="/">macOSdb</a> &rsaquo; <a href="/components/">Components</a> &rsaquo; {componentName}
+  </nav>
+
+  <header class="comp-header">
+    <h1 data-pagefind-weight="2">{componentName}</h1>
+    <div class="meta" data-pagefind-ignore>
+      <span>Latest: <code>{latest.version}</code></span>
+      <span class:list={['source', `source-${source}`]}>
+        {source === 'dyldCache' ? 'dyld cache' : source}
+      </span>
+      <code class="path">{compPath}</code>
+    </div>
+  </header>
+
+  <section class="history">
+    <h2>Version History</h2>
+    <p class="subtitle">{changes.length} version changes across all macOS releases.</p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Introduced in</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            changes.map((entry) => (
+              <tr>
+                <td>
+                  <code>{entry.version}</code>
+                </td>
+                <td>
+                  <a href={`/release/${entry.firstReleaseSlug}/`}>{entry.firstRelease}</a>
+                  {entry.firstReleaseBeta && <Badge variant="beta" />}
+                  {entry.firstReleaseRC && <Badge variant="rc" />}
+                </td>
+                <td>{formatDate(entry.firstReleaseDate)}</td>
+                <td>
+                  {entry.direction === 'upgraded' && <span class="status-badge status-upgraded">Upgraded</span>}
+                  {entry.direction === 'downgraded' && <span class="status-badge status-downgraded">Downgraded</span>}
+                  {entry.direction === 'added' && <span class="status-badge status-added">First tracked</span>}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .comp-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .comp-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    color: var(--color-text-secondary);
+    flex-wrap: wrap;
+  }
+
+  .source {
+    font-size: 0.8rem;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+  }
+
+  .path {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+  }
+
+  .history h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .status-upgraded {
+    background: color-mix(in srgb, var(--color-upgraded) 12%, transparent);
+    color: var(--color-upgraded);
+  }
+
+  .status-downgraded {
+    background: color-mix(in srgb, var(--color-downgraded) 12%, transparent);
+    color: var(--color-downgraded);
+  }
+
+  .status-added {
+    background: color-mix(in srgb, var(--color-added) 12%, transparent);
+    color: var(--color-added);
+  }
+
+  @media (max-width: 640px) {
+    .comp-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .meta {
+      gap: 0.75rem;
+    }
+  }
+</style>
