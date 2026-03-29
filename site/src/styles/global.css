@@ -132,3 +132,15 @@ tbody tr {
 tbody tr:hover {
   background: color-mix(in srgb, var(--color-link) 6%, var(--color-bg));
 }
+
+@media (max-width: 640px) {
+  th,
+  td {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  th {
+    font-size: 0.7rem;
+  }
+}

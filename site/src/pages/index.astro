@@ -82,14 +82,16 @@ const websiteSchema = {
                   </td>
                   <td>{formatDate(entry.data.releaseDate)}</td>
                   <td>
-                    {entry.data.isBeta ? (
-                      <Badge variant="beta" />
-                    ) : entry.data.isRC ? (
-                      <Badge variant="rc" />
-                    ) : (
-                      <Badge variant="release" />
-                    )}
-                    {entry.data.isDeviceSpecific && <Badge variant="device" />}
+                    <div class="type-cell">
+                      {entry.data.isBeta ? (
+                        <Badge variant="beta" />
+                      ) : entry.data.isRC ? (
+                        <Badge variant="rc" />
+                      ) : (
+                        <Badge variant="release" />
+                      )}
+                      {entry.data.isDeviceSpecific && <Badge variant="device" />}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -172,8 +174,41 @@ const websiteSchema = {
     border-color: var(--color-link);
   }
 
+  .type-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
   tr.filtered {
     display: none;
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      margin-bottom: 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2rem;
+    }
+
+    .hero p {
+      font-size: 1rem;
+    }
+
+    .version-group {
+      margin-bottom: 2rem;
+    }
+
+    .version-group h2 {
+      font-size: 1.25rem;
+    }
+
+    .version-group table {
+      min-width: 400px;
+    }
   }
 </style>
 

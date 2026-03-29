@@ -471,4 +471,18 @@ const releaseOptions = releases.map((entry) => ({
     color: var(--color-text-secondary);
     font-size: 1.05rem;
   }
+
+  @media (max-width: 640px) {
+    .arrow {
+      display: none;
+    }
+
+    .select-group {
+      min-width: 0;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
 </style>

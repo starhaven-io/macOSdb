@@ -56,4 +56,11 @@ const { darwinVersion, xnuVersion } = Astro.props;
     margin-left: 0;
     font-family: var(--font-mono);
   }
+
+  @media (max-width: 640px) {
+    .kernel-info dl {
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+  }
 </style>
