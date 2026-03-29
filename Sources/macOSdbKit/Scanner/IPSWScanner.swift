@@ -136,7 +136,7 @@ public actor IPSWScanner {
                 devices: devices
             )
         }
-        return deduplicateKernels(kernels).map(resolveDeviceChips).sorted { $0.file < $1.file }
+        return kernels.map(resolveDeviceChips).sorted { $0.file < $1.file }
     }
 
     private func resolveDeviceChips(_ kernel: KernelInfo) -> KernelInfo {
@@ -363,41 +363,6 @@ public actor IPSWScanner {
     private func sendVerbose(_ message: String) {
         onVerbose?(message)
     }
-}
-
-// MARK: - Kernel deduplication
-
-private func deduplicateKernels(_ kernels: [KernelInfo]) -> [KernelInfo] {
-    var seen: [String: Int] = [:]
-    var result: [KernelInfo] = []
-
-    for kernel in kernels {
-        if let existingIndex = seen[kernel.arch] {
-            let existing = result[existingIndex]
-            var mergedDevices = existing.devices
-            for device in kernel.devices where !mergedDevices.contains(device) {
-                mergedDevices.append(device)
-            }
-            var mergedDeviceChips = existing.deviceChips ?? []
-            for dc in kernel.deviceChips ?? [] where !mergedDeviceChips.contains(dc) {
-                mergedDeviceChips.append(dc)
-            }
-            result[existingIndex] = KernelInfo(
-                file: existing.file,
-                darwinVersion: existing.darwinVersion,
-                xnuVersion: existing.xnuVersion,
-                arch: existing.arch,
-                chip: existing.chip,
-                devices: mergedDevices,
-                deviceChips: mergedDeviceChips.isEmpty ? nil : mergedDeviceChips
-            )
-        } else {
-            seen[kernel.arch] = result.count
-            result.append(kernel)
-        }
-    }
-
-    return result
 }
 
 // MARK: - dyld cache helpers
