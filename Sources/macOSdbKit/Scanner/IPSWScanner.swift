@@ -136,7 +136,7 @@ public actor IPSWScanner {
                 devices: devices
             )
         }
-        return deduplicateKernels(kernels).map(resolveDeviceChips)
+        return deduplicateKernels(kernels).map(resolveDeviceChips).sorted { $0.file < $1.file }
     }
 
     private func resolveDeviceChips(_ kernel: KernelInfo) -> KernelInfo {
