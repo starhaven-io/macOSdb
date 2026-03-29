@@ -65,6 +65,8 @@ struct SidebarView: View {
             .labelsHidden()
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
+            .frame(maxWidth: .infinity)
+            .background(.bar)
         }
         .safeAreaInset(edge: .bottom) {
             if appState.isComparing {
