@@ -15,6 +15,10 @@ final class AppState {
     var compareRelease: Release?
     var isLoading = false
     var lastError: (any Error)?
+    var hasError: Bool {
+        get { lastError != nil }
+        set { if !newValue { lastError = nil } }
+    }
     var searchText = ""
     var isComparing = false
     var showBetas = true

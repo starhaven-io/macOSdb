@@ -30,27 +30,15 @@ struct MacOSdbApp: App {
 
 // MARK: - Sparkle Updates
 
-@MainActor
-private final class CheckForUpdatesViewModel: ObservableObject {
-    @Published var canCheckForUpdates = false
-
-    init(updater: SPUUpdater) {
-        updater.publisher(for: \.canCheckForUpdates)
-            .assign(to: &$canCheckForUpdates)
-    }
-}
-
 private struct CheckForUpdatesView: View {
-    @ObservedObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
-    private let updater: SPUUpdater
-
-    init(updater: SPUUpdater) {
-        self.updater = updater
-        self.checkForUpdatesViewModel = CheckForUpdatesViewModel(updater: updater)
-    }
+    let updater: SPUUpdater
+    @State private var canCheckForUpdates = false
 
     var body: some View {
         Button("Check for Updates…", action: updater.checkForUpdates)
-            .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
+            .disabled(!canCheckForUpdates)
+            .onReceive(updater.publisher(for: \.canCheckForUpdates)) {
+                canCheckForUpdates = $0
+            }
     }
 }

@@ -5,10 +5,12 @@ struct ContentView: View {
     @Environment(AppState.self)
     private var appState
 
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+
     var body: some View {
         @Bindable var state = appState
 
-        NavigationSplitView(columnVisibility: .constant(.all)) {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 320)
         } detail: {
@@ -56,6 +58,12 @@ struct ContentView: View {
             }
         }
         .toolbarRole(.editor)
+        .alert("Failed to Load Releases", isPresented: $state.hasError) {
+            Button("Retry") { Task { await appState.refresh() } }
+            Button("Dismiss", role: .cancel) { }
+        } message: {
+            Text(appState.lastError?.localizedDescription ?? "An unknown error occurred.")
+        }
         .task {
             if appState.releases.isEmpty {
                 await appState.refresh()
