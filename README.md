@@ -1,12 +1,24 @@
 # macOSdb
 
+[![CI](https://github.com/p-linnane/macOSdb/actions/workflows/check.yml/badge.svg)](https://github.com/p-linnane/macOSdb/actions/workflows/check.yml)
+[![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
+[![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
+
 A native macOS app and CLI that catalogs which versions of open-source components ship with each macOS release.
 
 macOSdb scans Apple's IPSW firmware files, extracts version strings from system binaries and the dyld shared cache, and records what ships where. Browse releases, compare component versions across updates, and see which chip families and devices each release supports.
 
+**Website:** [macosdb.com](https://macosdb.com)
+
 ## Tracked components
 
-bash, curl, httpd, LibreSSL, OpenSSH, rsync, Ruby, SQLite, vim, zip, zsh — plus dyld shared cache libraries like libcurl, libexpat, libncurses, libpcap, libsqlite3, libssl, libxml2, libbz2, and more.
+**Filesystem binaries:** curl, httpd, LibreSSL, OpenSSH, Ruby, SQLite, vim, zsh
+
+**Dyld shared cache:** libbz2, libcurl, libexpat, libncurses, libpcap, libsqlite3, libssl, libxml2
+
+**Xcode toolchain:** Apple Clang, cctools, Git, ld, lldb, Swift
+
+**SDK libraries:** bzip2, expat, libcurl, libedit, libexslt, libffi, libxml2, libxslt, ncurses, sqlite3, zlib
 
 ## Installation
 
@@ -20,14 +32,7 @@ brew install p-linnane/tap/macosdb
 
 ### App
 
-Download the latest release from [GitHub Releases](https://github.com/p-linnane/macOSdb/releases), unzip, and move to `/Applications`.
-
-The CLI is bundled inside the app at `macOSdb.app/Contents/MacOS/macosdb-tool`:
-
-```bash
-# Symlink for easy access
-ln -s /Applications/macOSdb.app/Contents/MacOS/macosdb-tool /usr/local/bin/macosdb
-```
+Download the latest release from [GitHub Releases](https://github.com/p-linnane/macOSdb/releases), unzip, and move to `/Applications`. The app includes Sparkle for automatic updates.
 
 ### Build from source
 
@@ -70,15 +75,15 @@ The scanner extracts component versions from Apple's IPSW firmware images throug
 5. **Extract from dyld shared cache** — many libraries live in the shared cache rather than as standalone files; the scanner parses the cache format to extract individual dylib data
 6. **Assemble results** — combine kernel info, filesystem components, and dyld cache components into a structured `Release` JSON file
 
-## Data format
+## Data
 
 Release data is stored as JSON files in `data/`, organized by product type:
 
-- `data/macos/releases.json` — index of all macOS releases
+- `data/macos/releases.json` — index of all macOS releases (sorted newest first)
 - `data/macos/releases/{major}/macOS-{version}-{build}.json` — full release data including kernels and components
 - `data/xcode/` — same structure for Xcode releases
 
-Data is fetched at runtime via HTTPS from GitHub raw URLs, so the app and CLI work without a local clone.
+Data is also served as a REST API at [macosdb.com/api/v1/](https://macosdb.com/api/v1/macos/releases.json).
 
 ## Project structure
 
@@ -86,11 +91,13 @@ Data is fetched at runtime via HTTPS from GitHub raw URLs, so the app and CLI wo
 Sources/macOSdbKit/     Shared library — models, data provider, scanner pipeline
 Sources/macosdb/        CLI executable (swift-argument-parser)
 macOSdbApp/             SwiftUI app (NavigationSplitView, MVVM with @Observable)
-  Bootstrap/            Entry point with CLI symlink dispatch
-  Resources/            Asset catalog (app icon)
-site/                   Astro static site (browse data on the web)
-Tests/                  Swift Testing (142 tests)
+site/                   Astro static site — release browser, compare view, component
+                        pages, JSON API, OG image generation, full-text search
+Tests/                  Swift Testing
 data/                   Pre-built release JSON (CC-BY-4.0)
+scripts/                JSON linting, release note formatting
+.github/workflows/      CI (build, lint, test), CodeQL, deploy site, release pipeline
+justfile                Task runner for common operations
 ```
 
 ## Building
@@ -105,21 +112,12 @@ just lint-json      # Validate JSON data files
 just audit          # Audit GitHub Actions workflows
 just build-app      # Build the app with xcodebuild
 just test-xcode     # Run tests with xcodebuild (matches CI)
-just check          # Run all checks (lint, lint-json, test, audit, site format check, site build)
-```
-
-Or run commands directly:
-
-```bash
-swift build
-swift test
-xcodebuild build -scheme macOSdb -configuration Debug
-swiftlint
+just check          # Run all checks (lint, lint-json, test, audit, site format, site build)
 ```
 
 ### Site
 
-The `site/` directory contains an [Astro](https://astro.build) static site:
+The `site/` directory contains an [Astro](https://astro.build) static site deployed to [macosdb.com](https://macosdb.com):
 
 ```bash
 just site-install       # Install npm dependencies
@@ -138,9 +136,13 @@ Commits must follow [Conventional Commits](https://www.conventionalcommits.org/)
 
 Built with [Claude Code](https://claude.ai/code).
 
-Thanks to [Guilherme Rambo](https://github.com/insidegui) for the [VirtualBuddy](https://github.com/insidegui/VirtualBuddy) project.
+Thanks to [Guilherme Rambo](https://github.com/insidegui) for [VirtualBuddy](https://github.com/insidegui/VirtualBuddy), where contributing to the macOS catalog first sparked my interest in IPSW cataloging.
 
-Release data is extracted from Apple's publicly available [IPSW firmware images](https://support.apple.com/en-us/102662). Device identification data sourced from [EveryMac](https://everymac.com), [The Apple Wiki](https://theapplewiki.com), and [Apple Support](https://support.apple.com/en-us/102869).
+Thanks to [Bo98](https://github.com/Bo98) for guidance on macOS and SDK internals.
+
+Release data is extracted from Apple's publicly available [IPSW firmware images](https://support.apple.com/en-us/102662).
+
+Device identification and release metadata sourced from [Apple Support](https://support.apple.com/en-us/102869), [AppleDB](https://appledb.dev), [EveryMac](https://everymac.com), and [The Apple Wiki](https://theapplewiki.com).
 
 Apple, macOS, and related trademarks are property of Apple Inc.
 
