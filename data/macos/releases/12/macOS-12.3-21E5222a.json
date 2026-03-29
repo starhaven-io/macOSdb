@@ -107,7 +107,7 @@
   "kernels" : [
     {
       "arch" : "ARM64",
-      "chip" : "Multiple",
+      "chip" : "M1",
       "darwinVersion" : "21.4.0",
       "deviceChips" : [
         {
@@ -129,7 +129,23 @@
         {
           "chip" : "M1",
           "device" : "iMac21,2"
-        },
+        }
+      ],
+      "devices" : [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ],
+      "file" : "kernelcache.development.mac13g",
+      "xnuVersion" : "8020.101.3"
+    },
+    {
+      "arch" : "ARM64",
+      "chip" : "Multiple",
+      "darwinVersion" : "21.4.0",
+      "deviceChips" : [
         {
           "chip" : "M1 Max",
           "device" : "Mac13,1"
@@ -153,27 +169,33 @@
         {
           "chip" : "M1 Max",
           "device" : "MacBookPro18,4"
-        },
+        }
+      ],
+      "devices" : [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ],
+      "file" : "kernelcache.development.mac13j",
+      "xnuVersion" : "8020.101.3"
+    },
+    {
+      "arch" : "ARM64",
+      "chip" : "Virtual Mac",
+      "darwinVersion" : "21.4.0",
+      "deviceChips" : [
         {
           "chip" : "Virtual Mac",
           "device" : "VirtualMac2,1"
         }
       ],
       "devices" : [
-        "MacBookAir10,1",
-        "MacBookPro17,1",
-        "Macmini9,1",
-        "iMac21,1",
-        "iMac21,2",
-        "Mac13,1",
-        "Mac13,2",
-        "MacBookPro18,1",
-        "MacBookPro18,2",
-        "MacBookPro18,3",
-        "MacBookPro18,4",
         "VirtualMac2,1"
       ],
-      "file" : "kernelcache.development.mac13g",
+      "file" : "kernelcache.development.vma2",
       "xnuVersion" : "8020.101.3"
     },
     {
@@ -271,6 +293,7 @@
     }
   ],
   "osVersion" : "12.3",
+  "productType" : "macOS",
   "releaseDate" : "2022-02-22",
   "releaseName" : "Monterey"
 }

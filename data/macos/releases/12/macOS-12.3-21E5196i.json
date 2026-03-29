@@ -1,4 +1,5 @@
 {
+  "betaNumber" : 1,
   "buildNumber" : "21E5196i",
   "components" : [
     {
@@ -100,14 +101,13 @@
   ],
   "ipswFile" : "UniversalMac_12.3_21E5196i_Restore.ipsw",
   "ipswURL" : "https://updates.cdn-apple.com/2022WinterSeed/fullrestores/002-59521/A51A8FB8-F6C3-47E3-AC02-A370AAF53C57/UniversalMac_12.3_21E5196i_Restore.ipsw",
-  "betaNumber" : 1,
   "isBeta" : true,
   "isDeviceSpecific" : false,
   "isRC" : false,
   "kernels" : [
     {
       "arch" : "ARM64",
-      "chip" : "Multiple",
+      "chip" : "M1",
       "darwinVersion" : "21.4.0",
       "deviceChips" : [
         {
@@ -129,7 +129,23 @@
         {
           "chip" : "M1",
           "device" : "iMac21,2"
-        },
+        }
+      ],
+      "devices" : [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ],
+      "file" : "kernelcache.development.mac13g",
+      "xnuVersion" : "8020.100.406.0.1"
+    },
+    {
+      "arch" : "ARM64",
+      "chip" : "Multiple",
+      "darwinVersion" : "21.4.0",
+      "deviceChips" : [
         {
           "chip" : "M1 Max",
           "device" : "Mac13,1"
@@ -153,27 +169,33 @@
         {
           "chip" : "M1 Max",
           "device" : "MacBookPro18,4"
-        },
+        }
+      ],
+      "devices" : [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ],
+      "file" : "kernelcache.development.mac13j",
+      "xnuVersion" : "8020.100.406.0.1"
+    },
+    {
+      "arch" : "ARM64",
+      "chip" : "Virtual Mac",
+      "darwinVersion" : "21.4.0",
+      "deviceChips" : [
         {
           "chip" : "Virtual Mac",
           "device" : "VirtualMac2,1"
         }
       ],
       "devices" : [
-        "MacBookAir10,1",
-        "MacBookPro17,1",
-        "Macmini9,1",
-        "iMac21,1",
-        "iMac21,2",
-        "Mac13,1",
-        "Mac13,2",
-        "MacBookPro18,1",
-        "MacBookPro18,2",
-        "MacBookPro18,3",
-        "MacBookPro18,4",
         "VirtualMac2,1"
       ],
-      "file" : "kernelcache.development.mac13g",
+      "file" : "kernelcache.development.vma2",
       "xnuVersion" : "8020.100.406.0.1"
     },
     {
@@ -271,6 +293,7 @@
     }
   ],
   "osVersion" : "12.3",
+  "productType" : "macOS",
   "releaseDate" : "2022-01-27",
   "releaseName" : "Monterey"
 }

@@ -145,12 +145,15 @@
       "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
       "darwinVersion" : "21.0.0",
-      "devices" : [],
+      "devices" : [
+
+      ],
       "file" : "kernelcache.release.vma1",
       "xnuVersion" : "8019.0.46.0.4"
     }
   ],
   "osVersion" : "12.0",
+  "productType" : "macOS",
   "releaseDate" : "2021-07-14",
   "releaseName" : "Monterey"
 }
