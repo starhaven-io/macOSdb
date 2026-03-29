@@ -11,7 +11,7 @@ struct SidebarView: View {
     var body: some View {
         @Bindable var state = appState
 
-        List(selection: appState.isComparing ? compareBinding : selectionBinding) {
+        List(selection: appState.isComparing ? $state.compareRelease : $state.selectedRelease) {
             if appState.isLoading && appState.releases.isEmpty {
                 ProgressView("Loading releases...")
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -76,9 +76,9 @@ struct SidebarView: View {
                     .padding(8)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
-                    Toggle("Show pre-releases", isOn: showBetasBinding)
+                    Toggle("Show pre-releases", isOn: $state.showBetas)
                         .toggleStyle(.checkbox)
-                    Toggle("Show device specific", isOn: showDeviceSpecificBinding)
+                    Toggle("Show device specific", isOn: $state.showDeviceSpecific)
                         .toggleStyle(.checkbox)
                     Text(totalCountLabel)
                         .foregroundStyle(.tertiary)
@@ -120,20 +120,6 @@ struct SidebarView: View {
         }
     }
 
-    private var selectionBinding: Binding<Release?> {
-        Binding(
-            get: { appState.selectedRelease },
-            set: { appState.selectedRelease = $0 }
-        )
-    }
-
-    private var compareBinding: Binding<Release?> {
-        Binding(
-            get: { appState.compareRelease },
-            set: { appState.compareRelease = $0 }
-        )
-    }
-
     private func groupCountLabel(for group: AppState.MajorVersionGroup) -> String {
         let total = group.releases.count
         let preRelease = group.releases.filter(\.isPrerelease).count
@@ -153,20 +139,6 @@ struct SidebarView: View {
             return "\(stable) stable, \(preRelease) pre-release, \(total) total"
         }
         return "\(stable) stable"
-    }
-
-    private var showBetasBinding: Binding<Bool> {
-        Binding(
-            get: { appState.showBetas },
-            set: { appState.showBetas = $0 }
-        )
-    }
-
-    private var showDeviceSpecificBinding: Binding<Bool> {
-        Binding(
-            get: { appState.showDeviceSpecific },
-            set: { appState.showDeviceSpecific = $0 }
-        )
     }
 
     private var productBinding: Binding<ProductType> {
