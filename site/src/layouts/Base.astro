@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title: string;
@@ -8,6 +9,8 @@ interface Props {
 
 const { title, description = 'A catalog of open-source components in every macOS release since macOS 11 Big Sur.' } =
   Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <html lang="en">
@@ -15,12 +18,32 @@ const { title, description = 'A catalog of open-source components in every macOS
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+
+    <!-- Canonical -->
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="macOSdb" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+
+    <!-- Sitemap -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="64x64" href="/apple-touch-icon.png" />
+
     <title>{title}</title>
+    <ClientRouter />
   </head>
   <body>
     <header>
       <nav>
-        <a href="/" class="site-title">macOSdb</a>
+        <a href="/" class="site-title" transition:name="site-title">macOSdb</a>
         <div class="nav-links">
           <a href="/compare/">Compare</a>
           <a href="https://github.com/p-linnane/macOSdb" class="github-link" aria-label="GitHub repository">

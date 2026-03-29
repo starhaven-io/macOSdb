@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Badge from '../components/Badge.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -89,13 +90,13 @@ function releaseSlug(release: any): string {
                   <td>{formatDate(release.releaseDate)}</td>
                   <td>
                     {release.isBeta ? (
-                      <span class="badge badge-beta">Beta</span>
+                      <Badge variant="beta" />
                     ) : release.isRC ? (
-                      <span class="badge badge-rc">RC</span>
+                      <Badge variant="rc" />
                     ) : (
-                      <span class="badge badge-release">Release</span>
+                      <Badge variant="release" />
                     )}
-                    {release.isDeviceSpecific && <span class="badge badge-device">Device Specific</span>}
+                    {release.isDeviceSpecific && <Badge variant="device" />}
                   </td>
                 </tr>
               ))}
@@ -142,35 +143,6 @@ function releaseSlug(release: any): string {
   .version-group table {
     table-layout: fixed;
     min-width: 500px;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 0.15em 0.6em;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .badge-beta {
-    background: color-mix(in srgb, var(--color-badge-beta) 15%, transparent);
-    color: var(--color-badge-beta);
-  }
-
-  .badge-rc {
-    background: color-mix(in srgb, var(--color-badge-rc) 15%, transparent);
-    color: var(--color-badge-rc);
-  }
-
-  .badge-release {
-    background: color-mix(in srgb, var(--color-text) 8%, transparent);
-    color: var(--color-text-secondary);
-  }
-
-  .badge-device {
-    background: color-mix(in srgb, var(--color-badge-device) 15%, transparent);
-    color: var(--color-badge-device);
   }
 
   .filter-bar {
