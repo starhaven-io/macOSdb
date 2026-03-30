@@ -101,7 +101,8 @@ jobs:
             -archivePath "${RUNNER_TEMP}/macOSdb.xcarchive" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}"
+            DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
+            EXCLUDED_ARCHS=x86_64
 
       - name: Export
         run: |

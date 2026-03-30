@@ -35,6 +35,7 @@ build-app:
         CODE_SIGN_IDENTITY="" \
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGNING_ALLOWED=NO \
+        EXCLUDED_ARCHS=x86_64 \
         build
 
 # Run tests with xcodebuild (matches CI)
@@ -43,7 +44,8 @@ test-xcode:
         -workspace . \
         -scheme macOSdb-Package \
         -destination 'platform=macOS' \
-        -enableCodeCoverage YES
+        -enableCodeCoverage YES \
+        EXCLUDED_ARCHS=x86_64
 
 # Start the site dev server
 site-dev:
