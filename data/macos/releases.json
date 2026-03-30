@@ -389,6 +389,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.6.1",
+    "productType" : "macOS",
     "releaseDate" : "2025-08-20",
     "releaseName" : "Sequoia"
   },
@@ -399,6 +400,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.6",
+    "productType" : "macOS",
     "releaseDate" : "2025-07-29",
     "releaseName" : "Sequoia"
   },
@@ -410,6 +412,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.6",
+    "productType" : "macOS",
     "releaseDate" : "2025-07-14",
     "releaseName" : "Sequoia"
   },
@@ -421,6 +424,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.6",
+    "productType" : "macOS",
     "releaseDate" : "2025-06-30",
     "releaseName" : "Sequoia"
   },
@@ -432,6 +436,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.6",
+    "productType" : "macOS",
     "releaseDate" : "2025-06-16",
     "releaseName" : "Sequoia"
   },
@@ -442,6 +447,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.5",
+    "productType" : "macOS",
     "releaseDate" : "2025-05-12",
     "releaseName" : "Sequoia"
   },
@@ -453,6 +459,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.5",
+    "productType" : "macOS",
     "releaseDate" : "2025-04-28",
     "releaseName" : "Sequoia"
   },
@@ -464,6 +471,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.5",
+    "productType" : "macOS",
     "releaseDate" : "2025-04-21",
     "releaseName" : "Sequoia"
   },
@@ -475,6 +483,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.5",
+    "productType" : "macOS",
     "releaseDate" : "2025-04-14",
     "releaseName" : "Sequoia"
   },
@@ -486,6 +495,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.5",
+    "productType" : "macOS",
     "releaseDate" : "2025-04-02",
     "releaseName" : "Sequoia"
   },
@@ -496,6 +506,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.4.1",
+    "productType" : "macOS",
     "releaseDate" : "2025-04-16",
     "releaseName" : "Sequoia"
   },
@@ -506,6 +517,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-31",
     "releaseName" : "Sequoia"
   },
@@ -516,6 +528,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "rcNumber" : 2,
     "releaseDate" : "2025-03-27",
     "releaseName" : "Sequoia"
@@ -527,6 +540,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-24",
     "releaseName" : "Sequoia"
   },
@@ -538,6 +552,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-17",
     "releaseName" : "Sequoia"
   },
@@ -549,6 +564,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-10",
     "releaseName" : "Sequoia"
   },
@@ -560,6 +576,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-03",
     "releaseName" : "Sequoia"
   },
@@ -571,6 +588,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.4",
+    "productType" : "macOS",
     "releaseDate" : "2025-02-21",
     "releaseName" : "Sequoia"
   },
@@ -581,6 +599,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3.2",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-11",
     "releaseName" : "Sequoia"
   },
@@ -591,6 +610,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "15.3.2",
+    "productType" : "macOS",
     "releaseDate" : "2025-03-11",
     "releaseName" : "Sequoia"
   },
@@ -601,6 +621,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3.1",
+    "productType" : "macOS",
     "releaseDate" : "2025-02-10",
     "releaseName" : "Sequoia"
   },
@@ -611,6 +632,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3",
+    "productType" : "macOS",
     "releaseDate" : "2025-01-27",
     "releaseName" : "Sequoia"
   },
@@ -622,6 +644,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3",
+    "productType" : "macOS",
     "releaseDate" : "2025-01-16",
     "releaseName" : "Sequoia"
   },
@@ -633,6 +656,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3",
+    "productType" : "macOS",
     "releaseDate" : "2025-01-07",
     "releaseName" : "Sequoia"
   },
@@ -644,6 +668,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3",
+    "productType" : "macOS",
     "releaseDate" : "2024-12-16",
     "releaseName" : "Sequoia"
   },
@@ -654,6 +679,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "releaseDate" : "2024-12-11",
     "releaseName" : "Sequoia"
   },
@@ -664,6 +690,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "releaseDate" : "2024-12-05",
     "releaseName" : "Sequoia"
   },
@@ -674,6 +701,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "rcNumber" : 2,
     "releaseDate" : "2024-12-09",
     "releaseName" : "Sequoia"
@@ -686,6 +714,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "releaseDate" : "2024-11-20",
     "releaseName" : "Sequoia"
   },
@@ -697,6 +726,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "releaseDate" : "2024-11-11",
     "releaseName" : "Sequoia"
   },
@@ -708,6 +738,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "releaseDate" : "2024-11-04",
     "releaseName" : "Sequoia"
   },
@@ -719,6 +750,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.2",
+    "productType" : "macOS",
     "releaseDate" : "2024-10-23",
     "releaseName" : "Sequoia"
   },
@@ -729,6 +761,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-11-19",
     "releaseName" : "Sequoia"
   },
@@ -739,6 +772,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "15.1.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-11-19",
     "releaseName" : "Sequoia"
   },
@@ -749,6 +783,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-10-28",
     "releaseName" : "Sequoia"
   },
@@ -759,6 +794,7 @@
     "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-10-30",
     "releaseName" : "Sequoia"
   },
@@ -769,6 +805,7 @@
     "isDeviceSpecific" : false,
     "isRC" : true,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-10-21",
     "releaseName" : "Sequoia"
   },
@@ -780,6 +817,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-10-07",
     "releaseName" : "Sequoia"
   },
@@ -791,6 +829,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-09-23",
     "releaseName" : "Sequoia"
   },
@@ -802,6 +841,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-09-17",
     "releaseName" : "Sequoia"
   },
@@ -813,6 +853,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-28",
     "releaseName" : "Sequoia"
   },
@@ -824,6 +865,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-12",
     "releaseName" : "Sequoia"
   },
@@ -835,6 +877,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-29",
     "releaseName" : "Sequoia"
   },
@@ -845,6 +888,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0.1",
+    "productType" : "macOS",
     "releaseDate" : "2024-10-03",
     "releaseName" : "Sequoia"
   },
@@ -855,6 +899,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-09-16",
     "releaseName" : "Sequoia"
   },
@@ -866,6 +911,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-28",
     "releaseName" : "Sequoia"
   },
@@ -877,6 +923,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-20",
     "releaseName" : "Sequoia"
   },
@@ -888,6 +935,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-12",
     "releaseName" : "Sequoia"
   },
@@ -899,6 +947,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-08-05",
     "releaseName" : "Sequoia"
   },
@@ -910,6 +959,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-23",
     "releaseName" : "Sequoia"
   },
@@ -921,6 +971,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-15",
     "releaseName" : "Sequoia"
   },
@@ -932,6 +983,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-07-10",
     "releaseName" : "Sequoia"
   },
@@ -943,6 +995,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-06-24",
     "releaseName" : "Sequoia"
   },
@@ -954,6 +1007,7 @@
     "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.0",
+    "productType" : "macOS",
     "releaseDate" : "2024-06-10",
     "releaseName" : "Sequoia"
   },
