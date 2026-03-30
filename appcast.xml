@@ -3,20 +3,30 @@
     <channel>
         <title>macOSdb</title>
         <item>
-            <title>1.8.2</title>
-            <pubDate>Sun, 29 Mar 2026 18:51:09 +0000</pubDate>
-            <sparkle:version>16</sparkle:version>
-            <sparkle:shortVersionString>1.8.2</sparkle:shortVersionString>
+            <title>1.9.0</title>
+            <pubDate>Mon, 30 Mar 2026 22:43:14 +0000</pubDate>
+            <sparkle:version>17</sparkle:version>
+            <sparkle:shortVersionString>1.9.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <description><![CDATA[<h2>What&#x27;s New</h2>
 <ul>
-  <li>kernel card improvements</li>
+  <li>Xcode data parity for lint-json and rename sourceFile/sourceURL</li>
+  <li>add macOS-26.5-25F5042g</li>
+  <li>AEA decryption key caching and offline reuse</li>
 </ul>
 <h2>Fixes</h2>
 <ul>
-  <li>add missing `productType` to 3 macOS 12 index entries</li>
+  <li>resolve CLI version from app bundle when invoked via symlink</li>
+</ul>
+<h2>Under the Hood</h2>
+<ul>
+  <li>remove `matchMtime` from `ValidateCommand`</li>
+</ul>
+<h2>Documentation</h2>
+<ul>
+  <li>overhaul README and update CLAUDE.md</li>
 </ul>]]></description>
-            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.8.2/macOSdb-1.8.2.zip" length="2758257" type="application/octet-stream" sparkle:edSignature="MD3eieSIv5UjOppMNq02ztT33KkilW+0MEZga7y4DGpW4OOzu4cPOOtPgQMDCVpdAp3IZohbLq/QJGtXdgOpBA=="/>
+            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.9.0/macOSdb-1.9.0.zip" length="2767409" type="application/octet-stream" sparkle:edSignature="yZdvrJTxKzchJUcAmaq7y/Y6n14RZAqw4JfN4D7FAedwyTs0SsgAJ5rMDwMnyTW8acCSyQQ3O6BbPQvnyBVyBg=="/>
         </item>
     </channel>
 </rss>
