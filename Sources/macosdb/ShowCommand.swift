@@ -46,7 +46,7 @@ struct ShowCommand: AsyncParsableCommand {
         if let date = release.releaseDate { print("Released: \(date)") }
         if release.isDeviceSpecific { print("Type: Device-specific build") }
         if let ipswURL = release.ipswURL { print("IPSW: \(ipswURL)") }
-        if let sourceURL = release.sourceURL { print("Source: \(sourceURL)") }
+        if let xipURL = release.xipURL { print("XIP: \(xipURL)") }
         print("")
 
         if let sdks = release.sdks, !sdks.isEmpty {

@@ -4,9 +4,9 @@
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
 [![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
 
-A native macOS app and CLI that catalogs which versions of open-source components ship with each macOS release.
+A native macOS app and CLI that catalogs which versions of open-source components ship with each macOS and Xcode release.
 
-macOSdb scans Apple's IPSW firmware files, extracts version strings from system binaries and the dyld shared cache, and records what ships where. Browse releases, compare component versions across updates, and see which chip families and devices each release supports.
+macOSdb scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from system binaries, the dyld shared cache, and SDK headers, and records what ships where. Browse releases, compare component versions across updates, and see which chip families and devices each release supports.
 
 **Website:** [macosdb.com](https://macosdb.com)
 
@@ -62,6 +62,10 @@ macosdb compare 15.1 15.2 --changed
 # Scan an IPSW to produce release JSON
 macosdb scan ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \
   --output data/macos/releases --release-date 2024-12-11 --update-index --verbose
+
+# Scan an Xcode .xip to produce release JSON
+macosdb scan ~/Downloads/Xcode_26.4_Apple_silicon.xip \
+  --output data/xcode/releases --release-date 2026-03-24 --update-index --verbose
 ```
 
 ## How scanning works
@@ -138,9 +142,9 @@ Built with [Claude Code](https://claude.ai/code).
 
 Thanks to [Guilherme Rambo](https://github.com/insidegui) for [VirtualBuddy](https://github.com/insidegui/VirtualBuddy), where contributing to the macOS catalog first sparked my interest in IPSW cataloging.
 
-Thanks to [Bo98](https://github.com/Bo98) for guidance on macOS and SDK internals.
+Thanks to [Bo Anderson](https://github.com/Bo98) for guidance on macOS and SDK internals.
 
-Release data is extracted from Apple's publicly available [IPSW firmware images](https://support.apple.com/en-us/102662).
+macOS release data is extracted from Apple's publicly available [IPSW firmware images](https://support.apple.com/en-us/102662). Xcode release metadata sourced from [Xcode Releases](https://xcodereleases.com).
 
 Device identification and release metadata sourced from [Apple Support](https://support.apple.com/en-us/102869), [AppleDB](https://appledb.dev), [EveryMac](https://everymac.com), and [The Apple Wiki](https://theapplewiki.com).
 

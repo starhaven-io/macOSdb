@@ -13,8 +13,8 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
     public let releaseDate: String?
     public let ipswFile: String?
     public let ipswURL: String?
-    public let sourceFile: String?
-    public let sourceURL: String?
+    public let xipFile: String?
+    public let xipURL: String?
     public let isBeta: Bool
     public let betaNumber: Int?
     public let isRC: Bool
@@ -33,8 +33,8 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         releaseDate: String? = nil,
         ipswFile: String? = nil,
         ipswURL: String? = nil,
-        sourceFile: String? = nil,
-        sourceURL: String? = nil,
+        xipFile: String? = nil,
+        xipURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         isRC: Bool = false,
@@ -52,8 +52,8 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         self.releaseDate = releaseDate
         self.ipswFile = ipswFile
         self.ipswURL = ipswURL
-        self.sourceFile = sourceFile
-        self.sourceURL = sourceURL
+        self.xipFile = xipFile
+        self.xipURL = xipURL
         self.isBeta = isBeta
         self.betaNumber = betaNumber
         self.isRC = isRC
@@ -135,8 +135,8 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         releaseDate = try container.decodeIfPresent(String.self, forKey: .releaseDate)
         ipswFile = try container.decodeIfPresent(String.self, forKey: .ipswFile)
         ipswURL = try container.decodeIfPresent(String.self, forKey: .ipswURL)
-        sourceFile = try container.decodeIfPresent(String.self, forKey: .sourceFile)
-        sourceURL = try container.decodeIfPresent(String.self, forKey: .sourceURL)
+        xipFile = try container.decodeIfPresent(String.self, forKey: .xipFile)
+        xipURL = try container.decodeIfPresent(String.self, forKey: .xipURL)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
