@@ -20,17 +20,18 @@ INDEX = Path("data/macos/releases.json")
 REQUIRED_FIELDS = [
     "buildNumber", "osVersion", "releaseDate", "releaseName",
     "isBeta", "isRC", "isDeviceSpecific", "ipswFile", "ipswURL",
-    "components", "kernels",
+    "productType", "components", "kernels",
 ]
 
 INDEX_REQUIRED = [
     "buildNumber", "osVersion", "releaseDate", "releaseName",
-    "isBeta", "isRC", "isDeviceSpecific", "dataFile",
+    "isBeta", "isRC", "isDeviceSpecific", "productType", "dataFile",
 ]
 
 PARITY_FIELDS = [
     "osVersion", "releaseDate", "releaseName",
-    "isBeta", "isRC", "isDeviceSpecific", "betaNumber", "rcNumber",
+    "isBeta", "isRC", "isDeviceSpecific", "productType",
+    "betaNumber", "rcNumber",
 ]
 
 IPSW_FILE_RE = re.compile(r"UniversalMac_([\d.]+)_([A-Za-z0-9]+)_Restore\.ipsw$")
