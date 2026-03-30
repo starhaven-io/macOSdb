@@ -80,23 +80,23 @@ struct XcodeModelTests {
         #expect(release.sdks == nil)
     }
 
-    @Test("Release decodes sourceFile and sourceURL")
-    func releaseDecodesSourceFields() throws {
+    @Test("Release decodes xipFile and xipURL")
+    func releaseDecodesXipFields() throws {
         let json = Data("""
         {
             "productType": "Xcode",
             "osVersion": "26.3",
             "buildNumber": "17C529",
             "releaseName": "Xcode 26.3",
-            "sourceFile": "Xcode_26.3.xip",
-            "sourceURL": "https://example.com/Xcode_26.3.xip",
+            "xipFile": "Xcode_26.3.xip",
+            "xipURL": "https://example.com/Xcode_26.3.xip",
             "components": []
         }
         """.utf8)
 
         let release = try JSONDecoder().decode(Release.self, from: json)
-        #expect(release.sourceFile == "Xcode_26.3.xip")
-        #expect(release.sourceURL == "https://example.com/Xcode_26.3.xip")
+        #expect(release.xipFile == "Xcode_26.3.xip")
+        #expect(release.xipURL == "https://example.com/Xcode_26.3.xip")
     }
 
     @Test("ReleaseIndexEntry decodes productType")

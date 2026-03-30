@@ -119,7 +119,7 @@ struct ScanCommand: AsyncParsableCommand {
                 xipPath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
-                sourceURL: ipswDownloadURL,
+                xipURL: ipswDownloadURL,
                 isBeta: beta || betaNumber != nil,
                 betaNumber: betaNumber,
                 isRC: rc || rcNumber != nil,

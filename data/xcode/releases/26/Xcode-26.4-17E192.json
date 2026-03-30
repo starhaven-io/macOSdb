@@ -126,5 +126,5 @@
       "sdkVersion" : "26.4"
     }
   ],
-  "sourceFile" : "Xcode_26.4_Apple_silicon.xip"
+  "xipFile" : "Xcode_26.4_Apple_silicon.xip"
 }

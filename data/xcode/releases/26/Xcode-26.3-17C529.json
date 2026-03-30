@@ -126,5 +126,5 @@
       "sdkVersion" : "26.2"
     }
   ],
-  "sourceFile" : "Xcode_26.3_Apple_silicon.xip"
+  "xipFile" : "Xcode_26.3_Apple_silicon.xip"
 }
