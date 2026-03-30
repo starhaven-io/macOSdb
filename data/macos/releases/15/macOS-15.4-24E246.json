@@ -65,7 +65,7 @@
       "name" : "libxml2",
       "path" : "/usr/lib/libxml2.2.dylib",
       "source" : "dyldCache",
-      "version" : "2.10.10"
+      "version" : "2.9.13"
     },
     {
       "name" : "OpenSSH",
@@ -456,6 +456,7 @@
     }
   ],
   "osVersion" : "15.4",
+  "productType" : "macOS",
   "releaseDate" : "2025-03-24",
   "releaseName" : "Sequoia"
 }
