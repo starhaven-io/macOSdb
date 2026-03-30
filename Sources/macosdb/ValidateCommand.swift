@@ -86,7 +86,6 @@ struct ValidateCommand: AsyncParsableCommand {
             let digest = try await hashFile(url)
             let line = "\(digest)  \(url.lastPathComponent)\n"
             try line.write(to: sidecar, atomically: true, encoding: .utf8)
-            matchMtime(of: sidecar, to: url)
             printStatus("  ✓ sha256: \(digest)")
             printStatus("    → \(sidecar.lastPathComponent)")
         } catch {
@@ -155,13 +154,6 @@ struct ValidateCommand: AsyncParsableCommand {
     private func printInline(_ message: String) {
         let line = message.isEmpty ? "\r\u{1B}[K" : "\r\(message)"
         FileHandle.standardError.write(Data(line.utf8))
-    }
-
-    private func matchMtime(of dst: URL, to src: URL) {
-        guard let mtime = (try? src.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate else {
-            return
-        }
-        try? FileManager.default.setAttributes([.modificationDate: mtime], ofItemAtPath: dst.path)
     }
 }
 
