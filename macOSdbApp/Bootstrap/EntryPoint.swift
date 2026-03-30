@@ -23,7 +23,23 @@ struct MacOSdbCLI: AsyncParsableCommand {
     nonisolated static let configuration = CommandConfiguration(
         commandName: "macosdb",
         abstract: "Browse and compare open source components bundled in macOS releases.",
-        version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev",
+        version: appVersion,
         subcommands: [ListCommand.self, ShowCommand.self, CompareCommand.self, ScanCommand.self]
     )
+
+    /// Falls back to the enclosing `.app` bundle when `Bundle.main` misses (e.g. symlink invocation).
+    private static var appVersion: String {
+        if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
+            return version
+        }
+        var url = URL(fileURLWithPath: ProcessInfo.processInfo.arguments[0]).resolvingSymlinksInPath()
+        while url.path != "/" {
+            if url.pathExtension == "app", let bundle = Bundle(url: url),
+               let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
+                return version
+            }
+            url = url.deletingLastPathComponent()
+        }
+        return "dev"
+    }
 }
