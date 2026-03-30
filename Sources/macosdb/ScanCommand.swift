@@ -41,6 +41,15 @@ struct ScanCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Update the releases.json index alongside the output directory.")
     var updateIndex = false
 
+    @Flag(name: .long, help: "Save the AEA decryption key as a .pem sidecar file next to the IPSW.")
+    var saveAeaKey = false
+
+    @Option(name: .customLong("aea-key"), help: "Path to a .pem file to use for AEA decryption instead of fetching from Apple's WKMS.")
+    var aeaKeyPath: String?
+
+    @Flag(name: .long, help: "Extract only the AEA decryption key without scanning components. Implies --save-aea-key.")
+    var keyOnly = false
+
     @Flag(name: .long, help: "Print verbose diagnostic output to stderr.")
     var verbose = false
 
@@ -62,13 +71,34 @@ struct ScanCommand: AsyncParsableCommand {
         printStatus("Archive: \(archiveURL.lastPathComponent)")
         printStatus("")
 
+        let aeaKeyPEM = try aeaKeyPath.map { path -> String in
+            let url = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                printError("AEA key file not found: \(path)")
+                throw ExitCode.failure
+            }
+            return try String(contentsOf: url, encoding: .utf8)
+        }
+
+        if keyOnly {
+            try await extractKeyOnly(archiveURL: archiveURL)
+            return
+        }
+
         let release: Release
 
         switch archiveURL.pathExtension.lowercased() {
         case "xip":
             release = try await scanXcode(archiveURL: archiveURL)
         default:
-            release = try await scanIPSW(archiveURL: archiveURL)
+            let (scannedRelease, recoveredPEM) = try await scanIPSW(
+                archiveURL: archiveURL,
+                aeaKeyPEM: aeaKeyPEM
+            )
+            release = scannedRelease
+            if saveAeaKey, let pem = recoveredPEM {
+                writeAEAKey(pem, for: archiveURL)
+            }
         }
 
         try writeOutput(release: release)
@@ -76,7 +106,7 @@ struct ScanCommand: AsyncParsableCommand {
 
     // MARK: - IPSW scan pipeline
 
-    private func scanIPSW(archiveURL: URL) async throws -> Release {
+    private func scanIPSW(archiveURL: URL, aeaKeyPEM: String? = nil) async throws -> (Release, String?) {
         let scanner = IPSWScanner()
         await configureProgress(scanner)
         if verbose {
@@ -86,7 +116,7 @@ struct ScanCommand: AsyncParsableCommand {
         }
 
         do {
-            return try await scanner.scan(
+            let release = try await scanner.scan(
                 ipswPath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
@@ -95,12 +125,41 @@ struct ScanCommand: AsyncParsableCommand {
                 betaNumber: betaNumber,
                 isRC: rc || rcNumber != nil,
                 rcNumber: rcNumber,
-                isDeviceSpecific: deviceSpecific
+                isDeviceSpecific: deviceSpecific,
+                aeaKeyPEM: aeaKeyPEM
             )
+            let aeaKeyPEM = await scanner.aeaPrivateKeyPEM
+            return (release, aeaKeyPEM)
         } catch {
             printError("Scan failed: \(error.localizedDescription)")
             throw ExitCode.failure
         }
+    }
+
+    // MARK: - Key-only extraction
+
+    private func extractKeyOnly(archiveURL: URL) async throws {
+        let scanner = IPSWScanner()
+        await configureProgress(scanner)
+        if verbose {
+            await scanner.setVerbose { message in
+                self.printStatus("[verbose] \(message)")
+            }
+        }
+
+        do {
+            try await scanner.extractAEAKey(ipswPath: archiveURL)
+        } catch {
+            printError("Key extraction failed: \(error.localizedDescription)")
+            throw ExitCode.failure
+        }
+
+        guard let pem = await scanner.aeaPrivateKeyPEM else {
+            printStatus("No AEA key found (IPSW is not AEA-encrypted)")
+            return
+        }
+
+        writeAEAKey(pem, for: archiveURL)
     }
 
     // MARK: - Xcode scan pipeline
@@ -268,6 +327,19 @@ struct ScanCommand: AsyncParsableCommand {
         try indexData.write(to: indexPath)
 
         printStatus("Updated index: \(indexPath.path) (\(entries.count) releases)")
+    }
+
+    private func writeAEAKey(_ pem: String, for ipswURL: URL) {
+        let sidecarPath = ipswURL.appendingPathExtension("pem")
+        guard !FileManager.default.fileExists(atPath: sidecarPath.path) else {
+            return
+        }
+        do {
+            try pem.write(to: sidecarPath, atomically: true, encoding: .utf8)
+            printStatus("Saved AEA key: \(sidecarPath.lastPathComponent)")
+        } catch {
+            printError("Failed to save AEA key: \(error.localizedDescription)")
+        }
     }
 
     private func printStatus(_ message: String) {

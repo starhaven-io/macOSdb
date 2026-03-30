@@ -14,6 +14,12 @@ import OSLog
 /// 2. Fetch the HPKE private key from Apple's WKMS
 /// 3. Unwrap the symmetric decryption key using CryptoKit HPKE
 /// 4. Shell out to `/usr/bin/aea decrypt` with the derived key
+
+public struct AEADecryptionResult: Sendable {
+    public let dmgPath: URL
+    public let privateKeyPEM: String
+}
+
 public actor AEADecryptor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "AEADecryptor")
 
@@ -21,20 +27,36 @@ public actor AEADecryptor {
         url.pathExtension == "aea"
     }
 
-    /// Decrypts and removes the `.aea` file, returning the path to the decrypted `.dmg`.
-    public func decrypt(aeaPath: URL) async throws -> URL {
-        let key = try await deriveKey(from: aeaPath)
+    public func decrypt(aeaPath: URL, privateKeyPEM: String? = nil) async throws -> AEADecryptionResult {
+        let (key, pemString) = try await deriveKey(from: aeaPath, privateKeyPEM: privateKeyPEM)
         let outputPath = aeaPath.deletingPathExtension()
         try runAEADecrypt(input: aeaPath, output: outputPath, key: key)
         try? FileManager.default.removeItem(at: aeaPath)
-        return outputPath
+        return AEADecryptionResult(dmgPath: outputPath, privateKeyPEM: pemString)
+    }
+
+    public func deriveKeyOnly(from aeaPath: URL) async throws -> String {
+        let (_, pemString) = try await deriveKey(from: aeaPath, privateKeyPEM: nil)
+        return pemString
+    }
+
+    public func deriveKeyOnly(from headerData: Data) async throws -> String {
+        let fields = parseAuthData(from: headerData)
+        let (_, pemString) = try await unwrapKey(from: fields)
+        return pemString
     }
 
     // MARK: - Key derivation
 
-    private func deriveKey(from aeaPath: URL) async throws -> String {
+    private func deriveKey(from aeaPath: URL, privateKeyPEM: String? = nil) async throws -> (String, String) {
         let fields = try parseAuthData(from: aeaPath)
+        return try await unwrapKey(from: fields, privateKeyPEM: privateKeyPEM)
+    }
 
+    private func unwrapKey(
+        from fields: [String: String],
+        privateKeyPEM: String? = nil
+    ) async throws -> (String, String) {
         guard let fcsResponseJSON = fields["com.apple.wkms.fcs-response"] else {
             throw ScannerError.aeaDecryptionFailed(reason: "No fcs-response field in AEA auth data")
         }
@@ -51,7 +73,13 @@ public actor AEADecryptor {
             throw ScannerError.aeaDecryptionFailed(reason: "Invalid fcs-response JSON format")
         }
 
-        let pemString = try await fetchPrivateKey(from: keyURLString)
+        let pemString: String
+        if let cached = privateKeyPEM {
+            Self.logger.info("Using cached AEA private key")
+            pemString = cached
+        } else {
+            pemString = try await fetchPrivateKey(from: keyURLString)
+        }
         let privateKey = try P256.KeyAgreement.PrivateKey(pemRepresentation: pemString)
 
         let ciphersuite = HPKE.Ciphersuite(
@@ -69,7 +97,7 @@ public actor AEADecryptor {
 
         let symmetricKey = try recipient.open(wrappedKey)
         Self.logger.info("Derived AEA decryption key")
-        return symmetricKey.base64EncodedString()
+        return (symmetricKey.base64EncodedString(), pemString)
     }
 
     // MARK: - AEA header parsing
@@ -82,33 +110,50 @@ public actor AEADecryptor {
             throw ScannerError.aeaDecryptionFailed(reason: "Could not read AEA header")
         }
 
-        let headerBytes = [UInt8](header)
-
-        guard headerBytes[0] == 0x41, headerBytes[1] == 0x45,
-              headerBytes[2] == 0x41, headerBytes[3] == 0x31 else {
-            throw ScannerError.aeaDecryptionFailed(reason: "Invalid AEA magic bytes")
-        }
-
-        let profile = UInt32(headerBytes[4])
-            | (UInt32(headerBytes[5]) << 8)
-            | (UInt32(headerBytes[6]) << 16)
-        guard profile == 1 else {
-            throw ScannerError.aeaDecryptionFailed(reason: "Unsupported AEA profile: \(profile)")
-        }
-
-        let authSize = Int(headerBytes[8])
-            | (Int(headerBytes[9]) << 8)
-            | (Int(headerBytes[10]) << 16)
-            | (Int(headerBytes[11]) << 24)
-        guard authSize > 0 else {
-            throw ScannerError.aeaDecryptionFailed(reason: "No auth data in AEA file")
-        }
+        let authSize = try validateHeader(header)
 
         guard let authBlob = try fileHandle.read(upToCount: authSize),
               authBlob.count == authSize else {
             throw ScannerError.aeaDecryptionFailed(reason: "Could not read AEA auth data blob")
         }
 
+        return parseFields(from: authBlob)
+    }
+
+    private func parseAuthData(from data: Data) -> [String: String] {
+        guard data.count >= 12 else { return [:] }
+        let header = data.prefix(12)
+        guard let authSize = try? validateHeader(header), data.count >= 12 + authSize else { return [:] }
+        return parseFields(from: data.subdata(in: 12..<(12 + authSize)))
+    }
+
+    private func validateHeader(_ header: Data) throws -> Int {
+        let bytes = [UInt8](header)
+
+        guard bytes[0] == 0x41, bytes[1] == 0x45,
+              bytes[2] == 0x41, bytes[3] == 0x31 else {
+            throw ScannerError.aeaDecryptionFailed(reason: "Invalid AEA magic bytes")
+        }
+
+        let profile = UInt32(bytes[4])
+            | (UInt32(bytes[5]) << 8)
+            | (UInt32(bytes[6]) << 16)
+        guard profile == 1 else {
+            throw ScannerError.aeaDecryptionFailed(reason: "Unsupported AEA profile: \(profile)")
+        }
+
+        let authSize = Int(bytes[8])
+            | (Int(bytes[9]) << 8)
+            | (Int(bytes[10]) << 16)
+            | (Int(bytes[11]) << 24)
+        guard authSize > 0 else {
+            throw ScannerError.aeaDecryptionFailed(reason: "No auth data in AEA file")
+        }
+
+        return authSize
+    }
+
+    private func parseFields(from authBlob: Data) -> [String: String] {
         let authBytes = [UInt8](authBlob)
         var fields: [String: String] = [:]
         var offset = 0
@@ -151,7 +196,7 @@ public actor AEADecryptor {
               httpResponse.statusCode == 200 else {
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             throw ScannerError.aeaDecryptionFailed(
-                reason: "WKMS key fetch failed (HTTP \(status))"
+                reason: "WKMS key fetch failed (HTTP \(status)): \(urlString)"
             )
         }
 

@@ -201,6 +201,25 @@ public actor IPSWExtractor {
         return (systemPath, cryptexPath)
     }
 
+    public func readAEAHeader(ipswPath: URL, maxBytes: Int = 256 * 1_024) throws -> Data? {
+        let archive = try Archive(url: ipswPath, accessMode: .read)
+        let classified = classifyEntries(archive)
+
+        guard let aeaEntry = classified.dmgs.first(where: {
+            URL(fileURLWithPath: $0.path).pathExtension == "aea"
+        }) else {
+            return nil
+        }
+
+        var collected = Data()
+        _ = try archive.extract(aeaEntry, skipCRC32: true) { chunk in
+            guard collected.count < maxBytes else { return }
+            let remaining = maxBytes - collected.count
+            collected.append(chunk.prefix(remaining))
+        }
+        return collected
+    }
+
     public func cleanup(workDirectory: URL) {
         do {
             try FileManager.default.removeItem(at: workDirectory)

@@ -28,6 +28,8 @@ public actor IPSWScanner {
     public var onProgress: (@Sendable (ScanProgress) -> Void)?
     public var onVerbose: (@Sendable (String) -> Void)?
 
+    public private(set) var aeaPrivateKeyPEM: String?
+
     public init() {}
 
     public func scan(
@@ -39,7 +41,8 @@ public actor IPSWScanner {
         betaNumber: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
-        isDeviceSpecific: Bool = false
+        isDeviceSpecific: Bool = false,
+        aeaKeyPEM: String? = nil
     ) async throws -> Release {
         let startTime = Date()
 
@@ -60,7 +63,7 @@ public actor IPSWScanner {
             }
 
             // Phases 3–5: Decrypt, mount, and extract components
-            let components = try await decryptMountAndExtract(extraction: extraction)
+            let components = try await decryptMountAndExtract(extraction: extraction, aeaKeyPEM: aeaKeyPEM)
 
             // Phase 6: Assemble the Release
             sendProgress(.assemblingResults)
@@ -102,6 +105,20 @@ public actor IPSWScanner {
 
         sendProgress(.complete)
         return release
+    }
+
+    public func extractAEAKey(ipswPath: URL) async throws {
+        sendProgress(.extractingIPSW)
+
+        guard let headerData = try await ipswExtractor.readAEAHeader(ipswPath: ipswPath) else {
+            Self.logger.info("No AEA encryption in \(ipswPath.lastPathComponent)")
+            sendProgress(.complete)
+            return
+        }
+
+        sendProgress(.decryptingAEA)
+        aeaPrivateKeyPEM = try await aeaDecryptor.deriveKeyOnly(from: headerData)
+        sendProgress(.complete)
     }
 
     // MARK: - Kernel parsing
@@ -166,7 +183,8 @@ public actor IPSWScanner {
     // MARK: - AEA decryption, DMG mounting, and component extraction
 
     private func decryptMountAndExtract(
-        extraction: IPSWExtractor.ExtractionResult
+        extraction: IPSWExtractor.ExtractionResult,
+        aeaKeyPEM: String? = nil
     ) async throws -> [Component] {
         var systemDMG = extraction.systemDMG
         var cryptexDMG = extraction.cryptexDMG
@@ -178,11 +196,17 @@ public actor IPSWScanner {
         }
         if AEADecryptor.isAEA(systemDMG) {
             Self.logger.info("Decrypting system AEA: \(systemDMG.lastPathComponent)")
-            systemDMG = try await aeaDecryptor.decrypt(aeaPath: systemDMG)
+            let result = try await aeaDecryptor.decrypt(aeaPath: systemDMG, privateKeyPEM: aeaKeyPEM)
+            systemDMG = result.dmgPath
+            aeaPrivateKeyPEM = result.privateKeyPEM
         }
         if let cryptex = cryptexDMG, AEADecryptor.isAEA(cryptex) {
             Self.logger.info("Decrypting cryptex AEA: \(cryptex.lastPathComponent)")
-            cryptexDMG = try await aeaDecryptor.decrypt(aeaPath: cryptex)
+            let result = try await aeaDecryptor.decrypt(aeaPath: cryptex, privateKeyPEM: aeaKeyPEM)
+            cryptexDMG = result.dmgPath
+            if aeaPrivateKeyPEM == nil {
+                aeaPrivateKeyPEM = result.privateKeyPEM
+            }
         }
 
         sendProgress(.mountingDMG)
