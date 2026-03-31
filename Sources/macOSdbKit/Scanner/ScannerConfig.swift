@@ -119,6 +119,15 @@ public let filesystemComponents: [ComponentDefinition] = [
         strategy: .regex
     ),
     ComponentDefinition(
+        name: "sudo",
+        path: "usr/bin/sudo",
+        source: .filesystem,
+        pattern: #"[0-9]+\.[0-9]+\.[0-9]+p[0-9]+"#,
+
+        normalize: identity,
+        strategy: .regex
+    ),
+    ComponentDefinition(
         name: "SQLite",
         path: "usr/bin/sqlite3",
         source: .filesystem,
@@ -363,10 +372,6 @@ private func buildSDKComponents() -> [SDKComponentDefinition] {
         SDKComponentDefinition(
             name: "libcurl", path: "include/curl/curlver.h",
             pattern: libcurl.pattern, normalize: libcurl.normalize
-        ),
-        SDKComponentDefinition(
-            name: "libedit", path: "lib/libedit.3.tbd",
-            pattern: tbd.pattern, normalize: tbd.normalize
         ),
         SDKComponentDefinition(
             name: "libexslt", path: "include/libexslt/exsltconfig.h",

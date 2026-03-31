@@ -303,8 +303,9 @@ public actor XcodeScanner {
                     name: "Python",
                     path: relativePath,
                     source: .filesystem,
-                    // Match "3.x.y" where x >= 2 — avoids "3.0.0" false positives from format versions
-                    pattern: #"3\.[2-9][0-9]*\.[0-9]+"#,
+                    // Match standalone "3.x.y" — anchored to full string to avoid false matches
+                    // from unrelated version numbers embedded in the binary
+                    pattern: #"^3\.[2-9][0-9]*\.[0-9]+$"#,
                     normalize: { $0 },
                     strategy: .regex
                 )
