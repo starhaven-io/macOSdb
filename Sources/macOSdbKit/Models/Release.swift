@@ -6,6 +6,13 @@ import Foundation
 public struct Release: Codable, Identifiable, Hashable, Sendable {
     public var id: String { buildNumber }
 
+    enum CodingKeys: String, CodingKey {
+        case productType, osVersion, buildNumber, releaseName, releaseDate
+        case ipswFile, ipswURL, xipFile, xipURL
+        case isBeta, betaNumber, isRC, rcNumber, isDeviceSpecific
+        case kernels, components, sdks, minimumOSVersion
+    }
+
     public let productType: ProductType?
     public let osVersion: String
     public let buildNumber: String
@@ -146,6 +153,30 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         components = try container.decodeIfPresent([Component].self, forKey: .components) ?? []
         sdks = try container.decodeIfPresent([SDKInfo].self, forKey: .sdks)
         minimumOSVersion = try container.decodeIfPresent(String.self, forKey: .minimumOSVersion)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(productType, forKey: .productType)
+        try container.encode(osVersion, forKey: .osVersion)
+        try container.encode(buildNumber, forKey: .buildNumber)
+        try container.encode(releaseName, forKey: .releaseName)
+        try container.encodeIfPresent(releaseDate, forKey: .releaseDate)
+        try container.encodeIfPresent(ipswFile, forKey: .ipswFile)
+        try container.encodeIfPresent(ipswURL, forKey: .ipswURL)
+        try container.encodeIfPresent(xipFile, forKey: .xipFile)
+        try container.encodeIfPresent(xipURL, forKey: .xipURL)
+        try container.encode(isBeta, forKey: .isBeta)
+        try container.encodeIfPresent(betaNumber, forKey: .betaNumber)
+        try container.encode(isRC, forKey: .isRC)
+        try container.encodeIfPresent(rcNumber, forKey: .rcNumber)
+        try container.encode(isDeviceSpecific, forKey: .isDeviceSpecific)
+        if !kernels.isEmpty {
+            try container.encode(kernels, forKey: .kernels)
+        }
+        try container.encode(components, forKey: .components)
+        try container.encodeIfPresent(sdks, forKey: .sdks)
+        try container.encodeIfPresent(minimumOSVersion, forKey: .minimumOSVersion)
     }
 }
 
