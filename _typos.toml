@@ -1,0 +1,3 @@
+[default.extend-words]
+# "Sur" is part of "Big Sur" (macOS 11)
+sur = "sur"

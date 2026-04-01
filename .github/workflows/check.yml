@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
 
       - name: Install tools
-        run: brew install just swiftlint zizmor
+        run: brew install just swiftlint typos-cli zizmor
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
