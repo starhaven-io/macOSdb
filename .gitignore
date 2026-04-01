@@ -1,25 +1,27 @@
 # Build
 .build/
 build/
-DerivedData/
 
-# Xcode
-xcuserdata/
-*.xcuserdata/
-*.xccheckout
-*.xcscmblueprint
-
-# SPM
-.swiftpm/
-
-# macOS
-.DS_Store
+# Claude Code
+.claude/
 
 # Editors
 .vscode/
 
-# Appcast (lives on the appcast branch, not main)
+# macOS
+.DS_Store
+
+# SPM
+.swiftpm/
+
+# Sparkle (lives on the appcast branch, not main)
 appcast.xml
 
-# Claude Code
-.claude/
+# Typos (override global gitignore)
+!_typos.toml
+
+# Xcode
+DerivedData/
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
