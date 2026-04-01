@@ -3,6 +3,8 @@ import Foundation
 public struct ComponentDefinition: Sendable {
     public let name: String
     public let path: String
+    /// Alternative path to try if `path` is not found (e.g. older toolchain layouts).
+    public let fallbackPath: String?
     public let source: ComponentSource
     public let pattern: String
     public let normalize: @Sendable (String) -> String
@@ -13,6 +15,7 @@ public struct ComponentDefinition: Sendable {
     public init(
         name: String,
         path: String,
+        fallbackPath: String? = nil,
         source: ComponentSource,
         pattern: String,
         normalize: @Sendable @escaping (String) -> String,
@@ -21,6 +24,7 @@ public struct ComponentDefinition: Sendable {
     ) {
         self.name = name
         self.path = path
+        self.fallbackPath = fallbackPath
         self.source = source
         self.pattern = pattern
         self.normalize = normalize
@@ -248,7 +252,7 @@ public let toolchainComponents: [ComponentDefinition] = [
         name: "Apple Clang",
         path: "usr/bin/clang",
         source: .filesystem,
-        pattern: #"clang-[0-9]+[0-9.]*"#,
+        pattern: #"clang-[0-9]{3,}\.[0-9]+[0-9.]*"#,
 
         normalize: stripPrefix(["clang-"]),
         strategy: .regex
@@ -256,6 +260,7 @@ public let toolchainComponents: [ComponentDefinition] = [
     ComponentDefinition(
         name: "Swift",
         path: "usr/bin/swift-frontend",
+        fallbackPath: "usr/bin/swift",
         source: .filesystem,
         // Newer Xcodes: "swiftlang-6.3.0.123.5"; older: "Swift version 5.5.2"
         // swiftlang major < 100 = real version; >= 100 = Apple project number (e.g. 1300.0.47.5)

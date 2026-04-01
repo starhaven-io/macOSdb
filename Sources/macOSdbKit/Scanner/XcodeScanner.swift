@@ -186,6 +186,23 @@ public actor XcodeScanner {
 
     // MARK: - Toolchain component extraction
 
+    /// Resolve the binary path for a component definition, trying the fallback path if needed.
+    private func resolveBinaryPath(
+        for definition: ComponentDefinition,
+        in baseDir: URL
+    ) -> (url: URL, relativePath: String) {
+        let primaryPath = baseDir.appendingPathComponent(definition.path)
+        if FileManager.default.fileExists(atPath: primaryPath.path) {
+            return (primaryPath, definition.path)
+        }
+        if let fallback = definition.fallbackPath {
+            let fallbackPath = baseDir.appendingPathComponent(fallback)
+            sendVerbose("\(definition.name): primary not found, trying fallback \(fallback)")
+            return (fallbackPath, fallback)
+        }
+        return (primaryPath, definition.path)
+    }
+
     private func extractToolchainComponents(from xcodeApp: URL) async -> [Component] {
         var components: [Component] = []
         let developerDir = xcodeApp.appendingPathComponent("Contents/Developer")
@@ -193,7 +210,6 @@ public actor XcodeScanner {
             "Toolchains/XcodeDefault.xctoolchain"
         )
 
-        // Extract toolchain components (clang, swift, ld, etc.)
         let total = toolchainComponents.count + developerComponents.count
 
         for (index, definition) in toolchainComponents.enumerated() {
@@ -203,20 +219,14 @@ public actor XcodeScanner {
                 total: total
             ))
 
-            let binaryPath = toolchainDir.appendingPathComponent(definition.path)
-            guard let data = try? Data(contentsOf: binaryPath) else {
-                sendVerbose("\(definition.name): binary not found at \(binaryPath.path)")
-                continue
-            }
-
-            if let component = await ComponentExtractor.extract(from: data, using: definition) {
+            let resolved = resolveBinaryPath(for: definition, in: toolchainDir)
+            if let component = await extractComponent(
+                from: resolved.url, using: definition, resolvedPath: resolved.relativePath
+            ) {
                 components.append(component)
-            } else {
-                sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
             }
         }
 
-        // Extract developer directory components (git, make, etc.)
         for (index, definition) in developerComponents.enumerated() {
             sendProgress(.scanningToolchain(
                 component: definition.name,
@@ -225,15 +235,10 @@ public actor XcodeScanner {
             ))
 
             let binaryPath = developerDir.appendingPathComponent(definition.path)
-            guard let data = try? Data(contentsOf: binaryPath) else {
-                sendVerbose("\(definition.name): binary not found at \(binaryPath.path)")
-                continue
-            }
-
-            if let component = await ComponentExtractor.extract(from: data, using: definition) {
+            if let component = await extractComponent(
+                from: binaryPath, using: definition, resolvedPath: definition.path
+            ) {
                 components.append(component)
-            } else {
-                sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
             }
         }
 
@@ -243,6 +248,33 @@ public actor XcodeScanner {
             Self.logger.info("Extracted \(components.count) toolchain components")
         }
         return components
+    }
+
+    /// Extract a single component from a binary, correcting the path if a fallback was used.
+    private func extractComponent(
+        from binaryPath: URL,
+        using definition: ComponentDefinition,
+        resolvedPath: String
+    ) async -> Component? {
+        guard let data = try? Data(contentsOf: binaryPath) else {
+            sendVerbose("\(definition.name): binary not found at \(binaryPath.path)")
+            return nil
+        }
+
+        guard var component = await ComponentExtractor.extract(from: data, using: definition) else {
+            sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
+            return nil
+        }
+
+        if resolvedPath != definition.path {
+            component = Component(
+                name: component.name,
+                version: component.version,
+                path: "/\(resolvedPath)",
+                source: component.source
+            )
+        }
+        return component
     }
 
     // MARK: - Framework component extraction

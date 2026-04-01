@@ -29,7 +29,7 @@ SHARED_REQUIRED = [
 ]
 
 MACOS_REQUIRED = SHARED_REQUIRED + ["ipswFile", "ipswURL", "kernels"]
-XCODE_REQUIRED = SHARED_REQUIRED + ["xipFile", "minimumOSVersion", "sdks", "kernels"]
+XCODE_REQUIRED = SHARED_REQUIRED + ["xipFile", "minimumOSVersion", "sdks"]
 
 MACOS_ALLOWED = {
     "buildNumber", "osVersion", "releaseDate", "releaseName",
@@ -41,7 +41,7 @@ XCODE_ALLOWED = {
     "buildNumber", "osVersion", "releaseDate", "releaseName",
     "productType", "isBeta", "isRC", "isDeviceSpecific",
     "xipFile", "xipURL", "minimumOSVersion", "sdks",
-    "betaNumber", "rcNumber", "components", "kernels",
+    "betaNumber", "rcNumber", "components",
 }
 
 INDEX_REQUIRED = [
@@ -312,7 +312,7 @@ def validate_releases(product, catalog):
                           f"(expected: {', '.join(sorted(valid_sources))})")
 
         # Kernels validation
-        kernels = d["kernels"]
+        kernels = d.get("kernels", [])
         if expect_kernels:
             if not isinstance(kernels, list) or len(kernels) == 0:
                 warn(f"{f.name}: kernels array is empty")
