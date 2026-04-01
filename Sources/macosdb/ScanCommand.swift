@@ -32,7 +32,7 @@ struct ScanCommand: AsyncParsableCommand {
     @Option(name: .long, help: "RC number (e.g. 2 for \"RC 2\"). Omit for just \"RC\".")
     var rcNumber: Int?
 
-    @Option(name: .customLong("ipsw-url"), help: "URL where this IPSW can be downloaded (e.g. Apple CDN URL).")
+    @Option(name: [.customLong("ipsw-url"), .customLong("xip-url")], help: "URL where this archive can be downloaded (e.g. Apple CDN URL).")
     var ipswDownloadURL: String?
 
     @Flag(name: .long, help: "Mark as a device-specific build (e.g. M3 launch build).")
