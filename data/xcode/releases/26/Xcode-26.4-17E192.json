@@ -44,12 +44,6 @@
       "version" : "8.7.1"
     },
     {
-      "name" : "libedit",
-      "path" : "/lib/libedit.3.tbd",
-      "source" : "sdk",
-      "version" : "3"
-    },
-    {
       "name" : "libexslt",
       "path" : "/include/libexslt/exsltconfig.h",
       "source" : "sdk",
@@ -111,11 +105,7 @@
     }
   ],
   "isBeta" : false,
-  "isDeviceSpecific" : false,
   "isRC" : false,
-  "kernels" : [
-
-  ],
   "minimumOSVersion" : "26.2",
   "osVersion" : "26.4",
   "productType" : "Xcode",
@@ -126,5 +116,6 @@
       "sdkVersion" : "26.4"
     }
   ],
-  "xipFile" : "Xcode_26.4_Apple_silicon.xip"
+  "xipFile" : "Xcode_26.4_Apple_silicon.xip",
+  "xipURL" : "https://download.developer.apple.com/Developer_Tools/Xcode_26.4/Xcode_26.4_Apple_silicon.xip"
 }
