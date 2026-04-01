@@ -101,8 +101,10 @@ enum SDKMetadataParser {
             options: [.skipsHiddenFiles]
         ) {
             for case let fileURL as URL in enumerator {
+                // Only parse SDKs in MacOSX*.sdk directories, skip DriverKit etc.
+                let sdkDir = fileURL.deletingLastPathComponent().lastPathComponent
                 if fileURL.lastPathComponent == "SDKSettings.json",
-                   fileURL.path.contains("MacOSX"),
+                   sdkDir.hasPrefix("MacOSX"),
                    let sdk = parseSDKSettingsJSON(at: fileURL) {
                     sdks.append(sdk)
                 }
