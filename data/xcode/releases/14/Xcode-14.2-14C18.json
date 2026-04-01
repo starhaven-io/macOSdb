@@ -44,12 +44,6 @@
       "version" : "7.85.0"
     },
     {
-      "name" : "libedit",
-      "path" : "/lib/libedit.3.tbd",
-      "source" : "sdk",
-      "version" : "3"
-    },
-    {
       "name" : "libexslt",
       "path" : "/include/libexslt/exsltconfig.h",
       "source" : "sdk",
@@ -111,11 +105,7 @@
     }
   ],
   "isBeta" : false,
-  "isDeviceSpecific" : false,
   "isRC" : false,
-  "kernels" : [
-
-  ],
   "minimumOSVersion" : "12.5",
   "osVersion" : "14.2",
   "productType" : "Xcode",
@@ -126,5 +116,6 @@
       "sdkVersion" : "13.1"
     }
   ],
-  "xipFile" : "Xcode_14.2.xip"
+  "xipFile" : "Xcode_14.2.xip",
+  "xipURL" : "https://download.developer.apple.com/Developer_Tools/Xcode_14.2/Xcode_14.2.xip"
 }

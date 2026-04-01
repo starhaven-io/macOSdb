@@ -170,7 +170,9 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         try container.encodeIfPresent(betaNumber, forKey: .betaNumber)
         try container.encode(isRC, forKey: .isRC)
         try container.encodeIfPresent(rcNumber, forKey: .rcNumber)
-        try container.encode(isDeviceSpecific, forKey: .isDeviceSpecific)
+        if productType != .xcode {
+            try container.encode(isDeviceSpecific, forKey: .isDeviceSpecific)
+        }
         if !kernels.isEmpty {
             try container.encode(kernels, forKey: .kernels)
         }
@@ -208,6 +210,12 @@ extension Release {
 /// An entry in the release index file (`releases.json`).
 public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
     public var id: String { buildNumber }
+
+    enum CodingKeys: String, CodingKey {
+        case productType, osVersion, buildNumber, releaseName, releaseDate
+        case isBeta, betaNumber, isRC, rcNumber, isDeviceSpecific
+        case dataFile
+    }
 
     public let productType: ProductType?
     public let osVersion: String
@@ -265,6 +273,23 @@ public struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
         isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
         dataFile = try container.decode(String.self, forKey: .dataFile)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(productType, forKey: .productType)
+        try container.encode(osVersion, forKey: .osVersion)
+        try container.encode(buildNumber, forKey: .buildNumber)
+        try container.encode(releaseName, forKey: .releaseName)
+        try container.encodeIfPresent(releaseDate, forKey: .releaseDate)
+        try container.encode(isBeta, forKey: .isBeta)
+        try container.encodeIfPresent(betaNumber, forKey: .betaNumber)
+        try container.encode(isRC, forKey: .isRC)
+        try container.encodeIfPresent(rcNumber, forKey: .rcNumber)
+        if resolvedProductType != .xcode {
+            try container.encode(isDeviceSpecific, forKey: .isDeviceSpecific)
+        }
+        try container.encode(dataFile, forKey: .dataFile)
     }
 }
 

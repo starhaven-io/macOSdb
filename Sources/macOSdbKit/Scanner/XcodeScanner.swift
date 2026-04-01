@@ -58,16 +58,17 @@ public actor XcodeScanner {
 
             // Phase 6: Assemble the Release
             sendProgress(.assemblingResults)
+            let resolvedBeta = isRC ? false : isBeta
             release = Release(
                 productType: .xcode,
                 osVersion: osVersion,
                 buildNumber: buildNumber,
                 releaseName: resolvedName,
                 releaseDate: releaseDate,
-                xipFile: xipPath.lastPathComponent,
+                xipFile: xipURL.flatMap { URL(string: $0)?.lastPathComponent } ?? xipPath.lastPathComponent,
                 xipURL: xipURL,
-                isBeta: isBeta,
-                betaNumber: betaNumber,
+                isBeta: resolvedBeta,
+                betaNumber: resolvedBeta ? betaNumber : nil,
                 isRC: isRC,
                 rcNumber: rcNumber,
                 components: components,

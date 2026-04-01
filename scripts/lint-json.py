@@ -25,11 +25,11 @@ from pathlib import Path
 
 SHARED_REQUIRED = [
     "buildNumber", "osVersion", "releaseDate", "releaseName",
-    "isBeta", "isRC", "isDeviceSpecific", "productType", "components",
+    "isBeta", "isRC", "productType", "components",
 ]
 
-MACOS_REQUIRED = SHARED_REQUIRED + ["ipswFile", "ipswURL", "kernels"]
-XCODE_REQUIRED = SHARED_REQUIRED + ["xipFile", "minimumOSVersion", "sdks"]
+MACOS_REQUIRED = SHARED_REQUIRED + ["isDeviceSpecific", "ipswFile", "ipswURL", "kernels"]
+XCODE_REQUIRED = SHARED_REQUIRED + ["xipFile", "xipURL", "minimumOSVersion", "sdks"]
 
 MACOS_ALLOWED = {
     "buildNumber", "osVersion", "releaseDate", "releaseName",
@@ -39,23 +39,29 @@ MACOS_ALLOWED = {
 }
 XCODE_ALLOWED = {
     "buildNumber", "osVersion", "releaseDate", "releaseName",
-    "productType", "isBeta", "isRC", "isDeviceSpecific",
+    "productType", "isBeta", "isRC",
     "xipFile", "xipURL", "minimumOSVersion", "sdks",
     "betaNumber", "rcNumber", "components",
 }
 
-INDEX_REQUIRED = [
+INDEX_SHARED_REQUIRED = [
     "buildNumber", "osVersion", "releaseDate", "releaseName",
-    "isBeta", "isRC", "isDeviceSpecific", "productType", "dataFile",
+    "isBeta", "isRC", "productType", "dataFile",
 ]
+
+MACOS_INDEX_REQUIRED = INDEX_SHARED_REQUIRED + ["isDeviceSpecific"]
+XCODE_INDEX_REQUIRED = INDEX_SHARED_REQUIRED
 
 PARITY_FIELDS = [
     "osVersion", "releaseDate", "releaseName",
-    "isBeta", "isRC", "isDeviceSpecific", "productType",
+    "isBeta", "isRC", "productType",
     "betaNumber", "rcNumber",
 ]
 
-BOOL_FIELDS = ["isBeta", "isRC", "isDeviceSpecific"]
+MACOS_PARITY_FIELDS = PARITY_FIELDS + ["isDeviceSpecific"]
+
+MACOS_BOOL_FIELDS = ["isBeta", "isRC", "isDeviceSpecific"]
+XCODE_BOOL_FIELDS = ["isBeta", "isRC"]
 COMPONENT_REQUIRED = ["name", "version", "path", "source"]
 
 IPSW_FILE_RE = re.compile(r"UniversalMac_([\d.]+)_([A-Za-z0-9]+)_Restore\.ipsw$")
@@ -71,6 +77,9 @@ PRODUCTS = [
         "index": Path("data/macos/releases.json"),
         "required": MACOS_REQUIRED,
         "allowed": MACOS_ALLOWED,
+        "index_required": MACOS_INDEX_REQUIRED,
+        "parity_fields": MACOS_PARITY_FIELDS,
+        "bool_fields": MACOS_BOOL_FIELDS,
         "component_sources": {"filesystem", "dyldCache"},
         "expect_kernels": True,
     },
@@ -81,6 +90,9 @@ PRODUCTS = [
         "index": Path("data/xcode/releases.json"),
         "required": XCODE_REQUIRED,
         "allowed": XCODE_ALLOWED,
+        "index_required": XCODE_INDEX_REQUIRED,
+        "parity_fields": PARITY_FIELDS,
+        "bool_fields": XCODE_BOOL_FIELDS,
         "component_sources": {"filesystem", "sdk"},
         "expect_kernels": False,
     },
@@ -205,7 +217,7 @@ def validate_releases(product, catalog):
             error(f"{f.name}: osVersion '{d['osVersion']}' doesn't match filename '{filename_version}'")
 
         # Boolean fields
-        for field in BOOL_FIELDS:
+        for field in product["bool_fields"]:
             if not isinstance(d[field], bool):
                 error(f"{f.name}: {field} should be bool, got {type(d[field]).__name__}")
 
@@ -329,8 +341,14 @@ def validate_releases(product, catalog):
                             error(f"{f.name}: kernels[{ki}] {sfield} is empty or not a string")
 
                     devices = kern.get("devices", [])
+                    chip = kern.get("chip", "")
+                    is_dtk = chip == "A12Z (DTK)"
+                    is_early_vm = chip == "Virtual Mac" and build in {
+                        "21A5268h", "21A5284e", "21A5294g",
+                    }
                     if not isinstance(devices, list) or len(devices) == 0:
-                        warn(f"{f.name}: kernels[{ki}] devices is empty")
+                        if not is_dtk and not is_early_vm:
+                            warn(f"{f.name}: kernels[{ki}] devices is empty")
                     elif not all(isinstance(d_item, str) for d_item in devices):
                         error(f"{f.name}: kernels[{ki}] devices contains non-string entries")
 
@@ -367,7 +385,7 @@ def validate_index(product, catalog):
         b = entry.get("buildNumber", "")
         index_builds[b] = entry
 
-        missing = [field for field in INDEX_REQUIRED if field not in entry]
+        missing = [field for field in product["index_required"] if field not in entry]
         if missing:
             error(f"{prefix} index/{b}: missing fields: {', '.join(missing)}")
 
@@ -386,7 +404,7 @@ def validate_index(product, catalog):
     for build in catalog_builds & index_build_set:
         release = catalog[build]["data"]
         idx = index_builds[build]
-        for field in PARITY_FIELDS:
+        for field in product["parity_fields"]:
             if idx.get(field) != release.get(field):
                 error(f"{prefix} index/{build}: {field} mismatch — "
                       f"index={idx.get(field)!r}, file={release.get(field)!r}")
