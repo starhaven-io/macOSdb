@@ -70,7 +70,7 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
           <a href="/xcode/">Xcode</a>
           <a href="/components/">Components</a>
           <a href="/compare/">Compare</a>
-          <div class="search-wrapper" role="search" aria-label="Search this site">
+          <div class="search-wrapper">
             <Search id="search" className="pagefind-ui" uiOptions={{ showImages: false, resetStyles: false }} />
             <script is:inline>
               new MutationObserver((_, obs) => {
