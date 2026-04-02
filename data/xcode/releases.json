@@ -30,6 +30,90 @@
     "releaseName" : "Xcode 16.2"
   },
   {
+    "buildNumber" : "15F31d",
+    "dataFile" : "releases/15/Xcode-15.4-15F31d.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-05-13",
+    "releaseName" : "Xcode 15.4"
+  },
+  {
+    "buildNumber" : "15F31c",
+    "dataFile" : "releases/15/Xcode-15.4-15F31c.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "15.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-05-07",
+    "releaseName" : "Xcode 15.4"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "15F5021i",
+    "dataFile" : "releases/15/Xcode-15.4-15F5021i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-04-16",
+    "releaseName" : "Xcode 15.4"
+  },
+  {
+    "buildNumber" : "15E204a",
+    "dataFile" : "releases/15/Xcode-15.3-15E204a.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-03-05",
+    "releaseName" : "Xcode 15.3"
+  },
+  {
+    "buildNumber" : "15E5202a",
+    "dataFile" : "releases/15/Xcode-15.3-15E5202a.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "15.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-02-27",
+    "releaseName" : "Xcode 15.3"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "15E5194e",
+    "dataFile" : "releases/15/Xcode-15.3-15E5194e.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-02-13",
+    "releaseName" : "Xcode 15.3"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "15E5188j",
+    "dataFile" : "releases/15/Xcode-15.3-15E5188j.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-02-06",
+    "releaseName" : "Xcode 15.3"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "15E5178i",
+    "dataFile" : "releases/15/Xcode-15.3-15E5178i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-01-25",
+    "releaseName" : "Xcode 15.3"
+  },
+  {
     "buildNumber" : "15C500b",
     "dataFile" : "releases/15/Xcode-15.2-15C500b.json",
     "isBeta" : false,
@@ -38,6 +122,157 @@
     "productType" : "Xcode",
     "releaseDate" : "2024-01-08",
     "releaseName" : "Xcode 15.2"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "15C5500c",
+    "dataFile" : "releases/15/Xcode-15.2-15C5500c.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-12-12",
+    "releaseName" : "Xcode 15.2"
+  },
+  {
+    "buildNumber" : "15C65",
+    "dataFile" : "releases/15/Xcode-15.1-15C65.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-12-11",
+    "releaseName" : "Xcode 15.1"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "15C5059c",
+    "dataFile" : "releases/15/Xcode-15.1-15C5059c.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-11-14",
+    "releaseName" : "Xcode 15.1"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "15C5042i",
+    "dataFile" : "releases/15/Xcode-15.1-15C5042i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-10-26",
+    "releaseName" : "Xcode 15.1"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "15C5028h",
+    "dataFile" : "releases/15/Xcode-15.1-15C5028h.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-10-03",
+    "releaseName" : "Xcode 15.1"
+  },
+  {
+    "buildNumber" : "15A507",
+    "dataFile" : "releases/15/Xcode-15.0.1-15A507.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.0.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-10-18",
+    "releaseName" : "Xcode 15.0.1"
+  },
+  {
+    "buildNumber" : "15A240d",
+    "dataFile" : "releases/15/Xcode-15.0-15A240d.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-09-18",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 8,
+    "buildNumber" : "15A5229m",
+    "dataFile" : "releases/15/Xcode-15.0-15A5229m.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-08-29",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 7,
+    "buildNumber" : "15A5229h",
+    "dataFile" : "releases/15/Xcode-15.0-15A5229h.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-08-22",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 6,
+    "buildNumber" : "15A5219j",
+    "dataFile" : "releases/15/Xcode-15.0-15A5219j.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-08-08",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 5,
+    "buildNumber" : "15A5209g",
+    "dataFile" : "releases/15/Xcode-15.0-15A5209g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-07-25",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 4,
+    "buildNumber" : "15A5195m",
+    "dataFile" : "releases/15/Xcode-15.0-15A5195m.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-07-11",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "15A5161b",
+    "dataFile" : "releases/15/Xcode-15.0-15A5161b.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-06-21",
+    "releaseName" : "Xcode 15.0"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "15A5160n",
+    "dataFile" : "releases/15/Xcode-15.0-15A5160n.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "15.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-06-05",
+    "releaseName" : "Xcode 15.0"
   },
   {
     "buildNumber" : "14E300c",

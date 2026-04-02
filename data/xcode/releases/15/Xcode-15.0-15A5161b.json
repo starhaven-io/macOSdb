@@ -1,0 +1,122 @@
+{
+  "betaNumber" : 2,
+  "buildNumber" : "15A5161b",
+  "components" : [
+    {
+      "name" : "Apple Clang",
+      "path" : "/usr/bin/clang",
+      "source" : "filesystem",
+      "version" : "1500.0.29.1"
+    },
+    {
+      "name" : "bzip2",
+      "path" : "/lib/libbz2.1.0.tbd",
+      "source" : "sdk",
+      "version" : "1.0.8"
+    },
+    {
+      "name" : "cctools",
+      "path" : "/usr/bin/otool",
+      "source" : "filesystem",
+      "version" : "1009"
+    },
+    {
+      "name" : "expat",
+      "path" : "/include/expat.h",
+      "source" : "sdk",
+      "version" : "2.5.0"
+    },
+    {
+      "name" : "Git",
+      "path" : "/usr/bin/git",
+      "source" : "filesystem",
+      "version" : "2.39.2"
+    },
+    {
+      "name" : "ld",
+      "path" : "/usr/bin/ld",
+      "source" : "filesystem",
+      "version" : "902.11"
+    },
+    {
+      "name" : "libcurl",
+      "path" : "/include/curl/curlver.h",
+      "source" : "sdk",
+      "version" : "8.0.1"
+    },
+    {
+      "name" : "libexslt",
+      "path" : "/include/libexslt/exsltconfig.h",
+      "source" : "sdk",
+      "version" : "0.8.20"
+    },
+    {
+      "name" : "libffi",
+      "path" : "/include/ffi/ffi.h",
+      "source" : "sdk",
+      "version" : "3.4-rc1"
+    },
+    {
+      "name" : "libxml2",
+      "path" : "/include/libxml/xmlversion.h",
+      "source" : "sdk",
+      "version" : "2.9.13"
+    },
+    {
+      "name" : "libxslt",
+      "path" : "/include/libxslt/xsltconfig.h",
+      "source" : "sdk",
+      "version" : "1.1.35"
+    },
+    {
+      "name" : "lldb",
+      "path" : "/Contents/SharedFrameworks/LLDB.framework/LLDB",
+      "source" : "filesystem",
+      "version" : "1500.0.14.8"
+    },
+    {
+      "name" : "ncurses",
+      "path" : "/include/curses.h",
+      "source" : "sdk",
+      "version" : "6.0.20150808"
+    },
+    {
+      "name" : "Python",
+      "path" : "/Library/Frameworks/Python3.framework/Versions/Current/lib/libpython3.9.dylib",
+      "source" : "filesystem",
+      "version" : "3.9.6"
+    },
+    {
+      "name" : "sqlite3",
+      "path" : "/include/sqlite3.h",
+      "source" : "sdk",
+      "version" : "3.39.5"
+    },
+    {
+      "name" : "Swift",
+      "path" : "/usr/bin/swift-frontend",
+      "source" : "filesystem",
+      "version" : "5.9.0.114.10"
+    },
+    {
+      "name" : "zlib",
+      "path" : "/include/zlib.h",
+      "source" : "sdk",
+      "version" : "1.2.12"
+    }
+  ],
+  "isBeta" : true,
+  "isRC" : false,
+  "minimumOSVersion" : "13.4",
+  "osVersion" : "15.0",
+  "productType" : "Xcode",
+  "releaseDate" : "2023-06-21",
+  "releaseName" : "Xcode 15.0",
+  "sdks" : [
+    {
+      "sdkVersion" : "14.0"
+    }
+  ],
+  "xipFile" : "Xcode_15_beta_2.xip",
+  "xipURL" : "https://download.developer.apple.com/Developer_Tools/Xcode_15_beta_2/Xcode_15_beta_2.xip"
+}
