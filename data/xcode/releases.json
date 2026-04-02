@@ -40,6 +40,79 @@
     "releaseName" : "Xcode 15.2"
   },
   {
+    "buildNumber" : "14E300c",
+    "dataFile" : "releases/14/Xcode-14.3.1-14E300c.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "14.3.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-06-01",
+    "releaseName" : "Xcode 14.3.1"
+  },
+  {
+    "buildNumber" : "14E300b",
+    "dataFile" : "releases/14/Xcode-14.3.1-14E300b.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "14.3.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-05-17",
+    "releaseName" : "Xcode 14.3.1"
+  },
+  {
+    "buildNumber" : "14E222b",
+    "dataFile" : "releases/14/Xcode-14.3-14E222b.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "14.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-03-30",
+    "releaseName" : "Xcode 14.3"
+  },
+  {
+    "buildNumber" : "14E222a",
+    "dataFile" : "releases/14/Xcode-14.3-14E222a.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "14.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-03-21",
+    "releaseName" : "Xcode 14.3"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "14E5215g",
+    "dataFile" : "releases/14/Xcode-14.3-14E5215g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "14.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-03-15",
+    "releaseName" : "Xcode 14.3"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "14E5207e",
+    "dataFile" : "releases/14/Xcode-14.3-14E5207e.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "14.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-02-28",
+    "releaseName" : "Xcode 14.3"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "14E5197f",
+    "dataFile" : "releases/14/Xcode-14.3-14E5197f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "14.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2023-02-16",
+    "releaseName" : "Xcode 14.3"
+  },
+  {
     "buildNumber" : "14C18",
     "dataFile" : "releases/14/Xcode-14.2-14C18.json",
     "isBeta" : false,
@@ -48,6 +121,46 @@
     "productType" : "Xcode",
     "releaseDate" : "2022-12-13",
     "releaseName" : "Xcode 14.2"
+  },
+  {
+    "buildNumber" : "14B47b",
+    "dataFile" : "releases/14/Xcode-14.1-14B47b.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "14.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-11-01",
+    "releaseName" : "Xcode 14.1"
+  },
+  {
+    "buildNumber" : "14B47",
+    "dataFile" : "releases/14/Xcode-14.1-14B47.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "14.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-10-18",
+    "releaseName" : "Xcode 14.1"
+  },
+  {
+    "buildNumber" : "14A400",
+    "dataFile" : "releases/14/Xcode-14.0.1-14A400.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "14.0.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-09-26",
+    "releaseName" : "Xcode 14.0.1"
+  },
+  {
+    "buildNumber" : "14A309",
+    "dataFile" : "releases/14/Xcode-14.0-14A309.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "14.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-09-12",
+    "releaseName" : "Xcode 14.0"
   },
   {
     "buildNumber" : "13F100",
