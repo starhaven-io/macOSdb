@@ -28,7 +28,7 @@ struct ValidateCommand: AsyncParsableCommand {
         let targets = collectTargets()
 
         if targets.isEmpty {
-            printStatus("No .ipsw files found.")
+            printStatus("No archive files found.")
             throw ExitCode.failure
         }
 
@@ -74,12 +74,14 @@ struct ValidateCommand: AsyncParsableCommand {
 
         printStatus("\(url.lastPathComponent)  (\(sizeGB))")
 
-        do {
-            let entryCount = try validateZIP(at: url)
-            printStatus("  ✓ Valid ZIP  (\(entryCount) entries)")
-        } catch {
-            printStatus("  ✗ Invalid ZIP: \(error.localizedDescription)")
-            return .failed
+        if url.pathExtension == "ipsw" {
+            do {
+                let entryCount = try validateZIP(at: url)
+                printStatus("  ✓ Valid ZIP  (\(entryCount) entries)")
+            } catch {
+                printStatus("  ✗ Invalid ZIP: \(error.localizedDescription)")
+                return .failed
+            }
         }
 
         do {
