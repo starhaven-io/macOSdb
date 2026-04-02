@@ -285,7 +285,7 @@ struct ScannerConfigTests {
     @Test("Swift normalization strips prefix for both formats")
     func swiftNormalization() {
         let swift = toolchainComponents.first { $0.name == "Swift" }!
-        #expect(swift.normalize("swiftlang-6.3.0.123.5") == "6.3.0.123.5")
+        #expect(swift.normalize("swiftlang-6.3.0.123.5") == "6.3")
         #expect(swift.normalize("Swift version 5.5.2") == "5.5.2")
     }
 

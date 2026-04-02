@@ -267,10 +267,19 @@ public let toolchainComponents: [ComponentDefinition] = [
         pattern: #"swiftlang-[0-9]{1,2}\.[0-9]+[0-9.]*|Swift version [0-9]+\.[0-9]+(?:\.[0-9]+)?"#,
 
         normalize: { raw in
+            let version: String
             if raw.hasPrefix("swiftlang-") {
-                return String(raw.dropFirst("swiftlang-".count))
+                version = String(raw.dropFirst("swiftlang-".count))
+            } else {
+                version = String(raw.dropFirst("Swift version ".count))
             }
-            return String(raw.dropFirst("Swift version ".count))
+            // Truncate to MAJOR.MINOR.PATCH — drop Apple build suffix (e.g. 5.9.0.128.108 → 5.9)
+            let parts = version.split(separator: ".")
+            guard parts.count > 3 else { return version }
+            let patch = Int(parts[2]) ?? 0
+            return patch > 0
+                ? "\(parts[0]).\(parts[1]).\(parts[2])"
+                : "\(parts[0]).\(parts[1])"
         },
         strategy: .regex
     ),
