@@ -6,21 +6,21 @@ import ZIPFoundation
 struct ValidateCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "validate",
-        abstract: "Validate IPSW files and verify or create SHA-256 sidecar hashes."
+        abstract: "Validate archive files and verify or create SHA-256 sidecar hashes."
     )
 
-    @Argument(help: "IPSW file(s) to validate.")
-    var ipswPaths: [String] = []
+    @Argument(help: "Archive file(s) to validate (.ipsw or .xip).")
+    var archivePaths: [String] = []
 
-    @Option(name: .shortAndLong, help: "Directory to search recursively for .ipsw files.")
+    @Option(name: .shortAndLong, help: "Directory to search recursively for .ipsw and .xip files.")
     var dir: String?
 
     @Flag(name: .long, help: "Rewrite sidecar even if one already exists.")
     var rehash = false
 
     func validate() throws {
-        if ipswPaths.isEmpty && dir == nil {
-            throw ValidationError("Provide at least one IPSW path or --dir.")
+        if archivePaths.isEmpty && dir == nil {
+            throw ValidationError("Provide at least one archive path or --dir.")
         }
     }
 
@@ -32,7 +32,7 @@ struct ValidateCommand: AsyncParsableCommand {
             throw ExitCode.failure
         }
 
-        printStatus("Validating \(targets.count) IPSW(s)...\n")
+        printStatus("Validating \(targets.count) archive(s)...\n")
 
         var hashed = 0
         var skipped = 0
@@ -126,8 +126,10 @@ struct ValidateCommand: AsyncParsableCommand {
         return digest.compactMap { String(format: "%02x", $0) }.joined()
     }
 
+    private static let supportedExtensions: Set<String> = ["ipsw", "xip"]
+
     private func collectTargets() -> [URL] {
-        var urls: [URL] = ipswPaths.map { URL(fileURLWithPath: $0) }
+        var urls: [URL] = archivePaths.map { URL(fileURLWithPath: $0) }
 
         if let dirPath = dir {
             let dirURL = URL(fileURLWithPath: dirPath)
@@ -137,7 +139,7 @@ struct ValidateCommand: AsyncParsableCommand {
                 options: [.skipsHiddenFiles]
             )
             while let fileURL = enumerator?.nextObject() as? URL {
-                if fileURL.pathExtension == "ipsw" {
+                if Self.supportedExtensions.contains(fileURL.pathExtension) {
                     urls.append(fileURL)
                 }
             }
