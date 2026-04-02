@@ -10,9 +10,10 @@ interface Component {
 
 interface Props {
   components: Component[];
+  basePath?: string;
 }
 
-const { components } = Astro.props;
+const { components, basePath = '' } = Astro.props;
 const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
 ---
 
@@ -32,7 +33,7 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
         sorted.map((comp) => (
           <tr>
             <td class="comp-name">
-              <a href={`/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
+              <a href={`${basePath}/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
             </td>
             <td>
               <code>{comp.version}</code>

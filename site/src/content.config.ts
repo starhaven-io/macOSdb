@@ -4,7 +4,7 @@ import { z } from 'astro/zod';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const releaseIndexEntrySchema = z.object({
+const releaseIndexBaseSchema = z.object({
   id: z.string(),
   buildNumber: z.string(),
   osVersion: z.string(),
@@ -12,10 +12,13 @@ const releaseIndexEntrySchema = z.object({
   releaseDate: z.string(),
   isBeta: z.boolean(),
   isRC: z.boolean(),
-  isDeviceSpecific: z.boolean(),
   betaNumber: z.number().optional(),
   rcNumber: z.number().optional(),
   dataFile: z.string(),
+});
+
+const macosReleaseIndexEntrySchema = releaseIndexBaseSchema.extend({
+  isDeviceSpecific: z.boolean(),
 });
 
 const componentSchema = z.object({
@@ -40,7 +43,7 @@ const kernelSchema = z.object({
   deviceChips: z.array(deviceChipSchema).optional(),
 });
 
-const releaseDetailSchema = z.object({
+const releaseDetailBaseSchema = z.object({
   id: z.string(),
   buildNumber: z.string(),
   osVersion: z.string(),
@@ -48,13 +51,27 @@ const releaseDetailSchema = z.object({
   releaseDate: z.string().optional(),
   isBeta: z.boolean(),
   isRC: z.boolean(),
-  isDeviceSpecific: z.boolean().optional(),
   betaNumber: z.number().optional(),
   rcNumber: z.number().optional(),
+  components: z.array(componentSchema),
+});
+
+const macosReleaseDetailSchema = releaseDetailBaseSchema.extend({
+  isDeviceSpecific: z.boolean().optional(),
   ipswFile: z.string().optional(),
   ipswURL: z.string().optional(),
-  components: z.array(componentSchema),
   kernels: z.array(kernelSchema),
+});
+
+const sdkSchema = z.object({
+  sdkVersion: z.string(),
+});
+
+const xcodeReleaseDetailSchema = releaseDetailBaseSchema.extend({
+  minimumOSVersion: z.string().optional(),
+  xipFile: z.string().optional(),
+  xipURL: z.string().optional(),
+  sdks: z.array(sdkSchema).optional(),
 });
 
 const macosReleases = defineCollection({
@@ -65,7 +82,7 @@ const macosReleases = defineCollection({
         id: `${r.osVersion}-${r.buildNumber}`,
       })),
   }),
-  schema: releaseIndexEntrySchema,
+  schema: macosReleaseIndexEntrySchema,
 });
 
 const macosReleaseDetails = defineCollection({
@@ -80,7 +97,33 @@ const macosReleaseDetails = defineCollection({
       };
     });
   },
-  schema: releaseDetailSchema,
+  schema: macosReleaseDetailSchema,
 });
 
-export const collections = { macosReleases, macosReleaseDetails };
+const xcodeReleases = defineCollection({
+  loader: file('../data/xcode/releases.json', {
+    parser: (text) =>
+      JSON.parse(text).map((r: Record<string, unknown>) => ({
+        ...r,
+        id: `${r.osVersion}-${r.buildNumber}`,
+      })),
+  }),
+  schema: releaseIndexBaseSchema,
+});
+
+const xcodeReleaseDetails = defineCollection({
+  loader: async () => {
+    const dataDir = path.resolve('..', 'data');
+    const index = JSON.parse(fs.readFileSync(path.join(dataDir, 'xcode', 'releases.json'), 'utf-8'));
+    return index.map((entry: Record<string, unknown>) => {
+      const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'xcode', entry.dataFile as string), 'utf-8'));
+      return {
+        id: `${entry.osVersion}-${entry.buildNumber}`,
+        ...data,
+      };
+    });
+  },
+  schema: xcodeReleaseDetailSchema,
+});
+
+export const collections = { macosReleases, macosReleaseDetails, xcodeReleases, xcodeReleaseDetails };

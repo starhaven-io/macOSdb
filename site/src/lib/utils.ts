@@ -16,10 +16,15 @@ export function formatDate(dateStr: string, style: 'short' | 'long' = 'short'): 
   });
 }
 
-export function displayName(release: ReleaseEntry, includeReleaseName = false): string {
-  let name = `macOS ${release.osVersion}`;
-  if (includeReleaseName && release.releaseName) {
-    name += ` ${release.releaseName}`;
+export function displayName(release: ReleaseEntry, includeReleaseName = false, productPrefix = 'macOS'): string {
+  let name: string;
+  if (productPrefix === 'Xcode') {
+    name = `Xcode ${release.osVersion}`;
+  } else {
+    name = `macOS ${release.osVersion}`;
+    if (includeReleaseName && release.releaseName) {
+      name += ` ${release.releaseName}`;
+    }
   }
   if (release.isBeta && release.betaNumber) {
     name += ` beta ${release.betaNumber}`;

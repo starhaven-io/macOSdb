@@ -11,7 +11,7 @@ interface Props {
 
 const {
   title,
-  description = 'A catalog of open-source components in every macOS release since macOS 11 Big Sur.',
+  description = 'A catalog of open-source components across macOS and Xcode releases for Apple silicon.',
   ogImage,
 } = Astro.props;
 
@@ -59,6 +59,8 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
       <nav>
         <a href="/" class="site-title" transition:name="site-title">macOSdb</a>
         <div class="nav-links">
+          <a href="/macos/">macOS</a>
+          <a href="/xcode/">Xcode</a>
           <a href="/components/">Components</a>
           <a href="/compare/">Compare</a>
           <div class="search-wrapper">
@@ -80,7 +82,7 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
     <footer>
       <p>
         Data licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>. Code licensed under <a
-          href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a
+          href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0-only</a
         >.
       </p>
     </footer>

@@ -9,6 +9,19 @@ export default defineConfig({
   integrations: [
     sitemap({
       filter: (page) => !page.includes('/api/'),
+      namespaces: {
+        news: false,
+        video: false,
+        image: false,
+      },
+      chunks: {
+        macos: (item) => {
+          if (/\/macos\//.test(item.url)) return item;
+        },
+        xcode: (item) => {
+          if (/\/xcode\//.test(item.url)) return item;
+        },
+      },
     }),
     pagefind(),
   ],
