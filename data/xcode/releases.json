@@ -50,6 +50,79 @@
     "releaseName" : "Xcode 14.2"
   },
   {
+    "buildNumber" : "13F100",
+    "dataFile" : "releases/13/Xcode-13.4.1-13F100.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.4.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-06-02",
+    "releaseName" : "Xcode 13.4.1"
+  },
+  {
+    "buildNumber" : "13F17a",
+    "dataFile" : "releases/13/Xcode-13.4-13F17a.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-05-16",
+    "releaseName" : "Xcode 13.4"
+  },
+  {
+    "buildNumber" : "13E500a",
+    "dataFile" : "releases/13/Xcode-13.3.1-13E500a.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.3.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-04-11",
+    "releaseName" : "Xcode 13.3.1"
+  },
+  {
+    "buildNumber" : "13E113",
+    "dataFile" : "releases/13/Xcode-13.3-13E113.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-03-14",
+    "releaseName" : "Xcode 13.3"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "13E5104i",
+    "dataFile" : "releases/13/Xcode-13.3-13E5104i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-02-22",
+    "releaseName" : "Xcode 13.3"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "13E5095k",
+    "dataFile" : "releases/13/Xcode-13.3-13E5095k.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-02-08",
+    "releaseName" : "Xcode 13.3"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "13E5086k",
+    "dataFile" : "releases/13/Xcode-13.3-13E5086k.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2022-01-27",
+    "releaseName" : "Xcode 13.3"
+  },
+  {
     "buildNumber" : "13C100",
     "dataFile" : "releases/13/Xcode-13.2.1-13C100.json",
     "isBeta" : false,
@@ -58,6 +131,113 @@
     "productType" : "Xcode",
     "releaseDate" : "2021-12-17",
     "releaseName" : "Xcode 13.2.1"
+  },
+  {
+    "buildNumber" : "13C90",
+    "dataFile" : "releases/13/Xcode-13.2-13C90.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-12-13",
+    "releaseName" : "Xcode 13.2"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "13C5081f",
+    "dataFile" : "releases/13/Xcode-13.2-13C5081f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-11-16",
+    "releaseName" : "Xcode 13.2"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "13C5066c",
+    "dataFile" : "releases/13/Xcode-13.2-13C5066c.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-10-27",
+    "releaseName" : "Xcode 13.2"
+  },
+  {
+    "buildNumber" : "13A1030d",
+    "dataFile" : "releases/13/Xcode-13.1-13A1030d.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-10-25",
+    "releaseName" : "Xcode 13.1"
+  },
+  {
+    "buildNumber" : "13A233",
+    "dataFile" : "releases/13/Xcode-13.0-13A233.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-09-20",
+    "releaseName" : "Xcode 13.0"
+  },
+  {
+    "betaNumber" : 5,
+    "buildNumber" : "13A5212g",
+    "dataFile" : "releases/13/Xcode-13.0-13A5212g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-08-10",
+    "releaseName" : "Xcode 13.0"
+  },
+  {
+    "betaNumber" : 4,
+    "buildNumber" : "13A5201i",
+    "dataFile" : "releases/13/Xcode-13.0-13A5201i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-07-27",
+    "releaseName" : "Xcode 13.0"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "13A5192j",
+    "dataFile" : "releases/13/Xcode-13.0-13A5192j.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-07-16",
+    "releaseName" : "Xcode 13.0"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "13A5155e",
+    "dataFile" : "releases/13/Xcode-13.0-13A5155e.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-06-24",
+    "releaseName" : "Xcode 13.0"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "13A5154h",
+    "dataFile" : "releases/13/Xcode-13.0-13A5154h.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "13.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-06-07",
+    "releaseName" : "Xcode 13.0"
   },
   {
     "buildNumber" : "12E507",
