@@ -58,5 +58,248 @@
     "productType" : "Xcode",
     "releaseDate" : "2021-12-17",
     "releaseName" : "Xcode 13.2.1"
+  },
+  {
+    "buildNumber" : "12E507",
+    "dataFile" : "releases/12/Xcode-12.5.1-12E507.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.5.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-06-21",
+    "releaseName" : "Xcode 12.5.1"
+  },
+  {
+    "buildNumber" : "12E262",
+    "dataFile" : "releases/12/Xcode-12.5-12E262.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-04-26",
+    "releaseName" : "Xcode 12.5"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "12E5244e",
+    "dataFile" : "releases/12/Xcode-12.5-12E5244e.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-03-02",
+    "releaseName" : "Xcode 12.5"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "12E5234g",
+    "dataFile" : "releases/12/Xcode-12.5-12E5234g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-02-16",
+    "releaseName" : "Xcode 12.5"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "12E5220o",
+    "dataFile" : "releases/12/Xcode-12.5-12E5220o.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.5",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-02-01",
+    "releaseName" : "Xcode 12.5"
+  },
+  {
+    "buildNumber" : "12D4e",
+    "dataFile" : "releases/12/Xcode-12.4-12D4e.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2021-01-26",
+    "releaseName" : "Xcode 12.4"
+  },
+  {
+    "buildNumber" : "12C33",
+    "dataFile" : "releases/12/Xcode-12.3-12C33.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-12-14",
+    "releaseName" : "Xcode 12.3"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "12C5020f",
+    "dataFile" : "releases/12/Xcode-12.3-12C5020f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-11-12",
+    "releaseName" : "Xcode 12.3"
+  },
+  {
+    "buildNumber" : "12B45b",
+    "dataFile" : "releases/12/Xcode-12.2-12B45b.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-11-12",
+    "releaseName" : "Xcode 12.2"
+  },
+  {
+    "buildNumber" : "12B5044c",
+    "dataFile" : "releases/12/Xcode-12.2-12B5044c.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "12.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-11-05",
+    "releaseName" : "Xcode 12.2"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "12B5035g",
+    "dataFile" : "releases/12/Xcode-12.2-12B5035g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-10-13",
+    "releaseName" : "Xcode 12.2"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "12B5025f",
+    "dataFile" : "releases/12/Xcode-12.2-12B5025f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-09-29",
+    "releaseName" : "Xcode 12.2"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "12B5018i",
+    "dataFile" : "releases/12/Xcode-12.2-12B5018i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-09-17",
+    "releaseName" : "Xcode 12.2"
+  },
+  {
+    "buildNumber" : "12A7605b",
+    "dataFile" : "releases/12/Xcode-12.1.1-12A7605b.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "12.1.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-10-30",
+    "releaseName" : "Xcode 12.1.1"
+  },
+  {
+    "buildNumber" : "12A7403",
+    "dataFile" : "releases/12/Xcode-12.1-12A7403.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-10-20",
+    "releaseName" : "Xcode 12.1"
+  },
+  {
+    "buildNumber" : "12A7300",
+    "dataFile" : "releases/12/Xcode-12.0.1-12A7300.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.0.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-09-24",
+    "releaseName" : "Xcode 12.0.1"
+  },
+  {
+    "buildNumber" : "12A7209",
+    "dataFile" : "releases/12/Xcode-12.0-12A7209.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-09-17",
+    "releaseName" : "Xcode 12.0"
+  },
+  {
+    "betaNumber" : 6,
+    "buildNumber" : "12A8189n",
+    "dataFile" : "releases/12/Xcode-12.0-12A8189n.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-08-25",
+    "releaseName" : "Xcode 12.0"
+  },
+  {
+    "betaNumber" : 5,
+    "buildNumber" : "12A8189h",
+    "dataFile" : "releases/12/Xcode-12.0-12A8189h.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-08-18",
+    "releaseName" : "Xcode 12.0"
+  },
+  {
+    "betaNumber" : 4,
+    "buildNumber" : "12A8179i",
+    "dataFile" : "releases/12/Xcode-12.0-12A8179i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-08-04",
+    "releaseName" : "Xcode 12.0"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "12A8169g",
+    "dataFile" : "releases/12/Xcode-12.0-12A8169g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-07-22",
+    "releaseName" : "Xcode 12.0"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "12A8161k",
+    "dataFile" : "releases/12/Xcode-12.0-12A8161k.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-07-07",
+    "releaseName" : "Xcode 12.0"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "12A8158a",
+    "dataFile" : "releases/12/Xcode-12.0-12A8158a.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "12.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2020-06-22",
+    "releaseName" : "Xcode 12.0"
   }
 ]
