@@ -20,6 +20,80 @@
     "releaseName" : "Xcode 26.3"
   },
   {
+    "buildNumber" : "16F6",
+    "dataFile" : "releases/16/Xcode-16.4-16F6.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "16.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-05-27",
+    "releaseName" : "Xcode 16.4"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "16F1t",
+    "dataFile" : "releases/16/Xcode-16.4-16F1t.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.4",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-04-28",
+    "releaseName" : "Xcode 16.4"
+  },
+  {
+    "buildNumber" : "16E140",
+    "dataFile" : "releases/16/Xcode-16.3-16E140.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "16.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-03-31",
+    "releaseName" : "Xcode 16.3"
+  },
+  {
+    "buildNumber" : "16E137",
+    "dataFile" : "releases/16/Xcode-16.3-16E137.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "16.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-03-24",
+    "releaseName" : "Xcode 16.3"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "16E5129f",
+    "dataFile" : "releases/16/Xcode-16.3-16E5129f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-03-17",
+    "releaseName" : "Xcode 16.3"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "16E5121h",
+    "dataFile" : "releases/16/Xcode-16.3-16E5121h.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-03-05",
+    "releaseName" : "Xcode 16.3"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "16E5104o",
+    "dataFile" : "releases/16/Xcode-16.3-16E5104o.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.3",
+    "productType" : "Xcode",
+    "releaseDate" : "2025-02-21",
+    "releaseName" : "Xcode 16.3"
+  },
+  {
     "buildNumber" : "16C5032a",
     "dataFile" : "releases/16/Xcode-16.2-16C5032a.json",
     "isBeta" : false,
@@ -28,6 +102,158 @@
     "productType" : "Xcode",
     "releaseDate" : "2024-12-11",
     "releaseName" : "Xcode 16.2"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "16C5023f",
+    "dataFile" : "releases/16/Xcode-16.2-16C5023f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-11-20",
+    "releaseName" : "Xcode 16.2"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "16C5013f",
+    "dataFile" : "releases/16/Xcode-16.2-16C5013f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-11-04",
+    "releaseName" : "Xcode 16.2"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "16B5100e",
+    "dataFile" : "releases/16/Xcode-16.2-16B5100e.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-10-23",
+    "releaseName" : "Xcode 16.2"
+  },
+  {
+    "buildNumber" : "16B40",
+    "dataFile" : "releases/16/Xcode-16.1-16B40.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "16.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-10-28",
+    "releaseName" : "Xcode 16.1"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "16B5029d",
+    "dataFile" : "releases/16/Xcode-16.1-16B5029d.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-10-07",
+    "releaseName" : "Xcode 16.1"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "16B5014f",
+    "dataFile" : "releases/16/Xcode-16.1-16B5014f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-09-17",
+    "releaseName" : "Xcode 16.1"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "16B5001e",
+    "dataFile" : "releases/16/Xcode-16.1-16B5001e.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-08-12",
+    "releaseName" : "Xcode 16.1"
+  },
+  {
+    "buildNumber" : "16A242d",
+    "dataFile" : "releases/16/Xcode-16.0-16A242d.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-09-16",
+    "releaseName" : "Xcode 16.0"
+  },
+  {
+    "betaNumber" : 6,
+    "buildNumber" : "16A5230g",
+    "dataFile" : "releases/16/Xcode-16.0-16A5230g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-08-20",
+    "releaseName" : "Xcode 16.0"
+  },
+  {
+    "betaNumber" : 5,
+    "buildNumber" : "16A5221g",
+    "dataFile" : "releases/16/Xcode-16.0-16A5221g.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-08-06",
+    "releaseName" : "Xcode 16.0"
+  },
+  {
+    "betaNumber" : 4,
+    "buildNumber" : "16A5211f",
+    "dataFile" : "releases/16/Xcode-16.0-16A5211f.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-07-23",
+    "releaseName" : "Xcode 16.0"
+  },
+  {
+    "betaNumber" : 3,
+    "buildNumber" : "16A5202i",
+    "dataFile" : "releases/16/Xcode-16.0-16A5202i.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-07-08",
+    "releaseName" : "Xcode 16.0"
+  },
+  {
+    "betaNumber" : 2,
+    "buildNumber" : "16A5171r",
+    "dataFile" : "releases/16/Xcode-16.0-16A5171r.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-06-25",
+    "releaseName" : "Xcode 16.0"
+  },
+  {
+    "betaNumber" : 1,
+    "buildNumber" : "16A5171c",
+    "dataFile" : "releases/16/Xcode-16.0-16A5171c.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "16.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2024-06-10",
+    "releaseName" : "Xcode 16.0"
   },
   {
     "buildNumber" : "15F31d",
