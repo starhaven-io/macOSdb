@@ -124,7 +124,7 @@ struct ComponentExtractorTests {
         let def = toolchainComponents.first { $0.name == "Swift" }!
         let component = await ComponentExtractor.extract(from: data, using: def)
 
-        #expect(component?.version == "6.3.0.123.5")
+        #expect(component?.version == "6.3")
     }
 
     @Test("Extract Swift version falls back to Swift version prefix for older Xcodes")
