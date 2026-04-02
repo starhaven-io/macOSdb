@@ -1,9 +1,9 @@
 ---
-import Base from '../../layouts/Base.astro';
-import Badge from '../../components/Badge.astro';
-import StructuredData from '../../components/StructuredData.astro';
+import Base from '../../../layouts/Base.astro';
+import Badge from '../../../components/Badge.astro';
+import StructuredData from '../../../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
-import { formatDate, displayName, releaseSlug, componentSlug, compareVersions } from '../../lib/utils';
+import { formatDate, displayName, releaseSlug, componentSlug, compareVersions } from '../../../lib/utils';
 
 interface VersionEntry {
   firstRelease: string;
@@ -109,7 +109,7 @@ const structuredData = {
   '@type': 'Dataset',
   name: `${componentName} on macOS`,
   description: `Version history of ${componentName} across macOS releases.`,
-  url: `https://macosdb.com/component/${slug}/`,
+  url: `https://macosdb.com/macos/component/${slug}/`,
 };
 ---
 
@@ -120,7 +120,8 @@ const structuredData = {
   <StructuredData slot="head" data={structuredData} />
 
   <nav class="breadcrumb" data-pagefind-ignore>
-    <a href="/">macOSdb</a> &rsaquo; <a href="/components/">Components</a> &rsaquo; {componentName}
+    <a href="/">macOSdb</a> &rsaquo; <a href="/macos/">macOS</a> &rsaquo;
+    <a href="/macos/components/">Components</a> &rsaquo; {componentName}
   </nav>
 
   <header class="comp-header">
@@ -156,7 +157,7 @@ const structuredData = {
                   <code>{entry.version}</code>
                 </td>
                 <td>
-                  <a href={`/release/${entry.firstReleaseSlug}/`}>{entry.firstRelease}</a>
+                  <a href={`/macos/release/${entry.firstReleaseSlug}/`}>{entry.firstRelease}</a>
                   {entry.firstReleaseBeta && <Badge variant="beta" />}
                   {entry.firstReleaseRC && <Badge variant="rc" />}
                 </td>

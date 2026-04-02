@@ -1,12 +1,12 @@
 ---
-import Base from '../../layouts/Base.astro';
-import Badge from '../../components/Badge.astro';
-import ComponentTable from '../../components/ComponentTable.astro';
-import KernelInfo from '../../components/KernelInfo.astro';
-import ChipGrid from '../../components/ChipGrid.astro';
-import StructuredData from '../../components/StructuredData.astro';
+import Base from '../../../layouts/Base.astro';
+import Badge from '../../../components/Badge.astro';
+import ComponentTable from '../../../components/ComponentTable.astro';
+import KernelInfo from '../../../components/KernelInfo.astro';
+import ChipGrid from '../../../components/ChipGrid.astro';
+import StructuredData from '../../../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
-import { formatDate, displayName, releaseSlug } from '../../lib/utils';
+import { formatDate, displayName, releaseSlug } from '../../../lib/utils';
 
 export async function getStaticPaths() {
   const allReleases = await getCollection('macosReleaseDetails');
@@ -75,8 +75,14 @@ const structuredData = [
       {
         '@type': 'ListItem',
         position: 2,
+        name: 'macOS',
+        item: 'https://macosdb.com/macos/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
         name: title,
-        item: `https://macosdb.com/release/${currentSlug}/`,
+        item: `https://macosdb.com/macos/release/${currentSlug}/`,
       },
     ],
   },
@@ -86,12 +92,12 @@ const structuredData = [
 <Base
   title={`${title} — macOSdb`}
   description={`Components and hardware support for ${title}`}
-  ogImage={`/og/${currentSlug}.png`}
+  ogImage={`/macos/og/${currentSlug}.png`}
 >
   <StructuredData slot="head" data={structuredData} />
 
   <nav class="breadcrumb" data-pagefind-ignore>
-    <a href="/">macOSdb</a> &rsaquo; {title}
+    <a href="/">macOSdb</a> &rsaquo; <a href="/macos/">macOS</a> &rsaquo; {title}
   </nav>
 
   <header class="release-header">
@@ -111,7 +117,7 @@ const structuredData = [
       }
       {
         previousSlug && (
-          <a href={`/compare/?from=${previousSlug}&to=${currentSlug}`} class="compare-link">
+          <a href={`/macos/compare/?from=${previousSlug}&to=${currentSlug}`} class="compare-link">
             Compare with previous
           </a>
         )
@@ -120,7 +126,7 @@ const structuredData = [
   </header>
 
   <KernelInfo darwinVersion={darwinVersion} xnuVersion={xnuVersion} />
-  <ComponentTable components={release.components} />
+  <ComponentTable components={release.components} basePath="/macos" />
   <ChipGrid kernels={release.kernels} />
 </Base>
 

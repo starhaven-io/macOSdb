@@ -1,0 +1,194 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Badge from '../../../components/Badge.astro';
+import ComponentTable from '../../../components/ComponentTable.astro';
+import StructuredData from '../../../components/StructuredData.astro';
+import { getCollection } from 'astro:content';
+import { formatDate, displayName, releaseSlug } from '../../../lib/utils';
+
+export async function getStaticPaths() {
+  const allReleases = await getCollection('xcodeReleaseDetails');
+  const releases = allReleases.sort(
+    (a, b) => new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime(),
+  );
+
+  return releases.map((entry, i) => {
+    const prev = i < releases.length - 1 ? releases[i + 1] : null;
+    const previousSlug = prev ? releaseSlug(prev.data) : null;
+    return {
+      params: { slug: `${entry.data.osVersion}-${entry.data.buildNumber}` },
+      props: { release: entry.data, previousSlug },
+    };
+  });
+}
+
+interface Props {
+  release: {
+    buildNumber: string;
+    osVersion: string;
+    releaseName: string;
+    releaseDate?: string;
+    isBeta: boolean;
+    isRC: boolean;
+    betaNumber?: number;
+    rcNumber?: number;
+    minimumOSVersion?: string;
+    xipURL?: string;
+    sdks?: { sdkVersion: string }[];
+    components: { name: string; version?: string | null; path: string; source: string }[];
+  };
+  previousSlug: string | null;
+}
+
+const { release, previousSlug } = Astro.props;
+const currentSlug = releaseSlug(release);
+const title = displayName(release, false, 'Xcode');
+
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: title,
+    applicationCategory: 'DeveloperApplication',
+    softwareVersion: release.osVersion,
+    ...(release.releaseDate && { datePublished: release.releaseDate }),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'macOSdb',
+        item: 'https://macosdb.com/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Xcode',
+        item: 'https://macosdb.com/xcode/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: title,
+        item: `https://macosdb.com/xcode/release/${currentSlug}/`,
+      },
+    ],
+  },
+];
+---
+
+<Base title={`${title} — macOSdb`} description={`Components for ${title}`} ogImage={`/xcode/og/${currentSlug}.png`}>
+  <StructuredData slot="head" data={structuredData} />
+
+  <nav class="breadcrumb" data-pagefind-ignore>
+    <a href="/">macOSdb</a> &rsaquo; <a href="/xcode/">Xcode</a> &rsaquo; {title}
+  </nav>
+
+  <header class="release-header">
+    <h1 data-pagefind-weight="2">{title}</h1>
+    <div class="meta" data-pagefind-ignore>
+      <span>Build <code>{release.buildNumber}</code></span>
+      {release.releaseDate && <span>{formatDate(release.releaseDate, 'long')}</span>}
+      {release.isBeta && <Badge variant="beta" />}
+      {release.isRC && <Badge variant="rc" />}
+      {release.minimumOSVersion && <span>Requires macOS {release.minimumOSVersion}+</span>}
+      {
+        release.xipURL && (
+          <a href={release.xipURL} class="download-link">
+            Download XIP
+          </a>
+        )
+      }
+      {
+        previousSlug && (
+          <a href={`/xcode/compare/?from=${previousSlug}&to=${currentSlug}`} class="compare-link">
+            Compare with previous
+          </a>
+        )
+      }
+    </div>
+  </header>
+
+  {
+    release.sdks && release.sdks.length > 0 && (
+      <section class="sdks">
+        <h2>Bundled SDKs</h2>
+        <div class="sdk-list">
+          {release.sdks.map((sdk) => (
+            <span class="sdk-badge">macOS {sdk.sdkVersion}</span>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <ComponentTable components={release.components} basePath="/xcode" />
+</Base>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .release-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .release-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    color: var(--color-text-secondary);
+  }
+
+  .download-link,
+  .compare-link {
+    font-size: 0.85rem;
+    color: var(--color-link);
+  }
+
+  .sdks {
+    margin-bottom: 2rem;
+  }
+
+  .sdks h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .sdk-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .sdk-badge {
+    font-size: 0.85rem;
+    padding: 0.25em 0.75em;
+    border-radius: 6px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  @media (max-width: 640px) {
+    .release-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .meta {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+  }
+</style>

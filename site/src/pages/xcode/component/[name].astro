@@ -1,0 +1,263 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Badge from '../../../components/Badge.astro';
+import StructuredData from '../../../components/StructuredData.astro';
+import { getCollection } from 'astro:content';
+import { formatDate, displayName, releaseSlug, componentSlug, compareVersions } from '../../../lib/utils';
+
+interface VersionEntry {
+  firstRelease: string;
+  firstReleaseSlug: string;
+  firstReleaseDate: string;
+  firstReleaseBeta: boolean;
+  firstReleaseRC: boolean;
+  oldestDate: number;
+}
+
+interface VersionChange {
+  version: string;
+  firstRelease: string;
+  firstReleaseSlug: string;
+  firstReleaseDate: string;
+  firstReleaseBeta: boolean;
+  firstReleaseRC: boolean;
+  direction: 'upgraded' | 'downgraded' | 'added' | '';
+}
+
+export async function getStaticPaths() {
+  const allReleases = await getCollection('xcodeReleaseDetails');
+
+  const componentMeta: Map<string, { name: string; source: string; path: string }> = new Map();
+  const componentVersions: Map<string, Map<string, VersionEntry>> = new Map();
+
+  for (const release of allReleases) {
+    const releaseDate = new Date(release.data.releaseDate ?? '').getTime();
+    for (const comp of release.data.components) {
+      const slug = componentSlug(comp.name);
+      const version = comp.version ?? '';
+
+      if (!componentMeta.has(slug)) {
+        componentMeta.set(slug, { name: comp.name, source: comp.source, path: comp.path });
+      }
+      if (!componentVersions.has(slug)) {
+        componentVersions.set(slug, new Map());
+      }
+
+      const vmap = componentVersions.get(slug)!;
+      const existing = vmap.get(version);
+      if (!existing || releaseDate < existing.oldestDate) {
+        vmap.set(version, {
+          firstRelease: displayName(release.data, false, 'Xcode'),
+          firstReleaseSlug: releaseSlug(release.data),
+          firstReleaseDate: release.data.releaseDate ?? '',
+          firstReleaseBeta: release.data.isBeta,
+          firstReleaseRC: release.data.isRC,
+          oldestDate: releaseDate,
+        });
+      }
+    }
+  }
+
+  const componentMap: Map<string, { name: string; source: string; path: string; changes: VersionChange[] }> = new Map();
+
+  for (const [slug, vmap] of componentVersions) {
+    const meta = componentMeta.get(slug)!;
+    const sorted = [...vmap.entries()].sort(([a], [b]) => {
+      const dir = compareVersions(a, b);
+      return dir === 'upgraded' ? 1 : dir === 'downgraded' ? -1 : 0;
+    });
+
+    const changes: VersionChange[] = sorted.map(([version, entry], i) => ({
+      version,
+      firstRelease: entry.firstRelease,
+      firstReleaseSlug: entry.firstReleaseSlug,
+      firstReleaseDate: entry.firstReleaseDate,
+      firstReleaseBeta: entry.firstReleaseBeta,
+      firstReleaseRC: entry.firstReleaseRC,
+      direction: i === sorted.length - 1 ? 'added' : compareVersions(sorted[i + 1][0], version),
+    }));
+
+    componentMap.set(slug, { name: meta.name, source: meta.source, path: meta.path, changes });
+  }
+
+  return [...componentMap.entries()].map(([slug, data]) => ({
+    params: { name: slug },
+    props: {
+      componentName: data.name,
+      source: data.source,
+      path: data.path,
+      changes: data.changes,
+    },
+  }));
+}
+
+interface Props {
+  componentName: string;
+  source: string;
+  path: string;
+  changes: VersionChange[];
+}
+
+const { componentName = '', source = '', path: compPath = '', changes = [] } = Astro.props;
+const latest = changes[0] ?? { version: '', direction: '' };
+const slug = componentSlug(componentName);
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: `${componentName} in Xcode`,
+  description: `Version history of ${componentName} across Xcode releases.`,
+  url: `https://macosdb.com/xcode/component/${slug}/`,
+};
+---
+
+<Base
+  title={`${componentName} (Xcode) — macOSdb`}
+  description={`Version history of ${componentName} across every Xcode release.`}
+>
+  <StructuredData slot="head" data={structuredData} />
+
+  <nav class="breadcrumb" data-pagefind-ignore>
+    <a href="/">macOSdb</a> &rsaquo; <a href="/xcode/">Xcode</a> &rsaquo;
+    <a href="/xcode/components/">Components</a> &rsaquo; {componentName}
+  </nav>
+
+  <header class="comp-header">
+    <h1 data-pagefind-weight="2">{componentName}</h1>
+    <div class="meta" data-pagefind-ignore>
+      <span>Latest: <code>{latest.version}</code></span>
+      <span class:list={['source', `source-${source}`]}>
+        {source === 'dyldCache' ? 'dyld cache' : source}
+      </span>
+      <code class="path">{compPath}</code>
+    </div>
+  </header>
+
+  <section class="history">
+    <h2>Version History</h2>
+    <p class="subtitle">{changes.length} version changes across all Xcode releases.</p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Introduced in</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            changes.map((entry) => (
+              <tr>
+                <td>
+                  <code>{entry.version}</code>
+                </td>
+                <td>
+                  <a href={`/xcode/release/${entry.firstReleaseSlug}/`}>{entry.firstRelease}</a>
+                  {entry.firstReleaseBeta && <Badge variant="beta" />}
+                  {entry.firstReleaseRC && <Badge variant="rc" />}
+                </td>
+                <td>{formatDate(entry.firstReleaseDate)}</td>
+                <td>
+                  {entry.direction === 'upgraded' && <span class="status-badge status-upgraded">Upgraded</span>}
+                  {entry.direction === 'downgraded' && <span class="status-badge status-downgraded">Downgraded</span>}
+                  {entry.direction === 'added' && <span class="status-badge status-added">First tracked</span>}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .comp-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .comp-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    color: var(--color-text-secondary);
+    flex-wrap: wrap;
+  }
+
+  .source {
+    font-size: 0.8rem;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+  }
+
+  .path {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+  }
+
+  .history h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .status-upgraded {
+    background: color-mix(in srgb, var(--color-upgraded) 12%, transparent);
+    color: var(--color-upgraded);
+  }
+
+  .status-downgraded {
+    background: color-mix(in srgb, var(--color-downgraded) 12%, transparent);
+    color: var(--color-downgraded);
+  }
+
+  .status-added {
+    background: color-mix(in srgb, var(--color-added) 12%, transparent);
+    color: var(--color-added);
+  }
+
+  @media (max-width: 640px) {
+    .comp-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .meta {
+      gap: 0.75rem;
+    }
+  }
+</style>

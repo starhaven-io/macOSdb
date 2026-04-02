@@ -1,106 +1,81 @@
 ---
 import Base from '../layouts/Base.astro';
-import Badge from '../components/Badge.astro';
 import StructuredData from '../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
 import { formatDate, displayName, releaseSlug } from '../lib/utils';
 
-const allReleases = await getCollection('macosReleases');
-
-// Sort newest first (by date descending, matching releases.json order)
-const releases = allReleases.sort(
+const macosReleases = (await getCollection('macosReleases')).sort(
+  (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
+);
+const xcodeReleases = (await getCollection('xcodeReleases')).sort(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
 );
 
-// Group by major version, derive release names from the data
-const grouped: Record<string, typeof releases> = {};
-const releaseNames: Record<string, string> = {};
-for (const entry of releases) {
-  const major = entry.data.osVersion.split('.')[0];
-  if (!grouped[major]) grouped[major] = [];
-  grouped[major].push(entry);
-  if (entry.data.releaseName) releaseNames[major] = entry.data.releaseName;
-}
-
-// Sort major versions descending
-const majorVersions = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+const latestMacos = macosReleases.find((r) => !r.data.isBeta && !r.data.isRC);
+const latestXcode = xcodeReleases.find((r) => !r.data.isBeta && !r.data.isRC);
 
 const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'macOSdb',
   url: 'https://macosdb.com',
-  description: 'A catalog of open-source components in every macOS release since macOS 11 Big Sur.',
+  description: 'A catalog of open-source components across macOS and Xcode releases for Apple silicon.',
 };
 ---
 
-<Base title="macOSdb — macOS Component Database">
+<Base title="macOSdb — Apple Platform Component Database">
   <StructuredData slot="head" data={websiteSchema} />
 
   <div class="hero">
     <h1>macOSdb</h1>
-    <p>A catalog of open-source components in every macOS release since macOS 11 Big Sur.</p>
+    <p>A catalog of open-source components across macOS and Xcode releases for Apple silicon.</p>
   </div>
 
-  <div class="filter-bar">
-    <button class="filter-btn active" data-filter="all">All</button>
-    <button class="filter-btn" data-filter="release">Release</button>
-    <button class="filter-btn" data-filter="beta">Beta</button>
-    <button class="filter-btn" data-filter="rc">RC</button>
-  </div>
+  <div class="product-grid">
+    <div class="product-card">
+      <h2><a href="/macos/">macOS</a></h2>
+      <p class="product-desc">
+        {macosReleases.length} releases tracked since macOS 11 Big Sur.
+      </p>
+      {
+        latestMacos && (
+          <div class="latest">
+            <span class="latest-label">Latest</span>
+            <a href={`/macos/release/${releaseSlug(latestMacos.data)}/`}>{displayName(latestMacos.data, true)}</a>
+            <span class="latest-date">{formatDate(latestMacos.data.releaseDate)}</span>
+          </div>
+        )
+      }
+      <div class="product-links">
+        <a href="/macos/releases/">Releases</a>
+        <a href="/macos/components/">Components</a>
+        <a href="/macos/compare/">Compare</a>
+      </div>
+    </div>
 
-  {
-    majorVersions.map((major) => (
-      <section class="version-group">
-        <h2>
-          macOS {major} {releaseNames[major] || ''}
-        </h2>
-        <div class="table-wrapper">
-          <table class="js-stripe">
-            <colgroup>
-              <col style="width: 30%" />
-              <col style="width: 18%" />
-              <col style="width: 22%" />
-              <col style="width: 30%" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Release</th>
-                <th>Build</th>
-                <th>Date</th>
-                <th>Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {grouped[major].map((entry) => (
-                <tr data-type={entry.data.isBeta ? 'beta' : entry.data.isRC ? 'rc' : 'release'}>
-                  <td>
-                    <a href={`/release/${releaseSlug(entry.data)}/`}>{displayName(entry.data)}</a>
-                  </td>
-                  <td>
-                    <code>{entry.data.buildNumber}</code>
-                  </td>
-                  <td>{formatDate(entry.data.releaseDate)}</td>
-                  <td>
-                    <div class="type-cell">
-                      {entry.data.isBeta ? (
-                        <Badge variant="beta" />
-                      ) : entry.data.isRC ? (
-                        <Badge variant="rc" />
-                      ) : (
-                        <Badge variant="release" />
-                      )}
-                      {entry.data.isDeviceSpecific && <Badge variant="device" />}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    ))
-  }
+    <div class="product-card">
+      <h2><a href="/xcode/">Xcode</a></h2>
+      <p class="product-desc">
+        {xcodeReleases.length} releases tracked since Xcode 12.
+      </p>
+      {
+        latestXcode && (
+          <div class="latest">
+            <span class="latest-label">Latest</span>
+            <a href={`/xcode/release/${releaseSlug(latestXcode.data)}/`}>
+              {displayName(latestXcode.data, false, 'Xcode')}
+            </a>
+            <span class="latest-date">{formatDate(latestXcode.data.releaseDate)}</span>
+          </div>
+        )
+      }
+      <div class="product-links">
+        <a href="/xcode/releases/">Releases</a>
+        <a href="/xcode/components/">Components</a>
+        <a href="/xcode/compare/">Compare</a>
+      </div>
+    </div>
+  </div>
 </Base>
 
 <style>
@@ -119,70 +94,66 @@ const websiteSchema = {
     color: var(--color-text-secondary);
   }
 
-  .version-group {
-    margin-bottom: 3rem;
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
   }
 
-  .version-group h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--color-border);
-  }
-
-  .version-group .table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .version-group table {
-    table-layout: fixed;
-    min-width: 500px;
-  }
-
-  .filter-bar {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .filter-btn {
-    font-family: var(--font-system);
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 0.35em 0.9em;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    user-select: none;
-    transition:
-      background 0.15s,
-      color 0.15s,
-      border-color 0.15s;
-  }
-
-  .filter-btn:hover {
+  .product-card {
     background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  .product-card h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-card h2 a {
     color: var(--color-text);
+    text-decoration: none;
   }
 
-  .filter-btn.active {
-    background: var(--color-link);
-    color: #fff;
-    border-color: var(--color-link);
+  .product-card h2 a:hover {
+    color: var(--color-link);
   }
 
-  .type-cell {
+  .product-desc {
+    color: var(--color-text-secondary);
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+  }
+
+  .latest {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
     align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
   }
 
-  tr.filtered {
-    display: none;
+  .latest-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-text-secondary);
+  }
+
+  .latest-date {
+    color: var(--color-text-secondary);
+  }
+
+  .product-links {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
   }
 
   @media (max-width: 640px) {
@@ -198,60 +169,8 @@ const websiteSchema = {
       font-size: 1rem;
     }
 
-    .version-group {
-      margin-bottom: 2rem;
-    }
-
-    .version-group h2 {
-      font-size: 1.25rem;
-    }
-
-    .version-group table {
-      min-width: 400px;
+    .product-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
-
-<script>
-  function init() {
-    const key = 'macosdb-type-filter';
-    const buttons = document.querySelectorAll('.filter-btn') as NodeListOf<HTMLButtonElement>;
-    const rows = document.querySelectorAll('tr[data-type]') as NodeListOf<HTMLTableRowElement>;
-
-    if (!buttons.length) return;
-
-    function apply(filter: string) {
-      rows.forEach((row) => {
-        row.classList.toggle('filtered', filter !== 'all' && row.dataset.type !== filter);
-      });
-      buttons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
-      });
-      // Restripe visible rows
-      document.querySelectorAll('tbody').forEach((tbody) => {
-        let i = 0;
-        tbody.querySelectorAll('tr').forEach((row) => {
-          if (!row.classList.contains('filtered')) {
-            row.classList.toggle('stripe', i % 2 === 1);
-            i++;
-          } else {
-            row.classList.remove('stripe');
-          }
-        });
-      });
-    }
-
-    const saved = localStorage.getItem(key) || 'all';
-    apply(saved);
-
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const filter = btn.dataset.filter!;
-        localStorage.setItem(key, filter);
-        apply(filter);
-      });
-    });
-  }
-
-  document.addEventListener('astro:page-load', init);
-</script>

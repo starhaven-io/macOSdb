@@ -4,48 +4,78 @@ import StructuredData from '../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
 import { componentSlug } from '../lib/utils';
 
-const allReleases = await getCollection('macosReleaseDetails');
-const releases = allReleases.sort(
+function collectLatest(
+  releases: { data: { components: { name: string; version?: string | null; path: string; source: string }[] } }[],
+) {
+  const components: Map<string, { name: string; version: string; source: string; path: string }> = new Map();
+  for (const release of releases) {
+    for (const comp of release.data.components) {
+      if (!components.has(comp.name)) {
+        components.set(comp.name, {
+          name: comp.name,
+          version: comp.version ?? '',
+          source: comp.source,
+          path: comp.path,
+        });
+      }
+    }
+  }
+  return [...components.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const macosReleases = (await getCollection('macosReleaseDetails')).sort(
+  (a, b) => new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime(),
+);
+const xcodeReleases = (await getCollection('xcodeReleaseDetails')).sort(
   (a, b) => new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime(),
 );
 
-// Collect latest version for each component
-const components: Map<string, { name: string; version: string; source: string; path: string }> = new Map();
-for (const release of releases) {
-  for (const comp of release.data.components) {
-    if (!components.has(comp.name)) {
-      components.set(comp.name, {
-        name: comp.name,
-        version: comp.version ?? '',
-        source: comp.source,
-        path: comp.path,
-      });
-    }
-  }
-}
-
-const sorted = [...components.values()].sort((a, b) => a.name.localeCompare(b.name));
+const macosComponents = collectLatest(macosReleases);
+const xcodeComponents = collectLatest(xcodeReleases);
 
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'Dataset',
-  name: 'macOS Open-Source Components',
-  description: 'Version history of open-source components bundled with macOS.',
+  name: 'Open-Source Components',
+  description: 'Version history of open-source components bundled with macOS and Xcode.',
   url: 'https://macosdb.com/components/',
 };
 ---
 
-<Base title="Components — macOSdb" description="Open-source components tracked across every macOS release.">
+<Base
+  title="Components — macOSdb"
+  description="Open-source components tracked across macOS and Xcode releases for Apple silicon."
+>
   <StructuredData slot="head" data={structuredData} />
 
   <h1>Components</h1>
-  <p class="subtitle">Open-source components tracked across every macOS release.</p>
+  <p class="subtitle">Open-source components tracked across macOS and Xcode releases for Apple silicon.</p>
 
+  <h2 class="section-heading">macOS</h2>
   <div class="component-grid">
     {
-      sorted.map((comp) => (
-        <a href={`/component/${componentSlug(comp.name)}/`} class="component-card">
-          <h2>{comp.name}</h2>
+      macosComponents.map((comp) => (
+        <a href={`/macos/component/${componentSlug(comp.name)}/`} class="component-card">
+          <h3>{comp.name}</h3>
+          <div class="version">
+            <code>{comp.version}</code>
+          </div>
+          <div class="meta">
+            <span class:list={['source', `source-${comp.source}`]}>
+              {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+            </span>
+          </div>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2 class="section-heading">Xcode</h2>
+  <div class="component-grid">
+    {
+      xcodeComponents.map((comp) => (
+        <a href={`/xcode/component/${componentSlug(comp.name)}/`} class="component-card">
+          <h3>{comp.name}</h3>
           <div class="version">
             <code>{comp.version}</code>
           </div>
@@ -70,6 +100,17 @@ const structuredData = {
   .subtitle {
     color: var(--color-text-secondary);
     margin-bottom: 2rem;
+  }
+
+  .section-heading {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .section-heading:not(:first-of-type) {
+    margin-top: 3rem;
   }
 
   .component-grid {
@@ -101,7 +142,7 @@ const structuredData = {
     color: var(--color-text);
   }
 
-  .component-card h2 {
+  .component-card h3 {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
