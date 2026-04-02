@@ -40,6 +40,11 @@ jobs:
         working-directory: site
         run: npm run build
 
+      - name: Fetch appcast
+        run: |
+          git fetch origin appcast --depth=1
+          git show origin/appcast:appcast.xml > site/dist/appcast.xml
+
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
           path: site/dist
