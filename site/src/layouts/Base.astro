@@ -70,6 +70,7 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
           <a href="/xcode/">Xcode</a>
           <a href="/components/">Components</a>
           <a href="/compare/">Compare</a>
+          <a href="/api/">API</a>
           <div class="search-wrapper">
             <Search id="search" className="pagefind-ui" uiOptions={{ showImages: false, resetStyles: false }} />
             <script is:inline>
@@ -117,6 +118,7 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1.5rem;
   }
 
   .nav-links {
