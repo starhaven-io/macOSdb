@@ -66,6 +66,10 @@ macosdb scan ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \
 # Scan an Xcode .xip to produce release JSON
 macosdb scan ~/Downloads/Xcode_26.4_Apple_silicon.xip \
   --output data/xcode/releases --release-date 2026-03-24 --update-index --verbose
+
+# Validate archives and create SHA-256 sidecar hashes
+macosdb validate ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw
+macosdb validate --dir /path/to/archive
 ```
 
 ## How scanning works

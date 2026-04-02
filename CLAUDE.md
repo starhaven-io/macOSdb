@@ -1,6 +1,6 @@
 # macOSdb — Claude Project Context
 
-macOSdb is a native macOS app and CLI that catalogs which versions of open-source components (curl, OpenSSH, SQLite, etc.) ship with each macOS release. It scans Apple's IPSW firmware files, extracts version strings from binaries and the dyld shared cache, and stores the results as JSON. The app lets you browse releases, compare component versions across releases, and see which chip families and devices each release supports.
+macOSdb is a native macOS app and CLI that catalogs which versions of open-source components (curl, OpenSSH, SQLite, etc.) ship with each macOS and Xcode release. It scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from binaries, the dyld shared cache, and SDK headers, and stores the results as JSON. The app lets you browse releases, compare component versions across releases, and see which chip families and devices each release supports.
 
 ## Project overview
 
@@ -85,7 +85,7 @@ The core library consumed by both the CLI and app.
 
 **Models:** `ChipFamily`, `Component`, `ComponentChange`, `DeviceRegistry`, `KernelInfo`, `ProductType`, `Release`, `SDKInfo`, `VersionComparison`
 
-**DataProvider:** Actor that fetches release data from HTTPS (GitHub raw URLs) or local `data/` directory. Configurable base URL for dev/testing.
+**DataProvider:** Actor that fetches release data from HTTPS (`macosdb.com/api/v1/`) or local `data/` directory. Configurable base URL for dev/testing.
 
 **VersionComparer:** Static methods to diff components between two releases.
 
@@ -118,7 +118,8 @@ Built with swift-argument-parser. Commands:
 - `macosdb list [--major N]` — list known releases
 - `macosdb show <version> [--component name]` — show components for a release
 - `macosdb compare <v1> <v2> [--changed]` — diff components between releases
-- `macosdb scan <ipsw> [--output dir] [--release-name name] [--release-date date] [--beta] [--beta-number N] [--update-index] [--verbose]` — scan an IPSW and produce release JSON
+- `macosdb scan <ipsw> [--output dir] [--release-name name] [--release-date date] [--beta] [--beta-number N] [--update-index] [--verbose]` — scan an IPSW or Xcode `.xip` and produce release JSON
+- `macosdb validate <paths...> [--dir path] [--rehash]` — validate archive files and create SHA-256 sidecar hashes
 
 **Two build modes:**
 - **Standalone** (`swift build`): uses `Sources/macosdb/MacOSdb.swift` with its own `@main`
@@ -134,7 +135,7 @@ SwiftUI app with NavigationSplitView (default window 1000×700):
 - Compare view: side-by-side diff with color-coded summary badges
 - AppState: uses `#filePath` to find local `data/` directory, falls back to GitHub raw URLs
 - App is built by `macOSdb.xcodeproj`; macOSdbKit is added as a local SPM dependency
-- Distribution: Developer ID signed and notarized, Sparkle auto-updates, not sandboxed
+- Distribution: Developer ID signed and notarized, Sparkle auto-updates (appcast on `appcast` branch, `SUFeedURL` in `Info.plist`), not sandboxed
 - Category: Utilities (`public.app-category.utilities`)
 
 ### Site (site/)
@@ -200,7 +201,7 @@ Common types: `feat`, `fix`, `refactor`, `docs`, `ci`, `chore`
 
 All commits must:
 - Use `git commit -s` for DCO sign-off
-- Include a `Co-authored-by: Claude Opus 4.6 <noreply@anthropic.com>` trailer when authored with Claude
+- Include a `Co-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>` trailer when authored with Claude
 
 ## Git workflow
 
