@@ -20,9 +20,11 @@ appcast.xml
 # Typos (override global gitignore)
 !_typos.toml
 
+# Wrangler
+.wrangler/
+
 # Xcode
 DerivedData/
 xcuserdata/
 *.xccheckout
 *.xcscmblueprint
-.wrangler/
