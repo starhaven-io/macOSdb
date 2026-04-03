@@ -6,3 +6,12 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-XSS-Protection: 0
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/api/*
+  Cache-Control: public, max-age=3600
+
+/appcast.xml
+  Cache-Control: public, max-age=3600

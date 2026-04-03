@@ -1,25 +1,7 @@
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
 import { compareReleases } from '../../../../../../lib/api';
 
-export async function getStaticPaths() {
-  const allReleases = await getCollection('macosReleases');
-  const ids = allReleases.map((r) => r.id);
-
-  // Generate paths for all adjacent release pairs (most useful comparisons)
-  const sorted = allReleases.sort(
-    (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
-  );
-
-  const paths = [];
-  for (let i = 0; i < sorted.length - 1; i++) {
-    paths.push({
-      params: { from: sorted[i + 1].id, to: sorted[i].id },
-    });
-  }
-
-  return paths;
-}
+export const prerender = false;
 
 export const GET: APIRoute = async ({ params }) => {
   const result = await compareReleases('macos', params.from!, params.to!);

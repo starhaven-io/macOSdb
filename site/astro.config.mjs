@@ -1,11 +1,15 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import pagefind from 'astro-pagefind';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://macosdb.com',
+  adapter: cloudflare({
+    prerenderEnvironment: 'node',
+  }),
   integrations: [
     sitemap({
       filter: (page) => !page.includes('/api/'),
@@ -28,6 +32,11 @@ export default defineConfig({
   prefetch: {
     prefetchAll: true,
     defaultStrategy: 'hover',
+  },
+  vite: {
+    optimizeDeps: {
+      exclude: ['astro'],
+    },
   },
   experimental: {
     svgo: true,
