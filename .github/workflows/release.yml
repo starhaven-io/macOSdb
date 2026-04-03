@@ -263,3 +263,8 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Update appcast for ${TAG}"
           git push origin appcast
+
+      - name: Trigger site deploy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run "Deploy Site" --repo "${GITHUB_REPOSITORY}"
