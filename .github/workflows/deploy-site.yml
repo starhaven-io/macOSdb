@@ -12,15 +12,16 @@ on:
 permissions: {}
 
 concurrency:
-  group: pages
+  group: deploy-site
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build
+  deploy:
+    name: Deploy
     runs-on: ubuntu-slim
     permissions:
       contents: read # required to checkout repository
+    environment: cloudflare
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -29,8 +30,7 @@ jobs:
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+          package-manager-cache: false
 
       - name: Install dependencies
         working-directory: site
@@ -45,20 +45,9 @@ jobs:
           git fetch origin appcast --depth=1
           git show origin/appcast:appcast.xml > site/dist/appcast.xml
 
-      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
         with:
-          path: site/dist
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-slim
-    permissions:
-      pages: write # required to deploy to GitHub Pages
-      id-token: write # required to verify deployment origin
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: site
