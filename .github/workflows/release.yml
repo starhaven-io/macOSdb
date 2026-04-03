@@ -155,6 +155,7 @@ jobs:
       name: release
       deployment: false
     permissions:
+      actions: write # required to trigger site deploy workflow
       contents: write # required to create GitHub releases
     env:
       TAG: ${{ needs.build.outputs.tag }}
