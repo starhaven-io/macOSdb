@@ -25,3 +25,4 @@ DerivedData/
 xcuserdata/
 *.xccheckout
 *.xcscmblueprint
+.wrangler/
