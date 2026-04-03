@@ -9,6 +9,7 @@ export default defineConfig({
   site: 'https://macosdb.com',
   adapter: cloudflare({
     prerenderEnvironment: 'node',
+    imageService: 'passthrough',
   }),
   integrations: [
     sitemap({
