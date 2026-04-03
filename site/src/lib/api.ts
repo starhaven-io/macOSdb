@@ -1,7 +1,7 @@
 import { getCollection } from 'astro:content';
 import { displayName, releaseSlug, componentSlug, compareVersions } from './utils';
 
-type Product = 'macos' | 'xcode';
+export type Product = 'macos' | 'xcode';
 
 interface ComponentSummary {
   name: string;
@@ -27,7 +27,7 @@ interface ComponentHistory {
   changes: VersionChange[];
 }
 
-interface CompareResult {
+export interface CompareResult {
   from: string;
   to: string;
   summary: {

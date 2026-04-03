@@ -1,0 +1,392 @@
+---
+import Base from '../layouts/Base.astro';
+import type { CompareResult } from '../lib/api';
+
+interface ReleaseOption {
+  key: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  productLabel: string;
+  basePath: string;
+  releaseOptions: ReleaseOption[];
+  fromKey: string | null;
+  toKey: string | null;
+  result: CompareResult | null;
+}
+
+const { title, description, productLabel, basePath, releaseOptions, fromKey, toKey, result } = Astro.props;
+
+const hasChanges =
+  result &&
+  (result.summary.upgraded > 0 ||
+    result.summary.downgraded > 0 ||
+    result.summary.added > 0 ||
+    result.summary.removed > 0);
+---
+
+<Base title={title} description={description}>
+  <nav class="breadcrumb" data-pagefind-ignore>
+    <a href="/">macOSdb</a> &rsaquo; <a href={`/${basePath}/`}>{productLabel}</a> &rsaquo; Compare
+  </nav>
+
+  <h1>Compare {productLabel} Releases</h1>
+  <p class="subtitle">Select two {productLabel} releases to compare their open-source components.</p>
+
+  <form method="GET" action={`/${basePath}/compare/`} class="controls">
+    <div class="select-group">
+      <label for="from-select">From</label>
+      <select id="from-select" name="from">
+        <option value="">Select a release...</option>
+        {
+          releaseOptions.map((opt) => (
+            <option value={opt.key} selected={opt.key === fromKey}>
+              {opt.label}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="select-group">
+      <label for="to-select">To</label>
+      <select id="to-select" name="to">
+        <option value="">Select a release...</option>
+        {
+          releaseOptions.map((opt) => (
+            <option value={opt.key} selected={opt.key === toKey}>
+              {opt.label}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+    <button type="submit">Compare</button>
+  </form>
+
+  {
+    fromKey && toKey && !result && (
+      <div class="results">
+        <p class="no-changes">One or both releases not found.</p>
+      </div>
+    )
+  }
+
+  {
+    result && !hasChanges && (
+      <div class="results">
+        <p class="no-changes">No differences found between these releases.</p>
+      </div>
+    )
+  }
+
+  {
+    result && hasChanges && (
+      <div class="results">
+        <div class="summary">
+          {result.summary.upgraded > 0 && <span class="badge badge-upgraded">{result.summary.upgraded} upgraded</span>}
+          {result.summary.downgraded > 0 && (
+            <span class="badge badge-downgraded">{result.summary.downgraded} downgraded</span>
+          )}
+          {result.summary.added > 0 && <span class="badge badge-added">{result.summary.added} added</span>}
+          {result.summary.removed > 0 && <span class="badge badge-removed">{result.summary.removed} removed</span>}
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            <input type="checkbox" id="changed-only" checked />
+            Show changed only
+          </label>
+        </div>
+
+        <table id="changes-table" class="hide-unchanged">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.changes.map((c) => {
+              const statusLabel =
+                c.direction === 'upgraded'
+                  ? '\u2191 Upgraded'
+                  : c.direction === 'downgraded'
+                    ? '\u2193 Downgraded'
+                    : '\u2014 Unchanged';
+              return (
+                <tr class={`status-${c.direction}`} data-status={c.direction}>
+                  <td>{c.name}</td>
+                  <td>
+                    <code>{c.from}</code>
+                  </td>
+                  <td>
+                    <code>{c.to}</code>
+                  </td>
+                  <td>
+                    <span class={`status-badge status-${c.direction}`}>{statusLabel}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {result.added.length > 0 && (
+          <div class="diff-section">
+            <h3 class="added-heading">Added</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Version</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.added.map((c) => (
+                  <tr>
+                    <td>{c.name}</td>
+                    <td>
+                      <code>{c.version}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {result.removed.length > 0 && (
+          <div class="diff-section">
+            <h3 class="removed-heading">Removed</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Version</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.removed.map((c) => (
+                  <tr>
+                    <td>{c.name}</td>
+                    <td>
+                      <code>{c.version}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    )
+  }
+</Base>
+
+<script>
+  function initFilter() {
+    const checkbox = document.getElementById('changed-only') as HTMLInputElement;
+    const table = document.getElementById('changes-table');
+    if (!checkbox || !table) return;
+    checkbox.addEventListener('change', () => {
+      table.classList.toggle('hide-unchanged', checkbox.checked);
+    });
+  }
+  document.addEventListener('astro:page-load', initFilter);
+</script>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+  }
+
+  .controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .select-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .select-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  select {
+    font-family: var(--font-system);
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    width: 100%;
+  }
+
+  .arrow {
+    font-size: 1.5rem;
+    color: var(--color-text-secondary);
+    padding-bottom: 0.25rem;
+  }
+
+  button {
+    font-family: var(--font-system);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--color-link);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--color-link-hover);
+  }
+
+  .summary {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.75em;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .badge-upgraded {
+    background: color-mix(in srgb, var(--color-upgraded) 15%, transparent);
+    color: var(--color-upgraded);
+  }
+
+  .badge-downgraded {
+    background: color-mix(in srgb, var(--color-downgraded) 15%, transparent);
+    color: var(--color-downgraded);
+  }
+
+  .badge-added {
+    background: color-mix(in srgb, var(--color-added) 15%, transparent);
+    color: var(--color-added);
+  }
+
+  .badge-removed {
+    background: color-mix(in srgb, var(--color-removed) 15%, transparent);
+    color: var(--color-removed);
+  }
+
+  .filter-bar {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .filter-bar label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+  }
+
+  .hide-unchanged tr[data-status='unchanged'] {
+    display: none;
+  }
+
+  :global(.status-badge) {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  :global(.status-upgraded .status-badge) {
+    background: color-mix(in srgb, var(--color-upgraded) 12%, transparent);
+    color: var(--color-upgraded);
+  }
+
+  :global(.status-downgraded .status-badge) {
+    background: color-mix(in srgb, var(--color-downgraded) 12%, transparent);
+    color: var(--color-downgraded);
+  }
+
+  :global(.status-unchanged .status-badge) {
+    color: var(--color-text-secondary);
+  }
+
+  .diff-section {
+    margin-top: 2rem;
+  }
+
+  .diff-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .added-heading {
+    color: var(--color-added);
+  }
+
+  .removed-heading {
+    color: var(--color-removed);
+  }
+
+  .results {
+    margin-top: 2rem;
+  }
+
+  .no-changes {
+    color: var(--color-text-secondary);
+    font-size: 1.05rem;
+  }
+
+  @media (max-width: 640px) {
+    .arrow {
+      display: none;
+    }
+
+    .select-group {
+      min-width: 0;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+</style>
