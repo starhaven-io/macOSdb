@@ -1,0 +1,286 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="API — macOSdb" description="REST API for querying macOS and Xcode component version data.">
+  <nav class="breadcrumb" data-pagefind-ignore>
+    <a href="/">macOSdb</a> &rsaquo; API
+  </nav>
+
+  <h1>API</h1>
+  <p class="subtitle">
+    All endpoints return JSON and are served from <code>macosdb.com/api/v1/</code>. Data is rebuilt on each release and
+    served as static files &mdash; no authentication or rate limits.
+  </p>
+
+  <p class="subtitle">
+    Data is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>.
+  </p>
+
+  <section class="endpoint-group">
+    <h2>Releases</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <code class="method">GET</code>
+        <code class="path">/api/v1/{'{product}'}/releases.json</code>
+      </div>
+      <p>Index of all releases with metadata, sorted newest first.</p>
+      <details>
+        <summary>Example response</summary>
+        <pre><code>{JSON.stringify([
+  {
+    "buildNumber": "25E246",
+    "osVersion": "26.4",
+    "releaseName": "Tahoe",
+    "releaseDate": "2026-03-24",
+    "isBeta": false,
+    "isRC": false,
+    "dataFile": "releases/26/macOS-26.4-25E246.json"
+  }
+], null, 2)}</code></pre>
+      </details>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <code class="method">GET</code>
+        <code class="path">/api/v1/{'{product}'}/releases/{'{major}'}/{'{file}'}.json</code>
+      </div>
+      <p>Full release detail including components, kernels (macOS), and SDKs (Xcode).</p>
+      <details>
+        <summary>Example: <code>/api/v1/macos/releases/26/macOS-26.4-25E246.json</code></summary>
+        <pre><code>{JSON.stringify({
+  "buildNumber": "25E246",
+  "osVersion": "26.4",
+  "releaseName": "Tahoe",
+  "releaseDate": "2026-03-24",
+  "isBeta": false,
+  "isRC": false,
+  "components": [
+    { "name": "curl", "version": "8.7.1", "path": "/usr/bin/curl", "source": "filesystem" }
+  ],
+  "kernels": [
+    { "darwinVersion": "25.4.0", "chip": "M4", "devices": ["Mac16,1"] }
+  ]
+}, null, 2)}</code></pre>
+      </details>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <code class="method">GET</code>
+        <code class="path">/api/v1/{'{product}'}/releases/latest.json</code>
+      </div>
+      <p>The most recent stable (non-beta, non-RC) release.</p>
+      <details>
+        <summary>Example response</summary>
+        <pre><code>{JSON.stringify({
+  "buildNumber": "25E246",
+  "osVersion": "26.4",
+  "releaseName": "Tahoe",
+  "releaseDate": "2026-03-24",
+  "isBeta": false,
+  "isRC": false,
+  "dataFile": "releases/26/macOS-26.4-25E246.json"
+}, null, 2)}</code></pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="endpoint-group">
+    <h2>Components</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <code class="method">GET</code>
+        <code class="path">/api/v1/{'{product}'}/components.json</code>
+      </div>
+      <p>All tracked components with their latest version.</p>
+      <details>
+        <summary>Example response</summary>
+        <pre><code>{JSON.stringify([
+  { "name": "curl", "version": "8.7.1", "source": "filesystem", "path": "/usr/bin/curl" },
+  { "name": "LibreSSL", "version": "3.3.6", "source": "filesystem", "path": "/usr/bin/openssl" }
+], null, 2)}</code></pre>
+      </details>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <code class="method">GET</code>
+        <code class="path">/api/v1/{'{product}'}/components/{'{name}'}.json</code>
+      </div>
+      <p>Version history for a single component across all releases.</p>
+      <details>
+        <summary>Example: <code>/api/v1/macos/components/curl.json</code></summary>
+        <pre><code>{JSON.stringify({
+  "name": "curl",
+  "source": "filesystem",
+  "path": "/usr/bin/curl",
+  "changes": [
+    {
+      "version": "8.7.1",
+      "firstRelease": "macOS 15.0 Sequoia",
+      "firstReleaseDate": "2024-09-16",
+      "direction": "upgraded"
+    },
+    {
+      "version": "8.6.0",
+      "firstRelease": "macOS 14.4 Sonoma",
+      "firstReleaseDate": "2024-03-07",
+      "direction": "upgraded"
+    }
+  ]
+}, null, 2)}</code></pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="endpoint-group">
+    <h2>Compare</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <code class="method">GET</code>
+        <code class="path">/api/v1/{'{product}'}/compare/{'{from}'}/{'{to}'}.json</code>
+      </div>
+      <p>
+        Diff components between two releases. Use <code>{'{version}'}-{'{build}'}</code> identifiers (e.g. <code
+          >15.1-24B83</code
+        >).
+      </p>
+      <details>
+        <summary>Example: <code>/api/v1/macos/compare/15.1-24B83/15.2-24C101.json</code></summary>
+        <pre><code>{JSON.stringify({
+  "from": "macOS 15.1 Sequoia",
+  "to": "macOS 15.2 Sequoia",
+  "summary": {
+    "upgraded": 3,
+    "downgraded": 0,
+    "added": 0,
+    "removed": 0,
+    "unchanged": 13
+  },
+  "changes": [
+    { "name": "curl", "from": "8.7.1", "to": "8.11.1", "direction": "upgraded" }
+  ],
+  "added": [],
+  "removed": []
+}, null, 2)}</code></pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="endpoint-group">
+    <h2>Products</h2>
+    <p>
+      Replace <code>{'{product}'}</code> with <code>macos</code> or <code>xcode</code> in any endpoint above.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
+  }
+
+  .subtitle code {
+    font-size: 0.9em;
+  }
+
+  .endpoint-group {
+    margin-top: 2.5rem;
+  }
+
+  .endpoint-group h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .endpoint {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  .endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .method {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2em 0.5em;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-added) 15%, transparent);
+    color: var(--color-added);
+  }
+
+  .path {
+    font-size: 0.95rem;
+  }
+
+  .endpoint p {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  details {
+    margin-top: 0.75rem;
+  }
+
+  summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--color-link);
+    font-weight: 500;
+  }
+
+  summary:hover {
+    color: var(--color-link-hover);
+  }
+
+  details pre {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 640px) {
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    .endpoint-header {
+      flex-wrap: wrap;
+    }
+  }
+</style>

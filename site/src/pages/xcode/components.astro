@@ -1,29 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
 import StructuredData from '../../components/StructuredData.astro';
-import { getCollection } from 'astro:content';
 import { componentSlug } from '../../lib/utils';
+import { getComponents } from '../../lib/api';
 
-const allReleases = await getCollection('xcodeReleaseDetails');
-const releases = allReleases.sort(
-  (a, b) => new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime(),
-);
-
-const components: Map<string, { name: string; version: string; source: string; path: string }> = new Map();
-for (const release of releases) {
-  for (const comp of release.data.components) {
-    if (!components.has(comp.name)) {
-      components.set(comp.name, {
-        name: comp.name,
-        version: comp.version ?? '',
-        source: comp.source,
-        path: comp.path,
-      });
-    }
-  }
-}
-
-const sorted = [...components.values()].sort((a, b) => a.name.localeCompare(b.name));
+const sorted = await getComponents('xcode');
 
 const structuredData = {
   '@context': 'https://schema.org',

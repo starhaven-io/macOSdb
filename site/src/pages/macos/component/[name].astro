@@ -2,102 +2,41 @@
 import Base from '../../../layouts/Base.astro';
 import Badge from '../../../components/Badge.astro';
 import StructuredData from '../../../components/StructuredData.astro';
-import { getCollection } from 'astro:content';
-import { formatDate, displayName, releaseSlug, componentSlug, compareVersions } from '../../../lib/utils';
-
-interface VersionEntry {
-  firstRelease: string;
-  firstReleaseSlug: string;
-  firstReleaseDate: string;
-  firstReleaseBeta: boolean;
-  firstReleaseRC: boolean;
-  oldestDate: number;
-}
-
-interface VersionChange {
-  version: string;
-  firstRelease: string;
-  firstReleaseSlug: string;
-  firstReleaseDate: string;
-  firstReleaseBeta: boolean;
-  firstReleaseRC: boolean;
-  direction: 'upgraded' | 'downgraded' | 'added' | '';
-}
+import { formatDate, componentSlug } from '../../../lib/utils';
+import { getComponentHistory, getAllComponentSlugs } from '../../../lib/api';
 
 export async function getStaticPaths() {
-  const allReleases = await getCollection('macosReleaseDetails');
-
-  // For each component, group by component version and track the oldest release that introduced it.
-  const componentMeta: Map<string, { name: string; source: string; path: string }> = new Map();
-  const componentVersions: Map<string, Map<string, VersionEntry>> = new Map();
-
-  for (const release of allReleases) {
-    const releaseDate = new Date(release.data.releaseDate ?? '').getTime();
-    for (const comp of release.data.components) {
-      const slug = componentSlug(comp.name);
-      const version = comp.version ?? '';
-
-      if (!componentMeta.has(slug)) {
-        componentMeta.set(slug, { name: comp.name, source: comp.source, path: comp.path });
-      }
-      if (!componentVersions.has(slug)) {
-        componentVersions.set(slug, new Map());
-      }
-
-      const vmap = componentVersions.get(slug)!;
-      const existing = vmap.get(version);
-      if (!existing || releaseDate < existing.oldestDate) {
-        vmap.set(version, {
-          firstRelease: displayName(release.data, true),
-          firstReleaseSlug: releaseSlug(release.data),
-          firstReleaseDate: release.data.releaseDate ?? '',
-          firstReleaseBeta: release.data.isBeta,
-          firstReleaseRC: release.data.isRC,
-          oldestDate: releaseDate,
-        });
-      }
-    }
-  }
-
-  // Build sorted change list per component (component version descending).
-  const componentMap: Map<string, { name: string; source: string; path: string; changes: VersionChange[] }> = new Map();
-
-  for (const [slug, vmap] of componentVersions) {
-    const meta = componentMeta.get(slug)!;
-    const sorted = [...vmap.entries()].sort(([a], [b]) => {
-      const dir = compareVersions(a, b);
-      return dir === 'upgraded' ? 1 : dir === 'downgraded' ? -1 : 0;
-    });
-
-    const changes: VersionChange[] = sorted.map(([version, entry], i) => ({
-      version,
-      firstRelease: entry.firstRelease,
-      firstReleaseSlug: entry.firstReleaseSlug,
-      firstReleaseDate: entry.firstReleaseDate,
-      firstReleaseBeta: entry.firstReleaseBeta,
-      firstReleaseRC: entry.firstReleaseRC,
-      direction: i === sorted.length - 1 ? 'added' : compareVersions(sorted[i + 1][0], version),
-    }));
-
-    componentMap.set(slug, { name: meta.name, source: meta.source, path: meta.path, changes });
-  }
-
-  return [...componentMap.entries()].map(([slug, data]) => ({
-    params: { name: slug },
-    props: {
-      componentName: data.name,
-      source: data.source,
-      path: data.path,
-      changes: data.changes,
-    },
-  }));
+  const slugs = await getAllComponentSlugs('macos');
+  const paths = await Promise.all(
+    slugs.map(async (slug) => {
+      const history = await getComponentHistory('macos', slug);
+      return {
+        params: { name: slug },
+        props: {
+          componentName: history!.name,
+          source: history!.source,
+          path: history!.path,
+          changes: history!.changes,
+        },
+      };
+    }),
+  );
+  return paths;
 }
 
 interface Props {
   componentName: string;
   source: string;
   path: string;
-  changes: VersionChange[];
+  changes: {
+    version: string;
+    firstRelease: string;
+    firstReleaseSlug: string;
+    firstReleaseDate: string;
+    firstReleaseBeta: boolean;
+    firstReleaseRC: boolean;
+    direction: string;
+  }[];
 }
 
 const { componentName = '', source = '', path: compPath = '', changes = [] } = Astro.props;

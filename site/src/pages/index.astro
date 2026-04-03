@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import StructuredData from '../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
 import { formatDate, displayName, releaseSlug } from '../lib/utils';
+import { getLatestRelease } from '../lib/api';
 
 const macosReleases = (await getCollection('macosReleases')).sort(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
@@ -11,8 +12,8 @@ const xcodeReleases = (await getCollection('xcodeReleases')).sort(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
 );
 
-const latestMacos = macosReleases.find((r) => !r.data.isBeta && !r.data.isRC);
-const latestXcode = xcodeReleases.find((r) => !r.data.isBeta && !r.data.isRC);
+const latestMacos = await getLatestRelease('macos');
+const latestXcode = await getLatestRelease('xcode');
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -41,8 +42,8 @@ const websiteSchema = {
         latestMacos && (
           <div class="latest">
             <span class="latest-label">Latest</span>
-            <a href={`/macos/release/${releaseSlug(latestMacos.data)}/`}>{displayName(latestMacos.data, true)}</a>
-            <span class="latest-date">{formatDate(latestMacos.data.releaseDate)}</span>
+            <a href={`/macos/release/${releaseSlug(latestMacos)}/`}>{displayName(latestMacos, true)}</a>
+            <span class="latest-date">{formatDate(latestMacos.releaseDate)}</span>
           </div>
         )
       }
@@ -62,10 +63,8 @@ const websiteSchema = {
         latestXcode && (
           <div class="latest">
             <span class="latest-label">Latest</span>
-            <a href={`/xcode/release/${releaseSlug(latestXcode.data)}/`}>
-              {displayName(latestXcode.data, false, 'Xcode')}
-            </a>
-            <span class="latest-date">{formatDate(latestXcode.data.releaseDate)}</span>
+            <a href={`/xcode/release/${releaseSlug(latestXcode)}/`}>{displayName(latestXcode, false, 'Xcode')}</a>
+            <span class="latest-date">{formatDate(latestXcode.releaseDate)}</span>
           </div>
         )
       }
