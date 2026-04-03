@@ -15,7 +15,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
     "@fontsource/inter": "^5.2.8",
-    "astro": "^6.0.8",
+    "astro": "^6.1.1",
     "astro-pagefind": "^1.8.6",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
