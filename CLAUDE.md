@@ -9,7 +9,7 @@ macOSdb is a native macOS app and CLI that catalogs which versions of open-sourc
 - **Architecture:** MVVM using `@Observable` and SwiftUI Environment injection
 - **Structure:** Xcode project (app + bundled CLI) + Swift Package (library, standalone CLI, tests)
 - **Bundle ID:** `io.linnane.macosdb`
-- **License:** GPL-3.0-only (code), CC-BY-4.0 (data)
+- **License:** AGPL-3.0-only (code), CC-BY-4.0 (data)
 - **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction)
 - **Website:** https://macosdb.com (Astro static site, deployed to GitHub Pages)
 
@@ -72,7 +72,7 @@ macOSdb/
 │   ├── appcast-template.xml               # Sparkle appcast template for auto-updates
 │   ├── dependabot.yml                     # Dependabot for GitHub Actions
 │   └── FUNDING.yml                        # GitHub Sponsors
-├── LICENSE                                # GPL-3.0-only
+├── LICENSE                                # AGPL-3.0-only
 ├── .swiftlint.yml
 └── .gitignore
 ```

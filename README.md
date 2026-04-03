@@ -1,7 +1,7 @@
 # macOSdb
 
 [![CI](https://github.com/p-linnane/macOSdb/actions/workflows/check.yml/badge.svg)](https://github.com/p-linnane/macOSdb/actions/workflows/check.yml)
-[![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg)](LICENSE)
 [![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
 
 A native macOS app and CLI that catalogs which versions of open-source components ship with each macOS and Xcode release.
@@ -156,7 +156,7 @@ Apple, macOS, and related trademarks are property of Apple Inc.
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0](LICENSE) (`GPL-3.0-only`).
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
 
 The release data in `data/` is licensed separately under [CC-BY-4.0](data/LICENSE).
 
