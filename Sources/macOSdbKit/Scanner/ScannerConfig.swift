@@ -350,6 +350,20 @@ private func extractDefine(_ defineName: String) -> (pattern: String, normalize:
     return (pattern, normalize)
 }
 
+/// Extracts an unquoted integer from a `#define NAME 820` line and decodes it to a dotted version string.
+private func extractIntegerDefine(
+    _ defineName: String,
+    decode: @escaping @Sendable (Int) -> String
+) -> (pattern: String, normalize: @Sendable (String) -> String) {
+    let pattern = #"#\s*define\s+"# + defineName + #"\s+\d+"#
+    let normalize: @Sendable (String) -> String = { raw in
+        guard let range = raw.range(of: #"\d+\s*$"#, options: .regularExpression),
+              let value = Int(raw[range].trimmingCharacters(in: .whitespaces)) else { return raw }
+        return decode(value)
+    }
+    return (pattern, normalize)
+}
+
 /// Extracts `current-version:` from a .tbd file.
 private let tbdCurrentVersion: (pattern: String, normalize: @Sendable (String) -> String) = {
     let pattern = #"current-version:\s*[0-9]+[0-9.]*"#
@@ -367,7 +381,12 @@ public let sdkComponents: [SDKComponentDefinition] = buildSDKComponents()
 private func buildSDKComponents() -> [SDKComponentDefinition] {
     let tbd = tbdCurrentVersion
     let libcurl = extractDefine("LIBCURL_VERSION")
-    let libexslt = extractDefine("LIBEXSLT_DOTTED_VERSION")
+    let libexslt = extractIntegerDefine("LIBEXSLT_VERSION") { value in
+        let major = value / 10_000
+        let minor = (value % 10_000) / 100
+        let patch = value % 100
+        return "\(major).\(minor).\(patch)"
+    }
     let libxml2 = extractDefine("LIBXML_DOTTED_VERSION")
     let libxslt = extractDefine("LIBXSLT_DOTTED_VERSION")
     let sqlite3 = extractDefine("SQLITE_VERSION")
