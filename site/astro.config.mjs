@@ -41,5 +41,9 @@ export default defineConfig({
   },
   experimental: {
     svgo: true,
+    clientPrerender: true,
+    queuedRendering: {
+      enabled: true,
+    },
   },
 });

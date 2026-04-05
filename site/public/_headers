@@ -7,6 +7,15 @@
   X-XSS-Protection: 0
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 
+/macos/*
+  Cache-Control: public, max-age=300, s-maxage=3600
+
+/xcode/*
+  Cache-Control: public, max-age=300, s-maxage=3600
+
+/about/
+  Cache-Control: public, max-age=3600, s-maxage=86400
+
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
