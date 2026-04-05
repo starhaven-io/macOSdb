@@ -150,4 +150,29 @@ struct XcodeModelTests {
         )
         #expect(release.displayName == "Xcode 26.4 Developer Beta 2")
     }
+
+    // MARK: - Fixture decoding
+
+    @Test("Decode Xcode release from fixture JSON")
+    func decodeXcodeFixture() throws {
+        let url = Bundle.module.url(
+            forResource: "Xcode-16.0-16A242d", withExtension: "json", subdirectory: "Fixtures"
+        )!
+        let data = try Data(contentsOf: url)
+        Attachment.record(data, named: "Xcode-16.0-16A242d.json")
+        let release = try JSONDecoder().decode(Release.self, from: data)
+
+        #expect(release.productType == .xcode)
+        #expect(release.osVersion == "16.0")
+        #expect(release.buildNumber == "16A242d")
+        #expect(release.releaseName == "Xcode 16.0")
+        #expect(release.minimumOSVersion == "14.5")
+        #expect(release.xipFile == "Xcode_16.xip")
+        #expect(release.xipURL != nil)
+        #expect(release.sdks?.count == 1)
+        #expect(release.sdks?[0].sdkVersion == "15.0")
+        #expect(!release.components.isEmpty)
+        #expect(release.kernels.isEmpty)
+        #expect(release.displayName == "Xcode 16.0")
+    }
 }

@@ -46,18 +46,24 @@ xcodebuild build -scheme macOSdb -configuration Release
 
 ## CLI usage
 
+All commands default to macOS. Use `--product xcode` for Xcode releases. Use `--json` for machine-readable output.
+
 ```bash
-# List all known macOS releases
+# List releases
 macosdb list
 macosdb list --major 15
+macosdb list --product xcode
 
 # Show components for a release
 macosdb show 15.2
 macosdb show 15.2 --component curl
+macosdb show 15.2 --detailed
+macosdb show 16.2 --product xcode
 
 # Compare components between releases
 macosdb compare 15.1 15.2
 macosdb compare 15.1 15.2 --changed
+macosdb compare 16.1 16.2 --product xcode
 
 # Scan an IPSW to produce release JSON
 macosdb scan ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \

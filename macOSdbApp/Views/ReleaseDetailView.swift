@@ -61,7 +61,7 @@ struct ReleaseDetailView: View {
                 }
                 if let urlString = release.ipswURL, let url = URL(string: urlString) {
                     Link(destination: url) {
-                        Label("IPSW", systemImage: "arrow.down.circle")
+                        Label("Download", systemImage: "arrow.down.circle")
                     }
                 }
                 if let urlString = release.xipURL, let url = URL(string: urlString) {
