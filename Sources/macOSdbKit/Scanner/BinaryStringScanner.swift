@@ -1,7 +1,10 @@
 import Foundation
+import OSLog
 
 /// Equivalent to the `strings` command — scans binary data for runs of printable ASCII characters.
 public enum BinaryStringScanner {
+
+    private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "BinaryStringScanner")
 
     public static let defaultMinLength = 4
 
@@ -52,6 +55,8 @@ public enum BinaryStringScanner {
                     return String(string[matchRange])
                 }
             }
+        } else {
+            logger.warning("Failed to compile regex pattern: \(pattern)")
         }
         return nil
     }
@@ -77,6 +82,8 @@ public enum BinaryStringScanner {
                     }
                 }
             }
+        } else {
+            logger.warning("Failed to compile regex pattern: \(pattern)")
         }
         return results
     }

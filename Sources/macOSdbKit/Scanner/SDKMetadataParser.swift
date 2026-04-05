@@ -57,8 +57,11 @@ enum SDKMetadataParser {
             return extractMultiDefineVersion(from: content, defines: definition.pattern)
         }
 
-        guard let regex = try? Regex(definition.pattern),
-              let match = content.firstMatch(of: regex) else {
+        guard let regex = try? Regex(definition.pattern) else {
+            logger.warning("Failed to compile regex for \(definition.name): \(definition.pattern)")
+            return nil
+        }
+        guard let match = content.firstMatch(of: regex) else {
             return nil
         }
 
@@ -72,8 +75,11 @@ enum SDKMetadataParser {
 
         for name in names {
             let pattern = #"#\s*define\s+"# + name + #"\s+(\S+)"#
-            guard let regex = try? Regex(pattern),
-                  let match = content.firstMatch(of: regex),
+            guard let regex = try? Regex(pattern) else {
+                logger.warning("Failed to compile regex for multi-define: \(pattern)")
+                return nil
+            }
+            guard let match = content.firstMatch(of: regex),
                   match.count > 1 else {
                 return nil
             }
