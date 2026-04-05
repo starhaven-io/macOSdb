@@ -65,14 +65,17 @@ public actor DMGMounter {
     // MARK: - Private
 
     private func parseMountOutput(_ data: Data, dmgPath: String) throws -> MountPoint {
-        guard let plist = try? PropertyListSerialization.propertyList(
-            from: data, format: nil
-        ) as? [String: Any],
+        let parsed: Any
+        do {
+            parsed = try PropertyListSerialization.propertyList(from: data, format: nil)
+        } catch {
+            Self.logger.error("Failed to parse hdiutil plist output: \(error.localizedDescription)")
+            throw ScannerError.dmgMountFailed(path: dmgPath, reason: "Could not parse hdiutil plist output")
+        }
+        guard let plist = parsed as? [String: Any],
               let entities = plist["system-entities"] as? [[String: Any]] else {
-            throw ScannerError.dmgMountFailed(
-                path: dmgPath,
-                reason: "Could not parse hdiutil plist output"
-            )
+            Self.logger.error("Unexpected hdiutil plist structure")
+            throw ScannerError.dmgMountFailed(path: dmgPath, reason: "Unexpected hdiutil plist structure")
         }
 
         // Find the entity with a mount point (Apple_APFS or Apple_HFS volume)
