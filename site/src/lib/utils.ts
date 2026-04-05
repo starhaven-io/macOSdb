@@ -58,6 +58,88 @@ function parseVersion(version: string): number[] {
   });
 }
 
+// Kernel grouping for release detail pages
+
+interface KernelInput {
+  darwinVersion: string;
+  xnuVersion?: string | null;
+  arch: string;
+  chip: string;
+  file: string;
+  deviceChips?: { device: string; chip: string }[];
+}
+
+export interface KernelRow {
+  chips: string[];
+  arch: string;
+  file: string;
+  isDev: boolean;
+}
+
+export interface KernelSummary {
+  darwinVersion: string;
+  xnuVersion: string | null;
+  rows: KernelRow[];
+}
+
+/**
+ * Parse chip generation and tier from a chip name like "M4 Pro".
+ * Returns [generation, tierRank] for sorting (higher generation first,
+ * base < Pro < Max < Ultra within a generation).
+ */
+function chipSortKey(chip: string): [number, number] {
+  const match = chip.match(/^M(\d+)\s*(Pro|Max|Ultra)?$/);
+  if (!match) {
+    if (chip.includes('Virtual')) return [0, 0];
+    return [0, 1]; // Unknown chips sort near the end
+  }
+  const gen = parseInt(match[1], 10);
+  const tier = match[2];
+  const tierRank = tier === 'Ultra' ? 3 : tier === 'Max' ? 2 : tier === 'Pro' ? 1 : 0;
+  return [gen, tierRank];
+}
+
+export function groupKernels(kernels: KernelInput[]): KernelSummary | null {
+  if (!kernels || kernels.length === 0) return null;
+
+  const darwinVersion = kernels[0].darwinVersion;
+  const xnuVersion = kernels[0].xnuVersion ?? null;
+
+  const rows: KernelRow[] = kernels.map((k) => {
+    const chips: string[] = [];
+    if (k.deviceChips && k.deviceChips.length > 0) {
+      for (const dc of k.deviceChips) {
+        if (!chips.includes(dc.chip)) chips.push(dc.chip);
+      }
+      // Sort chips within a row by tier (base, Pro, Max, Ultra)
+      chips.sort((a, b) => {
+        const [, aTier] = chipSortKey(a);
+        const [, bTier] = chipSortKey(b);
+        return aTier - bTier;
+      });
+    } else {
+      chips.push(k.chip);
+    }
+    return {
+      chips,
+      arch: k.arch,
+      file: k.file,
+      isDev: k.file.includes('development'),
+    };
+  });
+
+  // Sort: release before dev, then by chip generation descending, Virtual Mac last
+  rows.sort((a, b) => {
+    if (a.isDev !== b.isDev) return a.isDev ? 1 : -1;
+    const [aGen, aTier] = chipSortKey(a.chips[0]);
+    const [bGen, bTier] = chipSortKey(b.chips[0]);
+    if (aGen !== bGen) return bGen - aGen;
+    return aTier - bTier;
+  });
+
+  return { darwinVersion, xnuVersion, rows };
+}
+
 export function compareVersions(from: string, to: string): 'upgraded' | 'downgraded' | 'unchanged' {
   const fromParts = parseVersion(from);
   const toParts = parseVersion(to);

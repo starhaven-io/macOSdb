@@ -40,6 +40,9 @@ interface Props {
     kernels: {
       darwinVersion: string;
       xnuVersion?: string | null;
+      arch: string;
+      chip: string;
+      file: string;
       deviceChips?: { device: string; chip: string }[];
     }[];
   };
@@ -49,8 +52,6 @@ interface Props {
 const { release, previousSlug } = Astro.props;
 const currentSlug = releaseSlug(release);
 const title = displayName(release, true);
-const darwinVersion = release.kernels?.[0]?.darwinVersion;
-const xnuVersion = release.kernels?.[0]?.xnuVersion;
 
 const structuredData = [
   {
@@ -97,8 +98,8 @@ const structuredData = [
     {previousSlug && <a href={`/macos/compare/?from=${previousSlug}&to=${currentSlug}`}>Compare with previous</a>}
   </ReleaseHeader>
 
-  <KernelInfo darwinVersion={darwinVersion} xnuVersion={xnuVersion} />
   <ComponentTable components={release.components} basePath="/macos" />
+  <KernelInfo kernels={release.kernels} />
   <ChipGrid kernels={release.kernels} />
 </Base>
 
