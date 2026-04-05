@@ -9,7 +9,7 @@ struct ScanCommand: AsyncParsableCommand {
     )
 
     @Argument(help: "Path to the archive file (.ipsw, .dmg, or .xip) to scan.")
-    var ipswPath: String
+    var archivePath: String
 
     @Option(name: .shortAndLong, help: "Output directory for the JSON file (default: current directory).")
     var output: String?
@@ -33,21 +33,21 @@ struct ScanCommand: AsyncParsableCommand {
     var rcNumber: Int?
 
     @Option(name: [.customLong("ipsw-url"), .customLong("xip-url")], help: "URL where this archive can be downloaded (e.g. Apple CDN URL).")
-    var ipswDownloadURL: String?
+    var downloadURL: String?
 
-    @Flag(name: .long, help: "Mark as a device-specific build (e.g. M3 launch build).")
+    @Flag(name: .long, help: "Mark as a device-specific build, e.g. M3 launch build (IPSW only).")
     var deviceSpecific = false
 
     @Flag(name: .long, help: "Update the releases.json index alongside the output directory.")
     var updateIndex = false
 
-    @Flag(name: .long, help: "Save the AEA decryption key as a .pem sidecar file next to the IPSW.")
+    @Flag(name: .long, help: "Save the AEA decryption key as a .pem sidecar file next to the IPSW (IPSW only).")
     var saveAeaKey = false
 
-    @Option(name: .customLong("aea-key"), help: "Path to a .pem file to use for AEA decryption instead of fetching from Apple's WKMS.")
+    @Option(name: .customLong("aea-key"), help: "Path to a .pem file for AEA decryption instead of fetching from Apple's WKMS (IPSW only).")
     var aeaKeyPath: String?
 
-    @Flag(name: .long, help: "Extract only the AEA decryption key without scanning components. Implies --save-aea-key.")
+    @Flag(name: .long, help: "Extract only the AEA decryption key without scanning components (IPSW only). Implies --save-aea-key.")
     var keyOnly = false
 
     @Flag(name: .long, help: "Print verbose diagnostic output to stderr.")
@@ -60,10 +60,10 @@ struct ScanCommand: AsyncParsableCommand {
     }
 
     func run() async throws {
-        let archiveURL = URL(fileURLWithPath: ipswPath)
+        let archiveURL = URL(fileURLWithPath: archivePath)
 
         guard FileManager.default.fileExists(atPath: archiveURL.path) else {
-            printError("Archive not found: \(ipswPath)")
+            printError("Archive not found: \(archivePath)")
             throw ExitCode.failure
         }
 
@@ -120,7 +120,7 @@ struct ScanCommand: AsyncParsableCommand {
                 ipswPath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
-                ipswURL: ipswDownloadURL,
+                ipswURL: downloadURL,
                 isBeta: (beta || betaNumber != nil) ? true : nil,
                 betaNumber: betaNumber,
                 isRC: rc || rcNumber != nil,
@@ -178,7 +178,7 @@ struct ScanCommand: AsyncParsableCommand {
                 xipPath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
-                xipURL: ipswDownloadURL,
+                xipURL: downloadURL,
                 isBeta: beta || betaNumber != nil,
                 betaNumber: betaNumber,
                 isRC: rc || rcNumber != nil,
