@@ -14,6 +14,9 @@ struct ListCommand: AsyncParsableCommand {
     @Option(name: .long, help: "Filter by major version (e.g. 15).")
     var major: Int?
 
+    @Flag(name: .long, help: "Output as JSON.")
+    var json = false
+
     @Option(name: .long, help: "Base URL for release data (default: GitHub).")
     var dataURL: String?
 
@@ -36,6 +39,11 @@ struct ListCommand: AsyncParsableCommand {
                 let parts = entry.osVersion.split(separator: ".")
                 return Int(parts.first ?? "") == major
             }
+        }
+
+        if json {
+            try writeJSON(entries)
+            return
         }
 
         if entries.isEmpty {

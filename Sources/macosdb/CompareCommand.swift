@@ -20,6 +20,9 @@ struct CompareCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Only show components that changed.")
     var changed = false
 
+    @Flag(name: .long, help: "Output as JSON.")
+    var json = false
+
     @Option(name: .long, help: "Base URL for release data (default: GitHub).")
     var dataURL: String?
 
@@ -40,6 +43,11 @@ struct CompareCommand: AsyncParsableCommand {
         }
 
         let comparison = VersionComparer.compare(from: from, to: toRel)
+
+        if json {
+            try writeJSON(comparison)
+            return
+        }
 
         print("Comparing \(from.displayName) → \(toRel.displayName)")
         print(comparison.summary)

@@ -20,6 +20,9 @@ struct ShowCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Include kernel and chip information.")
     var detailed = false
 
+    @Flag(name: .long, help: "Output as JSON.")
+    var json = false
+
     @Option(name: .long, help: "Base URL for release data (default: GitHub).")
     var dataURL: String?
 
@@ -30,6 +33,11 @@ struct ShowCommand: AsyncParsableCommand {
         guard let release = try await provider.findRelease(osVersion: version, productType: productType) else {
             print("\(productType.displayName) \(version) not found.")
             throw ExitCode.failure
+        }
+
+        if json {
+            try writeJSON(release)
+            return
         }
 
         printReleaseMetadata(release)

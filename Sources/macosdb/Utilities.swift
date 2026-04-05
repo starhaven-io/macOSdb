@@ -8,6 +8,14 @@ nonisolated func makeDataProvider(dataURL: String?) -> DataProvider {
     return DataProvider()
 }
 
+nonisolated func writeJSON<T: Encodable>(_ value: T) throws {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+    var data = try encoder.encode(value)
+    data.append(0x0A)
+    FileHandle.standardOutput.write(data)
+}
+
 /// Parses a product type string from CLI `--product` option.
 /// Accepts case-insensitive values: "macOS", "xcode".
 /// Defaults to `.macOS` when nil.
