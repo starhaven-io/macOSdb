@@ -1,4 +1,4 @@
-public struct VersionComparison: Sendable {
+public struct VersionComparison: Sendable, Codable {
     public let from: Release
     public let to: Release
     public let changes: [ComponentChange]
@@ -28,7 +28,7 @@ public struct VersionComparison: Sendable {
     }
 }
 
-public struct ComponentChange: Identifiable, Sendable {
+public struct ComponentChange: Identifiable, Sendable, Codable {
     public var id: String { name }
 
     public let name: String
