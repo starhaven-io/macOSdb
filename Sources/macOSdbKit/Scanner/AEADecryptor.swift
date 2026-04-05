@@ -123,7 +123,14 @@ public actor AEADecryptor {
     private func parseAuthData(from data: Data) -> [String: String] {
         guard data.count >= 12 else { return [:] }
         let header = data.prefix(12)
-        guard let authSize = try? validateHeader(header), data.count >= 12 + authSize else { return [:] }
+        let authSize: Int
+        do {
+            authSize = try validateHeader(header)
+        } catch {
+            Self.logger.warning("Failed to validate AEA header: \(error.localizedDescription)")
+            return [:]
+        }
+        guard data.count >= 12 + authSize else { return [:] }
         return parseFields(from: data.subdata(in: 12..<(12 + authSize)))
     }
 
