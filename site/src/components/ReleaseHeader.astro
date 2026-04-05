@@ -1,0 +1,62 @@
+---
+import Badge from './Badge.astro';
+import { formatDate } from '../lib/utils';
+
+interface Props {
+  title: string;
+  buildNumber: string;
+  releaseDate?: string;
+  isBeta: boolean;
+  isRC: boolean;
+  isDeviceSpecific?: boolean;
+}
+
+const { title, buildNumber, releaseDate, isBeta, isRC, isDeviceSpecific } = Astro.props;
+---
+
+<header class="release-header">
+  <h1 data-pagefind-weight="2">{title}</h1>
+  <div class="meta" data-pagefind-ignore>
+    <span>Build <code>{buildNumber}</code></span>
+    {releaseDate && <span>{formatDate(releaseDate, 'long')}</span>}
+    {isBeta && <Badge variant="beta" />}
+    {isRC && <Badge variant="rc" />}
+    {isDeviceSpecific && <Badge variant="device" />}
+    <slot />
+  </div>
+</header>
+
+<style>
+  .release-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .release-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    color: var(--color-text-secondary);
+  }
+
+  .meta :global(a) {
+    font-size: 0.85rem;
+    color: var(--color-link);
+  }
+
+  @media (max-width: 640px) {
+    .release-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .meta {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+  }
+</style>

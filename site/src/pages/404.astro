@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Page not found — macOSdb" description="The page you're looking for doesn't exist.">
+  <div class="not-found" data-pagefind-ignore>
+    <h1>404</h1>
+    <p>The page you're looking for doesn't exist.</p>
+    <a href="/">Back to home</a>
+  </div>
+</Base>
+
+<style>
+  .not-found {
+    text-align: center;
+    padding: 4rem 0;
+  }
+
+  .not-found h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-secondary);
+  }
+
+  .not-found p {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+  }
+</style>
