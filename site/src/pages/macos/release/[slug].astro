@@ -1,12 +1,12 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import Badge from '../../../components/Badge.astro';
+import ReleaseHeader from '../../../components/ReleaseHeader.astro';
 import ComponentTable from '../../../components/ComponentTable.astro';
 import KernelInfo from '../../../components/KernelInfo.astro';
 import ChipGrid from '../../../components/ChipGrid.astro';
 import StructuredData from '../../../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
-import { formatDate, displayName, releaseSlug } from '../../../lib/utils';
+import { displayName, releaseSlug } from '../../../lib/utils';
 
 export async function getStaticPaths() {
   const allReleases = await getCollection('macosReleaseDetails');
@@ -66,24 +66,9 @@ const structuredData = [
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'macOSdb',
-        item: 'https://macosdb.com/',
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'macOS',
-        item: 'https://macosdb.com/macos/',
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: title,
-        item: `https://macosdb.com/macos/release/${currentSlug}/`,
-      },
+      { '@type': 'ListItem', position: 1, name: 'macOSdb', item: 'https://macosdb.com/' },
+      { '@type': 'ListItem', position: 2, name: 'macOS', item: 'https://macosdb.com/macos/' },
+      { '@type': 'ListItem', position: 3, name: title, item: `https://macosdb.com/macos/release/${currentSlug}/` },
     ],
   },
 ];
@@ -100,30 +85,17 @@ const structuredData = [
     <a href="/">macOSdb</a> &rsaquo; <a href="/macos/">macOS</a> &rsaquo; {title}
   </nav>
 
-  <header class="release-header">
-    <h1 data-pagefind-weight="2">{title}</h1>
-    <div class="meta" data-pagefind-ignore>
-      <span>Build <code>{release.buildNumber}</code></span>
-      {release.releaseDate && <span>{formatDate(release.releaseDate, 'long')}</span>}
-      {release.isBeta && <Badge variant="beta" />}
-      {release.isRC && <Badge variant="rc" />}
-      {release.isDeviceSpecific && <Badge variant="device" />}
-      {
-        release.ipswURL && (
-          <a href={release.ipswURL} class="ipsw-link">
-            Download IPSW
-          </a>
-        )
-      }
-      {
-        previousSlug && (
-          <a href={`/macos/compare/?from=${previousSlug}&to=${currentSlug}`} class="compare-link">
-            Compare with previous
-          </a>
-        )
-      }
-    </div>
-  </header>
+  <ReleaseHeader
+    title={title}
+    buildNumber={release.buildNumber}
+    releaseDate={release.releaseDate}
+    isBeta={release.isBeta}
+    isRC={release.isRC}
+    isDeviceSpecific={release.isDeviceSpecific}
+  >
+    {release.ipswURL && <a href={release.ipswURL}>Download IPSW</a>}
+    {previousSlug && <a href={`/macos/compare/?from=${previousSlug}&to=${currentSlug}`}>Compare with previous</a>}
+  </ReleaseHeader>
 
   <KernelInfo darwinVersion={darwinVersion} xnuVersion={xnuVersion} />
   <ComponentTable components={release.components} basePath="/macos" />
@@ -137,42 +109,8 @@ const structuredData = [
     color: var(--color-text-secondary);
   }
 
-  .release-header {
-    margin-bottom: 2.5rem;
-  }
-
-  .release-header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-  }
-
-  .meta {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    color: var(--color-text-secondary);
-  }
-
-  .ipsw-link,
-  .compare-link {
-    font-size: 0.85rem;
-    color: var(--color-link);
-  }
-
   section h2 {
     font-size: 1.3rem;
     margin-bottom: 1rem;
-  }
-
-  @media (max-width: 640px) {
-    .release-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .meta {
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
   }
 </style>

@@ -1,0 +1,103 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="About — macOSdb"
+  description="How macOSdb catalogs open-source components across macOS and Xcode releases for Apple silicon."
+>
+  <nav class="breadcrumb" data-pagefind-ignore>
+    <a href="/">macOSdb</a> &rsaquo; About
+  </nav>
+
+  <h1>About macOSdb</h1>
+
+  <div class="content">
+    <p>
+      macOSdb catalogs which versions of open-source components ship with each macOS and Xcode release for Apple
+      silicon. Every release is scanned directly from Apple's IPSW firmware files and Xcode archives to extract version
+      strings from binaries, the dyld shared cache, and SDK headers.
+    </p>
+
+    <h2>What's tracked</h2>
+    <p>
+      Over 30 open-source components are tracked across every release, including curl, OpenSSH, SQLite, zsh, Python,
+      Ruby, LibreSSL, and more. For macOS releases, kernel and hardware support data shows which chip families and
+      devices are supported by each build.
+    </p>
+
+    <h2>How scanning works</h2>
+    <p>For macOS releases:</p>
+    <ol>
+      <li>Download the IPSW firmware file from Apple</li>
+      <li>Extract and mount the system disk image</li>
+      <li>Scan filesystem binaries for embedded version strings</li>
+      <li>Extract components from the dyld shared cache</li>
+      <li>Parse kernelcaches to identify supported chips and devices</li>
+    </ol>
+    <p>For Xcode releases:</p>
+    <ol>
+      <li>Download the XIP archive from Apple</li>
+      <li>Extract the Xcode application bundle</li>
+      <li>Scan toolchain binaries for version strings</li>
+      <li>Parse SDK headers for component versions</li>
+    </ol>
+
+    <h2>Data freshness</h2>
+    <p>
+      New releases are typically scanned and published the same day Apple makes them available. When the scanner is
+      improved to extract additional components, all existing releases are rescanned so the catalog stays consistent.
+    </p>
+
+    <h2>Source and license</h2>
+    <p>
+      The scanning tools and website are open source under AGPL-3.0. Release data is published under CC-BY-4.0. Both are
+      available on <a href="https://github.com/p-linnane/macOSdb">GitHub</a>.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+
+  .content {
+    max-width: 700px;
+  }
+
+  .content p {
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .content h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .content ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .content li {
+    line-height: 1.7;
+    margin-bottom: 0.25rem;
+  }
+
+  @media (max-width: 640px) {
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+import ComparePage from './ComparePage.astro';
+import { getCollection } from 'astro:content';
+import { displayName } from '../lib/utils';
+import { compareReleases } from '../lib/api';
+import type { ProductConfig } from '../lib/products';
+
+interface Props {
+  product: ProductConfig;
+  url: URL;
+}
+
+const { product, url } = Astro.props;
+
+const allReleases = await getCollection(product.indexCollection);
+const releases = allReleases.sort(
+  (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
+);
+
+const releaseOptions = releases.map((entry) => ({
+  key: `${entry.data.osVersion}-${entry.data.buildNumber}`,
+  label: `${displayName(entry.data, product.includeReleaseName, product.label)} (${entry.data.buildNumber})`,
+}));
+
+const fromKey = url.searchParams.get('from');
+const toKey = url.searchParams.get('to');
+const result = fromKey && toKey ? await compareReleases(product.key, fromKey, toKey) : null;
+
+let title = `Compare ${product.label} Releases — macOSdb`;
+let description = `Compare open-source components between ${product.label} releases.`;
+if (result) {
+  title = `${result.from} vs ${result.to} — macOSdb`;
+  const parts: string[] = [];
+  if (result.summary.upgraded > 0) parts.push(`${result.summary.upgraded} upgraded`);
+  if (result.summary.downgraded > 0) parts.push(`${result.summary.downgraded} downgraded`);
+  if (result.summary.added > 0) parts.push(`${result.summary.added} added`);
+  if (result.summary.removed > 0) parts.push(`${result.summary.removed} removed`);
+  if (parts.length > 0) {
+    description = `Component changes: ${parts.join(', ')}.`;
+  } else {
+    description = `No component differences between ${result.from} and ${result.to}.`;
+  }
+}
+---
+
+<ComparePage
+  title={title}
+  description={description}
+  productLabel={product.label}
+  basePath={product.key}
+  releaseOptions={releaseOptions}
+  fromKey={fromKey}
+  toKey={toKey}
+  result={result}
+/>
