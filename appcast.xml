@@ -3,31 +3,37 @@
     <channel>
         <title>macOSdb</title>
         <item>
-            <title>1.10.1</title>
-            <pubDate>Fri, 03 Apr 2026 16:25:50 +0000</pubDate>
-            <sparkle:version>19</sparkle:version>
-            <sparkle:shortVersionString>1.10.1</sparkle:shortVersionString>
+            <title>1.11.0</title>
+            <pubDate>Mon, 06 Apr 2026 15:28:24 +0000</pubDate>
+            <sparkle:version>20</sparkle:version>
+            <sparkle:shortVersionString>1.11.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <description><![CDATA[<h2>What&#x27;s New</h2>
 <ul>
-  <li>serve Sparkle appcast from macosdb.com</li>
-  <li>extend API with component, compare, and latest endpoints</li>
-  <li>migrate from GitHub Pages to Cloudflare Workers</li>
-  <li>add SSR compare endpoint, cache headers, and Cloudflare adapter</li>
-  <li>SSR compare pages and move API products section</li>
+  <li>add `--json` flag to `list`, `show`, and `compare` commands</li>
+  <li>add mobile navigation modal</li>
+  <li>display full kernel architecture table on release pages</li>
+  <li>show device marketing names in hardware support grid</li>
+  <li>show device marketing names and add component browser</li>
 </ul>
 <h2>Fixes</h2>
 <ul>
-  <li>skip ZIP validation for `.xip` archives in `validate` command</li>
-  <li>use Wrangler 4 for Cloudflare Workers deploy</li>
-  <li>replace `wrangler-action` with direct `npx wrangler deploy`</li>
-  <li>disable `workers.dev` and preview URLs</li>
+  <li>add `actions: write` permission to release job</li>
+  <li>correct libexslt version extraction to use `LIBEXSLT_VERSION`</li>
+  <li>log warnings for silent `try?` failures</li>
+  <li>log actual error when hdiutil plist parsing fails</li>
+  <li>align CLI, app, README, and tests for Xcode product parity</li>
+  <li>register `ValidateCommand` in bundled CLI and remove dead code</li>
 </ul>
-<h2>Documentation</h2>
+<h2>Performance</h2>
 <ul>
-  <li>update README and CLAUDE.md for current state</li>
+  <li>enable client prerendering, queued rendering, and caching</li>
+</ul>
+<h2>Under the Hood</h2>
+<ul>
+  <li>deduplicate macOS/Xcode pages and add about/404 pages</li>
 </ul>]]></description>
-            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.10.1/macOSdb-1.10.1.zip" length="2769539" type="application/octet-stream" sparkle:edSignature="dePoihyethI2W/Whdg2Xj2hc3OeqVj43UeRYCyQjo6er5jKok3x7DmRWlQ42FK2zNJLzrjpiFQYAOW6G4LrVBw=="/>
+            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.11.0/macOSdb-1.11.0.zip" length="2825016" type="application/octet-stream" sparkle:edSignature="bxfU6FbqwBgL2yPB6Ll4+hnwF8tG8TdL4N8aeHw7BFVulLv8b6w6GJzr4ChSo9jX6G9lcHP0s1HwDziLpN42BQ=="/>
         </item>
     </channel>
 </rss>
