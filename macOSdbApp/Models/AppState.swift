@@ -23,6 +23,33 @@ final class AppState {
     var isComparing = false
     var showBetas = true
     var showDeviceSpecific = false
+    var sidebarMode: SidebarMode = .releases
+    var selectedComponentName: String?
+
+    // MARK: - Types
+
+    enum SidebarMode: String, CaseIterable {
+        case releases = "Releases"
+        case components = "Components"
+    }
+
+    struct ComponentSummary: Identifiable, Hashable {
+        let name: String
+        let latestVersion: String
+        let source: ComponentSource
+        let path: String
+        var id: String { name }
+    }
+
+    struct ComponentVersionEntry: Identifiable {
+        let version: String
+        let releaseName: String
+        let releaseDate: String?
+        let isBeta: Bool
+        let isRC: Bool
+        let direction: ChangeDirection?
+        var id: String { "\(releaseName)-\(version)" }
+    }
 
     // MARK: - Derived
 
@@ -56,6 +83,72 @@ final class AppState {
         guard let from = selectedRelease,
               let target = compareRelease else { return nil }
         return VersionComparer.compare(from: from, to: target)
+    }
+
+    var allComponents: [ComponentSummary] {
+        let filtered = releases.filter { release in
+            (showBetas || !release.isPrerelease) && (showDeviceSpecific || !release.isDeviceSpecific)
+        }
+        let sorted = filtered.sorted(by: >)
+
+        var seen = Set<String>()
+        var result: [ComponentSummary] = []
+        for release in sorted {
+            for comp in release.components where seen.insert(comp.name).inserted {
+                result.append(ComponentSummary(
+                    name: comp.name,
+                    latestVersion: comp.displayVersion,
+                    source: comp.source,
+                    path: comp.path
+                ))
+            }
+        }
+        return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    var filteredComponents: [ComponentSummary] {
+        let search = searchText.trimmingCharacters(in: .whitespaces)
+        guard !search.isEmpty else { return allComponents }
+        return allComponents.filter {
+            $0.name.localizedCaseInsensitiveContains(search)
+                || $0.latestVersion.localizedCaseInsensitiveContains(search)
+        }
+    }
+
+    func componentHistory(for name: String) -> [ComponentVersionEntry] {
+        let filtered = releases.filter { release in
+            (showBetas || !release.isPrerelease) && (showDeviceSpecific || !release.isDeviceSpecific)
+        }
+
+        var versionMap: [String: Release] = [:]
+        for release in filtered.sorted(by: <) {
+            guard let comp = release.component(named: name) else { continue }
+            let ver = comp.displayVersion
+            if versionMap[ver] == nil {
+                versionMap[ver] = release
+            }
+        }
+
+        let sorted = versionMap.keys.sorted {
+            VersionComparer.compareVersionStrings($0, $1) == .upgraded
+        }
+
+        let entries: [ComponentVersionEntry] = sorted.enumerated().map { index, version in
+            let release = versionMap[version]!
+            let direction: ChangeDirection? = index == 0
+                ? nil
+                : VersionComparer.compareVersionStrings(sorted[index - 1], version)
+            return ComponentVersionEntry(
+                version: version,
+                releaseName: release.displayName,
+                releaseDate: release.releaseDate,
+                isBeta: release.isBeta,
+                isRC: release.isRC,
+                direction: direction
+            )
+        }
+
+        return entries.reversed()
     }
 
     // MARK: - Data provider
@@ -106,6 +199,7 @@ final class AppState {
         selectedProduct = product
         selectedRelease = nil
         compareRelease = nil
+        selectedComponentName = nil
         isComparing = false
         releases = []
         Task { await refresh() }

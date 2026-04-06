@@ -136,9 +136,10 @@ private struct ChipCard: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(devices, id: \.self) { device in
-                    Text(device)
+                    Text(DeviceRegistry.info(for: device)?.marketingName ?? device)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .help(device)
                 }
             }
         }
