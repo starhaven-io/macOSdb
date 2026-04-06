@@ -293,7 +293,11 @@ private struct KernelCard: View {
                 Text(kernel.arch)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(kernel.devices.joined(separator: ", "))
+                Text(
+                    kernel.devices
+                        .map { DeviceRegistry.info(for: $0)?.marketingName ?? $0 }
+                        .joined(separator: ", ")
+                )
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

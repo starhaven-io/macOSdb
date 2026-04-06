@@ -16,33 +16,41 @@ struct ContentView: View {
         } detail: {
             if appState.isComparing, appState.comparison != nil {
                 CompareView()
+            } else if appState.sidebarMode == .components, let name = appState.selectedComponentName {
+                ComponentDetailView(componentName: name)
             } else if appState.selectedRelease != nil {
                 ReleaseDetailView()
             } else {
                 ContentUnavailableView(
-                    "Select a Release",
-                    systemImage: "apple.logo",
-                    description: Text("Choose a release from the sidebar to view its components.")
+                    appState.sidebarMode == .components ? "Select a Component" : "Select a Release",
+                    systemImage: appState.sidebarMode == .components ? "shippingbox" : "apple.logo",
+                    description: Text(
+                        appState.sidebarMode == .components
+                            ? "Choose a component from the sidebar to view its version history."
+                            : "Choose a release from the sidebar to view its components."
+                    )
                 )
             }
         }
         .searchable(text: $state.searchText, prompt: "Filter components")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                if appState.isComparing {
-                    Button {
-                        appState.endCompare()
-                    } label: {
-                        Label("Done", systemImage: "xmark.circle")
+                if appState.sidebarMode == .releases {
+                    if appState.isComparing {
+                        Button {
+                            appState.endCompare()
+                        } label: {
+                            Label("Done", systemImage: "xmark.circle")
+                        }
+                        .help("Exit comparison mode")
+                    } else if appState.selectedRelease != nil {
+                        Button {
+                            appState.startCompare()
+                        } label: {
+                            Label("Compare", systemImage: "square.split.2x1")
+                        }
+                        .help("Compare with another release")
                     }
-                    .help("Exit comparison mode")
-                } else if appState.selectedRelease != nil {
-                    Button {
-                        appState.startCompare()
-                    } label: {
-                        Label("Compare", systemImage: "square.split.2x1")
-                    }
-                    .help("Compare with another release")
                 }
             }
         }
