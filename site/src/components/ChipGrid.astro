@@ -7,6 +7,8 @@ interface Props {
   kernels: Kernel[];
 }
 
+import { deviceDisplayName } from '../lib/deviceNames';
+
 const { kernels } = Astro.props;
 
 const chipFamilies: Record<string, { device: string; chip: string }[]> = {};
@@ -26,13 +28,23 @@ const hasChips = Object.keys(chipFamilies).length > 0;
   hasChips && (
     <section class="hardware" data-pagefind-ignore>
       <h2>Hardware Support</h2>
+      <p class="hardware-hint">Click a device name to show its model identifier.</p>
       <div class="chip-grid">
         {Object.entries(chipFamilies).map(([chip, devices]) => (
           <div class="chip-card">
             <h3>{chip}</h3>
             <ul>
               {devices.map((d) => (
-                <li>{d.device}</li>
+                <li>
+                  <button
+                    type="button"
+                    class="device-toggle"
+                    data-model={d.device}
+                    data-name={deviceDisplayName(d.device)}
+                  >
+                    {deviceDisplayName(d.device)}
+                  </button>
+                </li>
               ))}
             </ul>
           </div>
@@ -48,6 +60,12 @@ const hasChips = Object.keys(chipFamilies).length > 0;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--color-border);
+  }
+
+  .hardware-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
   }
 
   .chip-grid {
@@ -81,10 +99,35 @@ const hasChips = Object.keys(chipFamilies).length > 0;
     list-style: none;
     font-size: 0.85rem;
     color: var(--color-text-secondary);
-    font-family: var(--font-mono);
   }
 
   .chip-card li {
     padding: 0.15rem 0;
   }
+
+  .device-toggle {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .device-toggle:hover {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+  }
 </style>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.device-toggle') as HTMLButtonElement | null;
+    if (!btn) return;
+    const isModel = btn.classList.toggle('showing-model');
+    btn.textContent = isModel ? btn.dataset.model! : btn.dataset.name!;
+  });
+</script>
