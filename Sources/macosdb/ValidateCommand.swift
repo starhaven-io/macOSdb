@@ -162,7 +162,7 @@ struct ValidateCommand: AsyncParsableCommand {
 }
 
 private extension URL {
-    var isReadableFile: Bool {
+    nonisolated var isReadableFile: Bool {
         (try? checkResourceIsReachable()) == true
     }
 }

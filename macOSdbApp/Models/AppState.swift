@@ -99,12 +99,6 @@ final class AppState {
         }
 
         isLoading = false
-        if pendingCounterpartVersion != nil {
-            // Defer selection to next run loop so the List has time to render with new data
-            Task { @MainActor in
-                selectPendingCounterpart()
-            }
-        }
     }
 
     func switchProduct(_ product: ProductType) {
@@ -115,28 +109,6 @@ final class AppState {
         isComparing = false
         releases = []
         Task { await refresh() }
-    }
-
-    private var pendingCounterpartVersion: String?
-
-    func navigateToCounterpart(_ release: Release, in targetProduct: ProductType) {
-        pendingCounterpartVersion = release.osVersion
-        switchProduct(targetProduct)
-    }
-
-    private func selectPendingCounterpart() {
-        guard let version = pendingCounterpartVersion else { return }
-        pendingCounterpartVersion = nil
-
-        let parts = version.split(separator: ".")
-        let major = parts.first.flatMap { Int($0) }
-        let minor = parts.count > 1 ? Int(parts[1]) : nil
-
-        selectedRelease = releases.first { $0.osVersion == version }
-            ?? releases.first {
-                $0.majorVersion == major && $0.minorVersion == minor
-            }
-            ?? releases.first { $0.majorVersion == major }
     }
 
     func startCompare() {
