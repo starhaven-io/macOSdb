@@ -24,6 +24,7 @@
 		CDAA000C2F6A0001005A8490 /* EntryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAA00062F6A0001005A8490 /* EntryPoint.swift */; };
 		CDAA000D2F6A0001005A8490 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = CDAA00112F6A0001005A8490 /* ArgumentParser */; };
 		CDAA00222F6A0002005A8490 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDAA00202F6A0002005A8490 /* Assets.xcassets */; };
+		CDC3BCAD2F8360AC00380644 /* ValidateCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC3BCAC2F8360AC00380644 /* ValidateCommand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +43,7 @@
 		CDAA00052F6A0001005A8490 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		CDAA00062F6A0001005A8490 /* EntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryPoint.swift; sourceTree = "<group>"; };
 		CDAA00202F6A0002005A8490 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CDC3BCAC2F8360AC00380644 /* ValidateCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidateCommand.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 				CDAA00042F6A0001005A8490 /* ScanCommand.swift */,
 				CDAA00032F6A0001005A8490 /* ShowCommand.swift */,
 				CDAA00052F6A0001005A8490 /* Utilities.swift */,
+				CDC3BCAC2F8360AC00380644 /* ValidateCommand.swift */,
 			);
 			name = CommandLine;
 			path = Sources/macosdb;
@@ -170,7 +173,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					CD7238CE2F5F7DCF0027E06F = {
 						CreatedOnToolsVersion = 26.3;
@@ -245,6 +248,7 @@
 				CD7EEB8B2F5F8038005A8490 /* AppState.swift in Sources */,
 				CDAA000C2F6A0001005A8490 /* EntryPoint.swift in Sources */,
 				CDAA00072F6A0001005A8490 /* ListCommand.swift in Sources */,
+				CDC3BCAD2F8360AC00380644 /* ValidateCommand.swift in Sources */,
 				CDAA00082F6A0001005A8490 /* CompareCommand.swift in Sources */,
 				CDAA00092F6A0001005A8490 /* ShowCommand.swift in Sources */,
 				CDAA000A2F6A0001005A8490 /* ScanCommand.swift in Sources */,
@@ -289,6 +293,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 927JGANW46;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -315,6 +320,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -354,6 +360,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 927JGANW46;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -373,6 +380,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
