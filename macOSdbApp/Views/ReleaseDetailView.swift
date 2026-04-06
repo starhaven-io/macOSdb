@@ -69,22 +69,9 @@ struct ReleaseDetailView: View {
                         Label("Download", systemImage: "arrow.down.circle")
                     }
                 }
-                if let counterpart = counterpartProduct(for: release) {
-                    Button {
-                        appState.navigateToCounterpart(release, in: counterpart)
-                    } label: {
-                        Label(counterpart.displayName, systemImage: "arrow.triangle.swap")
-                    }
-                }
             }
             .font(.callout)
             .foregroundStyle(.secondary)
-        }
-    }
-
-    private func counterpartProduct(for release: Release) -> ProductType? {
-        switch release.resolvedProductType {
-        case .macOS, .xcode: nil
         }
     }
 
