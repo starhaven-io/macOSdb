@@ -9,17 +9,10 @@ on:
       - "macOSdbApp/**"
       - "Package.swift"
       - "Package.resolved"
-  pull_request:
-    paths:
-      - "Sources/**"
-      - "macOSdbApp/**"
-      - "Package.swift"
-      - "Package.resolved"
-      - ".github/workflows/codeql.yml"
 
 concurrency:
   group: "codeql-${{ github.ref }}"
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 defaults:
   run:
