@@ -24,7 +24,7 @@ struct MacOSdbCLI: AsyncParsableCommand {
         commandName: "macosdb",
         abstract: "Browse and compare open source components bundled in macOS releases.",
         version: appVersion,
-        subcommands: [ListCommand.self, ShowCommand.self, CompareCommand.self, ScanCommand.self, ValidateCommand.self]
+        subcommands: [CleanupCommand.self, CompareCommand.self, ListCommand.self, ScanCommand.self, ShowCommand.self, ValidateCommand.self]
     )
 
     /// Falls back to the enclosing `.app` bundle when `Bundle.main` misses (e.g. symlink invocation).

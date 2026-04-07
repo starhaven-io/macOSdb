@@ -113,14 +113,21 @@ struct ValidateCommand: AsyncParsableCommand {
         var bytesRead = 0
 
         while true {
-            let chunk = handle.readData(ofLength: bufSize)
-            guard !chunk.isEmpty else { break }
-            hasher.update(data: chunk)
-            bytesRead += chunk.count
-            if fileSize > 0 {
-                let pct = bytesRead * 100 / fileSize
-                printInline("  Hashing... \(pct)%")
+            var finished = false
+            autoreleasepool {
+                let chunk = handle.readData(ofLength: bufSize)
+                guard !chunk.isEmpty else {
+                    finished = true
+                    return
+                }
+                hasher.update(data: chunk)
+                bytesRead += chunk.count
+                if fileSize > 0 {
+                    let pct = bytesRead * 100 / fileSize
+                    printInline("  Hashing... \(pct)%")
+                }
             }
+            if finished { break }
         }
 
         printInline("")

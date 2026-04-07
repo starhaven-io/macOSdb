@@ -7,6 +7,6 @@ struct MacOSdb: AsyncParsableCommand {
         commandName: "macosdb",
         abstract: "Browse and compare open source components bundled in macOS and Xcode releases.",
         version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev",
-        subcommands: [ListCommand.self, ShowCommand.self, CompareCommand.self, ScanCommand.self, ValidateCommand.self]
+        subcommands: [CleanupCommand.self, CompareCommand.self, ListCommand.self, ScanCommand.self, ShowCommand.self, ValidateCommand.self]
     )
 }
