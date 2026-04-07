@@ -26,6 +26,7 @@
 		CDAA000D2F6A0001005A8490 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = CDAA00112F6A0001005A8490 /* ArgumentParser */; };
 		CDAA00222F6A0002005A8490 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDAA00202F6A0002005A8490 /* Assets.xcassets */; };
 		CDC3BCAD2F8360AC00380644 /* ValidateCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC3BCAC2F8360AC00380644 /* ValidateCommand.swift */; };
+		CDC4C3AB2F84C68400425D25 /* CleanupCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC4C3AA2F84C68400425D25 /* CleanupCommand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 		CDAA00062F6A0001005A8490 /* EntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryPoint.swift; sourceTree = "<group>"; };
 		CDAA00202F6A0002005A8490 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CDC3BCAC2F8360AC00380644 /* ValidateCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidateCommand.swift; sourceTree = "<group>"; };
+		CDC4C3AA2F84C68400425D25 /* CleanupCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupCommand.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 		CDAA000E2F6A0001005A8490 /* CommandLine */ = {
 			isa = PBXGroup;
 			children = (
+				CDC4C3AA2F84C68400425D25 /* CleanupCommand.swift */,
 				CDAA00022F6A0001005A8490 /* CompareCommand.swift */,
 				CDAA00012F6A0001005A8490 /* ListCommand.swift */,
 				CDAA00042F6A0001005A8490 /* ScanCommand.swift */,
@@ -248,6 +251,7 @@
 				CD7EEB882F5F8038005A8490 /* CompareView.swift in Sources */,
 				CD7EEB892F5F8038005A8490 /* ReleaseDetailView.swift in Sources */,
 				CD7EEB8A2F5F8038005A8490 /* ChipSupportView.swift in Sources */,
+				CDC4C3AB2F84C68400425D25 /* CleanupCommand.swift in Sources */,
 				CD7EEB8B2F5F8038005A8490 /* AppState.swift in Sources */,
 				CDAA000C2F6A0001005A8490 /* EntryPoint.swift in Sources */,
 				CDAA00072F6A0001005A8490 /* ListCommand.swift in Sources */,
