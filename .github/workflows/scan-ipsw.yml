@@ -198,6 +198,9 @@ jobs:
           fi
           .build/release/macosdb scan "${SCAN_ARGS[@]}"
 
+      - name: Generate SHA-256 sidecar
+        run: .build/release/macosdb validate "${IPSW_FILE}"
+
       - name: Commit and push
         run: |
           NEW_FILE=$(git ls-files --others --exclude-standard 'data/macos/releases/')
