@@ -37,6 +37,36 @@ struct ComponentExtractorTests {
         #expect(component?.version == "9.9p2")
     }
 
+    @Test("Extract sudo version with pN patch suffix")
+    func extractSudoWithPatch() async {
+        var bytes: [UInt8] = [0x00]
+        bytes.append(contentsOf: "1.9.17p2".utf8)
+        bytes.append(0x00)
+        bytes.append(contentsOf: "sudoers 1.9.17p2".utf8)
+        bytes.append(0x00)
+        bytes.append(contentsOf: "1.4.1".utf8)
+        bytes.append(0x00)
+
+        let data = Data(bytes)
+        let def = filesystemComponents.first { $0.name == "sudo" }!
+        let component = await ComponentExtractor.extract(from: data, using: def)
+
+        #expect(component?.version == "1.9.17p2")
+    }
+
+    @Test("Extract sudo version without pN suffix (pre-CVE Big Sur)")
+    func extractSudoBareVersion() async {
+        var bytes: [UInt8] = [0x00]
+        bytes.append(contentsOf: "1.8.31".utf8)
+        bytes.append(0x00)
+
+        let data = Data(bytes)
+        let def = filesystemComponents.first { $0.name == "sudo" }!
+        let component = await ComponentExtractor.extract(from: data, using: def)
+
+        #expect(component?.version == "1.8.31")
+    }
+
     @Test("Integer decode for libxml2")
     func extractLibxml2IntegerDecode() async {
         var bytes: [UInt8] = [0x00]

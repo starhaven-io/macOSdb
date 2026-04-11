@@ -126,7 +126,7 @@ public let filesystemComponents: [ComponentDefinition] = [
         name: "sudo",
         path: "usr/bin/sudo",
         source: .filesystem,
-        pattern: #"[0-9]+\.[0-9]+\.[0-9]+p[0-9]+"#,
+        pattern: #"[0-9]+\.[0-9]+\.[0-9]+(?:p[0-9]+)?"#,
 
         normalize: identity,
         strategy: .regex
