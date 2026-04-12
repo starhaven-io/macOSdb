@@ -49,7 +49,9 @@ jobs:
   scan:
     name: Scan
     runs-on: scanner
-    environment: starhaven
+    environment:
+      name: starhaven
+      deployment: false
     permissions:
       contents: read
     steps:
