@@ -87,6 +87,12 @@
       "version" : "3.39.0"
     },
     {
+      "name" : "sudo",
+      "path" : "/usr/bin/sudo",
+      "source" : "filesystem",
+      "version" : "1.9.5p2"
+    },
+    {
       "name" : "vim",
       "path" : "/usr/bin/vim",
       "source" : "filesystem",
