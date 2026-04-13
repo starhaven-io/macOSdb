@@ -1,10 +1,14 @@
-name: Scan IPSW
+name: Scan XIP
 
 on:
   workflow_dispatch:
     inputs:
-      ipsw_url:
-        description: "IPSW download URL"
+      xip_url:
+        description: "Xcode XIP download URL"
+        required: true
+        type: string
+      build_number:
+        description: "Build number (e.g. 17E5170d)"
         required: true
         type: string
       release_date:
@@ -29,11 +33,6 @@ on:
         description: "RC number (e.g. 2). Omit for just RC"
         required: false
         type: string
-      device_specific:
-        description: "Device-specific build (e.g. M3 launch build)"
-        required: false
-        type: boolean
-        default: false
 
 defaults:
   run:
@@ -71,38 +70,39 @@ jobs:
           fetch-depth: 0
 
       - name: Clean workspace
-        run: git clean -fdx data/macos/releases/
+        run: git clean -fdx data/xcode/releases/
 
-      - name: Resolve IPSW path
+      - name: Resolve XIP path
         env:
-          IPSW_URL: ${{ inputs.ipsw_url }}
+          XIP_URL: ${{ inputs.xip_url }}
+          BUILD: ${{ inputs.build_number }}
         run: |
-          ORIG_NAME=$(basename "${IPSW_URL%%\?*}")
-          VERSION=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_([0-9.]+)_.*/\1/')
-          BUILD=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_[0-9.]+_([^_]+)_.*/\1/')
+          XIP_PATH=$(echo "${XIP_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
+          ORIG_NAME=$(basename "${XIP_PATH}")
+          VERSION=$(echo "${ORIG_NAME}" | sed -E 's/Xcode_([0-9]+(\.[0-9]+)*).*/\1/')
           MAJOR=${VERSION%%.*}
-          IPSW_DIR="/Volumes/macOS-Archive/macOS/${MAJOR}"
-          mkdir -p "${IPSW_DIR}"
-          IPSW_FILE="${IPSW_DIR}/macOS-${VERSION}-${BUILD}.ipsw"
-          echo "IPSW_FILE=${IPSW_FILE}" >> "${GITHUB_ENV}"
+          XIP_DIR="/Volumes/macOS-Archive/Xcode/${MAJOR}"
+          mkdir -p "${XIP_DIR}"
+          XIP_FILE="${XIP_DIR}/Xcode-${VERSION}-${BUILD}.xip"
+          echo "XIP_FILE=${XIP_FILE}" >> "${GITHUB_ENV}"
 
-      - name: Download IPSW
+      - name: Download XIP
         env:
-          IPSW_URL: ${{ inputs.ipsw_url }}
+          XIP_URL: ${{ inputs.xip_url }}
         run: |
           set +x
-          if [[ -f "${IPSW_FILE}" ]]; then
-            echo "IPSW already cached at ${IPSW_FILE}, skipping download"
+          if [[ -f "${XIP_FILE}" ]]; then
+            echo "XIP already cached at ${XIP_FILE}, skipping download"
           else
-            TOTAL=$(curl -sSLI --retry 5 --retry-connrefused "${IPSW_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
+            TOTAL=$(curl -sSLI --retry 5 --retry-connrefused "${XIP_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
             TOTAL_MB=$(( TOTAL / 1048576 ))
             TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
-            echo "Downloading IPSW ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
-            curl -sSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o "${IPSW_FILE}.part" "${IPSW_URL}" &
+            echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
+            curl -sSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o "${XIP_FILE}.part" "${XIP_URL}" &
             CURL_PID=$!
             while kill -0 "${CURL_PID}" 2>/dev/null; do
-              if [[ -f "${IPSW_FILE}.part" ]]; then
-                SIZE=$(stat -f%z "${IPSW_FILE}.part" 2>/dev/null || echo 0)
+              if [[ -f "${XIP_FILE}.part" ]]; then
+                SIZE=$(stat -f%z "${XIP_FILE}.part" 2>/dev/null || echo 0)
                 SIZE_MB=$(( SIZE / 1048576 ))
                 PCT=$(( SIZE_MB * 100 / TOTAL_MB ))
                 echo "${PCT}% (${SIZE_MB} MB / ${TOTAL_MB} MB)"
@@ -110,15 +110,15 @@ jobs:
               sleep 30
             done
             wait "${CURL_PID}"
-            mv "${IPSW_FILE}.part" "${IPSW_FILE}"
+            mv "${XIP_FILE}.part" "${XIP_FILE}"
           fi
 
-      - name: Set IPSW modification time to release date
+      - name: Set XIP modification time to release date
         env:
           RELEASE_DATE: ${{ inputs.release_date }}
         run: |
           TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
-          touch -t "${TOUCH_DATE}" "${IPSW_FILE}"
+          touch -t "${TOUCH_DATE}" "${XIP_FILE}"
 
       - name: Restore CLI build cache
         id: cache-cli
@@ -144,24 +144,22 @@ jobs:
           git reset --hard origin/main
           echo "BASE_SHA=$(git rev-parse HEAD)" >> "${GITHUB_ENV}"
 
-      - name: Scan IPSW
+      - name: Scan XIP
         env:
-          IPSW_URL: ${{ inputs.ipsw_url }}
+          XIP_URL: ${{ inputs.xip_url }}
           RELEASE_DATE: ${{ inputs.release_date }}
           IS_BETA: ${{ inputs.beta }}
           BETA_NUMBER: ${{ inputs.beta_number }}
           IS_RC: ${{ inputs.rc }}
           RC_NUMBER: ${{ inputs.rc_number }}
-          IS_DEVICE_SPECIFIC: ${{ inputs.device_specific }}
         run: |
           SCAN_ARGS=(
-            "${IPSW_FILE}"
-            --output data/macos/releases
+            "${XIP_FILE}"
+            --output data/xcode/releases
             --release-date "${RELEASE_DATE}"
             --update-index
             --verbose
-            --save-aea-key
-            --ipsw-url "${IPSW_URL}"
+            --xip-url "${XIP_URL}"
           )
           if [[ "${IS_BETA}" == "true" ]]; then
             SCAN_ARGS+=(--beta)
@@ -175,20 +173,17 @@ jobs:
           if [[ -n "${RC_NUMBER}" ]]; then
             SCAN_ARGS+=(--rc-number "${RC_NUMBER}")
           fi
-          if [[ "${IS_DEVICE_SPECIFIC}" == "true" ]]; then
-            SCAN_ARGS+=(--device-specific)
-          fi
           .build/release/macosdb scan "${SCAN_ARGS[@]}"
 
       - name: Generate SHA-256 sidecar
-        run: .build/release/macosdb validate "${IPSW_FILE}"
+        run: .build/release/macosdb validate "${XIP_FILE}"
 
       - name: Create signed commit and open PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           REPOSITORY: ${{ github.repository }}
-          IPSW_URL: ${{ inputs.ipsw_url }}
+          XIP_URL: ${{ inputs.xip_url }}
           RELEASE_DATE: ${{ inputs.release_date }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
@@ -196,12 +191,12 @@ jobs:
           BOT_USER="${APP_SLUG}[bot]"
           BOT_ID=$(gh api "/users/${BOT_USER}" --jq .id)
 
-          NEW_RELEASE_FILE=$(git ls-files --others --exclude-standard 'data/macos/releases/')
+          NEW_RELEASE_FILE=$(git ls-files --others --exclude-standard 'data/xcode/releases/')
           BASENAME=$(basename "${NEW_RELEASE_FILE}" .json)
           BRANCH="feat/data-${BASENAME}"
           TITLE="feat(data): add ${BASENAME}"
-          printf -v PR_BODY '## Summary\n- Scanned from IPSW: `%s`\n- Release date: %s\n\nAuto-generated by the [scan workflow](%s).' \
-            "${IPSW_URL}" "${RELEASE_DATE}" "${RUN_URL}"
+          printf -v PR_BODY '## Summary\n- Scanned from XIP: `%s`\n- Release date: %s\n\nAuto-generated by the [scan workflow](%s).' \
+            "${XIP_URL}" "${RELEASE_DATE}" "${RUN_URL}"
           COMMIT_BODY="Signed-off-by: ${BOT_USER} <${BOT_ID}+${BOT_USER}@users.noreply.github.com>"
 
           if [[ -n "${TRIGGERING_ACTOR}" ]]; then
@@ -212,9 +207,9 @@ jobs:
           fi
 
           # Stage untracked files as intent-to-add so git diff sees them.
-          git add -N data/
+          git add -N data/xcode/
           ADDITIONS=$(
-            git diff --name-only HEAD -- data/ |
+            git diff --name-only HEAD -- data/xcode/ |
             while IFS= read -r file; do
               CONTENT=$(base64 < "$file" | tr -d '\n')
               jq -n --arg path "$file" --arg contents "$CONTENT" \
