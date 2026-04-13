@@ -143,7 +143,7 @@ export async function getLatestRelease(product: Product) {
   const sorted = allReleases.sort(
     (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
   );
-  return sorted.find((r) => !r.data.isBeta && !r.data.isRC)?.data ?? null;
+  return sorted[0]?.data ?? null;
 }
 
 export async function compareReleases(product: Product, fromId: string, toId: string): Promise<CompareResult | null> {
