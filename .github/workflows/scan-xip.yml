@@ -94,7 +94,7 @@ jobs:
           set +x
           if [[ -f "${XIP_FILE}" ]]; then
             FILE_TYPE=$(file -b "${XIP_FILE}")
-            if [[ "${FILE_TYPE}" == *"XAR"* ]]; then
+            if [[ "${FILE_TYPE}" == *"xar"* || "${FILE_TYPE}" == *"XAR"* ]]; then
               echo "XIP already cached at ${XIP_FILE}, skipping download"
               exit 0
             fi
@@ -121,7 +121,7 @@ jobs:
           TOTAL_MB=$(( TOTAL / 1048576 ))
           TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
           echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
-          curl -SL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" -o "${XIP_FILE}.part" "${CDN_URL}" &
+          curl -sSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" -o "${XIP_FILE}.part" "${CDN_URL}" &
           CURL_PID=$!
           while kill -0 "${CURL_PID}" 2>/dev/null; do
             if [[ -f "${XIP_FILE}.part" ]]; then
@@ -139,7 +139,7 @@ jobs:
         run: |
           FILE_SIZE=$(stat -f%z "${XIP_FILE}")
           FILE_TYPE=$(file -b "${XIP_FILE}")
-          if (( FILE_SIZE < 104857600 )) || [[ "${FILE_TYPE}" != *"XAR"* ]]; then
+          if (( FILE_SIZE < 104857600 )) || { [[ "${FILE_TYPE}" != *"xar"* ]] && [[ "${FILE_TYPE}" != *"XAR"* ]]; }; then
             echo "::error::Downloaded file is not a valid XIP (${FILE_TYPE}, $(( FILE_SIZE / 1024 )) KB). The ADC_DOWNLOAD_AUTH cookie may be expired — refresh it from developer.apple.com and update the secret."
             rm -f "${XIP_FILE}"
             exit 1
