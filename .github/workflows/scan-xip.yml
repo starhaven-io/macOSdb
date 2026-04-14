@@ -89,29 +89,56 @@ jobs:
       - name: Download XIP
         env:
           XIP_URL: ${{ inputs.xip_url }}
+          ADC_DOWNLOAD_AUTH: ${{ secrets.ADC_DOWNLOAD_AUTH }}
         run: |
           set +x
           if [[ -f "${XIP_FILE}" ]]; then
             echo "XIP already cached at ${XIP_FILE}, skipping download"
-          else
-            TOTAL=$(curl -sSLI --retry 5 --retry-connrefused "${XIP_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
-            TOTAL_MB=$(( TOTAL / 1048576 ))
-            TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
-            echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
-            curl -sSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o "${XIP_FILE}.part" "${XIP_URL}" &
-            CURL_PID=$!
-            while kill -0 "${CURL_PID}" 2>/dev/null; do
-              if [[ -f "${XIP_FILE}.part" ]]; then
-                SIZE=$(stat -f%z "${XIP_FILE}.part" 2>/dev/null || echo 0)
-                SIZE_MB=$(( SIZE / 1048576 ))
-                PCT=$(( SIZE_MB * 100 / TOTAL_MB ))
-                echo "${PCT}% (${SIZE_MB} MB / ${TOTAL_MB} MB)"
-              fi
-              sleep 30
-            done
-            wait "${CURL_PID}"
-            mv "${XIP_FILE}.part" "${XIP_FILE}"
+            exit 0
           fi
+
+          if [[ -z "${ADC_DOWNLOAD_AUTH}" ]]; then
+            echo "::error::ADC_DOWNLOAD_AUTH secret is not set. Set it with: gh secret set ADC_DOWNLOAD_AUTH --env starhaven"
+            exit 1
+          fi
+
+          CDN_PATH=$(echo "${XIP_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
+          CDN_URL="https://adcdownload.apple.com${CDN_PATH}"
+
+          HTTP_STATUS=$(curl -sSI -o /dev/null -w '%{http_code}' -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}")
+          if [[ "${HTTP_STATUS}" != "200" ]]; then
+            echo "::error::Apple CDN returned HTTP ${HTTP_STATUS}. The ADC_DOWNLOAD_AUTH cookie is likely expired — refresh it from developer.apple.com and update the secret."
+            exit 1
+          fi
+
+          TOTAL=$(curl -sSI -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
+          TOTAL_MB=$(( TOTAL / 1048576 ))
+          TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
+          echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
+          curl -SL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" -o "${XIP_FILE}.part" "${CDN_URL}" &
+          CURL_PID=$!
+          while kill -0 "${CURL_PID}" 2>/dev/null; do
+            if [[ -f "${XIP_FILE}.part" ]]; then
+              SIZE=$(stat -f%z "${XIP_FILE}.part" 2>/dev/null || echo 0)
+              SIZE_MB=$(( SIZE / 1048576 ))
+              PCT=$(( SIZE_MB * 100 / TOTAL_MB ))
+              echo "${PCT}% (${SIZE_MB} MB / ${TOTAL_MB} MB)"
+            fi
+            sleep 30
+          done
+          wait "${CURL_PID}"
+          mv "${XIP_FILE}.part" "${XIP_FILE}"
+
+      - name: Validate XIP
+        run: |
+          FILE_SIZE=$(stat -f%z "${XIP_FILE}")
+          FILE_TYPE=$(file -b "${XIP_FILE}")
+          if (( FILE_SIZE < 104857600 )) || [[ "${FILE_TYPE}" != *"XAR"* ]]; then
+            echo "::error::Downloaded file is not a valid XIP (${FILE_TYPE}, $(( FILE_SIZE / 1024 )) KB). The ADC_DOWNLOAD_AUTH cookie may be expired — refresh it from developer.apple.com and update the secret."
+            rm -f "${XIP_FILE}"
+            exit 1
+          fi
+          echo "XIP validated: $(( FILE_SIZE / 1073741824 )) GB, ${FILE_TYPE}"
 
       - name: Set XIP modification time to release date
         env:
