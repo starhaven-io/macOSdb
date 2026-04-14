@@ -84,11 +84,12 @@ jobs:
           XIP_DIR="/Volumes/macOS-Archive/Xcode/${MAJOR}"
           mkdir -p "${XIP_DIR}"
           XIP_FILE="${XIP_DIR}/Xcode-${VERSION}-${BUILD}.xip"
+          CDN_URL="https://adcdownload.apple.com${XIP_PATH}"
           echo "XIP_FILE=${XIP_FILE}" >> "${GITHUB_ENV}"
+          echo "CDN_URL=${CDN_URL}" >> "${GITHUB_ENV}"
 
       - name: Download XIP
         env:
-          XIP_URL: ${{ inputs.xip_url }}
           ADC_DOWNLOAD_AUTH: ${{ secrets.ADC_DOWNLOAD_AUTH }}
         run: |
           set +x
@@ -106,9 +107,6 @@ jobs:
             echo "::error::ADC_DOWNLOAD_AUTH secret is not set. Set it with: gh secret set ADC_DOWNLOAD_AUTH --env starhaven"
             exit 1
           fi
-
-          CDN_PATH=$(echo "${XIP_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
-          CDN_URL="https://adcdownload.apple.com${CDN_PATH}"
 
           HTTP_STATUS=$(curl -sSI -o /dev/null -w '%{http_code}' -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}")
           CONTENT_TYPE=$(curl -sSI -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}" | grep -i content-type | tail -1 | tr -d '\r')
@@ -179,7 +177,6 @@ jobs:
 
       - name: Scan XIP
         env:
-          XIP_URL: ${{ inputs.xip_url }}
           RELEASE_DATE: ${{ inputs.release_date }}
           IS_BETA: ${{ inputs.beta }}
           BETA_NUMBER: ${{ inputs.beta_number }}
@@ -192,7 +189,7 @@ jobs:
             --release-date "${RELEASE_DATE}"
             --update-index
             --verbose
-            --xip-url "${XIP_URL}"
+            --xip-url "${CDN_URL}"
           )
           if [[ "${IS_BETA}" == "true" ]]; then
             SCAN_ARGS+=(--beta)
