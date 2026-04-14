@@ -105,13 +105,15 @@ jobs:
           CDN_PATH=$(echo "${XIP_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
           CDN_URL="https://adcdownload.apple.com${CDN_PATH}"
 
-          HTTP_STATUS=$(curl -sSI -o /dev/null -w '%{http_code}' -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}")
-          if [[ "${HTTP_STATUS}" != "200" ]]; then
-            echo "::error::Apple CDN returned HTTP ${HTTP_STATUS}. The ADC_DOWNLOAD_AUTH cookie is likely expired — refresh it from developer.apple.com and update the secret."
+          HEAD_RESPONSE=$(curl -sSI -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}")
+          HTTP_STATUS=$(echo "${HEAD_RESPONSE}" | head -1 | tr -dc '0-9')
+          CONTENT_TYPE=$(echo "${HEAD_RESPONSE}" | grep -i content-type | tail -1 | tr -d '\r')
+          if [[ "${HTTP_STATUS}" != "200" ]] || [[ "${CONTENT_TYPE}" == *"text/html"* ]]; then
+            echo "::error::Apple CDN returned HTTP ${HTTP_STATUS} (${CONTENT_TYPE}). The ADC_DOWNLOAD_AUTH cookie is likely expired — refresh it from developer.apple.com and update the secret."
             exit 1
           fi
 
-          TOTAL=$(curl -sSI -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
+          TOTAL=$(echo "${HEAD_RESPONSE}" | grep -i content-length | tail -1 | tr -dc '0-9')
           TOTAL_MB=$(( TOTAL / 1048576 ))
           TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
           echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
