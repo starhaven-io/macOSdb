@@ -208,6 +208,13 @@ jobs:
       - name: Generate SHA-256 sidecar
         run: .build/release/macosdb validate "${XIP_FILE}"
 
+      - name: Lock archive files
+        run: |
+          touch -r "${XIP_FILE}" "${XIP_FILE}.sha256"
+          for f in "${XIP_FILE}" "${XIP_FILE}.sha256"; do
+            [[ -f "$f" ]] && chflags uchg "$f"
+          done
+
       - name: Create signed commit and open PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}

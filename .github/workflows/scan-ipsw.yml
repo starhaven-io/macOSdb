@@ -183,6 +183,13 @@ jobs:
       - name: Generate SHA-256 sidecar
         run: .build/release/macosdb validate "${IPSW_FILE}"
 
+      - name: Lock archive files
+        run: |
+          touch -r "${IPSW_FILE}" "${IPSW_FILE}.sha256"
+          for f in "${IPSW_FILE}" "${IPSW_FILE}.pem" "${IPSW_FILE}.sha256"; do
+            [[ -f "$f" ]] && chflags uchg "$f"
+          done
+
       - name: Create signed commit and open PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
