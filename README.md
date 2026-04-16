@@ -1,6 +1,6 @@
 # macOSdb
 
-[![CI](https://github.com/p-linnane/macOSdb/actions/workflows/check.yml/badge.svg)](https://github.com/p-linnane/macOSdb/actions/workflows/check.yml)
+[![CI](https://github.com/p-linnane/macOSdb/actions/workflows/ci.yml/badge.svg)](https://github.com/p-linnane/macOSdb/actions/workflows/ci.yml)
 [![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg)](LICENSE)
 [![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
 
@@ -120,9 +120,11 @@ A [justfile](https://github.com/casey/just) provides common tasks:
 
 ```bash
 just build          # Build the Swift package
+just clean          # Clean Swift build artifacts
 just test           # Run Swift tests
 just lint           # Run SwiftLint (--strict)
 just lint-json      # Validate JSON data files
+just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows
 just build-app      # Build the app with xcodebuild
 just test-xcode     # Run tests with xcodebuild (matches CI)

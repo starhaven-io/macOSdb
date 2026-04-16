@@ -11,7 +11,7 @@ macOSdb is a native macOS app and CLI that catalogs which versions of open-sourc
 - **Bundle ID:** `io.linnane.macosdb`
 - **License:** AGPL-3.0-only (code), CC-BY-4.0 (data)
 - **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction)
-- **Website:** https://macosdb.com (Astro static site, deployed to GitHub Pages)
+- **Website:** https://macosdb.com (Astro static site, deployed to Cloudflare Workers)
 
 ## Repository structure
 
@@ -23,7 +23,7 @@ macOSdb/
 │   ├── macOSdbKit/                        # Shared library
 │   │   ├── Models/                        # Release, Component, KernelInfo, ChipFamily, DeviceRegistry, ProductType, SDKInfo, VersionComparison
 │   │   ├── Scanner/                       # IPSW/Xcode scanning pipeline
-│   │   ├── DataProvider.swift             # Fetch JSON from HTTPS (GitHub raw) or local files
+│   │   ├── DataProvider.swift             # Fetch JSON from HTTPS (macosdb.com/api/v1/) or local files
 │   │   └── VersionComparer.swift          # Diff components across releases
 │   └── macosdb/                           # CLI executable (swift-argument-parser)
 ├── macOSdbApp/                            # SwiftUI app sources (built by Xcode project)
@@ -36,6 +36,7 @@ macOSdb/
 │   │   ├── ContentView.swift              # NavigationSplitView root
 │   │   ├── SidebarView.swift              # Collapsible release groups, pre-release toggle
 │   │   ├── ReleaseDetailView.swift        # Component table, kernel info, chips
+│   │   ├── ComponentDetailView.swift      # Per-component version history
 │   │   ├── CompareView.swift              # Side-by-side diff with color-coded changes
 │   │   └── ChipSupportView.swift          # Chip/device support grouped by generation
 │   └── Resources/
@@ -45,7 +46,7 @@ macOSdb/
 │   │   ├── pages/                         # index, release/[slug], compare, components, component/[name]
 │   │   │   ├── api/v1/                    # JSON API endpoints (macos + xcode releases)
 │   │   │   └── og/                        # Dynamic Open Graph image generation
-│   │   ├── components/                    # Badge, ChipGrid, ComponentTable, KernelInfo, StructuredData
+│   │   ├── components/                    # Badge, ChipGrid, ComparePage, ComponentTable, KernelInfo, ProductCompare, ProductComponentDetail, ProductComponents, ProductIndex, ProductReleases, ReleaseHeader, StructuredData
 │   │   ├── layouts/                       # Base.astro
 │   │   ├── lib/                           # utils.ts
 │   │   └── styles/                        # global.css
@@ -133,14 +134,14 @@ SwiftUI app with NavigationSplitView (default window 1000×700):
 - Sidebar: collapsible DisclosureGroup sections by major version (descending), beta badges, show/hide pre-releases toggle
 - Detail: sortable component table, kernel info, chip/device support grouped by generation
 - Compare view: side-by-side diff with color-coded summary badges
-- AppState: uses `#filePath` to find local `data/` directory, falls back to GitHub raw URLs
+- AppState: uses `#filePath` to find local `data/` directory, falls back to `macosdb.com/api/v1/`
 - App is built by `macOSdb.xcodeproj`; macOSdbKit is added as a local SPM dependency
 - Distribution: Developer ID signed and notarized, Sparkle auto-updates (appcast on `appcast` branch, `SUFeedURL` in `Info.plist`), not sandboxed
 - Category: Utilities (`public.app-category.utilities`)
 
 ### Site (site/)
 
-Astro static site at [macosdb.com](https://macosdb.com). Reads JSON from `data/` at build time via Zod-validated content collections. Deployed to GitHub Pages via `deploy-site.yml`.
+Astro static site at [macosdb.com](https://macosdb.com). Reads JSON from `data/` at build time via Zod-validated content collections. Deployed to Cloudflare Workers via `deploy-site.yml` (uses `@astrojs/cloudflare` adapter and `wrangler deploy`).
 
 **Pages:**
 - Release index with pre-release filter toggle and full-text search (Pagefind)
@@ -152,7 +153,7 @@ Astro static site at [macosdb.com](https://macosdb.com). Reads JSON from `data/`
 
 **API:** REST endpoints at `/api/v1/` serve release data for both macOS and Xcode, mirroring the `data/` directory structure.
 
-**Components:** `Badge`, `ChipGrid`, `ComponentTable`, `KernelInfo`, `StructuredData`
+**Components:** `Badge`, `ChipGrid`, `ComparePage`, `ComponentTable`, `KernelInfo`, `ProductCompare`, `ProductComponentDetail`, `ProductComponents`, `ProductIndex`, `ProductReleases`, `ReleaseHeader`, `StructuredData`
 
 ### Data format
 
@@ -184,13 +185,13 @@ macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia,
 
 ## CI workflows (.github/workflows/)
 
-- **build.yml** — Test on PR with Thread Sanitizer and Address Sanitizer (parallel jobs, xcodebuild)
-- **check.yml** — Unified PR checks: runs `just check` (lint, lint-json, test, audit, site format check, site build)
-- **conventional-commits.yml** — Validate PR titles and commit messages match Conventional Commits format
-- **codeql.yml** — CodeQL security analysis for Swift
-- **zizmor.yml** — GitHub Actions security audit (SARIF output, uploaded to Security tab)
-- **scan-ipsw.yml** — Self-hosted IPSW scanning workflow
-- **deploy-site.yml** — Build and deploy Astro site to GitHub Pages
+- **ci.yml** — Unified PR checks with a dynamic matrix based on changed paths: Conventional Commits, SwiftLint, Thread Sanitizer + Address Sanitizer tests, CodeQL, lint-json, Site format check + build, zizmor
+- **codeql.yml** — Scheduled CodeQL security analysis for Swift
+- **zizmor.yml** — Scheduled GitHub Actions security audit (SARIF output, uploaded to Security tab)
+- **pinprick-audit.yml** — Scheduled dependency/supply-chain audit
+- **scan-ipsw.yml** — Self-hosted IPSW scanning workflow (dispatch-only)
+- **scan-xip.yml** — Self-hosted Xcode `.xip` scanning workflow (dispatch-only)
+- **deploy-site.yml** — Build and deploy Astro site to Cloudflare Workers
 - **release.yml** — Manual dispatch: build, sign (Developer ID), notarize, create GitHub release with formatted notes and Sparkle appcast update
 
 ## Commit conventions
@@ -201,7 +202,7 @@ Common types: `feat`, `fix`, `refactor`, `docs`, `ci`, `chore`
 
 All commits must:
 - Use `git commit -s` for DCO sign-off
-- Include a `Co-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>` trailer when authored with Claude
+- Include a `Co-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>` trailer when authored with Claude
 
 ## Git workflow
 
