@@ -25,6 +25,7 @@
 /api/*
   Cache-Control: public, max-age=3600
   Access-Control-Allow-Origin: *
+  ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
 
 /appcast.xml
