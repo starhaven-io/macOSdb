@@ -22,6 +22,16 @@
     "releaseName" : "Xcode 26.5"
   },
   {
+    "buildNumber" : "17E202",
+    "dataFile" : "releases/26/Xcode-26.4.1-17E202.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "26.4.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2026-04-16",
+    "releaseName" : "Xcode 26.4.1"
+  },
+  {
     "buildNumber" : "17E192",
     "dataFile" : "releases/26/Xcode-26.4-17E192.json",
     "isBeta" : false,
