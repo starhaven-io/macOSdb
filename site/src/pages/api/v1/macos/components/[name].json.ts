@@ -11,10 +11,10 @@ export const GET: APIRoute = async ({ params }) => {
   if (!history) {
     return new Response(JSON.stringify({ error: 'Component not found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
   return new Response(JSON.stringify(history, null, 2), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

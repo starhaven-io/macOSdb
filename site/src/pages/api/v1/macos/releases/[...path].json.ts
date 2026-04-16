@@ -21,6 +21,6 @@ export const GET: APIRoute = ({ props }) => {
   const data = fs.readFileSync(path.join(dataDir, props.dataFile), 'utf-8');
 
   return new Response(data, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

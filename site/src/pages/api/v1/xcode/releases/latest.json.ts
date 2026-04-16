@@ -6,10 +6,10 @@ export const GET: APIRoute = async () => {
   if (!latest) {
     return new Response(JSON.stringify({ error: 'No release found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
   return new Response(JSON.stringify(latest, null, 2), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

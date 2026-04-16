@@ -7,6 +7,6 @@ export const GET: APIRoute = () => {
   const releases = fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8');
 
   return new Response(releases, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

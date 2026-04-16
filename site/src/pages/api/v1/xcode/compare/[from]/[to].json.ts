@@ -8,10 +8,10 @@ export const GET: APIRoute = async ({ params }) => {
   if (!result) {
     return new Response(JSON.stringify({ error: 'One or both releases not found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
   return new Response(JSON.stringify(result, null, 2), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };
