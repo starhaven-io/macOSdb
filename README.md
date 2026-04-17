@@ -1,6 +1,6 @@
 # macOSdb
 
-[![CI](https://github.com/p-linnane/macOSdb/actions/workflows/ci.yml/badge.svg)](https://github.com/p-linnane/macOSdb/actions/workflows/ci.yml)
+[![CI](https://github.com/starhaven-io/macOSdb/actions/workflows/ci.yml/badge.svg)](https://github.com/starhaven-io/macOSdb/actions/workflows/ci.yml)
 [![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg)](LICENSE)
 [![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
 
@@ -27,12 +27,12 @@ Requires macOS 15.0+ and Apple Silicon. Building from source requires Xcode 26+.
 ### Homebrew
 
 ```bash
-brew install p-linnane/tap/macosdb
+brew install starhaven-io/tap/macosdb
 ```
 
 ### App
 
-Download the latest release from [GitHub Releases](https://github.com/p-linnane/macOSdb/releases), unzip, and move to `/Applications`. The app includes Sparkle for automatic updates.
+Download the latest release from [GitHub Releases](https://github.com/starhaven-io/macOSdb/releases), unzip, and move to `/Applications`. The app includes Sparkle for automatic updates.
 
 ### Build from source
 
