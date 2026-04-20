@@ -85,12 +85,19 @@ struct ReleaseDetailView: View {
                 .fontWeight(.semibold)
 
             ForEach(sdks) { sdk in
-                Label("SDK \(sdk.sdkVersion)", systemImage: "sdcard")
+                Label(sdkLabel(sdk), systemImage: "sdcard")
                     .font(.headline)
                     .padding(12)
                     .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
             }
         }
+    }
+
+    private func sdkLabel(_ sdk: SDKInfo) -> String {
+        if let build = sdk.buildVersion {
+            return "SDK \(sdk.sdkVersion) (\(build))"
+        }
+        return "SDK \(sdk.sdkVersion)"
     }
 
     // MARK: - Components

@@ -16,9 +16,25 @@ enum SDKMetadataParser {
             return nil
         }
 
-        logger.debug("macOS SDK \(version)")
+        let sdkRoot = path.deletingLastPathComponent()
+        let buildVersion = parseSDKBuildVersion(sdkRoot: sdkRoot)
 
-        return SDKInfo(sdkVersion: version)
+        logger.debug("macOS SDK \(version) (build \(buildVersion ?? "unknown"))")
+
+        return SDKInfo(sdkVersion: version, buildVersion: buildVersion)
+    }
+
+    static func parseSDKBuildVersion(sdkRoot: URL) -> String? {
+        let plistPath = sdkRoot.appendingPathComponent(
+            "System/Library/CoreServices/SystemVersion.plist"
+        )
+        guard let data = try? Data(contentsOf: plistPath),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil)
+                  as? [String: Any],
+              let build = plist["ProductBuildVersion"] as? String else {
+            return nil
+        }
+        return build
     }
 
     // MARK: - SDK component extraction

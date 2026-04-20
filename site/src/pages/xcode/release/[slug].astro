@@ -34,7 +34,7 @@ interface Props {
     rcNumber?: number;
     minimumOSVersion?: string;
     xipURL?: string;
-    sdks?: { sdkVersion: string }[];
+    sdks?: { sdkVersion: string; buildVersion?: string }[];
     components: { name: string; version?: string | null; path: string; source: string }[];
   };
   previousSlug: string | null;
@@ -90,7 +90,10 @@ const structuredData = [
         <h2>Bundled SDKs</h2>
         <div class="sdk-list">
           {release.sdks.map((sdk) => (
-            <span class="sdk-badge">macOS {sdk.sdkVersion}</span>
+            <span class="sdk-badge">
+              macOS {sdk.sdkVersion}
+              {sdk.buildVersion && <span class="sdk-build">({sdk.buildVersion})</span>}
+            </span>
           ))}
         </div>
       </section>
@@ -128,5 +131,10 @@ const structuredData = [
     border-radius: 6px;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
+  }
+
+  .sdk-build {
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
   }
 </style>
