@@ -284,13 +284,18 @@ jobs:
             --body "${PR_BODY}"
 
           echo "SCAN_BRANCH=${BRANCH}" >> "${GITHUB_ENV}"
+          {
+            echo "COMMIT_BODY<<EOF"
+            echo "${COMMIT_BODY}"
+            echo "EOF"
+          } >> "${GITHUB_ENV}"
 
       - name: Auto-merge pull request
         timeout-minutes: 30
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh pr merge "${SCAN_BRANCH}" --squash --auto --delete-branch
+          gh pr merge "${SCAN_BRANCH}" --squash --auto --delete-branch --body "${COMMIT_BODY}"
           echo "Waiting for PR to merge..."
           while true; do
             STATE=$(gh pr view "${SCAN_BRANCH}" --json state -q .state)
