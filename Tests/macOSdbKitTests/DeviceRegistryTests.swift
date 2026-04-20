@@ -77,30 +77,6 @@ struct DeviceRegistryTests {
         let info = DeviceRegistry.info(for: "Mac16,1")
         #expect(info?.chip == .m4)
         #expect(info?.marketingName == "MacBook Pro (14-inch, M4, Late 2024)")
-        #expect(info?.introduced == "2024-11")
-    }
-
-    // MARK: - Date filtering
-
-    @Test("Filter devices by introduction date")
-    func filterByDate() {
-        // Mac14,2 introduced 2022-06, Mac14,3 introduced 2023-01, Mac14,15 introduced 2023-06
-        let devices = ["Mac14,2", "Mac14,3", "Mac14,7", "Mac14,15"]
-
-        let by2022 = DeviceRegistry.filterByIntroductionDate(devices, onOrBefore: "2022-10")
-        #expect(by2022.contains("Mac14,2"))
-        #expect(by2022.contains("Mac14,7"))
-        #expect(!by2022.contains("Mac14,3"))
-        #expect(!by2022.contains("Mac14,15"))
-    }
-
-    @Test("Filter preserves unknown devices")
-    func filterPreservesUnknown() {
-        let devices = ["Mac14,2", "UnknownMac99,1"]
-        let filtered = DeviceRegistry.filterByIntroductionDate(devices, onOrBefore: "2020-01")
-        // Mac14,2 (2022-06) is excluded, unknown device is kept
-        #expect(!filtered.contains("Mac14,2"))
-        #expect(filtered.contains("UnknownMac99,1"))
     }
 
     // MARK: - Coverage
@@ -110,8 +86,6 @@ struct DeviceRegistryTests {
         for (model, info) in DeviceRegistry.allDevices {
             #expect(info.model == model, "Model key mismatch for \(model)")
             #expect(!info.marketingName.isEmpty, "Missing marketing name for \(model)")
-            #expect(info.introduced.count == 7, "Invalid date format for \(model): \(info.introduced)")
-            #expect(info.introduced.contains("-"), "Invalid date format for \(model): \(info.introduced)")
         }
     }
 }

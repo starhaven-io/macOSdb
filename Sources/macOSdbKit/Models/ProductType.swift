@@ -13,11 +13,6 @@ public enum ProductType: String, Codable, Sendable, CaseIterable {
         }
     }
 
-    /// Short label for use in file paths and CLI output.
-    public var shortName: String {
-        rawValue
-    }
-
     /// Subdirectory under `data/` for this product's releases.
     public var dataDirectory: String {
         switch self {

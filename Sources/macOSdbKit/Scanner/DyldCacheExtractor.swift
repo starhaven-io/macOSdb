@@ -11,14 +11,10 @@ public enum DyldCacheExtractor {
     // MARK: - Cache header structures (matching dyld_cache_format.h)
 
     private enum HeaderOffsets {
-        static let magic: Int = 0                    // char[16]
         static let mappingOffset: Int = 16           // uint32_t
-        static let mappingCount: Int = 20            // uint32_t
         static let imagesOffsetOld: Int = 24         // uint32_t (imagesOffset in old format)
-        static let imagesCountOld: Int = 28          // uint32_t (imagesCount in old format)
-        // Extended header fields (dyld4 format, macOS 12+)
+        // Extended header field (dyld4 format, macOS 12+)
         static let imagesTextOffset: Int = 136       // uint64_t (imagesTextOffset)
-        static let imagesTextCount: Int = 144        // uint64_t (imagesTextCount)
     }
 
     private enum ImageTableFormat: CustomStringConvertible {

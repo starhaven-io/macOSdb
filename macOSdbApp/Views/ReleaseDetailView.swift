@@ -168,7 +168,7 @@ struct ReleaseDetailView: View {
     @ViewBuilder
     private func chipSection(_ release: Release) -> some View {
         if !release.supportedChips.isEmpty {
-            ChipSupportView(kernels: release.kernels, chips: release.supportedChips)
+            ChipSupportView(kernels: release.kernels)
         }
     }
 

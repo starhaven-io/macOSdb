@@ -101,15 +101,6 @@ public struct Release: Codable, Identifiable, Hashable, Sendable {
         return result
     }
 
-    public var supportedDevices: [String] {
-        kernels.flatMap(\.devices)
-            .reduce(into: [String]()) { result, device in
-                if !result.contains(device) {
-                    result.append(device)
-                }
-            }
-    }
-
     /// The resolved product type, defaulting to `.macOS` for backward compatibility with existing JSON.
     public var resolvedProductType: ProductType {
         productType ?? .macOS
