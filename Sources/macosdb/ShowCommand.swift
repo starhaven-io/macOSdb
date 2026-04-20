@@ -60,7 +60,11 @@ struct ShowCommand: AsyncParsableCommand {
         if let sdks = release.sdks, !sdks.isEmpty {
             print("macOS SDKs:")
             for sdk in sdks {
-                print("  SDK \(sdk.sdkVersion)")
+                if let build = sdk.buildVersion {
+                    print("  SDK \(sdk.sdkVersion) (\(build))")
+                } else {
+                    print("  SDK \(sdk.sdkVersion)")
+                }
             }
             print("")
         }

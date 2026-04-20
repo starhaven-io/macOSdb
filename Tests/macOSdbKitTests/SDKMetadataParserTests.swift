@@ -28,6 +28,42 @@ struct SDKMetadataParserTests {
         let sdk = SDKMetadataParser.parseSDKSettingsJSON(at: settingsPath)
         #expect(sdk != nil)
         #expect(sdk?.sdkVersion == "15.2")
+        #expect(sdk?.buildVersion == nil)
+    }
+
+    @Test("Parse SDKSettings.json alongside SystemVersion.plist picks up build number")
+    func parseSDKSettingsWithBuildVersion() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-test-\(UUID().uuidString)")
+        let coreServices = tempDir.appendingPathComponent("System/Library/CoreServices")
+        try FileManager.default.createDirectory(at: coreServices, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let settings = """
+        {"Version": "26.4"}
+        """
+        try settings.write(
+            to: tempDir.appendingPathComponent("SDKSettings.json"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let plist: [String: Any] = [
+            "ProductVersion": "26.4",
+            "ProductBuildVersion": "25E202"
+        ]
+        let plistData = try PropertyListSerialization.data(
+            fromPropertyList: plist,
+            format: .xml,
+            options: 0
+        )
+        try plistData.write(to: coreServices.appendingPathComponent("SystemVersion.plist"))
+
+        let sdk = SDKMetadataParser.parseSDKSettingsJSON(
+            at: tempDir.appendingPathComponent("SDKSettings.json")
+        )
+        #expect(sdk?.sdkVersion == "26.4")
+        #expect(sdk?.buildVersion == "25E202")
     }
 
     @Test("Parse SDKSettings.json missing Version key returns nil")

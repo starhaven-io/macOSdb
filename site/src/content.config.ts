@@ -65,6 +65,7 @@ const macosReleaseDetailSchema = releaseDetailBaseSchema.extend({
 
 const sdkSchema = z.object({
   sdkVersion: z.string(),
+  buildVersion: z.string().optional(),
 });
 
 const xcodeReleaseDetailSchema = releaseDetailBaseSchema.extend({
