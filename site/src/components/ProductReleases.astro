@@ -17,6 +17,20 @@ const releases = allReleases.sort(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
 );
 
+const isXcode = product.key === 'xcode';
+const minMacOSByID = new Map<string, string>();
+const sdkByID = new Map<string, string>();
+if (isXcode) {
+  const details = await getCollection('xcodeReleaseDetails');
+  for (const entry of details) {
+    if (entry.data.minimumOSVersion) {
+      minMacOSByID.set(entry.id, entry.data.minimumOSVersion);
+    }
+    const sdk = entry.data.sdks?.[0]?.sdkVersion;
+    if (sdk) sdkByID.set(entry.id, sdk);
+  }
+}
+
 const grouped: Record<string, typeof releases> = {};
 const releaseNames: Record<string, string> = {};
 for (const entry of releases) {
@@ -74,16 +88,31 @@ const structuredData = {
         <div class="table-wrapper">
           <table class="js-stripe">
             <colgroup>
-              <col style="width: 30%" />
-              <col style="width: 18%" />
-              <col style="width: 22%" />
-              <col style="width: 30%" />
+              {isXcode ? (
+                <>
+                  <col style="width: 22%" />
+                  <col style="width: 14%" />
+                  <col style="width: 18%" />
+                  <col style="width: 14%" />
+                  <col style="width: 10%" />
+                  <col style="width: 22%" />
+                </>
+              ) : (
+                <>
+                  <col style="width: 30%" />
+                  <col style="width: 18%" />
+                  <col style="width: 22%" />
+                  <col style="width: 30%" />
+                </>
+              )}
             </colgroup>
             <thead>
               <tr>
                 <th>Release</th>
                 <th>Build</th>
                 <th>Date</th>
+                {isXcode && <th>Min macOS</th>}
+                {isXcode && <th>SDK</th>}
                 <th>Type</th>
               </tr>
             </thead>
@@ -99,6 +128,8 @@ const structuredData = {
                     <code>{entry.data.buildNumber}</code>
                   </td>
                   <td>{formatDate(entry.data.releaseDate)}</td>
+                  {isXcode && <td class="min-macos">{minMacOSByID.get(entry.id) ?? '—'}</td>}
+                  {isXcode && <td class="sdk-version">{sdkByID.get(entry.id) ?? '—'}</td>}
                   <td>
                     <div class="type-cell">
                       {entry.data.isBeta ? (
@@ -214,6 +245,12 @@ const structuredData = {
     flex-wrap: wrap;
     gap: 0.25rem;
     align-items: center;
+  }
+
+  .min-macos,
+  .sdk-version {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
   }
 
   tr.filtered {
