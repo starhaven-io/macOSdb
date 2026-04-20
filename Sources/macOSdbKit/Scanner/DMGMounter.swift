@@ -2,16 +2,16 @@ import Foundation
 import OSLog
 
 /// Uses `-nobrowse` and `-readonly` flags for headless read-only mounting.
-public actor DMGMounter {
+actor DMGMounter {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "DMGMounter")
 
-    public struct MountPoint: Sendable {
-        public let path: String
+    struct MountPoint: Sendable {
+        let path: String
         /// Device node (e.g. "/dev/disk4s1") for ejection.
-        public let deviceNode: String
+        let deviceNode: String
     }
 
-    public func mount(dmgPath: URL) async throws -> MountPoint {
+    func mount(dmgPath: URL) async throws -> MountPoint {
         Self.logger.info("Mounting DMG: \(dmgPath.path)")
 
         let process = Process()
@@ -37,7 +37,7 @@ public actor DMGMounter {
         return try parseMountOutput(outputData, dmgPath: dmgPath.path)
     }
 
-    public func unmount(_ mountPoint: MountPoint) async {
+    func unmount(_ mountPoint: MountPoint) async {
         Self.logger.info("Unmounting: \(mountPoint.path)")
 
         let process = Process()

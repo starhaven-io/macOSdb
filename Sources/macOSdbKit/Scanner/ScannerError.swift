@@ -1,6 +1,6 @@
 import Foundation
 
-public enum ScannerError: LocalizedError {
+enum ScannerError: LocalizedError {
     case ipswNotFound(path: String)
     case ipswExtractionFailed(reason: String)
     case systemDMGNotFound
@@ -15,7 +15,7 @@ public enum ScannerError: LocalizedError {
     case xcodeAppNotFound(reason: String)
     case versionPlistNotFound(reason: String)
 
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .ipswNotFound(let path):
             "IPSW file not found: \(path)"

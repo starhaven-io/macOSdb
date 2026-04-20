@@ -309,17 +309,17 @@ extension Release: Comparable {
     }
 }
 
-public enum BuildNumber {
+enum BuildNumber {
     /// Apple beta build numbers end with a lowercase letter (e.g. `25E5207k`),
     /// while release builds end with a digit (e.g. `24G90`).
-    public static func isBeta(_ buildNumber: String) -> Bool {
+    static func isBeta(_ buildNumber: String) -> Bool {
         guard let last = buildNumber.last else { return false }
         return last.isLetter && last.isLowercase
     }
 }
 
-public enum MacOSRelease {
-    public static func name(forMajorVersion major: Int) -> String {
+enum MacOSRelease {
+    static func name(forMajorVersion major: Int) -> String {
         switch major {
         case 11: "Big Sur"
         case 12: "Monterey"

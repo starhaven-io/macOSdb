@@ -3,7 +3,7 @@ import OSLog
 
 /// Minimal parser for Apple's dyld_shared_cache format. Supports both legacy
 /// single-file (macOS 11) and split subcache (macOS 12+) formats.
-public enum DyldCacheExtractor {
+enum DyldCacheExtractor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "DyldCacheExtractor")
 
     private static let cacheMagicPrefix = "dyld_v1"
@@ -56,7 +56,7 @@ public enum DyldCacheExtractor {
     }
 
     @concurrent
-    public static func extractDylibData(cachePath: URL, dylibPath: String) async -> Data? {
+    static func extractDylibData(cachePath: URL, dylibPath: String) async -> Data? {
         guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else {
             logger.warning("Could not open dyld cache: \(cachePath.path)")
             return nil
@@ -169,7 +169,7 @@ public enum DyldCacheExtractor {
         return nil
     }
 
-    public static func listDylibs(cachePath: URL) -> [String] {
+    static func listDylibs(cachePath: URL) -> [String] {
         guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else { return [] }
         defer { try? fileHandle.close() }
 

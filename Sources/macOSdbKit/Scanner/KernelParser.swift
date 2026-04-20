@@ -1,11 +1,11 @@
 import Foundation
 import OSLog
 
-public enum KernelParser {
+enum KernelParser {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "KernelParser")
 
     @concurrent
-    public static func parse(kernelcachePath: URL) async -> KernelInfo? {
+    static func parse(kernelcachePath: URL) async -> KernelInfo? {
         let filename = kernelcachePath.lastPathComponent
 
         guard let data = try? Data(contentsOf: kernelcachePath) else {
@@ -105,7 +105,7 @@ public enum KernelParser {
     /// - `kernelcache.release.VirtualMac2,1` → `["VirtualMac2,1"]`
     /// - `kernelcache.development.Mac16,1_2_3` → `["Mac16,1", "Mac16,2", "Mac16,3"]`
     /// - `kernelcache.release.mac13g` → `[]` (board codename, not device model IDs)
-    public static func parseDevicesFromFilename(_ filename: String) -> [String] {
+    static func parseDevicesFromFilename(_ filename: String) -> [String] {
         var suffix = filename
         for prefix in ["kernelcache.release.", "kernelcache.development."] {
             if let range = suffix.range(of: prefix) {

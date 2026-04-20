@@ -1,18 +1,18 @@
 import Foundation
 
-public struct ComponentDefinition: Sendable {
-    public let name: String
-    public let path: String
+struct ComponentDefinition: Sendable {
+    let name: String
+    let path: String
     /// Alternative path to try if `path` is not found (e.g. older toolchain layouts).
-    public let fallbackPath: String?
-    public let source: ComponentSource
-    public let pattern: String
-    public let normalize: @Sendable (String) -> String
-    public let strategy: ExtractionStrategy
+    let fallbackPath: String?
+    let source: ComponentSource
+    let pattern: String
+    let normalize: @Sendable (String) -> String
+    let strategy: ExtractionStrategy
     /// Minimum printable-ASCII run length for binary string extraction (default: 4).
-    public let minLength: Int?
+    let minLength: Int?
 
-    public init(
+    init(
         name: String,
         path: String,
         fallbackPath: String? = nil,
@@ -35,14 +35,14 @@ public struct ComponentDefinition: Sendable {
 
 /// A component extracted from SDK text files (headers, .tbd files).
 /// Paths are relative to the SDK `usr/` directory.
-public struct SDKComponentDefinition: Sendable {
-    public let name: String
-    public let path: String
-    public let pattern: String
-    public let normalize: @Sendable (String) -> String
+struct SDKComponentDefinition: Sendable {
+    let name: String
+    let path: String
+    let pattern: String
+    let normalize: @Sendable (String) -> String
 }
 
-public enum ExtractionStrategy: Sendable, Equatable {
+enum ExtractionStrategy: Sendable, Equatable {
     case regex
     /// Decode as MAJOR*10000 + MINOR*100 + PATCH (used for libxml2).
     case integerDecode
@@ -75,7 +75,7 @@ private func stripAppleGitSuffix() -> @Sendable (String) -> String {
 
 // MARK: - Filesystem component definitions
 
-public let filesystemComponents: [ComponentDefinition] = [
+let filesystemComponents: [ComponentDefinition] = [
     ComponentDefinition(
         name: "httpd",
         path: "usr/sbin/httpd",
@@ -163,7 +163,7 @@ public let filesystemComponents: [ComponentDefinition] = [
 
 // MARK: - dyld shared cache component definitions
 
-public let dyldCacheComponents: [ComponentDefinition] = [
+let dyldCacheComponents: [ComponentDefinition] = [
     ComponentDefinition(
         name: "libbz2 (bzip2)",
         path: "/usr/lib/libbz2.1.0.dylib",
@@ -247,7 +247,7 @@ public let dyldCacheComponents: [ComponentDefinition] = [
 
 /// Components found in the Xcode toolchain.
 /// Paths are relative to the toolchain root (e.g. `XcodeDefault.xctoolchain/`).
-public let toolchainComponents: [ComponentDefinition] = [
+let toolchainComponents: [ComponentDefinition] = [
     ComponentDefinition(
         name: "Apple Clang",
         path: "usr/bin/clang",
@@ -306,7 +306,7 @@ public let toolchainComponents: [ComponentDefinition] = [
 
 /// Components found in the Xcode Developer directory.
 /// Paths are relative to the Developer root.
-public let developerComponents: [ComponentDefinition] = [
+let developerComponents: [ComponentDefinition] = [
     ComponentDefinition(
         name: "Git",
         path: "usr/bin/git",
@@ -323,7 +323,7 @@ public let developerComponents: [ComponentDefinition] = [
 
 /// Components found in frameworks bundled with Xcode.
 /// Paths are relative to Xcode.app.
-public let frameworkComponents: [ComponentDefinition] = [
+let frameworkComponents: [ComponentDefinition] = [
     ComponentDefinition(
         name: "lldb",
         // Xcode: Contents/SharedFrameworks/LLDB.framework/LLDB
@@ -376,7 +376,7 @@ private let tbdCurrentVersion: (pattern: String, normalize: @Sendable (String) -
 
 /// Components extracted from macOS SDK headers and .tbd files.
 /// Paths are relative to the SDK `usr/` directory.
-public let sdkComponents: [SDKComponentDefinition] = buildSDKComponents()
+let sdkComponents: [SDKComponentDefinition] = buildSDKComponents()
 
 private func buildSDKComponents() -> [SDKComponentDefinition] {
     let tbd = tbdCurrentVersion
