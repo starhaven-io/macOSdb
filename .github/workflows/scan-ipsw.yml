@@ -8,8 +8,8 @@ on:
         required: true
         type: string
       release_date:
-        description: "Release date (ISO 8601, e.g. 2025-04-02)"
-        required: true
+        description: "Release date (ISO 8601, e.g. 2025-04-02). Defaults to today."
+        required: false
         type: string
       beta:
         description: "Is this a beta release?"
@@ -73,6 +73,27 @@ jobs:
       - name: Clean workspace
         run: git clean -fdx data/macos/releases/
 
+      - name: Resolve release date
+        env:
+          INPUT_DATE: ${{ inputs.release_date }}
+        run: |
+          if [[ -z "${INPUT_DATE}" ]]; then
+            RELEASE_DATE=$(date -u +%Y-%m-%d)
+            echo "No release_date provided; defaulting to today (${RELEASE_DATE})"
+          else
+            if ! [[ "${INPUT_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "::error::release_date '${INPUT_DATE}' is not ISO 8601 (YYYY-MM-DD)"
+              exit 1
+            fi
+            TODAY=$(date -u +%Y-%m-%d)
+            if [[ "${INPUT_DATE}" > "${TODAY}" ]]; then
+              echo "::error::release_date '${INPUT_DATE}' is in the future (today is ${TODAY})"
+              exit 1
+            fi
+            RELEASE_DATE="${INPUT_DATE}"
+          fi
+          echo "RELEASE_DATE=${RELEASE_DATE}" >> "${GITHUB_ENV}"
+
       - name: Resolve IPSW path
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
@@ -114,8 +135,6 @@ jobs:
           fi
 
       - name: Set IPSW modification time to release date
-        env:
-          RELEASE_DATE: ${{ inputs.release_date }}
         run: |
           TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
           touch -t "${TOUCH_DATE}" "${IPSW_FILE}"
@@ -147,7 +166,6 @@ jobs:
       - name: Scan IPSW
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
-          RELEASE_DATE: ${{ inputs.release_date }}
           IS_BETA: ${{ inputs.beta }}
           BETA_NUMBER: ${{ inputs.beta_number }}
           IS_RC: ${{ inputs.rc }}
@@ -196,7 +214,6 @@ jobs:
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           REPOSITORY: ${{ github.repository }}
           IPSW_URL: ${{ inputs.ipsw_url }}
-          RELEASE_DATE: ${{ inputs.release_date }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
