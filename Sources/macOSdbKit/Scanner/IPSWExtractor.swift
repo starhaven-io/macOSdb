@@ -2,22 +2,22 @@ import Foundation
 import OSLog
 import ZIPFoundation
 
-public actor IPSWExtractor {
+actor IPSWExtractor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "IPSWExtractor")
 
-    public struct ExtractionResult: Sendable {
-        public let workDirectory: URL
-        public let kernelcaches: [URL]
-        public let systemDMG: URL
+    struct ExtractionResult: Sendable {
+        let workDirectory: URL
+        let kernelcaches: [URL]
+        let systemDMG: URL
         /// Nil for macOS 11–12 (dyld cache is on the system DMG).
-        public let cryptexDMG: URL?
-        public let osVersion: String
-        public let buildNumber: String
+        let cryptexDMG: URL?
+        let osVersion: String
+        let buildNumber: String
         /// From BuildManifest.plist `Ap,ProductType` entries.
-        public let kernelDeviceMap: [String: [String]]
+        let kernelDeviceMap: [String: [String]]
     }
 
-    public func extract(ipswPath: URL) async throws -> ExtractionResult {
+    func extract(ipswPath: URL) async throws -> ExtractionResult {
         guard FileManager.default.fileExists(atPath: ipswPath.path) else {
             throw ScannerError.ipswNotFound(path: ipswPath.path)
         }
@@ -201,7 +201,7 @@ public actor IPSWExtractor {
         return (systemPath, cryptexPath)
     }
 
-    public func readAEAHeader(ipswPath: URL, maxBytes: Int = 256 * 1_024) throws -> Data? {
+    func readAEAHeader(ipswPath: URL, maxBytes: Int = 256 * 1_024) throws -> Data? {
         let archive = try Archive(url: ipswPath, accessMode: .read)
         let classified = classifyEntries(archive)
 
@@ -220,7 +220,7 @@ public actor IPSWExtractor {
         return collected
     }
 
-    public func cleanup(workDirectory: URL) {
+    func cleanup(workDirectory: URL) {
         do {
             try FileManager.default.removeItem(at: workDirectory)
             Self.logger.debug("Cleaned up work directory: \(workDirectory.path)")

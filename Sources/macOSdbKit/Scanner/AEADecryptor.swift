@@ -15,19 +15,19 @@ import OSLog
 /// 3. Unwrap the symmetric decryption key using CryptoKit HPKE
 /// 4. Shell out to `/usr/bin/aea decrypt` with the derived key
 
-public struct AEADecryptionResult: Sendable {
-    public let dmgPath: URL
-    public let privateKeyPEM: String
+struct AEADecryptionResult: Sendable {
+    let dmgPath: URL
+    let privateKeyPEM: String
 }
 
-public actor AEADecryptor {
+actor AEADecryptor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "AEADecryptor")
 
-    public static func isAEA(_ url: URL) -> Bool {
+    static func isAEA(_ url: URL) -> Bool {
         url.pathExtension == "aea"
     }
 
-    public func decrypt(aeaPath: URL, privateKeyPEM: String? = nil) async throws -> AEADecryptionResult {
+    func decrypt(aeaPath: URL, privateKeyPEM: String? = nil) async throws -> AEADecryptionResult {
         let (key, pemString) = try await deriveKey(from: aeaPath, privateKeyPEM: privateKeyPEM)
         let outputPath = aeaPath.deletingPathExtension()
         try runAEADecrypt(input: aeaPath, output: outputPath, key: key)
@@ -35,7 +35,7 @@ public actor AEADecryptor {
         return AEADecryptionResult(dmgPath: outputPath, privateKeyPEM: pemString)
     }
 
-    public func deriveKeyOnly(from headerData: Data) async throws -> String {
+    func deriveKeyOnly(from headerData: Data) async throws -> String {
         let fields = parseAuthData(from: headerData)
         let (_, pemString) = try await unwrapKey(from: fields)
         return pemString

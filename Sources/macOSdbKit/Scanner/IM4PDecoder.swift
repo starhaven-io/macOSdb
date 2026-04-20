@@ -16,12 +16,12 @@ import OSLog
 ///     [optional OCTET STRING keybags]
 /// }
 /// ```
-public enum IM4PDecoder {
+enum IM4PDecoder {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "IM4PDecoder")
 
     private static let maxDecompressedSize = 128 * 1_024 * 1_024
 
-    public static func isIM4P(_ data: Data) -> Bool {
+    static func isIM4P(_ data: Data) -> Bool {
         guard data.count > 16 else { return false }
         // "IM4P" appears within the first 16 bytes of the DER structure
         let magic: [UInt8] = [0x49, 0x4D, 0x34, 0x50] // "IM4P"
@@ -34,7 +34,7 @@ public enum IM4PDecoder {
         }
     }
 
-    public static func extractPayload(from data: Data) -> Data? {
+    static func extractPayload(from data: Data) -> Data? {
         guard isIM4P(data) else {
             logger.debug("Data is not an IM4P container")
             return nil

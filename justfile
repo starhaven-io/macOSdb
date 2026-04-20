@@ -121,6 +121,11 @@ check:
     else
         skip audit zizmor zizmor
     fi
+    if command -v periphery &>/dev/null; then
+        run periphery scan --strict --disable-update-check
+    else
+        skip periphery periphery periphery
+    fi
     run swift test
     echo "--- site-format-check ---"
     (cd site && npm run format:check) || failed=1

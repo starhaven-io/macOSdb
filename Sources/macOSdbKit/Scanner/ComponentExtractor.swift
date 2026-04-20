@@ -1,11 +1,11 @@
 import Foundation
 import OSLog
 
-public enum ComponentExtractor {
+enum ComponentExtractor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "ComponentExtractor")
 
     @concurrent
-    public static func extract(from data: Data, using definition: ComponentDefinition) async -> Component? {
+    static func extract(from data: Data, using definition: ComponentDefinition) async -> Component? {
         logger.debug("Extracting \(definition.name) from \(data.count) bytes")
 
         switch definition.strategy {

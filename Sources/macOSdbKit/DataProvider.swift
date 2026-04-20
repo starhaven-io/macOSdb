@@ -116,10 +116,10 @@ public actor DataProvider {
     }
 }
 
-public enum DataProviderError: LocalizedError {
+enum DataProviderError: LocalizedError {
     case httpError(statusCode: Int, url: URL)
 
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .httpError(let statusCode, let url):
             "HTTP \(statusCode) fetching \(url)"

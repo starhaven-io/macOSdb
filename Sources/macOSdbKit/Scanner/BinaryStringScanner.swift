@@ -2,13 +2,13 @@ import Foundation
 import OSLog
 
 /// Equivalent to the `strings` command — scans binary data for runs of printable ASCII characters.
-public enum BinaryStringScanner {
+enum BinaryStringScanner {
 
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "BinaryStringScanner")
 
-    public static let defaultMinLength = 4
+    static let defaultMinLength = 4
 
-    public static func extractStrings(from data: Data, minLength: Int = defaultMinLength) -> [String] {
+    static func extractStrings(from data: Data, minLength: Int = defaultMinLength) -> [String] {
         var results: [String] = []
         var current: [UInt8] = []
 
@@ -35,7 +35,7 @@ public enum BinaryStringScanner {
         return results
     }
 
-    public static func findFirst(
+    static func findFirst(
         in data: Data,
         matching pattern: String,
         minLength: Int = defaultMinLength
@@ -61,7 +61,7 @@ public enum BinaryStringScanner {
         return nil
     }
 
-    public static func findAll(
+    static func findAll(
         in data: Data,
         matching pattern: String,
         minLength: Int = defaultMinLength
