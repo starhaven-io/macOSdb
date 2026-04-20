@@ -87,6 +87,10 @@ site-install:
 site-preview:
     cd site && npm run preview
 
+# Check for broken links in the built site
+lychee: site-build
+    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html'
+
 # Check
 
 # Run all checks
