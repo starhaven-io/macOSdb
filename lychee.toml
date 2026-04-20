@@ -9,6 +9,10 @@ max_retries = 3
 # Astro SSR pages (prerender = false) aren't written to dist/client,
 # so lychee can't resolve them against the filesystem. They're valid
 # routes on macosdb.com — excluded here, not broken.
+#
+# gnu.org blocks cloud IP ranges (GitHub Actions runners) with 403.
+# The AGPL license URL is a canonical FSF reference; skip verifying it.
 exclude = [
     "^file://.*/(macos|xcode)/compare/?$",
+    "^https://www\\.gnu\\.org/",
 ]
