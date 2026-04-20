@@ -35,11 +35,6 @@ public actor AEADecryptor {
         return AEADecryptionResult(dmgPath: outputPath, privateKeyPEM: pemString)
     }
 
-    public func deriveKeyOnly(from aeaPath: URL) async throws -> String {
-        let (_, pemString) = try await deriveKey(from: aeaPath, privateKeyPEM: nil)
-        return pemString
-    }
-
     public func deriveKeyOnly(from headerData: Data) async throws -> String {
         let fields = parseAuthData(from: headerData)
         let (_, pemString) = try await unwrapKey(from: fields)

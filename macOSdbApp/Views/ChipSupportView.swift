@@ -3,7 +3,6 @@ import SwiftUI
 
 struct ChipSupportView: View {
     let kernels: [KernelInfo]
-    let chips: [ChipFamily]
 
     private let gridColumns = [GridItem(.adaptive(minimum: 200, maximum: 300), spacing: 12)]
 
@@ -37,7 +36,6 @@ struct ChipSupportView: View {
     }
 
     private struct GenerationGroup {
-        let generation: Int
         let label: String
         let chips: [ChipGroup]
     }
@@ -55,16 +53,11 @@ struct ChipSupportView: View {
             let label = group.chip.series.label
             if let index = result.firstIndex(where: { $0.label == label }) {
                 result[index] = GenerationGroup(
-                    generation: group.chip.generation,
                     label: label,
                     chips: result[index].chips + [group]
                 )
             } else {
-                result.append(GenerationGroup(
-                    generation: group.chip.generation,
-                    label: label,
-                    chips: [group]
-                ))
+                result.append(GenerationGroup(label: label, chips: [group]))
             }
         }
         return result

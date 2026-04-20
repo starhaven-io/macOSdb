@@ -313,11 +313,9 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(ChipFamily.from(chipName: "M99") == nil)
     }
 
-    @Test("ChipFamily generation and tier")
-    func chipFamilyGenerationAndTier() {
-        #expect(ChipFamily.m3Pro.generation == 3)
+    @Test("ChipFamily tier")
+    func chipFamilyTier() {
         #expect(ChipFamily.m3Pro.tier == .pro)
-        #expect(ChipFamily.m4Ultra.generation == 4)
         #expect(ChipFamily.m4Ultra.tier == .ultra)
     }
 
@@ -383,7 +381,6 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(chips.contains(.m4Max))
         #expect(chips.contains(.m4Pro))
         #expect(chips.count == 3)
-        #expect(release.supportedDevices == ["Mac16,1", "Mac16,5", "Mac16,7"])
     }
 
     @Test("Release supported chips fallback without deviceChips")

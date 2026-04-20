@@ -1,8 +1,6 @@
 import ArgumentParser
 import SwiftUI
 
-import macOSdbKit
-
 @main
 struct MacOSdbEntryPoint {
     static func main() async throws {

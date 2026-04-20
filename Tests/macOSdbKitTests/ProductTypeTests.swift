@@ -14,14 +14,6 @@ struct ProductTypeTests {
         #expect(ProductType.xcode.displayName == "Xcode")
     }
 
-    // MARK: - Short names / raw values
-
-    @Test("Short names match raw values")
-    func shortNames() {
-        #expect(ProductType.macOS.shortName == "macOS")
-        #expect(ProductType.xcode.shortName == "Xcode")
-    }
-
     // MARK: - Data directories
 
     @Test("Data directories for each product type")

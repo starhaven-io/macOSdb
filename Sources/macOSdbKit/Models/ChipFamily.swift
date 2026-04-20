@@ -68,13 +68,6 @@ public enum ChipFamily: String, CaseIterable, Sendable, Codable {
         }
     }
 
-    public var generation: Int {
-        switch series {
-        case .mSeries(let gen): gen
-        case .aSeries, .other: 0
-        }
-    }
-
     public var tier: ChipTier {
         switch self {
         case .a12z: .base
