@@ -53,6 +53,10 @@ lint:
 lint-json:
     python3 scripts/lint-json.py
 
+# Scan for unused code (uses .periphery.yml)
+periphery:
+    periphery scan
+
 # Check for typos
 typos:
     typos
