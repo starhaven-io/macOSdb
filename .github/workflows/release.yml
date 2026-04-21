@@ -269,3 +269,28 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run "Deploy Site" --repo "${GITHUB_REPOSITORY}"
+
+      - name: Mint bot token for tap
+        id: tap-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: homebrew-tap
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Bump Homebrew cask
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ steps.tap-token.outputs.token }}
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_ENV_HINTS: 1
+          APP_SLUG: ${{ steps.tap-token.outputs.app-slug }}
+        run: |
+          BOT_USER="${APP_SLUG}[bot]"
+          BOT_ID=$(GH_TOKEN="${HOMEBREW_GITHUB_API_TOKEN}" gh api "/users/${BOT_USER}" --jq .id)
+          export HOMEBREW_GIT_NAME="${BOT_USER}"
+          export HOMEBREW_GIT_EMAIL="${BOT_ID}+${BOT_USER}@users.noreply.github.com"
+          brew tap starhaven-io/homebrew-tap
+          brew bump --cask --no-fork --tap starhaven-io/homebrew-tap --version "${TAG}" macosdb
