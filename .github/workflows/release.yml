@@ -270,6 +270,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run "Deploy Site" --repo "${GITHUB_REPOSITORY}"
 
+  bump-cask:
+    name: Bump Homebrew cask
+    needs: [build, release]
+    runs-on: macos-26
+    environment:
+      name: release
+      deployment: false
+    permissions: {}
+    env:
+      TAG: ${{ needs.build.outputs.tag }}
+    steps:
       - name: Mint bot token for tap
         id: tap-token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
