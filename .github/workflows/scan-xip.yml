@@ -105,9 +105,16 @@ jobs:
           XIP_DIR="/Volumes/macOS-Archive/Xcode/${MAJOR}"
           mkdir -p "${XIP_DIR}"
           XIP_FILE="${XIP_DIR}/Xcode-${VERSION}-${BUILD}.xip"
+          # adcdownload.apple.com is the CDN the ADCDownloadAuth cookie is
+          # scoped to; the services-account URL is the auth-aware portal
+          # link (what developer.apple.com hands out), which is what we
+          # want surfaced in release JSON so visitors get logged in cleanly
+          # rather than bouncing off the CDN's unauthorized page.
           CDN_URL="https://adcdownload.apple.com${XIP_PATH}"
+          PUBLIC_URL="https://developer.apple.com/services-account/download?path=${XIP_PATH}"
           echo "XIP_FILE=${XIP_FILE}" >> "${GITHUB_ENV}"
           echo "CDN_URL=${CDN_URL}" >> "${GITHUB_ENV}"
+          echo "PUBLIC_URL=${PUBLIC_URL}" >> "${GITHUB_ENV}"
 
       - name: Download XIP
         env:
@@ -207,7 +214,7 @@ jobs:
             --release-date "${RELEASE_DATE}"
             --update-index
             --verbose
-            --xip-url "${CDN_URL}"
+            --xip-url "${PUBLIC_URL}"
           )
           if [[ "${IS_BETA}" == "true" ]]; then
             SCAN_ARGS+=(--beta)
