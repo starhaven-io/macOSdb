@@ -3,37 +3,46 @@
     <channel>
         <title>macOSdb</title>
         <item>
-            <title>1.11.0</title>
-            <pubDate>Mon, 06 Apr 2026 15:28:24 +0000</pubDate>
-            <sparkle:version>20</sparkle:version>
-            <sparkle:shortVersionString>1.11.0</sparkle:shortVersionString>
+            <title>1.12.0</title>
+            <pubDate>Tue, 21 Apr 2026 03:39:19 +0000</pubDate>
+            <sparkle:version>21</sparkle:version>
+            <sparkle:shortVersionString>1.12.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <description><![CDATA[<h2>What&#x27;s New</h2>
 <ul>
-  <li>add `--json` flag to `list`, `show`, and `compare` commands</li>
-  <li>add mobile navigation modal</li>
-  <li>display full kernel architecture table on release pages</li>
-  <li>show device marketing names in hardware support grid</li>
-  <li>show device marketing names and add component browser</li>
+  <li>add `cleanup` command and fix `validate` OOM</li>
+  <li>add macOS-26.4.1-25E253</li>
+  <li>add cross-origin isolation headers</li>
+  <li>add `sudo` component to all macOS releases</li>
+  <li>add macOS-26.5-25F5053d by @starhaven-bot[bot]</li>
+  <li>add Xcode-26.5-17F5022i by @starhaven-bot[bot]</li>
+  <li>add Xcode-26.4.1-17E202 by @starhaven-bot[bot]</li>
+  <li>add Min macOS and SDK columns to Xcode release index</li>
+  <li>add macOS-26.5-25F5058e by @starhaven-bot[bot]</li>
+  <li>capture SDK build number from SystemVersion.plist</li>
 </ul>
 <h2>Fixes</h2>
 <ul>
-  <li>add `actions: write` permission to release job</li>
-  <li>correct libexslt version extraction to use `LIBEXSLT_VERSION`</li>
-  <li>log warnings for silent `try?` failures</li>
-  <li>log actual error when hdiutil plist parsing fails</li>
-  <li>align CLI, app, README, and tests for Xcode product parity</li>
-  <li>register `ValidateCommand` in bundled CLI and remove dead code</li>
+  <li>match bare sudo versions without pN suffix</li>
+  <li>unblock pagefind and Cloudflare Insights in CSP</li>
+  <li>remove unsupported versioning-strategy for Swift</li>
+  <li>use Apple CDN for authenticated XIP downloads</li>
+  <li>improve download validation and error handling</li>
+  <li>fix HTTP status code parsing in pre-flight check</li>
+  <li>fix case-sensitive XAR check and curl progress spam</li>
+  <li>pass CDN URL to scanner for correct `xipFile` field</li>
+  <li>add CORS to API and harden JSON-LD escaping</li>
+  <li>enable cross-origin access for /api/* responses</li>
+  <li>drop inherited CORP header on /api/* responses</li>
+  <li>correct releaseDate for macOS-26.5-25F5058e</li>
+  <li>exclude gnu.org from link check</li>
+  <li>migrate all Xcode xipURLs to services-account portal form</li>
 </ul>
-<h2>Performance</h2>
+<h2>Documentation</h2>
 <ul>
-  <li>enable client prerendering, queued rendering, and caching</li>
-</ul>
-<h2>Under the Hood</h2>
-<ul>
-  <li>deduplicate macOS/Xcode pages and add about/404 pages</li>
+  <li>refresh stale references in README and CLAUDE.md</li>
 </ul>]]></description>
-            <enclosure url="https://github.com/p-linnane/macOSdb/releases/download/1.11.0/macOSdb-1.11.0.zip" length="2825016" type="application/octet-stream" sparkle:edSignature="bxfU6FbqwBgL2yPB6Ll4+hnwF8tG8TdL4N8aeHw7BFVulLv8b6w6GJzr4ChSo9jX6G9lcHP0s1HwDziLpN42BQ=="/>
+            <enclosure url="https://github.com/starhaven-io/macOSdb/releases/download/1.12.0/macOSdb-1.12.0.zip" length="2824580" type="application/octet-stream" sparkle:edSignature="V/eRiExu7J+slgdXl3tTgb9M/zzDt91V53fCdZduARGlpiNCFVxCKrajwIVhmuSbbLfgEpX2rrRy2hG6Oca9Cg=="/>
         </item>
     </channel>
 </rss>
