@@ -157,6 +157,8 @@ jobs:
     permissions:
       actions: write # required to trigger site deploy workflow
       contents: write # required to create GitHub releases
+    outputs:
+      version: ${{ needs.build.outputs.tag }}
     env:
       TAG: ${{ needs.build.outputs.tag }}
     steps:
@@ -272,14 +274,14 @@ jobs:
 
   bump-cask:
     name: Bump Homebrew cask
-    needs: [build, release]
+    needs: release
     runs-on: macos-26
     environment:
       name: release
       deployment: false
     permissions: {}
     env:
-      TAG: ${{ needs.build.outputs.tag }}
+      VERSION: ${{ needs.release.outputs.version }}
     steps:
       - name: Mint bot token for tap
         id: tap-token
@@ -304,4 +306,4 @@ jobs:
           export HOMEBREW_GIT_NAME="${BOT_USER}"
           export HOMEBREW_GIT_EMAIL="${BOT_ID}+${BOT_USER}@users.noreply.github.com"
           brew tap starhaven-io/homebrew-tap
-          brew bump-cask-pr --no-fork --version "${TAG}" starhaven-io/tap/macosdb
+          brew bump-cask-pr --no-fork --version "${VERSION}" starhaven-io/tap/macosdb
