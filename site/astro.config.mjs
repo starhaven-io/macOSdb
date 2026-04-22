@@ -45,6 +45,7 @@ export default defineConfig({
         bundleName: 'macosdb-site',
         uploadToken: process.env.CODECOV_TOKEN,
         gitService: 'github',
+        telemetry: false,
       }),
     ],
   },
