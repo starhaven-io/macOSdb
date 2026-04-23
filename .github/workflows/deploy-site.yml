@@ -39,8 +39,6 @@ jobs:
       - name: Build site
         working-directory: site
         run: npm run build
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Fetch appcast
         run: |
