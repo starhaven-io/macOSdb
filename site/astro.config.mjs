@@ -3,7 +3,6 @@ import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import pagefind from 'astro-pagefind';
-import { codecovVitePlugin } from '@codecov/vite-plugin';
 
 // https://astro.build/config
 export default defineConfig({
@@ -39,15 +38,6 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ['astro'],
     },
-    plugins: [
-      codecovVitePlugin({
-        enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-        bundleName: 'macosdb-site',
-        uploadToken: process.env.CODECOV_TOKEN,
-        gitService: 'github',
-        telemetry: false,
-      }),
-    ],
   },
   experimental: {
     svgo: true,

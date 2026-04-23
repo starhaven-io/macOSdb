@@ -38,11 +38,10 @@ jobs:
           EVENT_ACTION: ${{ github.event.action }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
-          # Push to main: run test-tsan so Codecov has a coverage baseline
-          # for PR comparisons, and Site so Codecov has a bundle-analysis
-          # baseline.
+          # Push to main: run test-tsan so Codecov has a baseline for PR
+          # coverage comparisons.
           if [[ "${EVENT_NAME}" == "push" ]]; then
-            echo 'matrix=[{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","xcodebuild_flags":"-enableCodeCoverage YES -enableThreadSanitizer YES","result_bundle":"TestResults-TSAN","environment":"codecov"},{"name":"Site","check":"site","runner":"ubuntu-slim","environment":"codecov","fetch_depth":"2"}]' >> "${GITHUB_OUTPUT}"
+            echo 'matrix=[{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","xcodebuild_flags":"-enableCodeCoverage YES -enableThreadSanitizer YES","result_bundle":"TestResults-TSAN","environment":"codecov"}]' >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
@@ -75,7 +74,7 @@ jobs:
 
           # Site or data changes: format check + build
           if echo "${CHANGED}" | grep -qE '^site/|^data/'; then
-            MATRIX+=',{"name":"Site","check":"site","runner":"ubuntu-slim","environment":"codecov","fetch_depth":"2"}'
+            MATRIX+=',{"name":"Site","check":"site","runner":"ubuntu-slim"}'
           fi
 
           # Workflow changes: Actions security audit
@@ -200,8 +199,6 @@ jobs:
         if: matrix.check == 'site'
         working-directory: site
         run: npm run build
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       # --- Tests ---
 
