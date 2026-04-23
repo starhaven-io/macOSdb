@@ -14,10 +14,10 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.1.9",
+    "@astrojs/cloudflare": "^13.1.10",
     "@astrojs/sitemap": "^3.7.2",
     "@fontsource/inter": "^5.2.8",
-    "astro": "^6.1.6",
+    "astro": "^6.1.7",
     "astro-pagefind": "^1.8.6",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
@@ -26,6 +26,6 @@
   "devDependencies": {
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
-    "wrangler": "^4.82.2"
+    "wrangler": "^4.83.0"
   }
 }
