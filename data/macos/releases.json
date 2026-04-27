@@ -1,5 +1,17 @@
 [
   {
+    "betaNumber" : 4,
+    "buildNumber" : "25F5068a",
+    "dataFile" : "releases/26/macOS-26.5-25F5068a.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "26.5",
+    "productType" : "macOS",
+    "releaseDate" : "2026-04-27",
+    "releaseName" : "Tahoe"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "25F5058e",
     "dataFile" : "releases/26/macOS-26.5-25F5058e.json",
