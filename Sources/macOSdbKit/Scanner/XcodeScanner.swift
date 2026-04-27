@@ -65,7 +65,7 @@ public actor XcodeScanner {
                 buildNumber: buildNumber,
                 releaseName: resolvedName,
                 releaseDate: releaseDate,
-                xipFile: xipURL.flatMap { URL(string: $0)?.lastPathComponent } ?? xipPath.lastPathComponent,
+                xipFile: Self.xipFilename(fromURLString: xipURL) ?? xipPath.lastPathComponent,
                 xipURL: xipURL,
                 isBeta: resolvedBeta,
                 betaNumber: resolvedBeta ? betaNumber : nil,
@@ -387,5 +387,26 @@ public actor XcodeScanner {
 
     private func sendVerbose(_ message: String) {
         onVerbose?(message)
+    }
+}
+
+extension XcodeScanner {
+    /// Apple's services-account portal wraps the real download in a `path=` query parameter
+    /// (`/services-account/download?path=/.../Xcode.xip`); prefer that value over `lastPathComponent`,
+    /// which would otherwise be `download`.
+    static func xipFilename(fromURLString urlString: String?) -> String? {
+        guard let urlString,
+              let url = URL(string: urlString) else { return nil }
+
+        if let pathQuery = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?
+            .first(where: { $0.name == "path" })?
+            .value,
+            !pathQuery.isEmpty {
+            return (pathQuery as NSString).lastPathComponent
+        }
+
+        let last = url.lastPathComponent
+        return last.isEmpty ? nil : last
     }
 }
