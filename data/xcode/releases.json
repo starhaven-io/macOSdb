@@ -1,5 +1,15 @@
 [
   {
+    "buildNumber" : "17F42",
+    "dataFile" : "releases/26/Xcode-26.5-17F42.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "26.5",
+    "productType" : "Xcode",
+    "releaseDate" : "2026-05-04",
+    "releaseName" : "Xcode 26.5"
+  },
+  {
     "betaNumber" : 3,
     "buildNumber" : "17F5032f",
     "dataFile" : "releases/26/Xcode-26.5-17F5032f.json",
