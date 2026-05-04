@@ -1,0 +1,541 @@
+{
+  "buildNumber" : "25F71",
+  "components" : [
+    {
+      "name" : "curl",
+      "path" : "/usr/bin/curl",
+      "source" : "filesystem",
+      "version" : "8.7.1"
+    },
+    {
+      "name" : "httpd",
+      "path" : "/usr/sbin/httpd",
+      "source" : "filesystem",
+      "version" : "2.4.66"
+    },
+    {
+      "name" : "libbz2 (bzip2)",
+      "path" : "/usr/lib/libbz2.1.0.dylib",
+      "source" : "dyldCache",
+      "version" : "1.0.8"
+    },
+    {
+      "name" : "libcurl",
+      "path" : "/usr/lib/libcurl.4.dylib",
+      "source" : "dyldCache",
+      "version" : "8.7.1"
+    },
+    {
+      "name" : "libexpat",
+      "path" : "/usr/lib/libexpat.1.dylib",
+      "source" : "dyldCache",
+      "version" : "2.7.4"
+    },
+    {
+      "name" : "libncurses",
+      "path" : "/usr/lib/libncurses.5.4.dylib",
+      "source" : "dyldCache",
+      "version" : "6.0.20150808"
+    },
+    {
+      "name" : "libpcap",
+      "path" : "/usr/lib/libpcap.A.dylib",
+      "source" : "dyldCache",
+      "version" : "1.10.1"
+    },
+    {
+      "name" : "LibreSSL",
+      "path" : "/usr/bin/openssl",
+      "source" : "filesystem",
+      "version" : "3.3.6"
+    },
+    {
+      "name" : "libsqlite3",
+      "path" : "/usr/lib/libsqlite3.dylib",
+      "source" : "dyldCache",
+      "version" : "3.51.0"
+    },
+    {
+      "name" : "libssl (LibreSSL)",
+      "path" : "/usr/lib/libssl.35.dylib",
+      "source" : "dyldCache",
+      "version" : "2.2.9"
+    },
+    {
+      "name" : "libxml2",
+      "path" : "/usr/lib/libxml2.2.dylib",
+      "source" : "dyldCache",
+      "version" : "2.9.13"
+    },
+    {
+      "name" : "OpenSSH",
+      "path" : "/usr/bin/ssh",
+      "source" : "filesystem",
+      "version" : "10.2p1"
+    },
+    {
+      "name" : "Ruby",
+      "path" : "/usr/bin/ruby",
+      "source" : "filesystem",
+      "version" : "2.6.10"
+    },
+    {
+      "name" : "SQLite",
+      "path" : "/usr/bin/sqlite3",
+      "source" : "filesystem",
+      "version" : "3.51.0"
+    },
+    {
+      "name" : "sudo",
+      "path" : "/usr/bin/sudo",
+      "source" : "filesystem",
+      "version" : "1.9.17p2"
+    },
+    {
+      "name" : "vim",
+      "path" : "/usr/bin/vim",
+      "source" : "filesystem",
+      "version" : "9.1"
+    },
+    {
+      "name" : "zsh",
+      "path" : "/bin/zsh",
+      "source" : "filesystem",
+      "version" : "5.9"
+    }
+  ],
+  "ipswFile" : "UniversalMac_26.5_25F71_Restore.ipsw",
+  "ipswURL" : "https://updates.cdn-apple.com/2026SpringFCS/fullrestores/122-58869/DFB1CEEF-5619-4591-9924-E20DB2C8FED0/UniversalMac_26.5_25F71_Restore.ipsw",
+  "isBeta" : false,
+  "isDeviceSpecific" : false,
+  "isRC" : true,
+  "kernels" : [
+    {
+      "arch" : "ARM64_T8103",
+      "chip" : "M1",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M1",
+          "device" : "MacBookAir10,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "MacBookPro17,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "Macmini9,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "iMac21,1"
+        },
+        {
+          "chip" : "M1",
+          "device" : "iMac21,2"
+        }
+      ],
+      "devices" : [
+        "MacBookAir10,1",
+        "MacBookPro17,1",
+        "Macmini9,1",
+        "iMac21,1",
+        "iMac21,2"
+      ],
+      "file" : "kernelcache.release.mac13g",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T6000",
+      "chip" : "M1 Pro",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M1 Max",
+          "device" : "Mac13,1"
+        },
+        {
+          "chip" : "M1 Ultra",
+          "device" : "Mac13,2"
+        },
+        {
+          "chip" : "M1 Pro",
+          "device" : "MacBookPro18,1"
+        },
+        {
+          "chip" : "M1 Max",
+          "device" : "MacBookPro18,2"
+        },
+        {
+          "chip" : "M1 Pro",
+          "device" : "MacBookPro18,3"
+        },
+        {
+          "chip" : "M1 Max",
+          "device" : "MacBookPro18,4"
+        }
+      ],
+      "devices" : [
+        "Mac13,1",
+        "Mac13,2",
+        "MacBookPro18,1",
+        "MacBookPro18,2",
+        "MacBookPro18,3",
+        "MacBookPro18,4"
+      ],
+      "file" : "kernelcache.release.mac13j",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T8112",
+      "chip" : "M2",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2",
+          "device" : "Mac14,15"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,2"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,3"
+        },
+        {
+          "chip" : "M2",
+          "device" : "Mac14,7"
+        }
+      ],
+      "devices" : [
+        "Mac14,15",
+        "Mac14,2",
+        "Mac14,3",
+        "Mac14,7"
+      ],
+      "file" : "kernelcache.release.mac14g",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T6020",
+      "chip" : "M2 Pro",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,10"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,12"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,13"
+        },
+        {
+          "chip" : "M2 Ultra",
+          "device" : "Mac14,14"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,5"
+        },
+        {
+          "chip" : "M2 Max",
+          "device" : "Mac14,6"
+        },
+        {
+          "chip" : "M2 Ultra",
+          "device" : "Mac14,8"
+        },
+        {
+          "chip" : "M2 Pro",
+          "device" : "Mac14,9"
+        }
+      ],
+      "devices" : [
+        "Mac14,10",
+        "Mac14,12",
+        "Mac14,13",
+        "Mac14,14",
+        "Mac14,5",
+        "Mac14,6",
+        "Mac14,8",
+        "Mac14,9"
+      ],
+      "file" : "kernelcache.release.mac14j",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T8122",
+      "chip" : "M3",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M3",
+          "device" : "Mac15,12"
+        },
+        {
+          "chip" : "M3",
+          "device" : "Mac15,13"
+        },
+        {
+          "chip" : "M3",
+          "device" : "Mac15,3"
+        },
+        {
+          "chip" : "M3",
+          "device" : "Mac15,4"
+        },
+        {
+          "chip" : "M3",
+          "device" : "Mac15,5"
+        }
+      ],
+      "devices" : [
+        "Mac15,12",
+        "Mac15,13",
+        "Mac15,3",
+        "Mac15,4",
+        "Mac15,5"
+      ],
+      "file" : "kernelcache.release.mac15g",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T6031",
+      "chip" : "M3 Max",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M3 Max",
+          "device" : "Mac15,10"
+        },
+        {
+          "chip" : "M3 Max",
+          "device" : "Mac15,11"
+        },
+        {
+          "chip" : "M3 Ultra",
+          "device" : "Mac15,14"
+        },
+        {
+          "chip" : "M3 Max",
+          "device" : "Mac15,8"
+        },
+        {
+          "chip" : "M3 Max",
+          "device" : "Mac15,9"
+        }
+      ],
+      "devices" : [
+        "Mac15,10",
+        "Mac15,11",
+        "Mac15,14",
+        "Mac15,8",
+        "Mac15,9"
+      ],
+      "file" : "kernelcache.release.mac15j",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T6030",
+      "chip" : "M3 Pro",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M3 Pro",
+          "device" : "Mac15,6"
+        },
+        {
+          "chip" : "M3 Pro",
+          "device" : "Mac15,7"
+        }
+      ],
+      "devices" : [
+        "Mac15,6",
+        "Mac15,7"
+      ],
+      "file" : "kernelcache.release.mac15s",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T8132",
+      "chip" : "M4",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M4",
+          "device" : "Mac16,1"
+        },
+        {
+          "chip" : "M4",
+          "device" : "Mac16,10"
+        },
+        {
+          "chip" : "M4",
+          "device" : "Mac16,12"
+        },
+        {
+          "chip" : "M4",
+          "device" : "Mac16,13"
+        },
+        {
+          "chip" : "M4",
+          "device" : "Mac16,2"
+        },
+        {
+          "chip" : "M4",
+          "device" : "Mac16,3"
+        }
+      ],
+      "devices" : [
+        "Mac16,1",
+        "Mac16,10",
+        "Mac16,12",
+        "Mac16,13",
+        "Mac16,2",
+        "Mac16,3"
+      ],
+      "file" : "kernelcache.release.mac16g",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T6041",
+      "chip" : "M4 Max",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M4 Pro",
+          "device" : "Mac16,11"
+        },
+        {
+          "chip" : "M4 Max",
+          "device" : "Mac16,5"
+        },
+        {
+          "chip" : "M4 Max",
+          "device" : "Mac16,6"
+        },
+        {
+          "chip" : "M4 Pro",
+          "device" : "Mac16,7"
+        },
+        {
+          "chip" : "M4 Pro",
+          "device" : "Mac16,8"
+        },
+        {
+          "chip" : "M4 Max",
+          "device" : "Mac16,9"
+        }
+      ],
+      "devices" : [
+        "Mac16,11",
+        "Mac16,5",
+        "Mac16,6",
+        "Mac16,7",
+        "Mac16,8",
+        "Mac16,9"
+      ],
+      "file" : "kernelcache.release.mac16j",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T8142",
+      "chip" : "M5",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M5",
+          "device" : "Mac17,2"
+        },
+        {
+          "chip" : "M5",
+          "device" : "Mac17,3"
+        },
+        {
+          "chip" : "M5",
+          "device" : "Mac17,4"
+        }
+      ],
+      "devices" : [
+        "Mac17,2",
+        "Mac17,3",
+        "Mac17,4"
+      ],
+      "file" : "kernelcache.release.mac17g",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T6050",
+      "chip" : "M5 Pro",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "M5 Pro",
+          "device" : "Mac17,6"
+        },
+        {
+          "chip" : "M5 Pro",
+          "device" : "Mac17,7"
+        },
+        {
+          "chip" : "M5 Max",
+          "device" : "Mac17,8"
+        },
+        {
+          "chip" : "M5 Max",
+          "device" : "Mac17,9"
+        }
+      ],
+      "devices" : [
+        "Mac17,6",
+        "Mac17,7",
+        "Mac17,8",
+        "Mac17,9"
+      ],
+      "file" : "kernelcache.release.mac17j",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_T8140",
+      "chip" : "A18 Pro",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "A18 Pro",
+          "device" : "Mac17,5"
+        }
+      ],
+      "devices" : [
+        "Mac17,5"
+      ],
+      "file" : "kernelcache.release.mac17p",
+      "xnuVersion" : "12377.121.6"
+    },
+    {
+      "arch" : "ARM64_VMAPPLE",
+      "chip" : "Virtual Mac",
+      "darwinVersion" : "25.5.0",
+      "deviceChips" : [
+        {
+          "chip" : "Virtual Mac",
+          "device" : "VirtualMac2,1"
+        }
+      ],
+      "devices" : [
+        "VirtualMac2,1"
+      ],
+      "file" : "kernelcache.release.vma2",
+      "xnuVersion" : "12377.121.6"
+    }
+  ],
+  "osVersion" : "26.5",
+  "productType" : "macOS",
+  "releaseDate" : "2026-05-04",
+  "releaseName" : "Tahoe"
+}
