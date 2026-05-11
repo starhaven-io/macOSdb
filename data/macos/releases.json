@@ -4,10 +4,10 @@
     "dataFile" : "releases/26/macOS-26.5-25F71.json",
     "isBeta" : false,
     "isDeviceSpecific" : false,
-    "isRC" : true,
+    "isRC" : false,
     "osVersion" : "26.5",
     "productType" : "macOS",
-    "releaseDate" : "2026-05-04",
+    "releaseDate" : "2026-05-11",
     "releaseName" : "Tahoe"
   },
   {

@@ -108,7 +108,7 @@
   "ipswURL" : "https://updates.cdn-apple.com/2026SpringFCS/fullrestores/122-58869/DFB1CEEF-5619-4591-9924-E20DB2C8FED0/UniversalMac_26.5_25F71_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,
-  "isRC" : true,
+  "isRC" : false,
   "kernels" : [
     {
       "arch" : "ARM64_T8103",
@@ -536,6 +536,6 @@
   ],
   "osVersion" : "26.5",
   "productType" : "macOS",
-  "releaseDate" : "2026-05-04",
+  "releaseDate" : "2026-05-11",
   "releaseName" : "Tahoe"
 }
