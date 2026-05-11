@@ -105,11 +105,11 @@
     }
   ],
   "isBeta" : false,
-  "isRC" : true,
+  "isRC" : false,
   "minimumOSVersion" : "26.2",
   "osVersion" : "26.5",
   "productType" : "Xcode",
-  "releaseDate" : "2026-05-04",
+  "releaseDate" : "2026-05-11",
   "releaseName" : "Xcode 26.5",
   "sdks" : [
     {
