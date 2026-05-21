@@ -17,6 +17,8 @@ struct SidebarView: View {
                 releaseList
             case .components:
                 componentList
+            case .sdks:
+                sdkList
             }
         }
         .listStyle(.sidebar)
@@ -32,7 +34,7 @@ struct SidebarView: View {
                 .labelsHidden()
 
                 Picker("Mode", selection: $state.sidebarMode) {
-                    ForEach(AppState.SidebarMode.allCases, id: \.self) { mode in
+                    ForEach(appState.availableSidebarModes, id: \.self) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
                 }
@@ -152,6 +154,37 @@ struct SidebarView: View {
         .id(appState.selectedProduct)
     }
 
+    // MARK: - SDK List
+
+    private var sdkList: some View {
+        @Bindable var state = appState
+
+        return List(selection: $state.selectedSDKVersion) {
+            if appState.isLoading && appState.releases.isEmpty {
+                ProgressView("Loading releases...")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else if appState.filteredSDKs.isEmpty {
+                if appState.searchText.isEmpty {
+                    ContentUnavailableView(
+                        "No SDKs",
+                        systemImage: "sdcard",
+                        description: Text("No SDK data available.")
+                    )
+                } else {
+                    ContentUnavailableView.search(text: appState.searchText)
+                }
+            } else {
+                ForEach(appState.filteredSDKs) { sdk in
+                    SDKRow(sdk: sdk)
+                        .tag(sdk.version)
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 8))
+            }
+        }
+        .id(appState.selectedProduct)
+    }
+
     private func expandedBinding(for major: Int) -> Binding<Bool> {
         Binding(
             get: { expandedGroups.contains(major) },
@@ -208,6 +241,13 @@ struct SidebarView: View {
                 return "\(count) of \(total) components"
             }
             return "\(total) components"
+        case .sdks:
+            let count = appState.filteredSDKs.count
+            let total = appState.allSDKs.count
+            if count != total {
+                return "\(count) of \(total) SDKs"
+            }
+            return "\(total) SDK\(total == 1 ? "" : "s")"
         }
     }
 
@@ -270,6 +310,33 @@ private struct ReleaseRow: View {
                 }
             }
 
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+// MARK: - SDK Row
+
+private struct SDKRow: View {
+    let sdk: AppState.SDKSummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("macOS SDK \(sdk.version)")
+                .font(.body)
+                .fontWeight(.medium)
+
+            HStack(spacing: 8) {
+                if let build = sdk.latestBuild {
+                    Text(build)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("\(sdk.xcodeReleaseCount) release\(sdk.xcodeReleaseCount == 1 ? "" : "s")")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(.vertical, 2)
     }

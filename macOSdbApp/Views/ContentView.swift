@@ -18,18 +18,12 @@ struct ContentView: View {
                 CompareView()
             } else if appState.sidebarMode == .components, let name = appState.selectedComponentName {
                 ComponentDetailView(componentName: name)
-            } else if appState.selectedRelease != nil {
+            } else if appState.sidebarMode == .sdks, let version = appState.selectedSDKVersion {
+                SDKDetailView(sdkVersion: version)
+            } else if appState.sidebarMode == .releases, appState.selectedRelease != nil {
                 ReleaseDetailView()
             } else {
-                ContentUnavailableView(
-                    appState.sidebarMode == .components ? "Select a Component" : "Select a Release",
-                    systemImage: appState.sidebarMode == .components ? "shippingbox" : "apple.logo",
-                    description: Text(
-                        appState.sidebarMode == .components
-                            ? "Choose a component from the sidebar to view its version history."
-                            : "Choose a release from the sidebar to view its components."
-                    )
-                )
+                emptyStateView
             }
         }
         .searchable(text: $state.searchText, prompt: "Filter components")
@@ -76,6 +70,29 @@ struct ContentView: View {
             if appState.releases.isEmpty {
                 await appState.refresh()
             }
+        }
+    }
+
+    @ViewBuilder private var emptyStateView: some View {
+        switch appState.sidebarMode {
+        case .components:
+            ContentUnavailableView(
+                "Select a Component",
+                systemImage: "shippingbox",
+                description: Text("Choose a component from the sidebar to view its version history.")
+            )
+        case .sdks:
+            ContentUnavailableView(
+                "Select an SDK",
+                systemImage: "sdcard",
+                description: Text("Choose an SDK from the sidebar to view its build history.")
+            )
+        case .releases:
+            ContentUnavailableView(
+                "Select a Release",
+                systemImage: "apple.logo",
+                description: Text("Choose a release from the sidebar to view its components.")
+            )
         }
     }
 }

@@ -25,12 +25,14 @@ final class AppState {
     var showDeviceSpecific = false
     var sidebarMode: SidebarMode = .releases
     var selectedComponentName: String?
+    var selectedSDKVersion: String?
 
     // MARK: - Types
 
     enum SidebarMode: String, CaseIterable {
         case releases = "Releases"
         case components = "Components"
+        case sdks = "SDKs"
     }
 
     struct ComponentSummary: Identifiable, Hashable {
@@ -49,6 +51,25 @@ final class AppState {
         let isRC: Bool
         let direction: ChangeDirection?
         var id: String { "\(releaseName)-\(version)" }
+    }
+
+    struct SDKSummary: Identifiable, Hashable {
+        let version: String
+        let latestBuild: String?
+        let xcodeReleaseCount: Int
+        var id: String { version }
+    }
+
+    struct SDKVersionEntry: Identifiable {
+        let sdkBuild: String?
+        let xcodeDisplayName: String
+        let xcodeBuild: String
+        let xcodeReleaseDate: String?
+        let isBeta: Bool
+        let isRC: Bool
+        /// True when this is the earliest Xcode release to ship this particular SDK build.
+        let isFirstShippingBuild: Bool
+        var id: String { xcodeBuild }
     }
 
     // MARK: - Derived
@@ -113,6 +134,75 @@ final class AppState {
             $0.name.localizedCaseInsensitiveContains(search)
                 || $0.latestVersion.localizedCaseInsensitiveContains(search)
         }
+    }
+
+    var supportsSDKsMode: Bool {
+        selectedProduct == .xcode
+    }
+
+    var availableSidebarModes: [SidebarMode] {
+        supportsSDKsMode ? SidebarMode.allCases : [.releases, .components]
+    }
+
+    var allSDKs: [SDKSummary] {
+        guard supportsSDKsMode else { return [] }
+        let filtered = releases.filter { release in
+            (showBetas || !release.isPrerelease) && (showDeviceSpecific || !release.isDeviceSpecific)
+        }
+        let sorted = filtered.sorted(by: >)
+
+        var versionMap: [String: (latestBuild: String?, count: Int)] = [:]
+        var order: [String] = []
+        for release in sorted {
+            guard let sdks = release.sdks else { continue }
+            for sdk in sdks {
+                if let existing = versionMap[sdk.sdkVersion] {
+                    versionMap[sdk.sdkVersion] = (existing.latestBuild, existing.count + 1)
+                } else {
+                    versionMap[sdk.sdkVersion] = (sdk.buildVersion, 1)
+                    order.append(sdk.sdkVersion)
+                }
+            }
+        }
+        return order.compactMap { version in
+            guard let entry = versionMap[version] else { return nil }
+            return SDKSummary(version: version, latestBuild: entry.latestBuild, xcodeReleaseCount: entry.count)
+        }
+    }
+
+    var filteredSDKs: [SDKSummary] {
+        let search = searchText.trimmingCharacters(in: .whitespaces)
+        guard !search.isEmpty else { return allSDKs }
+        return allSDKs.filter {
+            $0.version.localizedCaseInsensitiveContains(search)
+                || ($0.latestBuild?.localizedCaseInsensitiveContains(search) ?? false)
+        }
+    }
+
+    func sdkHistory(for sdkVersion: String) -> [SDKVersionEntry] {
+        guard supportsSDKsMode else { return [] }
+        let filtered = releases.filter { release in
+            (showBetas || !release.isPrerelease) && (showDeviceSpecific || !release.isDeviceSpecific)
+        }
+
+        // Walk oldest-first so we can mark the earliest release for each SDK build.
+        var firstSeenBuilds = Set<String>()
+        var oldestFirst: [SDKVersionEntry] = []
+        for release in filtered.sorted(by: <) {
+            guard let sdks = release.sdks else { continue }
+            guard let sdk = sdks.first(where: { $0.sdkVersion == sdkVersion }) else { continue }
+            let isFirstShipping = sdk.buildVersion.map { firstSeenBuilds.insert($0).inserted } ?? false
+            oldestFirst.append(SDKVersionEntry(
+                sdkBuild: sdk.buildVersion,
+                xcodeDisplayName: release.displayName,
+                xcodeBuild: release.buildNumber,
+                xcodeReleaseDate: release.releaseDate,
+                isBeta: release.isBeta,
+                isRC: release.isRC,
+                isFirstShippingBuild: isFirstShipping
+            ))
+        }
+        return oldestFirst.reversed()
     }
 
     func componentHistory(for name: String) -> [ComponentVersionEntry] {
@@ -200,6 +290,10 @@ final class AppState {
         selectedRelease = nil
         compareRelease = nil
         selectedComponentName = nil
+        selectedSDKVersion = nil
+        if sidebarMode == .sdks && product != .xcode {
+            sidebarMode = .releases
+        }
         isComparing = false
         releases = []
         Task { await refresh() }
