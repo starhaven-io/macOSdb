@@ -78,6 +78,16 @@ macosdb validate ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw
 macosdb validate --dir /path/to/archive
 ```
 
+### Shell completions
+
+Generate completions for your shell:
+
+```bash
+macosdb completions zsh > ~/.zfunc/_macosdb
+macosdb completions bash > /etc/bash_completion.d/macosdb
+macosdb completions fish > ~/.config/fish/completions/macosdb.fish
+```
+
 ## How scanning works
 
 The scanner extracts component versions from Apple's IPSW firmware images through a multi-phase pipeline:
