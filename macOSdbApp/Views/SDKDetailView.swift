@@ -1,4 +1,3 @@
-import macOSdbKit
 import SwiftUI
 
 struct SDKDetailView: View {
