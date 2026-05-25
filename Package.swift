@@ -32,5 +32,9 @@ let package = Package(
             dependencies: ["macOSdbKit"],
             resources: [.copy("Fixtures")]
         ),
+        .testTarget(
+            name: "macosdbTests",
+            dependencies: ["macosdb"]
+        ),
     ]
 )
