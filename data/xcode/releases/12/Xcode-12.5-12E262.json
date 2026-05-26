@@ -113,6 +113,7 @@
   "releaseName" : "Xcode 12.5",
   "sdks" : [
     {
+      "buildVersion" : "20E214",
       "sdkVersion" : "11.3"
     }
   ],

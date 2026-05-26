@@ -113,6 +113,7 @@
   "releaseName" : "Xcode 15.1",
   "sdks" : [
     {
+      "buildVersion" : "23C53",
       "sdkVersion" : "14.2"
     }
   ],

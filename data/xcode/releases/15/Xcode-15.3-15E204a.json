@@ -113,6 +113,7 @@
   "releaseName" : "Xcode 15.3",
   "sdks" : [
     {
+      "buildVersion" : "23E208",
       "sdkVersion" : "14.4"
     }
   ],

@@ -113,6 +113,7 @@
   "releaseName" : "Xcode 14.3.1",
   "sdks" : [
     {
+      "buildVersion" : "22E245",
       "sdkVersion" : "13.3"
     }
   ],

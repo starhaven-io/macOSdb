@@ -114,6 +114,7 @@
   "releaseName" : "Xcode 16.3",
   "sdks" : [
     {
+      "buildVersion" : "24E5206k",
       "sdkVersion" : "15.4"
     }
   ],

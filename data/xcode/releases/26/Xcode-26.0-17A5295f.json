@@ -114,6 +114,7 @@
   "releaseName" : "Xcode 26.0",
   "sdks" : [
     {
+      "buildVersion" : "25A5327f",
       "sdkVersion" : "26.0"
     }
   ],

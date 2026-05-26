@@ -114,6 +114,7 @@
   "releaseName" : "Xcode 13.2",
   "sdks" : [
     {
+      "buildVersion" : "21C5039a",
       "sdkVersion" : "12.1"
     }
   ],

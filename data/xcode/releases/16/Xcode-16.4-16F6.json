@@ -113,6 +113,7 @@
   "releaseName" : "Xcode 16.4",
   "sdks" : [
     {
+      "buildVersion" : "24F74",
       "sdkVersion" : "15.5"
     }
   ],
