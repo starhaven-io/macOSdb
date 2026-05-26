@@ -2,7 +2,7 @@
   "name": "macosdb.com",
   "type": "module",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=26.0.0"
   },
   "scripts": {
     "dev": "astro dev",
