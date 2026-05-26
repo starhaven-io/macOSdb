@@ -88,6 +88,9 @@ struct ValidateCommand: AsyncParsableCommand {
             let digest = try await hashFile(url)
             let line = "\(digest)  \(url.lastPathComponent)\n"
             try line.write(to: sidecar, atomically: true, encoding: .utf8)
+            if let mtime = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date {
+                try? FileManager.default.setAttributes([.modificationDate: mtime], ofItemAtPath: sidecar.path)
+            }
             printStatus("  ✓ sha256: \(digest)")
             printStatus("    → \(sidecar.lastPathComponent)")
         } catch {
