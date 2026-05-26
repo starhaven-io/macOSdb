@@ -14,10 +14,10 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.5.1",
+    "@astrojs/cloudflare": "^13.5.2",
     "@astrojs/sitemap": "^3.7.2",
     "@fontsource/inter": "^5.2.8",
-    "astro": "^6.2.2",
+    "astro": "^6.3.5",
     "astro-pagefind": "^2.0.0",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
