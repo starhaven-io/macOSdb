@@ -44,6 +44,8 @@ export default defineConfig({
     clientPrerender: true,
     queuedRendering: {
       enabled: true,
+      contentCache: true,
     },
+    rustCompiler: true,
   },
 });
