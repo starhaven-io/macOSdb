@@ -37,6 +37,33 @@ struct SubprocessSmokeTests {
         #expect(result.stderr.contains("Provide at least one archive path or --dir"))
     }
 
+    @Test("validate copies source mtime onto the .sha256 sidecar")
+    func validateSyncsSidecarMtime() throws {
+        let tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("macosdb-mtime-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let archive = tempDir.appendingPathComponent("fake.xip")
+        try Data("not a real xip".utf8).write(to: archive)
+
+        // Pick a fixed mtime well in the past so the test doesn't accidentally
+        // match a wall-clock-near write time.
+        let expected = Date(timeIntervalSince1970: 1_700_000_000)
+        try FileManager.default.setAttributes(
+            [.modificationDate: expected],
+            ofItemAtPath: archive.path
+        )
+
+        let result = try runMacosdb(["validate", archive.path])
+        #expect(result.exitCode == 0)
+
+        let sidecar = archive.appendingPathExtension("sha256")
+        let sidecarMtime = try FileManager.default
+            .attributesOfItem(atPath: sidecar.path)[.modificationDate] as? Date
+        #expect(sidecarMtime == expected)
+    }
+
     // MARK: - Helpers
 
     private struct ProcessResult {

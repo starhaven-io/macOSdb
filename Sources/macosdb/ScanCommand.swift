@@ -336,6 +336,9 @@ struct ScanCommand: AsyncParsableCommand {
         }
         do {
             try pem.write(to: sidecarPath, atomically: true, encoding: .utf8)
+            if let mtime = (try? FileManager.default.attributesOfItem(atPath: ipswURL.path))?[.modificationDate] as? Date {
+                try? FileManager.default.setAttributes([.modificationDate: mtime], ofItemAtPath: sidecarPath.path)
+            }
             printStatus("Saved AEA key: \(sidecarPath.lastPathComponent)")
         } catch {
             printError("Failed to save AEA key: \(error.localizedDescription)")
