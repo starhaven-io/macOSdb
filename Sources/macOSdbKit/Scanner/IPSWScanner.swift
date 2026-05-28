@@ -212,35 +212,34 @@ public actor IPSWScanner {
         sendProgress(.mountingDMG)
         Self.logger.info("Mounting system DMG: \(systemDMG.lastPathComponent)")
         let systemMount = try await dmgMounter.mount(dmgPath: systemDMG)
+
         var fsComponents = await extractFilesystemComponents(mountPoint: systemMount)
 
+        // Unmount the system DMG on every path; a throw here leaks the volume, then cleanup deletes its backing file.
         let dyldComponents: [Component]
-        if let cryptexDMG {
-            sendProgress(.mountingCryptex)
-            Self.logger.info("Mounting cryptex DMG: \(cryptexDMG.lastPathComponent)")
-            let cryptexMount = try await dmgMounter.mount(dmgPath: cryptexDMG)
+        do {
+            if let cryptexDMG {
+                sendProgress(.mountingCryptex)
+                Self.logger.info("Mounting cryptex DMG: \(cryptexDMG.lastPathComponent)")
+                let cryptexMount = try await dmgMounter.mount(dmgPath: cryptexDMG)
 
-            // Scan filesystem components from cryptex too (macOS 13+ moved some binaries there)
-            let cryptexFsComponents = await extractFilesystemComponents(mountPoint: cryptexMount)
-            let systemNames = Set(fsComponents.map(\.name))
-            for component in cryptexFsComponents {
-                if systemNames.contains(component.name) {
-                    // Cryptex version overrides system version
-                    fsComponents.removeAll { $0.name == component.name }
-                }
-                fsComponents.append(component)
+                // Scan filesystem components from cryptex too (macOS 13+ moved some binaries there)
+                let cryptexFsComponents = await extractFilesystemComponents(mountPoint: cryptexMount)
+                fsComponents = merging(fsComponents, overriddenBy: cryptexFsComponents)
+
+                dyldComponents = await extractDyldCacheComponents(mountPoint: cryptexMount)
+                sendProgress(.unmountingDMG)
+                await dmgMounter.unmount(cryptexMount)
+            } else {
+                dyldComponents = await extractDyldCacheComponents(mountPoint: systemMount)
+                sendProgress(.unmountingDMG)
             }
-
-            dyldComponents = await extractDyldCacheComponents(mountPoint: cryptexMount)
-            sendProgress(.unmountingDMG)
-            await dmgMounter.unmount(cryptexMount)
+        } catch {
             await dmgMounter.unmount(systemMount)
-        } else {
-            dyldComponents = await extractDyldCacheComponents(mountPoint: systemMount)
-            sendProgress(.unmountingDMG)
-            await dmgMounter.unmount(systemMount)
+            throw error
         }
 
+        await dmgMounter.unmount(systemMount)
         return (fsComponents + dyldComponents).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
@@ -453,6 +452,13 @@ private func resolveDylibPath(
     let prefix = dir + "/" + baseName + "."
 
     return allPaths.first { $0.hasPrefix(prefix) && $0.hasSuffix(".dylib") }
+}
+
+/// Merges cryptex components over system ones, with cryptex winning on name collisions.
+private func merging(_ system: [Component], overriddenBy cryptex: [Component]) -> [Component] {
+    guard !cryptex.isEmpty else { return system }
+    let cryptexNames = Set(cryptex.map(\.name))
+    return system.filter { !cryptexNames.contains($0.name) } + cryptex
 }
 
 // MARK: - Board codename device mapping

@@ -59,14 +59,14 @@ public actor DataProvider {
         let release = try decoder.decode(Release.self, from: data)
         cachedReleases[entry.buildNumber] = release
 
-        Self.logger.info("Loaded release: macOS \(release.osVersion) (\(release.buildNumber))")
+        Self.logger.info("Loaded release: \(release.displayName) (\(release.buildNumber))")
         return release
     }
 
     public func fetchAllReleases(for productType: ProductType = .macOS) async throws -> [Release] {
         let index = try await fetchReleaseIndex(for: productType)
 
-        return await withTaskGroup(of: Release?.self, returning: [Release].self) { group in
+        let releases = await withTaskGroup(of: Release?.self, returning: [Release].self) { group in
             for entry in index {
                 group.addTask {
                     do {
@@ -88,6 +88,12 @@ public actor DataProvider {
             }
             return releases.sorted()
         }
+
+        // Surface an all-failed load as an error — an empty array reads as an empty catalog.
+        guard index.isEmpty || !releases.isEmpty else {
+            throw DataProviderError.allReleasesFailed(count: index.count)
+        }
+        return releases
     }
 
     public func findRelease(osVersion: String, productType: ProductType = .macOS) async throws -> Release? {
@@ -118,11 +124,14 @@ public actor DataProvider {
 
 enum DataProviderError: LocalizedError {
     case httpError(statusCode: Int, url: URL)
+    case allReleasesFailed(count: Int)
 
     var errorDescription: String? {
         switch self {
         case .httpError(let statusCode, let url):
             "HTTP \(statusCode) fetching \(url)"
+        case .allReleasesFailed(let count):
+            "Loaded the release index but failed to fetch any of its \(count) releases"
         }
     }
 }
