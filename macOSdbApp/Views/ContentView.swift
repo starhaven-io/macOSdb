@@ -57,6 +57,7 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("r", modifiers: .command)
                 .help("Refresh release data")
+                .disabled(appState.isLoading)
             }
         }
         .toolbarRole(.editor)

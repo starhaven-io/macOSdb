@@ -131,6 +131,7 @@ struct CompareView: View {
                     TableColumn("") { change in
                         Image(systemName: iconForDirection(change.direction))
                             .foregroundStyle(colorForDirection(change.direction))
+                            .accessibilityLabel(labelForDirection(change.direction))
                     }
                     .width(30)
                 }
@@ -206,6 +207,14 @@ struct CompareView: View {
         case .upgraded: "arrow.up.circle.fill"
         case .downgraded: "arrow.down.circle.fill"
         case .unchanged: "equal.circle"
+        }
+    }
+
+    private func labelForDirection(_ direction: ChangeDirection) -> String {
+        switch direction {
+        case .upgraded: "Upgraded"
+        case .downgraded: "Downgraded"
+        case .unchanged: "Unchanged"
         }
     }
 }

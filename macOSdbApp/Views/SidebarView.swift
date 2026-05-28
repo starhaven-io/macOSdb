@@ -85,11 +85,21 @@ struct SidebarView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
             } else if appState.releases.isEmpty {
-                ContentUnavailableView(
-                    "No Releases",
-                    systemImage: "externaldrive.badge.questionmark",
-                    description: Text("Could not load release data. Check your network connection.")
-                )
+                if let error = appState.lastError {
+                    ContentUnavailableView {
+                        Label("Couldn't Load Releases", systemImage: "externaldrive.badge.questionmark")
+                    } description: {
+                        Text(error.localizedDescription)
+                    } actions: {
+                        Button("Retry") { Task { await appState.refresh() } }
+                    }
+                } else {
+                    ContentUnavailableView(
+                        "No Releases",
+                        systemImage: "externaldrive.badge.questionmark",
+                        description: Text("No release data is available.")
+                    )
+                }
             } else {
                 ForEach(appState.releasesByMajorVersion) { group in
                     DisclosureGroup(isExpanded: expandedBinding(for: group.major)) {
