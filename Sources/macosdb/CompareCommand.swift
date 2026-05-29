@@ -34,11 +34,11 @@ struct CompareCommand: AsyncParsableCommand {
         async let toRelease = provider.findRelease(osVersion: toVersion, productType: productType)
 
         guard let from = try await fromRelease else {
-            print("\(productType.displayName) \(fromVersion) not found.")
+            printError("\(productType.displayName) \(fromVersion) not found.")
             throw ExitCode.failure
         }
         guard let toRel = try await toRelease else {
-            print("\(productType.displayName) \(toVersion) not found.")
+            printError("\(productType.displayName) \(toVersion) not found.")
             throw ExitCode.failure
         }
 

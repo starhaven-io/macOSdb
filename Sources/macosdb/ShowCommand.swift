@@ -31,7 +31,7 @@ struct ShowCommand: AsyncParsableCommand {
         let provider = makeDataProvider(dataURL: dataURL)
 
         guard let release = try await provider.findRelease(osVersion: version, productType: productType) else {
-            print("\(productType.displayName) \(version) not found.")
+            printError("\(productType.displayName) \(version) not found.")
             throw ExitCode.failure
         }
 

@@ -8,6 +8,12 @@ nonisolated func makeDataProvider(dataURL: String?) -> DataProvider {
     return DataProvider()
 }
 
+/// Writes a diagnostic line to standard error. CLI errors belong on stderr so
+/// they don't contaminate the stdout stream consumers parse (e.g. --json output).
+nonisolated func printError(_ message: String) {
+    FileHandle.standardError.write(Data((message + "\n").utf8))
+}
+
 nonisolated func writeJSON<T: Encodable>(_ value: T) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]

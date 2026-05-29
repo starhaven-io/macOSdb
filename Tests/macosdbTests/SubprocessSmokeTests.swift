@@ -30,6 +30,13 @@ struct SubprocessSmokeTests {
         #expect(result.stderr.contains("--release-date"))
     }
 
+    @Test("scan rejects a malformed --release-date")
+    func scanRejectsMalformedDate() throws {
+        let result = try runMacosdb(["scan", "archive.ipsw", "--update-index", "--release-date", "garbage"])
+        #expect(result.exitCode != 0)
+        #expect(result.stderr.contains("ISO 8601") || result.stderr.contains("release-date"))
+    }
+
     @Test("validate with no arguments is rejected")
     func validateRequiresInput() throws {
         let result = try runMacosdb(["validate"])
