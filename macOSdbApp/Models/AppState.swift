@@ -15,6 +15,9 @@ final class AppState {
     var compareRelease: Release?
     var isLoading = false
     var lastError: (any Error)?
+    /// Persists a load failure for the inline empty state until the next refresh,
+    /// independent of `lastError`, which the alert clears on dismissal.
+    var loadFailureMessage: String?
     var hasError: Bool {
         get { lastError != nil }
         set { if !newValue { lastError = nil } }
@@ -248,21 +251,26 @@ final class AppState {
     init(dataProvider: DataProvider? = nil) {
         if let dataProvider {
             self.dataProvider = dataProvider
-        } else {
-            // Try to find local data directory relative to the source tree
-            let sourceFile = URL(fileURLWithPath: #filePath)
-            let repoRoot = sourceFile
-                .deletingLastPathComponent() // Models/
-                .deletingLastPathComponent() // macOSdbApp/
-                .deletingLastPathComponent() // repo root
-            let localData = repoRoot.appendingPathComponent("data")
-            let indexFile = localData.appendingPathComponent("macos/releases.json")
-            if FileManager.default.fileExists(atPath: indexFile.path) {
-                self.dataProvider = DataProvider(baseURL: localData)
-            } else {
-                self.dataProvider = DataProvider()
-            }
+            return
         }
+
+        #if DEBUG
+        // DEBUG-only: prefer the repo's local data/ dir. #filePath is compile-time,
+        // so gating on DEBUG keeps the dev's absolute path out of release builds.
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile
+            .deletingLastPathComponent() // Models/
+            .deletingLastPathComponent() // macOSdbApp/
+            .deletingLastPathComponent() // repo root
+        let localData = repoRoot.appendingPathComponent("data")
+        let indexFile = localData.appendingPathComponent("macos/releases.json")
+        if FileManager.default.fileExists(atPath: indexFile.path) {
+            self.dataProvider = DataProvider(baseURL: localData)
+            return
+        }
+        #endif
+
+        self.dataProvider = DataProvider()
     }
 
     // MARK: - Actions
@@ -270,18 +278,33 @@ final class AppState {
     func refresh() async {
         isLoading = true
         lastError = nil
+        loadFailureMessage = nil
         await dataProvider.clearCache()
 
         do {
             let fetched = try await dataProvider.fetchAllReleases(for: selectedProduct)
             releases = fetched.sorted(by: >)
+            reconcileSelection()
             Self.logger.info("Loaded \(fetched.count) \(self.selectedProduct.displayName) releases")
         } catch {
             lastError = error
+            loadFailureMessage = error.localizedDescription
             Self.logger.error("Failed to load \(self.selectedProduct.displayName) releases: \(error.localizedDescription)")
         }
 
         isLoading = false
+    }
+
+    /// Re-point the current selection/comparison at the freshly loaded instances so
+    /// the detail panes don't keep rendering a stale snapshot (or a release that is
+    /// no longer in the catalog) after a refresh.
+    private func reconcileSelection() {
+        if let selected = selectedRelease {
+            selectedRelease = releases.first { $0.buildNumber == selected.buildNumber }
+        }
+        if let compare = compareRelease {
+            compareRelease = releases.first { $0.buildNumber == compare.buildNumber }
+        }
     }
 
     func switchProduct(_ product: ProductType) {
