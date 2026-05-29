@@ -57,6 +57,9 @@ struct ScanCommand: AsyncParsableCommand {
         if updateIndex && releaseDate == nil {
             throw ValidationError("--release-date is required when using --update-index")
         }
+        if let releaseDate, releaseDate.wholeMatch(of: /\d{4}-\d{2}-\d{2}/) == nil {
+            throw ValidationError("--release-date must be ISO 8601 (YYYY-MM-DD), got '\(releaseDate)'")
+        }
     }
 
     func run() async throws {
@@ -262,7 +265,7 @@ struct ScanCommand: AsyncParsableCommand {
         try FileManager.default.createDirectory(at: versionDir, withIntermediateDirectories: true)
         let outputPath = versionDir.appendingPathComponent(filename)
 
-        try jsonData.write(to: outputPath)
+        try jsonData.write(to: outputPath, options: .atomic)
         printStatus("")
         printStatus("Written to: \(outputPath.path)")
 
@@ -324,7 +327,7 @@ struct ScanCommand: AsyncParsableCommand {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         var indexData = try encoder.encode(entries)
         indexData.append(contentsOf: [0x0A]) // trailing newline
-        try indexData.write(to: indexPath)
+        try indexData.write(to: indexPath, options: .atomic)
 
         printStatus("Updated index: \(indexPath.path) (\(entries.count) releases)")
     }

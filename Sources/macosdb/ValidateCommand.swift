@@ -35,21 +35,21 @@ struct ValidateCommand: AsyncParsableCommand {
         printStatus("Validating \(targets.count) archive(s)...\n")
 
         var hashed = 0
-        var skipped = 0
+        var verified = 0
         var failed = 0
 
         for url in targets {
             let result = await process(url)
             switch result {
             case .hashed: hashed += 1
-            case .skipped: skipped += 1
+            case .verified: verified += 1
             case .failed: failed += 1
             }
         }
 
         let parts = [
             hashed > 0 ? "\(hashed) hashed" : nil,
-            skipped > 0 ? "\(skipped) already verified" : nil,
+            verified > 0 ? "\(verified) verified" : nil,
             failed > 0 ? "\(failed) failed" : nil
         ].compactMap { $0 }
         printStatus("\n\(parts.joined(separator: ", "))  (\(targets.count) total)")
@@ -59,22 +59,18 @@ struct ValidateCommand: AsyncParsableCommand {
         }
     }
 
-    private enum ProcessResult { case hashed, skipped, failed }
+    private enum ProcessResult { case hashed, verified, failed }
 
     private func process(_ url: URL) async -> ProcessResult {
         let sizeGB = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize)
             .map { String(format: "%.1f GB", Double($0) / 1e9) } ?? "unknown size"
 
         let sidecar = url.appendingPathExtension("sha256")
-
-        if sidecar.isReadableFile && !rehash {
-            printStatus("\(url.lastPathComponent)  (\(sizeGB))  ✓ already verified")
-            return .skipped
-        }
+        let existingHash = rehash ? nil : storedHash(at: sidecar)
 
         printStatus("\(url.lastPathComponent)  (\(sizeGB))")
 
-        if url.pathExtension == "ipsw" {
+        if url.pathExtension.lowercased() == "ipsw" {
             do {
                 let entryCount = try validateZIP(at: url)
                 printStatus("  ✓ Valid ZIP  (\(entryCount) entries)")
@@ -84,8 +80,26 @@ struct ValidateCommand: AsyncParsableCommand {
             }
         }
 
+        let digest: String
         do {
-            let digest = try await hashFile(url)
+            digest = try await hashFile(url)
+        } catch {
+            printStatus("  ✗ Hashing failed: \(error.localizedDescription)")
+            return .failed
+        }
+
+        // Verify against the stored sidecar rather than trusting its mere existence.
+        if let existingHash {
+            guard existingHash == digest else {
+                printStatus("  ✗ MISMATCH  stored \(existingHash)  computed \(digest)")
+                return .failed
+            }
+            printStatus("  ✓ verified: \(digest)")
+            return .verified
+        }
+
+        // Create (or rewrite, with --rehash) the sidecar.
+        do {
             let line = "\(digest)  \(url.lastPathComponent)\n"
             try line.write(to: sidecar, atomically: true, encoding: .utf8)
             if let mtime = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date {
@@ -94,11 +108,19 @@ struct ValidateCommand: AsyncParsableCommand {
             printStatus("  ✓ sha256: \(digest)")
             printStatus("    → \(sidecar.lastPathComponent)")
         } catch {
-            printStatus("  ✗ Hashing failed: \(error.localizedDescription)")
+            printStatus("  ✗ Writing sidecar failed: \(error.localizedDescription)")
             return .failed
         }
 
         return .hashed
+    }
+
+    /// Reads the hex digest from an existing `<archive>.sha256` sidecar, if present.
+    private func storedHash(at sidecar: URL) -> String? {
+        guard let contents = try? String(contentsOf: sidecar, encoding: .utf8) else { return nil }
+        return contents.split(whereSeparator: { $0 == " " || $0 == "\n" || $0 == "\t" })
+            .first
+            .map { $0.lowercased() }
     }
 
     private func validateZIP(at url: URL) throws -> Int {
@@ -151,7 +173,7 @@ struct ValidateCommand: AsyncParsableCommand {
                 options: [.skipsHiddenFiles]
             )
             while let fileURL = enumerator?.nextObject() as? URL {
-                if Self.supportedExtensions.contains(fileURL.pathExtension) {
+                if Self.supportedExtensions.contains(fileURL.pathExtension.lowercased()) {
                     urls.append(fileURL)
                 }
             }
@@ -168,11 +190,5 @@ struct ValidateCommand: AsyncParsableCommand {
     private func printInline(_ message: String) {
         let line = message.isEmpty ? "\r\u{1B}[K" : "\r\(message)"
         FileHandle.standardError.write(Data(line.utf8))
-    }
-}
-
-private extension URL {
-    nonisolated var isReadableFile: Bool {
-        (try? checkResourceIsReachable()) == true
     }
 }

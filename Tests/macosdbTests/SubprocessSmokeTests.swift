@@ -30,6 +30,13 @@ struct SubprocessSmokeTests {
         #expect(result.stderr.contains("--release-date"))
     }
 
+    @Test("scan rejects a malformed --release-date")
+    func scanRejectsMalformedDate() throws {
+        let result = try runMacosdb(["scan", "archive.ipsw", "--update-index", "--release-date", "garbage"])
+        #expect(result.exitCode != 0)
+        #expect(result.stderr.contains("ISO 8601") || result.stderr.contains("release-date"))
+    }
+
     @Test("validate with no arguments is rejected")
     func validateRequiresInput() throws {
         let result = try runMacosdb(["validate"])
@@ -62,6 +69,38 @@ struct SubprocessSmokeTests {
         let sidecarMtime = try FileManager.default
             .attributesOfItem(atPath: sidecar.path)[.modificationDate] as? Date
         #expect(sidecarMtime == expected)
+    }
+
+    @Test("validate verifies an existing sidecar and detects a mismatch")
+    func validateVerifiesAndDetectsMismatch() throws {
+        let tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("macosdb-verify-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let archive = tempDir.appendingPathComponent("fake.xip")
+        try Data("original contents".utf8).write(to: archive)
+
+        // First run creates the sidecar.
+        let created = try runMacosdb(["validate", archive.path])
+        #expect(created.exitCode == 0)
+        #expect(created.stderr.contains("sha256:"))
+
+        // Second run recomputes and verifies against the stored hash.
+        let verified = try runMacosdb(["validate", archive.path])
+        #expect(verified.exitCode == 0)
+        #expect(verified.stderr.contains("verified"))
+
+        // Tampering with the archive must be detected as a mismatch (non-zero exit).
+        try Data("tampered contents".utf8).write(to: archive)
+        let mismatch = try runMacosdb(["validate", archive.path])
+        #expect(mismatch.exitCode != 0)
+        #expect(mismatch.stderr.contains("MISMATCH"))
+
+        // --rehash overwrites the stale sidecar and succeeds again.
+        let rehashed = try runMacosdb(["validate", archive.path, "--rehash"])
+        #expect(rehashed.exitCode == 0)
+        #expect(rehashed.stderr.contains("sha256:"))
     }
 
     // MARK: - Helpers

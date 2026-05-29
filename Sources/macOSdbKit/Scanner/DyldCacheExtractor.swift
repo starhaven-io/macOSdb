@@ -108,40 +108,30 @@ enum DyldCacheExtractor {
 
         fileHandle.seek(toFileOffset: UInt64(imageTable.offset))
         let imagesData = fileHandle.readData(ofLength: imageTable.count * entrySize)
+        guard imagesData.count == imageTable.count * entrySize else {
+            logger.warning("dyld image table truncated: wanted \(imageTable.count * entrySize) bytes, got \(imagesData.count)")
+            return nil
+        }
+
+        let pathFieldOffset = imageTable.format == .legacy
+            ? LegacyImageLayout.pathFileOffsetOffset
+            : TextImageLayout.pathOffsetOffset
+        let addressFieldOffset = imageTable.format == .legacy
+            ? LegacyImageLayout.addressOffset
+            : TextImageLayout.loadAddressOffset
 
         for imageIndex in 0..<imageTable.count {
             let entryOffset = imageIndex * entrySize
 
             // Read path offset — different field position depending on format
-            let pathFileOffset: UInt32 = imagesData.withUnsafeBytes { buffer in
-                let fieldOffset = imageTable.format == .legacy
-                    ? LegacyImageLayout.pathFileOffsetOffset
-                    : TextImageLayout.pathOffsetOffset
-                return buffer.load(
-                    fromByteOffset: entryOffset + fieldOffset,
-                    as: UInt32.self
-                )
-            }
+            guard let pathFileOffset = loadUInt32(imagesData, at: entryOffset + pathFieldOffset) else { continue }
 
-            fileHandle.seek(toFileOffset: UInt64(pathFileOffset))
-            let pathData = fileHandle.readData(ofLength: 512)
-            guard let imagePath = pathData.withUnsafeBytes({ buffer -> String? in
-                guard let baseAddress = buffer.baseAddress else { return nil }
-                return String(cString: baseAddress.assumingMemoryBound(to: CChar.self))
-            }) else { continue }
+            guard let imagePath = readCString(fileHandle: fileHandle, at: UInt64(pathFileOffset)) else { continue }
 
             guard imagePath == dylibPath else { continue }
 
             // Read image address — different field position depending on format
-            let imageAddress: UInt64 = imagesData.withUnsafeBytes { buffer in
-                let fieldOffset = imageTable.format == .legacy
-                    ? LegacyImageLayout.addressOffset
-                    : TextImageLayout.loadAddressOffset
-                return buffer.load(
-                    fromByteOffset: entryOffset + fieldOffset,
-                    as: UInt64.self
-                )
-            }
+            guard let imageAddress = loadUInt64(imagesData, at: entryOffset + addressFieldOffset) else { return nil }
 
             guard let result = translateAddress(imageAddress, mappings: mappings) else {
                 logger.warning("Could not translate address for \(dylibPath)")
@@ -186,27 +176,19 @@ enum DyldCacheExtractor {
 
         fileHandle.seek(toFileOffset: UInt64(imageTable.offset))
         let imagesData = fileHandle.readData(ofLength: imageTable.count * entrySize)
+        guard imagesData.count == imageTable.count * entrySize else { return [] }
+
+        let pathFieldOffset = imageTable.format == .legacy
+            ? LegacyImageLayout.pathFileOffsetOffset
+            : TextImageLayout.pathOffsetOffset
 
         var paths: [String] = []
         for imageIndex in 0..<imageTable.count {
             let entryOffset = imageIndex * entrySize
 
-            let pathFileOffset: UInt32 = imagesData.withUnsafeBytes { buffer in
-                let fieldOffset = imageTable.format == .legacy
-                    ? LegacyImageLayout.pathFileOffsetOffset
-                    : TextImageLayout.pathOffsetOffset
-                return buffer.load(
-                    fromByteOffset: entryOffset + fieldOffset,
-                    as: UInt32.self
-                )
-            }
+            guard let pathFileOffset = loadUInt32(imagesData, at: entryOffset + pathFieldOffset) else { continue }
 
-            fileHandle.seek(toFileOffset: UInt64(pathFileOffset))
-            let pathData = fileHandle.readData(ofLength: 512)
-            if let imagePath = pathData.withUnsafeBytes({ buffer -> String? in
-                guard let baseAddress = buffer.baseAddress else { return nil }
-                return String(cString: baseAddress.assumingMemoryBound(to: CChar.self))
-            }) {
+            if let imagePath = readCString(fileHandle: fileHandle, at: UInt64(pathFileOffset)) {
                 paths.append(imagePath)
             }
         }
@@ -285,28 +267,22 @@ enum DyldCacheExtractor {
         sourceFile: URL
     ) -> [CacheMapping] {
         fileHandle.seek(toFileOffset: UInt64(HeaderOffsets.mappingOffset))
-        let mappingOffsetData = fileHandle.readData(ofLength: 4)
-        let mappingCountData = fileHandle.readData(ofLength: 4)
-        let mappingOffset = mappingOffsetData.withUnsafeBytes { $0.load(as: UInt32.self) }
-        let mappingCount = mappingCountData.withUnsafeBytes { $0.load(as: UInt32.self) }
-
-        guard mappingCount > 0, mappingCount < 100 else { return [] }
+        let header = fileHandle.readData(ofLength: 8)
+        guard let mappingOffset = loadUInt32(header, at: 0),
+              let mappingCount = loadUInt32(header, at: 4),
+              mappingCount > 0, mappingCount < 100 else { return [] }
 
         fileHandle.seek(toFileOffset: UInt64(mappingOffset))
-        let data = fileHandle.readData(ofLength: Int(mappingCount) * MappingLayout.size)
+        let expectedBytes = Int(mappingCount) * MappingLayout.size
+        let data = fileHandle.readData(ofLength: expectedBytes)
+        guard data.count == expectedBytes else { return [] }
 
         var mappings: [CacheMapping] = []
         for mappingIndex in 0..<Int(mappingCount) {
             let entryOffset = mappingIndex * MappingLayout.size
-            let address: UInt64 = data.withUnsafeBytes { buffer in
-                buffer.load(fromByteOffset: entryOffset + MappingLayout.addressOffset, as: UInt64.self)
-            }
-            let size: UInt64 = data.withUnsafeBytes { buffer in
-                buffer.load(fromByteOffset: entryOffset + MappingLayout.sizeOffset, as: UInt64.self)
-            }
-            let fileOff: UInt64 = data.withUnsafeBytes { buffer in
-                buffer.load(fromByteOffset: entryOffset + MappingLayout.fileOffsetOffset, as: UInt64.self)
-            }
+            guard let address = loadUInt64(data, at: entryOffset + MappingLayout.addressOffset),
+                  let size = loadUInt64(data, at: entryOffset + MappingLayout.sizeOffset),
+                  let fileOff = loadUInt64(data, at: entryOffset + MappingLayout.fileOffsetOffset) else { continue }
             mappings.append(CacheMapping(
                 address: address,
                 size: size,
@@ -329,29 +305,29 @@ enum DyldCacheExtractor {
     }
 
     /// Tries legacy format first, falls back to dyld4 text format.
+    /// All count/offset fields are untrusted; they are range-checked *before*
+    /// the `UInt64`→`Int` conversion (which would otherwise trap on values > Int.max).
     private static func readImageTableInfo(
         fileHandle: FileHandle
     ) -> ImageTableInfo {
+        let empty = ImageTableInfo(offset: 0, count: 0, format: .legacy)
+
         // Try legacy format (offset at byte 24): dyld_cache_image_info
         fileHandle.seek(toFileOffset: UInt64(HeaderOffsets.imagesOffsetOld))
-        let oldOffsetData = fileHandle.readData(ofLength: 4)
-        let oldCountData = fileHandle.readData(ofLength: 4)
-        let oldOffset = oldOffsetData.withUnsafeBytes { $0.load(as: UInt32.self) }
-        let oldCount = oldCountData.withUnsafeBytes { $0.load(as: UInt32.self) }
-
-        // Sanity check: if the legacy format values look reasonable, use them.
-        // The offset limit is generous to handle large split caches (macOS 12+).
-        if oldCount > 0, oldCount < 100_000, oldOffset > 0, oldOffset < 500_000_000 {
+        let legacy = fileHandle.readData(ofLength: 8)
+        if let oldOffset = loadUInt32(legacy, at: 0), let oldCount = loadUInt32(legacy, at: 4),
+           // Sanity check; the offset limit is generous for large split caches (macOS 12+).
+           oldCount > 0, oldCount < 100_000, oldOffset > 0, oldOffset < 500_000_000 {
             return ImageTableInfo(offset: Int(oldOffset), count: Int(oldCount), format: .legacy)
         }
 
         // Fall back to dyld4 text image info (offset at byte 136): dyld_cache_image_text_info
         fileHandle.seek(toFileOffset: UInt64(HeaderOffsets.imagesTextOffset))
-        let newOffsetData = fileHandle.readData(ofLength: 8)
-        let newCountData = fileHandle.readData(ofLength: 8)
-        let newOffset = newOffsetData.withUnsafeBytes { $0.load(as: UInt64.self) }
-        let newCount = newCountData.withUnsafeBytes { $0.load(as: UInt64.self) }
-
+        let text = fileHandle.readData(ofLength: 16)
+        guard let newOffset = loadUInt64(text, at: 0), let newCount = loadUInt64(text, at: 8),
+              newCount > 0, newCount < 100_000, newOffset > 0, newOffset < 4_000_000_000 else {
+            return empty
+        }
         return ImageTableInfo(offset: Int(newOffset), count: Int(newCount), format: .text)
     }
 
@@ -366,17 +342,44 @@ enum DyldCacheExtractor {
         mappings: [CacheMapping]
     ) -> TranslatedAddress? {
         for mapping in mappings {
-            if address >= mapping.address, address < mapping.address + mapping.size {
+            // Untrusted address/size from the cache; avoid trapping on overflow.
+            let (end, overflow) = mapping.address.addingReportingOverflow(mapping.size)
+            guard !overflow else { continue }
+            if address >= mapping.address, address < end {
                 let offsetInMapping = address - mapping.address
-                let fileOffset = mapping.fileOffset + offsetInMapping
-                let remainingSize = mapping.size - offsetInMapping
+                let (fileOffset, fileOverflow) = mapping.fileOffset.addingReportingOverflow(offsetInMapping)
+                guard !fileOverflow else { continue }
                 return TranslatedAddress(
                     fileOffset: fileOffset,
-                    remainingSize: remainingSize,
+                    remainingSize: mapping.size - offsetInMapping,
                     sourceFile: mapping.sourceFile
                 )
             }
         }
         return nil
+    }
+
+    // MARK: - Bounds-checked reads (cache contents are untrusted)
+
+    /// Loads a little-endian integer only if `data` actually holds the bytes
+    /// (`readData` returns a short buffer at EOF, which `load` would over-read).
+    private static func loadUInt32(_ data: Data, at offset: Int) -> UInt32? {
+        guard offset >= 0, offset &+ 4 <= data.count else { return nil }
+        return data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: offset, as: UInt32.self) }
+    }
+
+    private static func loadUInt64(_ data: Data, at offset: Int) -> UInt64? {
+        guard offset >= 0, offset &+ 8 <= data.count else { return nil }
+        return data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: offset, as: UInt64.self) }
+    }
+
+    /// Reads a NUL-terminated path, bounded to the bytes actually read so a
+    /// cache whose path offset points at non-terminated bytes can't over-read.
+    private static func readCString(fileHandle: FileHandle, at offset: UInt64, maxLength: Int = 512) -> String? {
+        fileHandle.seek(toFileOffset: offset)
+        let data = fileHandle.readData(ofLength: maxLength)
+        let bytes = data.prefix { $0 != 0 }
+        guard !bytes.isEmpty else { return nil }
+        return String(bytes: bytes, encoding: .utf8)
     }
 }

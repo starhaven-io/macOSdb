@@ -23,6 +23,12 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .navigationTitle("macOSdb")
+        .onChange(of: appState.selectedProduct) {
+            // Expansion is keyed by raw major version, which overlaps across products;
+            // reset on switch so one product's collapse choices don't bleed over.
+            hasInitializedExpansion = false
+            expandedGroups = []
+        }
         .safeAreaInset(edge: .top) {
             VStack(spacing: 6) {
                 Picker("Product", selection: productBinding) {
@@ -85,11 +91,11 @@ struct SidebarView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
             } else if appState.releases.isEmpty {
-                if let error = appState.lastError {
+                if let message = appState.loadFailureMessage {
                     ContentUnavailableView {
                         Label("Couldn't Load Releases", systemImage: "externaldrive.badge.questionmark")
                     } description: {
-                        Text(error.localizedDescription)
+                        Text(message)
                     } actions: {
                         Button("Retry") { Task { await appState.refresh() } }
                     }

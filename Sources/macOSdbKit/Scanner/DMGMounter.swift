@@ -24,16 +24,18 @@ actor DMGMounter {
         process.standardError = stderr
 
         try process.run()
+        // Drain both pipes before waiting: a large -plist output on stdout could
+        // otherwise fill the pipe buffer and deadlock against waitUntilExit().
+        let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
+        let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
         guard process.terminationStatus == 0 else {
-            let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
             let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
             Self.logger.error("hdiutil attach failed: \(errorMessage)")
             throw ScannerError.dmgMountFailed(path: dmgPath.path, reason: errorMessage)
         }
 
-        let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
         return try parseMountOutput(outputData, dmgPath: dmgPath.path)
     }
 
@@ -50,10 +52,10 @@ actor DMGMounter {
 
         do {
             try process.run()
+            let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
 
             if process.terminationStatus != 0 {
-                let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
                 let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
                 Self.logger.warning("hdiutil detach warning: \(errorMessage)")
             }

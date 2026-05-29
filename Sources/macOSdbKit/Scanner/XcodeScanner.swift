@@ -100,28 +100,34 @@ public actor XcodeScanner {
 
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
-        sendVerbose("Extracting XIP to \(tempDir.path)")
+        // Clean up the temp dir if anything after createDirectory throws
+        // (including a process.run() failure).
+        do {
+            sendVerbose("Extracting XIP to \(tempDir.path)")
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/xip")
-        process.arguments = ["--expand", xipPath.path]
-        process.currentDirectoryURL = tempDir
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/xip")
+            process.arguments = ["--expand", xipPath.path]
+            process.currentDirectoryURL = tempDir
 
-        let stderr = Pipe()
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = stderr
+            let stderr = Pipe()
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = stderr
 
-        try process.run()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
+            try process.run()
             let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
-            let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
-            cleanup(tempDir)
-            throw ScannerError.xipExtractionFailed(reason: errorMessage)
-        }
+            process.waitUntilExit()
 
-        return tempDir
+            guard process.terminationStatus == 0 else {
+                let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
+                throw ScannerError.xipExtractionFailed(reason: errorMessage)
+            }
+
+            return tempDir
+        } catch {
+            cleanup(tempDir)
+            throw error
+        }
     }
 
     // MARK: - Xcode.app discovery
@@ -373,6 +379,9 @@ public actor XcodeScanner {
         return SDKMetadataParser.extractSDKComponents(from: sdkUsrDir)
     }
 
+}
+
+extension XcodeScanner {
     // MARK: - Cleanup
 
     private func cleanup(_ directory: URL) {
@@ -388,9 +397,7 @@ public actor XcodeScanner {
     private func sendVerbose(_ message: String) {
         onVerbose?(message)
     }
-}
 
-extension XcodeScanner {
     /// Apple's services-account portal wraps the real download in a `path=` query parameter
     /// (`/services-account/download?path=/.../Xcode.xip`); prefer that value over `lastPathComponent`,
     /// which would otherwise be `download`.

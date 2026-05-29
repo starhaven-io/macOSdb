@@ -80,10 +80,12 @@ struct CleanupCommand: AsyncParsableCommand {
             return []
         }
 
+        let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
+
         var results: [StaleMount] = []
         for image in images {
             guard let imagePath = image["image-path"] as? String,
-                  imagePath.contains("macosdb-"),
+                  isScannerImage(imagePath, tempBase: tempBase),
                   let entities = image["system-entities"] as? [[String: Any]] else {
                 continue
             }
@@ -102,6 +104,14 @@ struct CleanupCommand: AsyncParsableCommand {
         }
 
         return results
+    }
+
+    /// True only for DMGs the scanner created: under the temp dir and in a
+    /// `macosdb-…` work dir, so `--force` can't detach unrelated user volumes.
+    private func isScannerImage(_ imagePath: String, tempBase: String) -> Bool {
+        let resolved = URL(fileURLWithPath: imagePath).resolvingSymlinksInPath()
+        guard resolved.path.hasPrefix(tempBase) else { return false }
+        return resolved.pathComponents.contains { $0.hasPrefix("macosdb-") }
     }
 
     private func unmount(_ mount: StaleMount) {

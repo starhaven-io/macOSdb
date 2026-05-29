@@ -28,36 +28,43 @@ actor IPSWExtractor {
             .appendingPathComponent("macosdb-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
 
-        let archive: Archive
+        // Clean up the work dir if anything after its creation throws; the caller
+        // only cleans up once it holds the ExtractionResult.
         do {
-            archive = try Archive(url: ipswPath, accessMode: .read)
-        } catch {
-            throw ScannerError.ipswExtractionFailed(
-                reason: "Could not open IPSW as ZIP archive: \(error)"
+            let archive: Archive
+            do {
+                archive = try Archive(url: ipswPath, accessMode: .read)
+            } catch {
+                throw ScannerError.ipswExtractionFailed(
+                    reason: "Could not open IPSW as ZIP archive: \(error)"
+                )
+            }
+
+            let classified = classifyEntries(archive)
+            let metadata = try extractMetadata(
+                from: classified, archive: archive, workDir: workDir, filename: ipswPath.lastPathComponent
             )
+            let kernelcachePaths = try extractKernels(classified.kernelcaches, archive: archive, workDir: workDir)
+            let (systemDMGPath, cryptexDMGPath) = try extractDMGs(
+                classified.dmgs,
+                archive: archive,
+                workDir: workDir,
+                dmgRoles: metadata.dmgRoles
+            )
+
+            return ExtractionResult(
+                workDirectory: workDir,
+                kernelcaches: kernelcachePaths.sorted { $0.lastPathComponent < $1.lastPathComponent },
+                systemDMG: systemDMGPath,
+                cryptexDMG: cryptexDMGPath,
+                osVersion: metadata.osVersion,
+                buildNumber: metadata.buildNumber,
+                kernelDeviceMap: metadata.kernelDeviceMap
+            )
+        } catch {
+            cleanup(workDirectory: workDir)
+            throw error
         }
-
-        let classified = classifyEntries(archive)
-        let metadata = try extractMetadata(
-            from: classified, archive: archive, workDir: workDir, filename: ipswPath.lastPathComponent
-        )
-        let kernelcachePaths = try extractKernels(classified.kernelcaches, archive: archive, workDir: workDir)
-        let (systemDMGPath, cryptexDMGPath) = try extractDMGs(
-            classified.dmgs,
-            archive: archive,
-            workDir: workDir,
-            dmgRoles: metadata.dmgRoles
-        )
-
-        return ExtractionResult(
-            workDirectory: workDir,
-            kernelcaches: kernelcachePaths.sorted { $0.lastPathComponent < $1.lastPathComponent },
-            systemDMG: systemDMGPath,
-            cryptexDMG: cryptexDMGPath,
-            osVersion: metadata.osVersion,
-            buildNumber: metadata.buildNumber,
-            kernelDeviceMap: metadata.kernelDeviceMap
-        )
     }
 
     // MARK: - Extraction helpers

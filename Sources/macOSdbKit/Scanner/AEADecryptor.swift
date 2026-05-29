@@ -131,6 +131,9 @@ actor AEADecryptor {
 
     private func validateHeader(_ header: Data) throws -> Int {
         let bytes = [UInt8](header)
+        guard bytes.count >= 12 else {
+            throw ScannerError.aeaDecryptionFailed(reason: "AEA header too short")
+        }
 
         guard bytes[0] == 0x41, bytes[1] == 0x45,
               bytes[2] == 0x41, bytes[3] == 0x31 else {

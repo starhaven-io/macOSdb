@@ -12,13 +12,13 @@ macOSdb scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts ve
 
 ## Tracked components
 
-**Filesystem binaries:** curl, httpd, LibreSSL, OpenSSH, Ruby, SQLite, vim, zsh
+**Filesystem binaries:** curl, httpd, LibreSSL, OpenSSH, Ruby, sudo, SQLite, vim, zsh
 
 **Dyld shared cache:** libbz2, libcurl, libexpat, libncurses, libpcap, libsqlite3, libssl, libxml2
 
-**Xcode toolchain:** Apple Clang, cctools, Git, ld, lldb, Swift
+**Xcode toolchain:** Apple Clang, cctools, Git, ld, lldb, Python, Swift
 
-**SDK libraries:** bzip2, expat, libcurl, libedit, libexslt, libffi, libxml2, libxslt, ncurses, sqlite3, zlib
+**SDK libraries:** bzip2, expat, libcurl, libexslt, libffi, libxml2, libxslt, ncurses, sqlite3, zlib
 
 ## Installation
 
@@ -73,9 +73,13 @@ macosdb scan ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \
 macosdb scan ~/Downloads/Xcode_26.4_Apple_silicon.xip \
   --output data/xcode/releases --release-date 2026-03-24 --update-index --verbose
 
-# Validate archives and create SHA-256 sidecar hashes
+# Validate archives: create SHA-256 sidecars, or verify against existing ones
 macosdb validate ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw
 macosdb validate --dir /path/to/archive
+
+# Clean up leftover mounted DMGs and temp directories from aborted scans
+macosdb cleanup            # dry run — list what would be removed
+macosdb cleanup --force    # actually unmount and delete
 ```
 
 ### Shell completions
@@ -135,10 +139,12 @@ just test           # Run Swift tests
 just lint           # Run SwiftLint (--strict)
 just lint-json      # Validate JSON data files
 just typos          # Check for typos
-just audit          # Audit GitHub Actions workflows
+just audit          # Audit GitHub Actions workflows (zizmor)
+just periphery      # Scan for unused code
 just build-app      # Build the app with xcodebuild
 just test-xcode     # Run tests with xcodebuild (matches CI)
-just check          # Run all checks (lint, lint-json, test, audit, site format, site build)
+just lychee         # Check the built site for broken links
+just check          # Run all checks (lint, lint-json, typos, audit, periphery, test, site format, site build)
 ```
 
 ### Site

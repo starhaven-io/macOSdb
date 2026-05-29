@@ -44,8 +44,17 @@ public actor DataProvider {
     }
 
     public func fetchRelease(_ entry: ReleaseIndexEntry) async throws -> Release {
-        if let cached = cachedReleases[entry.buildNumber] {
+        // Build numbers aren't guaranteed unique across products, so namespace the
+        // cache key by product directory.
+        let cacheKey = "\(entry.resolvedProductType.dataDirectory)/\(entry.buildNumber)"
+        if let cached = cachedReleases[cacheKey] {
             return cached
+        }
+
+        // dataFile comes from the index; reject path traversal so a crafted index
+        // can't read outside the data directory when baseURL is a local file:// path.
+        guard !entry.dataFile.contains("..") else {
+            throw DataProviderError.invalidDataFile(entry.dataFile)
         }
 
         let relativePath = "\(entry.resolvedProductType.dataDirectory)/\(entry.dataFile)"
@@ -57,7 +66,7 @@ public actor DataProvider {
 
         let decoder = JSONDecoder()
         let release = try decoder.decode(Release.self, from: data)
-        cachedReleases[entry.buildNumber] = release
+        cachedReleases[cacheKey] = release
 
         Self.logger.info("Loaded release: \(release.displayName) (\(release.buildNumber))")
         return release
@@ -125,6 +134,7 @@ public actor DataProvider {
 enum DataProviderError: LocalizedError {
     case httpError(statusCode: Int, url: URL)
     case allReleasesFailed(count: Int)
+    case invalidDataFile(String)
 
     var errorDescription: String? {
         switch self {
@@ -132,6 +142,8 @@ enum DataProviderError: LocalizedError {
             "HTTP \(statusCode) fetching \(url)"
         case .allReleasesFailed(let count):
             "Loaded the release index but failed to fetch any of its \(count) releases"
+        case .invalidDataFile(let path):
+            "Refusing to fetch release data with an unsafe path: \(path)"
         }
     }
 }
