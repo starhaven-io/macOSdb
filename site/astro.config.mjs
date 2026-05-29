@@ -35,8 +35,12 @@ export default defineConfig({
     defaultStrategy: 'hover',
   },
   vite: {
-    optimizeDeps: {
-      exclude: ['astro'],
+    environments: {
+      client: {
+        optimizeDeps: {
+          exclude: ['astro'],
+        },
+      },
     },
   },
   experimental: {
