@@ -93,15 +93,17 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(older < newer)
     }
 
-    @Test("Release sorting — same version different builds is deterministic")
+    @Test("Release sorting — same version orders builds numerically, not lexicographically")
     func releaseSortingSameVersion() {
-        let buildA = Release(osVersion: "15.1.1", buildNumber: "24B2091", releaseName: "Sequoia")
-        let buildB = Release(osVersion: "15.1.1", buildNumber: "24B91", releaseName: "Sequoia")
-        #expect(buildA < buildB)
-        #expect(!(buildB < buildA))
-        // Verify sorted order is stable
-        let sorted = [buildB, buildA].sorted()
-        #expect(sorted.map(\.buildNumber) == ["24B2091", "24B91"])
+        // 24B91 (original) predates 24B2091 (the later device-specific re-release).
+        // Numeric ordering must place 91 before 2091; a lexicographic compare would
+        // wrongly rank "24B2091" first because '2' < '8'.
+        let original = Release(osVersion: "15.1.1", buildNumber: "24B91", releaseName: "Sequoia")
+        let reRelease = Release(osVersion: "15.1.1", buildNumber: "24B2091", releaseName: "Sequoia")
+        #expect(original < reRelease)
+        #expect(!(reRelease < original))
+        let sorted = [reRelease, original].sorted()
+        #expect(sorted.map(\.buildNumber) == ["24B91", "24B2091"])
     }
 
     @Test("Release component lookup by name")

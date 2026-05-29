@@ -299,7 +299,7 @@ extension Release: Comparable {
         if lhs.prereleaseRank != rhs.prereleaseRank {
             return lhs.prereleaseRank < rhs.prereleaseRank
         }
-        return lhs.buildNumber < rhs.buildNumber
+        return BuildNumber.less(lhs.buildNumber, rhs.buildNumber)
     }
 
     private var prereleaseRank: (Int, Int) {
@@ -309,12 +309,38 @@ extension Release: Comparable {
     }
 }
 
-enum BuildNumber {
+public enum BuildNumber {
     /// Apple beta build numbers end with a lowercase letter (e.g. `25E5207k`),
     /// while release builds end with a digit (e.g. `24G90`).
     static func isBeta(_ buildNumber: String) -> Bool {
         guard let last = buildNumber.last else { return false }
         return last.isLetter && last.isLowercase
+    }
+
+    /// Orders Apple build numbers by (cycle, train, build, suffix) so re-release
+    /// variants compare numerically (24B83 < 24B2083) rather than lexicographically
+    /// (where "24B2083" < "24B83" because '2' < '8').
+    public static func less(_ lhs: String, _ rhs: String) -> Bool {
+        let lhsParts = parse(lhs), rhsParts = parse(rhs)
+        if lhsParts.cycle != rhsParts.cycle { return lhsParts.cycle < rhsParts.cycle }
+        if lhsParts.train != rhsParts.train { return lhsParts.train < rhsParts.train }
+        if lhsParts.build != rhsParts.build { return lhsParts.build < rhsParts.build }
+        return lhsParts.suffix < rhsParts.suffix
+    }
+
+    /// Splits e.g. "24B2083" → (24, "B", 2083, "") and "24A5331b" → (24, "A", 5331, "b").
+    private static func parse(_ build: String) -> (cycle: Int, train: String, build: Int, suffix: String) {
+        let chars = Array(build)
+        var idx = 0
+        func take(_ predicate: (Character) -> Bool) -> String {
+            let start = idx
+            while idx < chars.count, predicate(chars[idx]) { idx += 1 }
+            return String(chars[start..<idx])
+        }
+        let cycle = Int(take { $0.isNumber }) ?? 0
+        let train = take { $0.isLetter }
+        let build = Int(take { $0.isNumber }) ?? 0
+        return (cycle, train, build, String(chars[idx...]))
     }
 }
 

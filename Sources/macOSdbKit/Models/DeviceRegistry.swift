@@ -176,6 +176,8 @@ public enum DeviceRegistry {
                        marketingName: "Apple Virtual Machine")
         ]
 
-        return Dictionary(uniqueKeysWithValues: entries.map { ($0.model, $0) })
+        // Keep the first entry if a duplicate model id ever slips into the
+        // hand-maintained list, rather than trapping as uniqueKeysWithValues would.
+        return Dictionary(entries.map { ($0.model, $0) }, uniquingKeysWith: { first, _ in first })
     }()
 }

@@ -57,7 +57,9 @@ public struct KernelInfo: Codable, Identifiable, Hashable, Sendable {
         ChipFamily.from(chipName: chip)
     }
 
-    /// Uses per-device resolution when available, falls back to the kernel-level chip.
+    /// Uses per-device resolution when available, falls back to the kernel-level
+    /// chip, then to the arch suffix (so an unmapped label like "Multiple" on older
+    /// data still resolves via e.g. "ARM64_T8132" → M4).
     public var resolvedChipFamilies: [ChipFamily] {
         if let deviceChips, !deviceChips.isEmpty {
             var seen = Set<ChipFamily>()
@@ -67,9 +69,13 @@ public struct KernelInfo: Codable, Identifiable, Hashable, Sendable {
                     result.append(family)
                 }
             }
-            return result
+            if !result.isEmpty { return result }
         }
         if let family = chipFamily {
+            return [family]
+        }
+        if let suffix = arch.split(separator: "_").last.map(String.init),
+           suffix != arch, let family = ChipFamily.from(archSuffix: suffix) {
             return [family]
         }
         return []
