@@ -101,6 +101,13 @@ jobs:
           BUILD: ${{ inputs.build_number }}
         run: |
           XIP_PATH=$(echo "${XIP_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
+          # The ADCDownloadAuth secret cookie is sent to adcdownload.apple.com${XIP_PATH}.
+          # Reject anything that isn't a clean absolute .xip path so a value like
+          # "@evil.example.com/x.xip" can't redirect curl (and the cookie) to another host.
+          if [[ ! "${XIP_PATH}" =~ ^/[A-Za-z0-9._~%/+-]+\.xip$ ]]; then
+            echo "::error::Refusing to use download path '${XIP_PATH}': not a clean absolute .xip path."
+            exit 1
+          fi
           ORIG_NAME=$(basename "${XIP_PATH}")
           VERSION=$(echo "${ORIG_NAME}" | sed -E 's/Xcode_([0-9]+(\.[0-9]+)*).*/\1/')
           MAJOR=${VERSION%%.*}

@@ -73,16 +73,20 @@ jobs:
       - name: Create temporary certificate file
         env:
           DEVELOPER_ID_CERTIFICATE: ${{ secrets.DEVELOPER_ID_CERTIFICATE }}
-        run: echo -n "${DEVELOPER_ID_CERTIFICATE}" |
-          base64 --decode --output="${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
+        run: |
+          set +x  # don't xtrace the base64-encoded certificate
+          echo -n "${DEVELOPER_ID_CERTIFICATE}" |
+            base64 --decode --output="${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
 
       - name: Import certificate into keychain
         env:
           DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-        run: security import "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
-          -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
-          -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}"
-          -t cert -f pkcs12 -A
+        run: |
+          set +x  # don't xtrace the certificate password
+          security import "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}" \
+            -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" \
+            -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}" \
+            -t cert -f pkcs12 -A
 
       - name: Clean up temporary certificate file
         if: always()
@@ -173,6 +177,7 @@ jobs:
           NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
           ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
         run: |
+          set +x  # keep the notarization password out of the xtrace log
           xcrun notarytool submit "${ARTIFACT_NAME}" \
             --team-id "${DEVELOPMENT_TEAM}" \
             --apple-id "${APPLE_ID}" \
@@ -185,9 +190,15 @@ jobs:
             "${ARTIFACT_NAME}"
 
       - name: Download Sparkle
+        env:
+          # Keep in lockstep with the Sparkle framework version in Package.resolved
+          # so the sign_update tool matches the runtime that verifies updates.
+          SPARKLE_VERSION: "2.9.2"
+          SPARKLE_SHA256: "1cb340cbbef04c6c0d162078610c25e2221031d794a3449d89f2f56f4df77c95"
         run: |
-          curl -L -o "${RUNNER_TEMP}/sparkle.tar.xz" \
-            "https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz"
+          curl -fL -o "${RUNNER_TEMP}/sparkle.tar.xz" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+          echo "${SPARKLE_SHA256}  ${RUNNER_TEMP}/sparkle.tar.xz" | shasum -a 256 -c -
           mkdir -p "${RUNNER_TEMP}/sparkle"
           tar xf "${RUNNER_TEMP}/sparkle.tar.xz" -C "${RUNNER_TEMP}/sparkle"
 
@@ -196,6 +207,7 @@ jobs:
           SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
         run: |
+          set +x  # never xtrace the EdDSA private key
           SPARKLE_KEY_FILE="${RUNNER_TEMP}/sparkle_private_key"
           echo "${SPARKLE_KEY}" > "${SPARKLE_KEY_FILE}"
           SIG_OUTPUT=$("${RUNNER_TEMP}/sparkle/bin/sign_update" "${ARTIFACT_NAME}" --ed-key-file "${SPARKLE_KEY_FILE}" 2>&1)
