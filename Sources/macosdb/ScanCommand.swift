@@ -114,7 +114,7 @@ struct ScanCommand: AsyncParsableCommand {
         await configureProgress(scanner)
         if verbose {
             await scanner.setVerbose { message in
-                self.printStatus("[verbose] \(message)")
+                printStatus("[verbose] \(message)")
             }
         }
 
@@ -146,7 +146,7 @@ struct ScanCommand: AsyncParsableCommand {
         await configureProgress(scanner)
         if verbose {
             await scanner.setVerbose { message in
-                self.printStatus("[verbose] \(message)")
+                printStatus("[verbose] \(message)")
             }
         }
 
@@ -172,7 +172,7 @@ struct ScanCommand: AsyncParsableCommand {
         await configureProgress(scanner)
         if verbose {
             await scanner.setVerbose { message in
-                self.printStatus("[verbose] \(message)")
+                printStatus("[verbose] \(message)")
             }
         }
 
@@ -320,7 +320,7 @@ struct ScanCommand: AsyncParsableCommand {
             let lhsRank = lhs.isBeta ? 0 : lhs.isRC ? 1 : 2
             let rhsRank = rhs.isBeta ? 0 : rhs.isRC ? 1 : 2
             if lhsRank != rhsRank { return lhsRank > rhsRank }
-            return lhs.buildNumber > rhs.buildNumber
+            return BuildNumber.less(rhs.buildNumber, lhs.buildNumber)
         }
 
         let encoder = JSONEncoder()
@@ -348,13 +348,6 @@ struct ScanCommand: AsyncParsableCommand {
         }
     }
 
-    private func printStatus(_ message: String) {
-        FileHandle.standardError.write(Data((message + "\n").utf8))
-    }
-
-    private func printError(_ message: String) {
-        FileHandle.standardError.write(Data(("Error: " + message + "\n").utf8))
-    }
 }
 
 extension IPSWScanner {

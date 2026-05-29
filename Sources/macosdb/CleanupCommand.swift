@@ -188,14 +188,4 @@ struct CleanupCommand: AsyncParsableCommand {
         }
     }
 
-    // MARK: - Helpers
-
-    private func printStatus(_ message: String) {
-        FileHandle.standardError.write(Data((message + "\n").utf8))
-    }
-
-    private func printInline(_ message: String) {
-        let line = message.isEmpty ? "\r\u{1B}[K" : "\r\(message)"
-        FileHandle.standardError.write(Data(line.utf8))
-    }
 }
