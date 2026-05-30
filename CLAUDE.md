@@ -199,7 +199,8 @@ Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinne
 ## Commit conventions
 
 - Conventional Commits: `type(scope): description` (types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `style`).
-- Sign off every commit (`git commit -s`, DCO) and add `Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` when authored with Claude.
+- Sign off every commit with `git commit -s` for DCO (enforced by the `.githooks/commit-msg` hook — run `just install-hooks` once per clone to enable it).
+- Add a `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` trailer when authored with Claude, placed after `Signed-off-by`. Bump the model version as newer ones ship.
 
 ## Git workflow
 

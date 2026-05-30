@@ -145,6 +145,7 @@ just build-app      # Build the app with xcodebuild
 just test-xcode     # Run tests with xcodebuild (matches CI)
 just lychee         # Check the built site for broken links
 just check          # Run all checks (lint, lint-json, typos, audit, periphery, test, site format, site build)
+just install-hooks  # Install git hooks: pre-push check + DCO sign-off (once per clone)
 ```
 
 ### Site
@@ -162,7 +163,7 @@ just site-format-check  # Check site formatting
 
 ## Contributing
 
-Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format and include a DCO sign-off (`git commit -s`).
+Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format and include a DCO sign-off (`git commit -s`). Run `just install-hooks` once per clone to enable the git hooks (a pre-push `just check` and DCO sign-off enforcement).
 
 ## Acknowledgements
 
