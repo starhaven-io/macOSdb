@@ -12,6 +12,17 @@
     "releaseName" : "Tahoe"
   },
   {
+    "buildNumber" : "25F80",
+    "dataFile" : "releases/26/macOS-26.5.1-25F80.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "26.5.1",
+    "productType" : "macOS",
+    "releaseDate" : "2026-06-01",
+    "releaseName" : "Tahoe"
+  },
+  {
     "buildNumber" : "25F71",
     "dataFile" : "releases/26/macOS-26.5-25F71.json",
     "isBeta" : false,
@@ -711,10 +722,10 @@
     "releaseName" : "Sequoia"
   },
   {
-    "buildNumber" : "24D81",
-    "dataFile" : "releases/15/macOS-15.3.2-24D81.json",
+    "buildNumber" : "24D2082",
+    "dataFile" : "releases/15/macOS-15.3.2-24D2082.json",
     "isBeta" : false,
-    "isDeviceSpecific" : false,
+    "isDeviceSpecific" : true,
     "isRC" : false,
     "osVersion" : "15.3.2",
     "productType" : "macOS",
@@ -722,10 +733,10 @@
     "releaseName" : "Sequoia"
   },
   {
-    "buildNumber" : "24D2082",
-    "dataFile" : "releases/15/macOS-15.3.2-24D2082.json",
+    "buildNumber" : "24D81",
+    "dataFile" : "releases/15/macOS-15.3.2-24D81.json",
     "isBeta" : false,
-    "isDeviceSpecific" : true,
+    "isDeviceSpecific" : false,
     "isRC" : false,
     "osVersion" : "15.3.2",
     "productType" : "macOS",
@@ -802,17 +813,6 @@
     "releaseName" : "Sequoia"
   },
   {
-    "buildNumber" : "24C98",
-    "dataFile" : "releases/15/macOS-15.2-24C98.json",
-    "isBeta" : false,
-    "isDeviceSpecific" : false,
-    "isRC" : true,
-    "osVersion" : "15.2",
-    "productType" : "macOS",
-    "releaseDate" : "2024-12-05",
-    "releaseName" : "Sequoia"
-  },
-  {
     "buildNumber" : "24C100",
     "dataFile" : "releases/15/macOS-15.2-24C100.json",
     "isBeta" : false,
@@ -822,6 +822,17 @@
     "productType" : "macOS",
     "rcNumber" : 2,
     "releaseDate" : "2024-12-09",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24C98",
+    "dataFile" : "releases/15/macOS-15.2-24C98.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "15.2",
+    "productType" : "macOS",
+    "releaseDate" : "2024-12-05",
     "releaseName" : "Sequoia"
   },
   {
@@ -873,17 +884,6 @@
     "releaseName" : "Sequoia"
   },
   {
-    "buildNumber" : "24B91",
-    "dataFile" : "releases/15/macOS-15.1.1-24B91.json",
-    "isBeta" : false,
-    "isDeviceSpecific" : false,
-    "isRC" : false,
-    "osVersion" : "15.1.1",
-    "productType" : "macOS",
-    "releaseDate" : "2024-11-19",
-    "releaseName" : "Sequoia"
-  },
-  {
     "buildNumber" : "24B2091",
     "dataFile" : "releases/15/macOS-15.1.1-24B2091.json",
     "isBeta" : false,
@@ -895,14 +895,14 @@
     "releaseName" : "Sequoia"
   },
   {
-    "buildNumber" : "24B83",
-    "dataFile" : "releases/15/macOS-15.1-24B83.json",
+    "buildNumber" : "24B91",
+    "dataFile" : "releases/15/macOS-15.1.1-24B91.json",
     "isBeta" : false,
     "isDeviceSpecific" : false,
     "isRC" : false,
-    "osVersion" : "15.1",
+    "osVersion" : "15.1.1",
     "productType" : "macOS",
-    "releaseDate" : "2024-10-28",
+    "releaseDate" : "2024-11-19",
     "releaseName" : "Sequoia"
   },
   {
@@ -914,6 +914,17 @@
     "osVersion" : "15.1",
     "productType" : "macOS",
     "releaseDate" : "2024-10-30",
+    "releaseName" : "Sequoia"
+  },
+  {
+    "buildNumber" : "24B83",
+    "dataFile" : "releases/15/macOS-15.1-24B83.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "15.1",
+    "productType" : "macOS",
+    "releaseDate" : "2024-10-28",
     "releaseName" : "Sequoia"
   },
   {
@@ -1480,17 +1491,6 @@
     "releaseName" : "Sonoma"
   },
   {
-    "buildNumber" : "23B92",
-    "dataFile" : "releases/14/macOS-14.1.2-23B92.json",
-    "isBeta" : false,
-    "isDeviceSpecific" : false,
-    "isRC" : false,
-    "osVersion" : "14.1.2",
-    "productType" : "macOS",
-    "releaseDate" : "2023-11-30",
-    "releaseName" : "Sonoma"
-  },
-  {
     "buildNumber" : "23B2091",
     "dataFile" : "releases/14/macOS-14.1.2-23B2091.json",
     "isBeta" : false,
@@ -1502,14 +1502,14 @@
     "releaseName" : "Sonoma"
   },
   {
-    "buildNumber" : "23B81",
-    "dataFile" : "releases/14/macOS-14.1.1-23B81.json",
+    "buildNumber" : "23B92",
+    "dataFile" : "releases/14/macOS-14.1.2-23B92.json",
     "isBeta" : false,
     "isDeviceSpecific" : false,
     "isRC" : false,
-    "osVersion" : "14.1.1",
+    "osVersion" : "14.1.2",
     "productType" : "macOS",
-    "releaseDate" : "2023-11-07",
+    "releaseDate" : "2023-11-30",
     "releaseName" : "Sonoma"
   },
   {
@@ -1524,14 +1524,14 @@
     "releaseName" : "Sonoma"
   },
   {
-    "buildNumber" : "23B74",
-    "dataFile" : "releases/14/macOS-14.1-23B74.json",
+    "buildNumber" : "23B81",
+    "dataFile" : "releases/14/macOS-14.1.1-23B81.json",
     "isBeta" : false,
     "isDeviceSpecific" : false,
     "isRC" : false,
-    "osVersion" : "14.1",
+    "osVersion" : "14.1.1",
     "productType" : "macOS",
-    "releaseDate" : "2023-10-25",
+    "releaseDate" : "2023-11-07",
     "releaseName" : "Sonoma"
   },
   {
@@ -1543,6 +1543,17 @@
     "osVersion" : "14.1",
     "productType" : "macOS",
     "releaseDate" : "2023-11-01",
+    "releaseName" : "Sonoma"
+  },
+  {
+    "buildNumber" : "23B74",
+    "dataFile" : "releases/14/macOS-14.1-23B74.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "14.1",
+    "productType" : "macOS",
+    "releaseDate" : "2023-10-25",
     "releaseName" : "Sonoma"
   },
   {
@@ -1827,17 +1838,6 @@
     "releaseName" : "Ventura"
   },
   {
-    "buildNumber" : "22F82",
-    "dataFile" : "releases/13/macOS-13.4.1-22F82.json",
-    "isBeta" : false,
-    "isDeviceSpecific" : false,
-    "isRC" : false,
-    "osVersion" : "13.4.1",
-    "productType" : "macOS",
-    "releaseDate" : "2023-06-21",
-    "releaseName" : "Ventura"
-  },
-  {
     "buildNumber" : "22F2083",
     "dataFile" : "releases/13/macOS-13.4.1-22F2083.json",
     "isBeta" : false,
@@ -1849,14 +1849,14 @@
     "releaseName" : "Ventura"
   },
   {
-    "buildNumber" : "22F66",
-    "dataFile" : "releases/13/macOS-13.4-22F66.json",
+    "buildNumber" : "22F82",
+    "dataFile" : "releases/13/macOS-13.4.1-22F82.json",
     "isBeta" : false,
     "isDeviceSpecific" : false,
     "isRC" : false,
-    "osVersion" : "13.4",
+    "osVersion" : "13.4.1",
     "productType" : "macOS",
-    "releaseDate" : "2023-05-18",
+    "releaseDate" : "2023-06-21",
     "releaseName" : "Ventura"
   },
   {
@@ -1868,6 +1868,17 @@
     "osVersion" : "13.4",
     "productType" : "macOS",
     "releaseDate" : "2023-06-05",
+    "releaseName" : "Ventura"
+  },
+  {
+    "buildNumber" : "22F66",
+    "dataFile" : "releases/13/macOS-13.4-22F66.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "13.4",
+    "productType" : "macOS",
+    "releaseDate" : "2023-05-18",
     "releaseName" : "Ventura"
   },
   {
@@ -2409,17 +2420,6 @@
     "releaseName" : "Monterey"
   },
   {
-    "buildNumber" : "21F79",
-    "dataFile" : "releases/12/macOS-12.4-21F79.json",
-    "isBeta" : false,
-    "isDeviceSpecific" : false,
-    "isRC" : false,
-    "osVersion" : "12.4",
-    "productType" : "macOS",
-    "releaseDate" : "2022-05-16",
-    "releaseName" : "Monterey"
-  },
-  {
     "buildNumber" : "21F2092",
     "dataFile" : "releases/12/macOS-12.4-21F2092.json",
     "isBeta" : false,
@@ -2439,6 +2439,17 @@
     "osVersion" : "12.4",
     "productType" : "macOS",
     "releaseDate" : "2022-06-14",
+    "releaseName" : "Monterey"
+  },
+  {
+    "buildNumber" : "21F79",
+    "dataFile" : "releases/12/macOS-12.4-21F79.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "12.4",
+    "productType" : "macOS",
+    "releaseDate" : "2022-05-16",
     "releaseName" : "Monterey"
   },
   {
