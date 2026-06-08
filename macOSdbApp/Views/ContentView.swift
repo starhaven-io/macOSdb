@@ -5,6 +5,8 @@ struct ContentView: View {
     @Environment(AppState.self)
     private var appState
 
+    // periphery false-positive: @State read only via its $-projection (bound below).
+    // periphery:ignore
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
