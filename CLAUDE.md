@@ -141,7 +141,7 @@ Astro site at [macosdb.com](https://macosdb.com), deployed to Cloudflare Workers
 - `data/{product}/releases.json` — index of all releases, sorted newest first.
 - `data/{product}/releases/{major}/{Prefix}-{version}-{build}.json` — per-release data.
 - Product dirs: `macos`, `xcode`. File prefixes: `macOS`, `Xcode`.
-- macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia, 26=Tahoe.
+- macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia, 26=Tahoe, 27=Golden Gate.
 
 ## Common commands
 

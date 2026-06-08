@@ -353,6 +353,7 @@ enum MacOSRelease {
         case 14: "Sonoma"
         case 15: "Sequoia"
         case 26: "Tahoe"
+        case 27: "Golden Gate"
         default: "macOS \(major)"
         }
     }

@@ -347,6 +347,7 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(MacOSRelease.name(forMajorVersion: 14) == "Sonoma")
         #expect(MacOSRelease.name(forMajorVersion: 15) == "Sequoia")
         #expect(MacOSRelease.name(forMajorVersion: 26) == "Tahoe")
+        #expect(MacOSRelease.name(forMajorVersion: 27) == "Golden Gate")
         #expect(MacOSRelease.name(forMajorVersion: 99) == "macOS 99")
     }
 
