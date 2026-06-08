@@ -59,7 +59,7 @@ const structuredData = {
   }
   {
     latestPre && (
-      <div class="latest-release latest-pre">
+      <div class="latest-release">
         <span class="latest-label">{latestPre.data.isBeta ? 'Latest beta' : 'Latest RC'}</span>
         <a href={`/${product.key}/release/${releaseSlug(latestPre.data)}/`} class="latest-name">
           {displayName(latestPre.data, product.includeReleaseName, product.label)}
@@ -116,14 +116,15 @@ const structuredData = {
 
   .latest-release {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.95rem;
     flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.6rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
   }
 
   .latest-label {
+    flex-basis: 100%;
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -137,10 +138,6 @@ const structuredData = {
 
   .latest-date {
     color: var(--color-text-secondary);
-  }
-
-  .latest-pre {
-    margin-top: -1rem;
   }
 
   .stats {

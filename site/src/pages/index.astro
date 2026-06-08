@@ -49,7 +49,7 @@ const websiteSchema = {
       }
       {
         macos.prerelease && (
-          <div class="latest latest-pre">
+          <div class="latest">
             <span class="latest-label">{macos.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
             <a href={`/macos/release/${releaseSlug(macos.prerelease)}/`}>{displayName(macos.prerelease, true)}</a>
             <span class="latest-date">{formatDate(macos.prerelease.releaseDate)}</span>
@@ -79,7 +79,7 @@ const websiteSchema = {
       }
       {
         xcode.prerelease && (
-          <div class="latest latest-pre">
+          <div class="latest">
             <span class="latest-label">{xcode.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
             <a href={`/xcode/release/${releaseSlug(xcode.prerelease)}/`}>
               {displayName(xcode.prerelease, false, 'Xcode')}
@@ -149,14 +149,15 @@ const websiteSchema = {
 
   .latest {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
-    font-size: 0.9rem;
     flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.6rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .latest-label {
+    flex-basis: 100%;
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -166,10 +167,6 @@ const websiteSchema = {
 
   .latest-date {
     color: var(--color-text-secondary);
-  }
-
-  .latest-pre {
-    margin-top: -0.75rem;
   }
 
   .product-links {
