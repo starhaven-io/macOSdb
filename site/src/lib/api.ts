@@ -138,10 +138,10 @@ export async function getComponentHistory(product: Product, name: string): Promi
   return { ...meta, changes };
 }
 
+// The single "latest" release (used by /releases/latest.json) is the latest GA —
+// the endpoint's documented contract is "most recent stable (non-beta, non-RC)".
 export async function getLatestRelease(product: Product) {
-  const allReleases = await getCollection(indexCollection(product));
-  const sorted = [...allReleases].sort((a, b) => compareReleasesByRecency(a.data, b.data));
-  return sorted[0]?.data ?? null;
+  return (await getLatestReleases(product)).ga;
 }
 
 /**
