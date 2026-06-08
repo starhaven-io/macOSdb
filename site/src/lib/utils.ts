@@ -153,3 +153,50 @@ export function compareVersions(from: string, to: string): 'upgraded' | 'downgra
   }
   return 'unchanged';
 }
+
+interface DatedRelease {
+  osVersion: string;
+  buildNumber: string;
+  releaseDate: string;
+  isBeta: boolean;
+  isRC: boolean;
+}
+
+/**
+ * Order Apple build numbers within a train numerically, e.g. 25F71 < 25F5068a.
+ * Splits "25F5068a" into [cycle 25, train "F", build 5068, suffix "a"].
+ */
+function parseBuild(build: string): [number, string, number, string] {
+  const m = build.match(/^(\d+)([A-Za-z]+)(\d+)(.*)$/);
+  if (!m) return [0, '', 0, build];
+  return [Number(m[1]), m[2], Number(m[3]), m[4]];
+}
+
+function compareBuilds(a: string, b: string): number {
+  const [aCycle, aTrain, aBuild, aSuffix] = parseBuild(a);
+  const [bCycle, bTrain, bBuild, bSuffix] = parseBuild(b);
+  if (aCycle !== bCycle) return aCycle - bCycle;
+  if (aTrain !== bTrain) return aTrain < bTrain ? -1 : 1;
+  if (aBuild !== bBuild) return aBuild - bBuild;
+  return aSuffix < bSuffix ? -1 : aSuffix > bSuffix ? 1 : 0;
+}
+
+/**
+ * Order releases newest-first. Date is the primary key because Apple ships a
+ * GA with a *lower* build number than its own betas (25F71 GA lands after the
+ * 25F5068a beta), so build order can't stand in for chronology. Releases that
+ * share a date — a new-major beta and a prior-major RC dropping together at
+ * WWDC, say — are broken by version, then build.
+ */
+export function compareReleasesByRecency(a: DatedRelease, b: DatedRelease): number {
+  const byDate = new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime();
+  if (byDate !== 0) return byDate;
+  const av = parseVersion(a.osVersion);
+  const bv = parseVersion(b.osVersion);
+  const len = Math.max(av.length, bv.length);
+  for (let i = 0; i < len; i++) {
+    const diff = (bv[i] ?? 0) - (av[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return compareBuilds(b.buildNumber, a.buildNumber);
+}

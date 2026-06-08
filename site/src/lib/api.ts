@@ -1,5 +1,5 @@
 import { getCollection } from 'astro:content';
-import { displayName, releaseSlug, componentSlug, compareVersions } from './utils';
+import { displayName, releaseSlug, componentSlug, compareVersions, compareReleasesByRecency } from './utils';
 
 export type Product = 'macos' | 'xcode';
 
@@ -140,10 +140,22 @@ export async function getComponentHistory(product: Product, name: string): Promi
 
 export async function getLatestRelease(product: Product) {
   const allReleases = await getCollection(indexCollection(product));
-  const sorted = allReleases.sort(
-    (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
-  );
+  const sorted = [...allReleases].sort((a, b) => compareReleasesByRecency(a.data, b.data));
   return sorted[0]?.data ?? null;
+}
+
+/**
+ * The newest GA release and, when one is newer than that GA, the newest
+ * pre-release. `prerelease` is null outside beta season (a shipped GA
+ * supersedes its own betas/RC), so callers render one line or two.
+ */
+export async function getLatestReleases(product: Product) {
+  const allReleases = await getCollection(indexCollection(product));
+  const sorted = [...allReleases].sort((a, b) => compareReleasesByRecency(a.data, b.data)).map((r) => r.data);
+  const ga = sorted.find((r) => !r.isBeta && !r.isRC) ?? null;
+  const newestPre = sorted.find((r) => r.isBeta || r.isRC) ?? null;
+  const prerelease = newestPre && (!ga || compareReleasesByRecency(newestPre, ga) < 0) ? newestPre : null;
+  return { ga, prerelease };
 }
 
 export async function compareReleases(product: Product, fromId: string, toId: string): Promise<CompareResult | null> {

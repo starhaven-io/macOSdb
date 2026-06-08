@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import StructuredData from '../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
 import { formatDate, displayName, releaseSlug } from '../lib/utils';
-import { getLatestRelease } from '../lib/api';
+import { getLatestReleases } from '../lib/api';
 
 const macosReleases = (await getCollection('macosReleases')).sort(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
@@ -12,8 +12,8 @@ const xcodeReleases = (await getCollection('xcodeReleases')).sort(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
 );
 
-const latestMacos = await getLatestRelease('macos');
-const latestXcode = await getLatestRelease('xcode');
+const macos = await getLatestReleases('macos');
+const xcode = await getLatestReleases('xcode');
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -39,11 +39,20 @@ const websiteSchema = {
         {macosReleases.length} releases tracked since macOS 11 Big Sur.
       </p>
       {
-        latestMacos && (
+        macos.ga && (
           <div class="latest">
-            <span class="latest-label">Latest</span>
-            <a href={`/macos/release/${releaseSlug(latestMacos)}/`}>{displayName(latestMacos, true)}</a>
-            <span class="latest-date">{formatDate(latestMacos.releaseDate)}</span>
+            <span class="latest-label">{macos.prerelease ? 'Latest stable' : 'Latest'}</span>
+            <a href={`/macos/release/${releaseSlug(macos.ga)}/`}>{displayName(macos.ga, true)}</a>
+            <span class="latest-date">{formatDate(macos.ga.releaseDate)}</span>
+          </div>
+        )
+      }
+      {
+        macos.prerelease && (
+          <div class="latest latest-pre">
+            <span class="latest-label">{macos.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
+            <a href={`/macos/release/${releaseSlug(macos.prerelease)}/`}>{displayName(macos.prerelease, true)}</a>
+            <span class="latest-date">{formatDate(macos.prerelease.releaseDate)}</span>
           </div>
         )
       }
@@ -60,11 +69,22 @@ const websiteSchema = {
         {xcodeReleases.length} releases tracked since Xcode 12.
       </p>
       {
-        latestXcode && (
+        xcode.ga && (
           <div class="latest">
-            <span class="latest-label">Latest</span>
-            <a href={`/xcode/release/${releaseSlug(latestXcode)}/`}>{displayName(latestXcode, false, 'Xcode')}</a>
-            <span class="latest-date">{formatDate(latestXcode.releaseDate)}</span>
+            <span class="latest-label">{xcode.prerelease ? 'Latest stable' : 'Latest'}</span>
+            <a href={`/xcode/release/${releaseSlug(xcode.ga)}/`}>{displayName(xcode.ga, false, 'Xcode')}</a>
+            <span class="latest-date">{formatDate(xcode.ga.releaseDate)}</span>
+          </div>
+        )
+      }
+      {
+        xcode.prerelease && (
+          <div class="latest latest-pre">
+            <span class="latest-label">{xcode.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
+            <a href={`/xcode/release/${releaseSlug(xcode.prerelease)}/`}>
+              {displayName(xcode.prerelease, false, 'Xcode')}
+            </a>
+            <span class="latest-date">{formatDate(xcode.prerelease.releaseDate)}</span>
           </div>
         )
       }
@@ -146,6 +166,10 @@ const websiteSchema = {
 
   .latest-date {
     color: var(--color-text-secondary);
+  }
+
+  .latest-pre {
+    margin-top: -0.75rem;
   }
 
   .product-links {
