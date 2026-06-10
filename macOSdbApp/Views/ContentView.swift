@@ -71,7 +71,7 @@ struct ContentView: View {
         }
         .task {
             if appState.releases.isEmpty {
-                await appState.refresh()
+                await appState.load()
             }
         }
     }

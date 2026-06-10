@@ -275,11 +275,13 @@ final class AppState {
 
     // MARK: - Actions
 
-    func refresh() async {
+    /// Loads the current product's releases, reusing any cached data. Used on launch
+    /// and when switching products so a flip doesn't re-download the whole catalog —
+    /// the DataProvider caches are product-keyed and URLCache serves repeat launches.
+    func load() async {
         isLoading = true
         lastError = nil
         loadFailureMessage = nil
-        await dataProvider.clearCache()
 
         do {
             let fetched = try await dataProvider.fetchAllReleases(for: selectedProduct)
@@ -293,6 +295,13 @@ final class AppState {
         }
 
         isLoading = false
+    }
+
+    /// Discards cached data and reloads from the network. Backs the ⌘R Refresh
+    /// command so the user can pull in newly published releases.
+    func refresh() async {
+        await dataProvider.clearCache()
+        await load()
     }
 
     /// Re-point the current selection/comparison at the freshly loaded instances so
@@ -319,7 +328,7 @@ final class AppState {
         }
         isComparing = false
         releases = []
-        Task { await refresh() }
+        Task { await load() }
     }
 
     func startCompare() {
