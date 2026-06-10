@@ -35,7 +35,6 @@ jobs:
         id: matrix
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          EVENT_ACTION: ${{ github.event.action }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           # Push to main: run test-tsan so Codecov has a baseline for PR
@@ -47,16 +46,17 @@ jobs:
 
           MATRIX='[{"name":"Conventional Commits","check":"commits","runner":"ubuntu-slim","fetch_depth":"0"}'
 
-          # For title/body edits, only recheck conventional commits
-          if [[ "${EVENT_ACTION}" == "edited" ]]; then
-            echo "matrix=${MATRIX}]" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-
+          # `edited` (title/body/base) also runs the full path-derived matrix. The
+          # aggregate "conclusion" job is the only required status check, so it must
+          # certify every relevant leg for the current commit. Collapsing to a
+          # commits-only matrix on `edited` let a green run overwrite a prior failing
+          # one on the same SHA, bypassing tests, lint-json, CodeQL and the rest.
           CHANGED=$(git diff --name-only "${BASE_SHA}...HEAD")
 
-          # Swift or CI workflow changes: lint + sanitizer tests
-          if echo "${CHANGED}" | grep -qE '\.swift$|^Package\.(swift|resolved)$|^macOSdb\.xcodeproj/|^\.swiftlint\.yml$|^\.github/workflows/ci\.yml$'; then
+          # Swift, CI workflow, or project tooling changes: lint + sanitizer tests.
+          # Tooling paths (scripts/, justfile, hooks, lint configs) are included so a
+          # PR touching only those can't merge having run nothing but the commits leg.
+          if echo "${CHANGED}" | grep -qE '\.swift$|^Package\.(swift|resolved)$|^macOSdb\.xcodeproj/|^\.swiftlint\.yml$|^\.github/workflows/ci\.yml$|^scripts/|^justfile$|^\.githooks/|^_typos\.toml$|^\.periphery\.yml$|^lychee\.toml$'; then
             MATRIX+=',{"name":"Lint","check":"lint","runner":"macos-26"}'
             MATRIX+=',{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","xcodebuild_flags":"-enableCodeCoverage YES -enableThreadSanitizer YES","result_bundle":"TestResults-TSAN","environment":"codecov"}'
             MATRIX+=',{"name":"Test (Address Sanitizer)","check":"test-asan","runner":"macos-26","xcodebuild_flags":"-enableAddressSanitizer YES","result_bundle":"TestResults-ASAN"}'
@@ -67,8 +67,9 @@ jobs:
             MATRIX+=',{"name":"CodeQL","check":"codeql","runner":"macos-26"}'
           fi
 
-          # Data changes: JSON schema validation
-          if echo "${CHANGED}" | grep -qE '^data/'; then
+          # Data changes — and changes to the linter that gates them — run lint-json
+          # so a modified scripts/lint-json.py is re-validated against existing data.
+          if echo "${CHANGED}" | grep -qE '^data/|^scripts/'; then
             MATRIX+=',{"name":"Lint JSON","check":"lint-json","runner":"ubuntu-slim"}'
           fi
 
