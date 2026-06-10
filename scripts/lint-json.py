@@ -18,6 +18,7 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 # ---------------------------------------------------------------------------
 # Product configurations
@@ -68,6 +69,11 @@ IPSW_FILE_RE = re.compile(r"UniversalMac_([\d.]+)_([A-Za-z0-9]+)_Restore\.ipsw$"
 VERSION_RE = re.compile(r"^\d+\.\d+(\.\d+)?$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TODAY = date.today()
+
+# IPSW/XIP download URLs are rendered as <a href> links on the site, so restrict
+# them to Apple's https endpoints — a javascript:/http:/foreign value must never
+# reach the published data. Apple serves these from *.apple.com and *.cdn-apple.com.
+APPLE_DOWNLOAD_HOST_SUFFIXES = (".apple.com", ".cdn-apple.com")
 
 PRODUCTS = [
     {
@@ -127,6 +133,22 @@ def validate_date(value, field, build):
         warn(f"{build}: {field} {value} is in the future")
     if d.year < 2001:
         warn(f"{build}: {field} {value} is before 2001")
+
+
+def validate_download_url(url, field, name):
+    """Require an Apple https URL. These values are published verbatim as download
+    links, so a non-https scheme (javascript:, data:, http:) or a foreign host is an
+    error, not a warning."""
+    if not isinstance(url, str) or not url:
+        error(f"{name}: {field} is empty or not a string")
+        return
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        error(f"{name}: {field} must use https, got '{parsed.scheme or url[:16]}'")
+        return
+    host = parsed.hostname or ""
+    if host != "apple.com" and not host.endswith(APPLE_DOWNLOAD_HOST_SUFFIXES):
+        error(f"{name}: {field} host '{host}' is not an Apple download domain")
 
 
 def parse_version(version_str):
@@ -207,6 +229,9 @@ def validate_releases(product, catalog):
             error(f"{f.name}: invalid JSON — {e}")
             continue
 
+        if build in catalog:
+            error(f"{f.name}: duplicate buildNumber '{build}' "
+                  f"(already defined in {catalog[build]['path'].name})")
         catalog[build] = {"path": f, "data": d}
 
         # Required fields
@@ -265,8 +290,7 @@ def validate_releases(product, catalog):
             url = d["ipswURL"]
             ipswfile = d["ipswFile"]
 
-            if not isinstance(url, str) or not url:
-                error(f"{f.name}: ipswURL is empty or not a string")
+            validate_download_url(url, "ipswURL", f.name)
             if not isinstance(ipswfile, str) or not ipswfile:
                 error(f"{f.name}: ipswFile is empty or not a string")
 
@@ -291,6 +315,7 @@ def validate_releases(product, catalog):
                 error(f"{f.name}: xipFile is empty or not a string")
 
             xip_url = d.get("xipURL", "")
+            validate_download_url(xip_url, "xipURL", f.name)
             if xip_url and xip_file:
                 url_file = xip_url.split("/")[-1]
                 if xip_file != url_file:
@@ -397,6 +422,8 @@ def validate_index(product, catalog):
     index_builds = {}
     for entry in index_entries:
         b = entry.get("buildNumber", "")
+        if b in index_builds:
+            error(f"{prefix} index: duplicate buildNumber '{b}'")
         index_builds[b] = entry
 
         missing = [field for field in product["index_required"] if field not in entry]
