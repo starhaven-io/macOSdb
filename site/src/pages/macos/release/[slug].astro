@@ -6,7 +6,7 @@ import KernelInfo from '../../../components/KernelInfo.astro';
 import ChipGrid from '../../../components/ChipGrid.astro';
 import StructuredData from '../../../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
-import { displayName, releaseSlug } from '../../../lib/utils';
+import { displayName, httpsDownloadURL, releaseSlug } from '../../../lib/utils';
 
 export async function getStaticPaths() {
   const allReleases = await getCollection('macosReleaseDetails');
@@ -52,6 +52,7 @@ interface Props {
 const { release, previousSlug } = Astro.props;
 const currentSlug = releaseSlug(release);
 const title = displayName(release, true);
+const ipswLink = httpsDownloadURL(release.ipswURL);
 
 const structuredData = [
   {
@@ -94,7 +95,7 @@ const structuredData = [
     isRC={release.isRC}
     isDeviceSpecific={release.isDeviceSpecific}
   >
-    {release.ipswURL && <a href={release.ipswURL}>Download IPSW</a>}
+    {ipswLink && <a href={ipswLink}>Download IPSW</a>}
     {previousSlug && <a href={`/macos/compare/?from=${previousSlug}&to=${currentSlug}`}>Compare with previous</a>}
   </ReleaseHeader>
 
