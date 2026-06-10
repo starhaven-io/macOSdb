@@ -97,6 +97,35 @@ struct DyldCacheExtractorTests {
         #expect(extracted.prefix(payload.count) == Data(payload))
     }
 
+    @Test("Mapping size greater than Int.max is clamped, not trapped")
+    func oversizedMappingSize() async throws {
+        let dylibPath = "/usr/lib/test.dylib"
+        let payload = "TESTDYLIBPAYLOAD".utf8
+
+        var blob = Data(count: 0x400)
+        putMagic(&blob)
+        putU32(0x100, at: 16, in: &blob)   // mappingOffset
+        putU32(1, at: 20, in: &blob)       // mappingCount
+        putU32(0x80, at: 24, in: &blob)    // imagesOffset (legacy)
+        putU32(1, at: 28, in: &blob)       // imagesCount
+        putU64(0x1000, at: 0x80, in: &blob)        // image address
+        putU32(0xC0, at: 0x80 + 24, in: &blob)     // pathFileOffset
+        putString(dylibPath, at: 0xC0, in: &blob)
+        // Mapping covers the image vmaddr, but its size overflows Int. Pre-fix this
+        // trapped at Int(remainingSize); now it is clamped to the 2 MB read cap.
+        putU64(0x1000, at: 0x100, in: &blob)                  // address
+        putU64(0x8000_0000_0000_0000, at: 0x108, in: &blob)   // size > Int.max
+        putU64(0x200, at: 0x110, in: &blob)                   // fileOffset
+        putBytes(Array(payload), at: 0x200, in: &blob)
+
+        let url = try writeCache(blob)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let data = await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: dylibPath)
+        let extracted = try #require(data)
+        #expect(extracted.prefix(payload.count) == Data(payload))
+    }
+
     // MARK: - Helpers
 
     private func writeCache(_ data: Data) throws -> URL {

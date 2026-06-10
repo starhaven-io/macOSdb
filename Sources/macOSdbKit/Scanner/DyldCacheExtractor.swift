@@ -138,7 +138,9 @@ enum DyldCacheExtractor {
                 return nil
             }
 
-            let readSize = min(Int(result.remainingSize), 2 * 1_024 * 1_024)
+            // Clamp in the UInt64 domain before narrowing: a crafted mapping size
+            // greater than Int.max would trap the Int(...) conversion if it ran first.
+            let readSize = Int(min(result.remainingSize, 2 * 1_024 * 1_024))
 
             // Read from the correct cache file (may be a subcache)
             guard let sourceHandle = try? FileHandle(forReadingFrom: result.sourceFile) else {
