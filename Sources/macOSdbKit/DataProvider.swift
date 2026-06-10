@@ -107,10 +107,31 @@ public actor DataProvider {
 
     public func findRelease(osVersion: String, productType: ProductType = .macOS) async throws -> Release? {
         let index = try await fetchReleaseIndex(for: productType)
-        guard let entry = index.first(where: { $0.osVersion == osVersion }) else {
+        let matches = index.filter { $0.osVersion == osVersion }
+        guard let entry = Self.preferredRelease(among: matches) else {
             return nil
         }
         return try await fetchRelease(entry)
+    }
+
+    /// Selects the most representative build among index entries that share an
+    /// `osVersion`, preferring a final release over RCs/betas and a universal build
+    /// over device-specific re-releases. Returns `nil` for empty input.
+    ///
+    /// Several versions list more than one build — e.g. macOS 15.1 carries the
+    /// device-specific 24B2083 ahead of the GA 24B83 — so a naive first match would
+    /// resolve `show`/`compare` to the wrong build.
+    static func preferredRelease(among entries: [ReleaseIndexEntry]) -> ReleaseIndexEntry? {
+        entries.max { selectionRank($0) < selectionRank($1) }
+    }
+
+    /// Ranking key (higher is preferred). The first element orders GA > RC > beta and,
+    /// within a maturity tier, universal > device-specific; the second breaks ties
+    /// toward the later prerelease.
+    private static func selectionRank(_ entry: ReleaseIndexEntry) -> (Int, Int) {
+        let maturity = entry.isBeta ? 0 : (entry.isRC ? 1 : 2)
+        let universal = entry.isDeviceSpecific ? 0 : 1
+        return (maturity * 2 + universal, entry.betaNumber ?? entry.rcNumber ?? 0)
     }
 
     public func clearCache() {
