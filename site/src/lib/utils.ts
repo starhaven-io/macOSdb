@@ -200,3 +200,12 @@ export function compareReleasesByRecency(a: DatedRelease, b: DatedRelease): numb
   }
   return compareBuilds(b.buildNumber, a.buildNumber);
 }
+
+/**
+ * Returns a download URL only if it is a plain https link. IPSW/XIP URLs come from
+ * the data files and are rendered as <a href>, so a non-https scheme (javascript:,
+ * data:, http:) must never become a clickable link.
+ */
+export function httpsDownloadURL(url?: string): string | undefined {
+  return url?.startsWith('https://') ? url : undefined;
+}

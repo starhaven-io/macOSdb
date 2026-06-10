@@ -4,7 +4,7 @@ import ReleaseHeader from '../../../components/ReleaseHeader.astro';
 import ComponentTable from '../../../components/ComponentTable.astro';
 import StructuredData from '../../../components/StructuredData.astro';
 import { getCollection } from 'astro:content';
-import { displayName, releaseSlug } from '../../../lib/utils';
+import { displayName, httpsDownloadURL, releaseSlug } from '../../../lib/utils';
 
 export async function getStaticPaths() {
   const allReleases = await getCollection('xcodeReleaseDetails');
@@ -43,6 +43,7 @@ interface Props {
 const { release, previousSlug } = Astro.props;
 const currentSlug = releaseSlug(release);
 const title = displayName(release, false, 'Xcode');
+const xipLink = httpsDownloadURL(release.xipURL);
 
 const structuredData = [
   {
@@ -80,7 +81,7 @@ const structuredData = [
     isRC={release.isRC}
   >
     {release.minimumOSVersion && <span>Requires macOS {release.minimumOSVersion}+</span>}
-    {release.xipURL && <a href={release.xipURL}>Download XIP</a>}
+    {xipLink && <a href={xipLink}>Download XIP</a>}
     {previousSlug && <a href={`/xcode/compare/?from=${previousSlug}&to=${currentSlug}`}>Compare with previous</a>}
   </ReleaseHeader>
 
