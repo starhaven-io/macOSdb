@@ -3,6 +3,10 @@ export const prerender = false;
 
 import ProductCompare from '../../components/ProductCompare.astro';
 import { products } from '../../lib/products';
+
+// Output is a pure function of the query params and this deploy's data, so it's
+// safe to cache like the static pages (the SSR Worker gets no _headers rules).
+Astro.response.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800');
 ---
 
 <ProductCompare product={products.xcode} url={Astro.url} />
