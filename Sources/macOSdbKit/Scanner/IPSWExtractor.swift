@@ -219,14 +219,22 @@ actor IPSWExtractor {
             return nil
         }
 
+        // ZIPFoundation's consumer can't signal "stop", so once we have the bytes we
+        // need, throw a sentinel to abort the extract rather than streaming the whole
+        // multi-GB AEA entry — a `--key-only` scan only reads ~256 KB of header.
         var collected = Data()
-        _ = try archive.extract(aeaEntry, skipCRC32: true) { chunk in
-            guard collected.count < maxBytes else { return }
-            let remaining = maxBytes - collected.count
-            collected.append(chunk.prefix(remaining))
+        do {
+            _ = try archive.extract(aeaEntry, skipCRC32: true) { chunk in
+                collected.append(chunk.prefix(maxBytes - collected.count))
+                if collected.count >= maxBytes { throw HeaderRead.complete }
+            }
+        } catch HeaderRead.complete {
+            // Captured the header prefix; the rest of the entry is intentionally skipped.
         }
         return collected
     }
+
+    private enum HeaderRead: Error { case complete }
 
     func cleanup(workDirectory: URL) {
         do {
