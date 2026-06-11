@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getComponents } from '../../../../../lib/api';
+import { getComponents } from '../../../../lib/api';
 
 export const GET: APIRoute = async () => {
   const components = await getComponents('macos');
