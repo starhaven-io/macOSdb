@@ -96,19 +96,30 @@ struct CompareView: View {
     private func changesTable(_ comparison: VersionComparison) -> some View {
         let items = showOnlyChanged ? comparison.changedComponents : comparison.changes
 
-        if !items.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Components")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+        // Header and toggle render unconditionally: when "Changed only" is on and the
+        // releases are identical there are no rows, and gating the section on `items`
+        // hid the toggle itself, leaving no way back to the full list.
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Components")
+                    .font(.title2)
+                    .fontWeight(.semibold)
 
-                    Spacer()
+                Spacer()
 
-                    Toggle("Changed only", isOn: $showOnlyChanged)
-                        .toggleStyle(.checkbox)
-                }
+                Toggle("Changed only", isOn: $showOnlyChanged)
+                    .toggleStyle(.checkbox)
+            }
 
+            if items.isEmpty {
+                ContentUnavailableView(
+                    "No Changed Components",
+                    systemImage: "equal.circle",
+                    description: Text("These releases ship the same component versions. "
+                        + "Turn off “Changed only” to see the full list.")
+                )
+                .frame(minHeight: 200)
+            } else {
                 Table(items) {
                     TableColumn("Component") { (change: ComponentChange) in
                         Text(change.name)
