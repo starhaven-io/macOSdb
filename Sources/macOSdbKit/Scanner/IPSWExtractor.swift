@@ -27,6 +27,7 @@ actor IPSWExtractor {
         let workDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("macosdb-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
+        ScanWorkspace.markOwned(workDir)
 
         // Clean up the work dir if anything after its creation throws; the caller
         // only cleans up once it holds the ExtractionResult.
