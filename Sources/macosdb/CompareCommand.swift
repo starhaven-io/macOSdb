@@ -27,8 +27,8 @@ struct CompareCommand: AsyncParsableCommand {
     var dataURL: String?
 
     func run() async throws {
-        let productType = parseProductType(product)
-        let provider = makeDataProvider(dataURL: dataURL)
+        let productType = try parseProductType(product)
+        let provider = try makeDataProvider(dataURL: dataURL)
 
         async let fromRelease = provider.findRelease(osVersion: fromVersion, productType: productType)
         async let toRelease = provider.findRelease(osVersion: toVersion, productType: productType)
