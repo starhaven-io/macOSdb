@@ -1,11 +1,22 @@
+import ArgumentParser
 import Foundation
 import macOSdbKit
 
-nonisolated func makeDataProvider(dataURL: String?) -> DataProvider {
-    if let dataURL, let url = URL(string: dataURL) {
-        return DataProvider(baseURL: url)
+/// Builds a DataProvider from `--data-url`: a local directory path, an https URL, or
+/// the default production endpoint when unset. Throws rather than silently falling
+/// back to production on an unparsable value, and reads a scheme-less local path as
+/// a file URL instead of a doomed network fetch.
+nonisolated func makeDataProvider(dataURL: String?) throws -> DataProvider {
+    guard let dataURL else { return DataProvider() }
+    if FileManager.default.fileExists(atPath: dataURL) {
+        return DataProvider(baseURL: URL(fileURLWithPath: dataURL))
     }
-    return DataProvider()
+    guard let url = URL(string: dataURL), url.scheme != nil else {
+        throw ValidationError(
+            "Invalid --data-url '\(dataURL)'. Use an https URL or the path to a local data directory."
+        )
+    }
+    return DataProvider(baseURL: url)
 }
 
 /// Writes an "Error: …" line to standard error. CLI errors belong on stderr so
@@ -33,16 +44,15 @@ nonisolated func writeJSON<T: Encodable>(_ value: T) throws {
     FileHandle.standardOutput.write(data)
 }
 
-/// Parses a product type string from CLI `--product` option.
-/// Accepts case-insensitive values: "macOS", "xcode".
-/// Defaults to `.macOS` when nil.
-nonisolated func parseProductType(_ value: String?) -> ProductType {
+/// Parses a product type from the CLI `--product` option. Accepts case-insensitive
+/// "macOS"/"xcode", defaults to `.macOS` when nil, and throws on an unrecognized
+/// value rather than silently defaulting (which fed scripts the wrong product).
+nonisolated func parseProductType(_ value: String?) throws -> ProductType {
     guard let value else { return .macOS }
     switch value.lowercased() {
     case "macos": return .macOS
     case "xcode": return .xcode
     default:
-        FileHandle.standardError.write(Data("Warning: Unknown product type '\(value)', defaulting to macOS\n".utf8))
-        return .macOS
+        throw ValidationError("Unknown product '\(value)'. Expected 'macos' or 'xcode'.")
     }
 }

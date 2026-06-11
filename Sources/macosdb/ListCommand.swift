@@ -21,8 +21,8 @@ struct ListCommand: AsyncParsableCommand {
     var dataURL: String?
 
     func run() async throws {
-        let productType = parseProductType(product)
-        let provider = makeDataProvider(dataURL: dataURL)
+        let productType = try parseProductType(product)
+        let provider = try makeDataProvider(dataURL: dataURL)
         let index = try await provider.fetchReleaseIndex(for: productType)
 
         var entries = index.sorted { lhs, rhs in

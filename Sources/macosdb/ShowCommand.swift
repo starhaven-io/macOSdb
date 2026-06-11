@@ -27,8 +27,8 @@ struct ShowCommand: AsyncParsableCommand {
     var dataURL: String?
 
     func run() async throws {
-        let productType = parseProductType(product)
-        let provider = makeDataProvider(dataURL: dataURL)
+        let productType = try parseProductType(product)
+        let provider = try makeDataProvider(dataURL: dataURL)
 
         guard let release = try await provider.findRelease(osVersion: version, productType: productType) else {
             printError("\(productType.displayName) \(version) not found.")
@@ -36,7 +36,12 @@ struct ShowCommand: AsyncParsableCommand {
         }
 
         if json {
-            try writeJSON(release)
+            // Honor --component in JSON mode too, mirroring the human output.
+            if component != nil {
+                try writeJSON(filteredComponents(release))
+            } else {
+                try writeJSON(release)
+            }
             return
         }
 
@@ -83,11 +88,13 @@ struct ShowCommand: AsyncParsableCommand {
         print("")
     }
 
+    private func filteredComponents(_ release: Release) -> [Component] {
+        guard let componentFilter = component else { return release.components }
+        return release.components.filter { $0.name.lowercased().contains(componentFilter.lowercased()) }
+    }
+
     private func printComponents(_ release: Release) {
-        var components = release.components
-        if let componentFilter = component {
-            components = components.filter { $0.name.lowercased().contains(componentFilter.lowercased()) }
-        }
+        let components = filteredComponents(release)
 
         if components.isEmpty {
             print("No components found.")
