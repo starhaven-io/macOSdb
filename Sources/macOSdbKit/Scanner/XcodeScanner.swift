@@ -99,6 +99,7 @@ public actor XcodeScanner {
             .appendingPathComponent("macosdb-xcode-\(UUID().uuidString)")
 
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        ScanWorkspace.markOwned(tempDir)
 
         // Clean up the temp dir if anything after createDirectory throws
         // (including a process.run() failure).

@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import macOSdbKit
 
 struct CleanupCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -67,14 +68,16 @@ struct CleanupCommand: AsyncParsableCommand {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return []
         }
 
-        guard process.terminationStatus == 0 else { return [] }
-
+        // Drain the pipe before waiting: a large `hdiutil info` plist can exceed the
+        // pipe buffer and deadlock if we wait for exit while hdiutil blocks on write.
         let data = stdout.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else { return [] }
         guard let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
               let images = plist["images"] as? [[String: Any]] else {
             return []
@@ -85,10 +88,13 @@ struct CleanupCommand: AsyncParsableCommand {
         var results: [StaleMount] = []
         for image in images {
             guard let imagePath = image["image-path"] as? String,
-                  isScannerImage(imagePath, tempBase: tempBase),
+                  let workDir = scannerWorkDir(forImage: imagePath, tempBase: tempBase),
                   let entities = image["system-entities"] as? [[String: Any]] else {
                 continue
             }
+
+            // Leave volumes mounted by a scan that is still running.
+            if ScanWorkspace.isOwnedByRunningScan(workDir) { continue }
 
             for entity in entities {
                 guard let mountPoint = entity["mount-point"] as? String,
@@ -106,12 +112,20 @@ struct CleanupCommand: AsyncParsableCommand {
         return results
     }
 
-    /// True only for DMGs the scanner created: under the temp dir and in a
-    /// `macosdb-…` work dir, so `--force` can't detach unrelated user volumes.
-    private func isScannerImage(_ imagePath: String, tempBase: String) -> Bool {
+    /// The `macosdb-…` work dir that contains a scanner-created image, or nil if the
+    /// image isn't one of ours — so `--force` only ever detaches volumes from the
+    /// scanner's own work dirs under the temp dir, never unrelated user volumes.
+    private func scannerWorkDir(forImage imagePath: String, tempBase: String) -> URL? {
         let resolved = URL(fileURLWithPath: imagePath).resolvingSymlinksInPath()
-        guard resolved.path.hasPrefix(tempBase) else { return false }
-        return resolved.pathComponents.contains { $0.hasPrefix("macosdb-") }
+        guard resolved.path.hasPrefix(tempBase) else { return nil }
+        var dir = resolved.deletingLastPathComponent()
+        while dir.path.hasPrefix(tempBase) {
+            if dir.lastPathComponent.hasPrefix("macosdb-") { return dir }
+            let parent = dir.deletingLastPathComponent()
+            if parent == dir { break }
+            dir = parent
+        }
+        return nil
     }
 
     private func unmount(_ mount: StaleMount) {
@@ -149,7 +163,9 @@ struct CleanupCommand: AsyncParsableCommand {
         return contents.filter { url in
             let name = url.lastPathComponent
             guard name.hasPrefix("macosdb-") else { return false }
-            return (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false else { return false }
+            // Don't delete a work dir whose scan is still running.
+            return !ScanWorkspace.isOwnedByRunningScan(url)
         }.sorted { $0.path < $1.path }
     }
 
