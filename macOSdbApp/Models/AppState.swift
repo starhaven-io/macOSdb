@@ -275,26 +275,35 @@ final class AppState {
 
     // MARK: - Actions
 
-    /// Loads the current product's releases, reusing any cached data. Used on launch
-    /// and when switching products so a flip doesn't re-download the whole catalog —
-    /// the DataProvider caches are product-keyed and URLCache serves repeat launches.
+    /// Loads the current product's releases, reusing any cached data. Driven by
+    /// ContentView's `.task(id: selectedProduct)`, so switching products cancels the
+    /// prior load and the guards below stop a superseded load from overwriting newer
+    /// data. The DataProvider caches are product-keyed and URLCache serves launches.
     func load() async {
+        let product = selectedProduct
         isLoading = true
         lastError = nil
         loadFailureMessage = nil
 
         do {
-            let fetched = try await dataProvider.fetchAllReleases(for: selectedProduct)
+            let fetched = try await dataProvider.fetchAllReleases(for: product)
+            // A product switch may have superseded this load; don't overwrite the
+            // newer product's data (or its loading state) with stale results.
+            guard !Task.isCancelled, product == selectedProduct else { return }
             releases = fetched.sorted(by: >)
             reconcileSelection()
-            Self.logger.info("Loaded \(fetched.count) \(self.selectedProduct.displayName) releases")
+            Self.logger.info("Loaded \(fetched.count) \(product.displayName) releases")
         } catch {
+            // A switch cancels the in-flight load — that isn't a real failure.
+            guard !Task.isCancelled, product == selectedProduct else { return }
             lastError = error
             loadFailureMessage = error.localizedDescription
-            Self.logger.error("Failed to load \(self.selectedProduct.displayName) releases: \(error.localizedDescription)")
+            Self.logger.error("Failed to load \(product.displayName) releases: \(error.localizedDescription)")
         }
 
-        isLoading = false
+        if product == selectedProduct {
+            isLoading = false
+        }
     }
 
     /// Discards cached data and reloads from the network. Backs the ⌘R Refresh
@@ -328,7 +337,10 @@ final class AppState {
         }
         isComparing = false
         releases = []
-        Task { await load() }
+        // Show the loading state immediately. The load itself is driven by
+        // ContentView's `.task(id: selectedProduct)`, which cancels any in-flight
+        // load for the previous product so a rapid flip can't leave stale data.
+        isLoading = true
     }
 
     func startCompare() {

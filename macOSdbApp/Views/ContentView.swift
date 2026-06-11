@@ -69,10 +69,8 @@ struct ContentView: View {
         } message: {
             Text(appState.lastError?.localizedDescription ?? "An unknown error occurred.")
         }
-        .task {
-            if appState.releases.isEmpty {
-                await appState.load()
-            }
+        .task(id: appState.selectedProduct) {
+            await appState.load()
         }
     }
 
