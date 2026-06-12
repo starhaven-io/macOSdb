@@ -14,49 +14,33 @@ actor DMGMounter {
     func mount(dmgPath: URL) async throws -> MountPoint {
         Self.logger.info("Mounting DMG: \(dmgPath.path)")
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
-        process.arguments = ["attach", "-nobrowse", "-readonly", "-plist", dmgPath.path]
+        let result = try ProcessRunner.run(
+            executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"),
+            arguments: ["attach", "-nobrowse", "-readonly", "-plist", dmgPath.path]
+        )
 
-        let stdout = Pipe()
-        let stderr = Pipe()
-        process.standardOutput = stdout
-        process.standardError = stderr
-
-        try process.run()
-        // Drain both pipes before waiting: a large -plist output on stdout could
-        // otherwise fill the pipe buffer and deadlock against waitUntilExit().
-        let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
-        let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
-            let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
+        guard result.terminationStatus == 0 else {
+            let errorMessage = String(data: result.stderr, encoding: .utf8) ?? "unknown error"
             Self.logger.error("hdiutil attach failed: \(errorMessage)")
             throw ScannerError.dmgMountFailed(path: dmgPath.path, reason: errorMessage)
         }
 
-        return try parseMountOutput(outputData, dmgPath: dmgPath.path)
+        return try parseMountOutput(result.stdout, dmgPath: dmgPath.path)
     }
 
     func unmount(_ mountPoint: MountPoint) async {
         Self.logger.info("Unmounting: \(mountPoint.path)")
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
-        process.arguments = ["detach", mountPoint.deviceNode, "-force"]
-
-        let stderr = Pipe()
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = stderr
-
         do {
-            try process.run()
-            let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
+            let result = try ProcessRunner.run(
+                executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"),
+                arguments: ["detach", mountPoint.deviceNode, "-force"],
+                capturesStandardOutput: false,
+                capturesStandardError: true
+            )
 
-            if process.terminationStatus != 0 {
-                let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
+            if result.terminationStatus != 0 {
+                let errorMessage = String(data: result.stderr, encoding: .utf8) ?? "unknown error"
                 Self.logger.warning("hdiutil detach warning: \(errorMessage)")
             }
         } catch {

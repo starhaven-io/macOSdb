@@ -22,9 +22,24 @@ struct AEADecryptionResult: Sendable {
 
 actor AEADecryptor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "AEADecryptor")
+    private static let maxAuthDataSize = 1 * 1_024 * 1_024
+    private static let allowedWKMSHostSuffixes = ["apple.com", "cdn-apple.com"]
 
     static func isAEA(_ url: URL) -> Bool {
         url.pathExtension == "aea"
+    }
+
+    nonisolated static func isAllowedWKMSURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "https",
+              url.user == nil,
+              url.password == nil,
+              let host = url.host(percentEncoded: false)?.lowercased() else {
+            return false
+        }
+
+        return allowedWKMSHostSuffixes.contains { suffix in
+            host == suffix || host.hasSuffix(".\(suffix)")
+        }
     }
 
     func decrypt(aeaPath: URL, privateKeyPEM: String? = nil) async throws -> AEADecryptionResult {
@@ -154,6 +169,11 @@ actor AEADecryptor {
         guard authSize > 0 else {
             throw ScannerError.aeaDecryptionFailed(reason: "No auth data in AEA file")
         }
+        guard authSize <= Self.maxAuthDataSize else {
+            throw ScannerError.aeaDecryptionFailed(
+                reason: "AEA auth data too large: \(authSize) bytes"
+            )
+        }
 
         return authSize
     }
@@ -193,9 +213,23 @@ actor AEADecryptor {
         guard let url = URL(string: urlString) else {
             throw ScannerError.aeaDecryptionFailed(reason: "Invalid WKMS key URL: \(urlString)")
         }
+        guard Self.isAllowedWKMSURL(url) else {
+            throw ScannerError.aeaDecryptionFailed(reason: "Refusing non-Apple WKMS key URL: \(urlString)")
+        }
 
         Self.logger.info("Fetching decryption key from \(urlString)")
-        let (data, response) = try await URLSession.shared.data(from: url)
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 30
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpShouldSetCookies = false
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        let delegate = WKMSURLSessionDelegate()
+        let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
+        defer { session.finishTasksAndInvalidate() }
+
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -217,28 +251,39 @@ actor AEADecryptor {
     private func runAEADecrypt(input: URL, output: URL, key: String) throws {
         Self.logger.info("Decrypting \(input.lastPathComponent)")
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/aea")
-        process.arguments = [
-            "decrypt",
-            "-i", input.path,
-            "-o", output.path,
-            "-key-value", "base64:\(key)"
-        ]
+        let result = try ProcessRunner.run(
+            executableURL: URL(fileURLWithPath: "/usr/bin/aea"),
+            arguments: [
+                "decrypt",
+                "-i", input.path,
+                "-o", output.path,
+                "-key-value", "base64:\(key)"
+            ],
+            capturesStandardOutput: false,
+            capturesStandardError: true
+        )
 
-        let stderr = Pipe()
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = stderr
-
-        try process.run()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
-            let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
-            let errorMessage = String(data: errorData, encoding: .utf8)?.trimmingCharacters(
+        guard result.terminationStatus == 0 else {
+            let errorMessage = String(data: result.stderr, encoding: .utf8)?.trimmingCharacters(
                 in: .whitespacesAndNewlines
             ) ?? "unknown error"
             throw ScannerError.aeaDecryptionFailed(reason: "aea decrypt failed: \(errorMessage)")
         }
+    }
+}
+
+private final class WKMSURLSessionDelegate: NSObject, URLSessionTaskDelegate {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        guard let url = request.url, AEADecryptor.isAllowedWKMSURL(url) else {
+            completionHandler(nil)
+            return
+        }
+        completionHandler(request)
     }
 }
