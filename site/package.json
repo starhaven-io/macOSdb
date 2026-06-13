@@ -31,5 +31,11 @@
   },
   "overrides": {
     "esbuild": "^0.28.1"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true,
+    "sharp": true,
+    "workerd": true
   }
 }
