@@ -14,20 +14,20 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.6.1",
+    "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/compiler-rs": "^0.2.1",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource/inter": "^5.2.8",
-    "astro": "^6.4.4",
+    "astro": "^6.4.5",
     "astro-pagefind": "^2.0.0",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "prettier": "^3.8.3",
+    "prettier": "^3.8.4",
     "prettier-plugin-astro": "^0.14.1",
-    "wrangler": "^4.95.0"
+    "wrangler": "^4.99.0"
   },
   "overrides": {
     "esbuild": "^0.28.1"
