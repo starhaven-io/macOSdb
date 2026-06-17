@@ -18,7 +18,7 @@
     "@astrojs/compiler-rs": "^0.2.1",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource/inter": "^5.2.8",
-    "astro": "^6.4.5",
+    "astro": "^6.4.7",
     "astro-pagefind": "^2.0.0",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
