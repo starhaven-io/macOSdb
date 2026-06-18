@@ -15,14 +15,14 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
-    "@astrojs/compiler-rs": "^0.2.1",
+    "@astrojs/compiler-rs": "^0.2.2",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource/inter": "^5.2.8",
     "astro": "^6.4.7",
     "astro-pagefind": "^2.0.0",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.0"
   },
   "devDependencies": {
     "prettier": "^3.8.4",
