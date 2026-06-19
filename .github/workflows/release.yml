@@ -158,21 +158,23 @@ jobs:
             -f "ref=refs/tags/${TAG}" \
             -f "sha=${COMMIT_SHA}"
 
-      - name: Download artifacts
+      - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
+          name: ${{ needs.build.outputs.artifact }}
           path: artifacts
 
       - name: Create release with generated notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository }}
+          ARTIFACT: ${{ needs.build.outputs.artifact }}
         run: |
           gh release create "${TAG}" \
             --repo "${REPOSITORY}" \
             --title "${TAG}" \
             --generate-notes \
-            artifacts/**/*.tar.gz
+            "artifacts/${ARTIFACT}.tar.gz"
           gh release view "${TAG}" \
             --repo "${REPOSITORY}" \
             --json body \
