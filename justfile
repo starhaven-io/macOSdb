@@ -37,9 +37,7 @@ lint:
 lint-json:
     python3 scripts/lint-json.py
 
-# Scan for unused code (uses .periphery.yml)
-# Swift 6.2's swiftbuild system writes the index store under .build/index-build/,
-# not the legacy path Periphery probes, so build first and point it at the store.
+# Scan for unused code. Build first — Periphery can't find swiftbuild's index store.
 periphery:
     swift build --build-tests
     periphery scan --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"

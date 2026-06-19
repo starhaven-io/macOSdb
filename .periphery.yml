@@ -1,4 +1,2 @@
-# Scans the Swift package (auto-detected from Package.swift).
-# macOSdbKit is a library, so retain_public keeps its intentionally public API
-# from being reported as unused.
+# macOSdbKit is a library; retain_public keeps its public API from being flagged.
 retain_public: true
