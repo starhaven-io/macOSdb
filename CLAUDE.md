@@ -48,7 +48,7 @@ macOSdb/
 │   ├── LICENSE                            # CC-BY-4.0
 │   ├── macos/  └ releases.json + releases/{major}/macOS-{version}-{build}.json
 │   └── xcode/  └ releases.json + releases/{major}/Xcode-{version}-{build}.json
-├── scripts/                              # format-release-notes.py, lint-json.py, xcresult-to-junit.py
+├── scripts/                              # format-release-notes.py, lint-json.py
 ├── justfile                             # Task runner (see "Common commands")
 ├── .github/
 │   ├── workflows/                        # ci, codeql, zizmor, pinprick-audit, scan-ipsw, scan-xip,
@@ -132,7 +132,7 @@ just lint-json                  # python3 scripts/lint-json.py (data schema vali
 just typos                      # typos
 just audit                      # zizmor --persona auditor .github/workflows/
 just periphery                  # unused-code scan (local only; not in CI)
-just test-xcode                 # xcodebuild test — sanitizers + coverage (matches CI)
+just test-cov                   # swift test --enable-code-coverage
 just check                      # lint, lint-json, typos, audit, periphery, swift test, site format + build
 just site-dev / site-build      # Astro dev server / production build (in site/)
 just lychee                     # broken-link check on the built site

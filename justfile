@@ -14,14 +14,9 @@ clean:
 test:
     swift test
 
-# Run tests with xcodebuild (matches CI)
-test-xcode:
-    xcodebuild test \
-        -workspace . \
-        -scheme macOSdb-Package \
-        -destination 'platform=macOS' \
-        -enableCodeCoverage YES \
-        EXCLUDED_ARCHS=x86_64
+# Run tests with code coverage
+test-cov:
+    swift test --enable-code-coverage
 
 # Lint
 
