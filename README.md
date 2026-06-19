@@ -4,7 +4,7 @@
 [![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg)](LICENSE)
 [![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
 
-A native macOS app and CLI that catalogs which versions of open-source components ship with each macOS and Xcode release.
+A CLI and website that catalog which versions of open-source components ship with each macOS and Xcode release.
 
 macOSdb scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from system binaries, the dyld shared cache, and SDK headers, and records what ships where. Browse releases, compare component versions across updates, and see which chip families and devices each release supports.
 
@@ -22,7 +22,7 @@ macOSdb scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts ve
 
 ## Installation
 
-Requires macOS 15.0+ and Apple Silicon. Building from source requires Xcode 26+.
+Requires macOS 15.0+ and Apple Silicon.
 
 ### Homebrew
 
@@ -30,18 +30,12 @@ Requires macOS 15.0+ and Apple Silicon. Building from source requires Xcode 26+.
 brew install starhaven-io/tap/macosdb
 ```
 
-### App
-
-Download the latest release from [GitHub Releases](https://github.com/starhaven-io/macOSdb/releases), unzip, and move to `/Applications`. The app includes Sparkle for automatic updates.
-
 ### Build from source
 
-```bash
-# Build the CLI
-swift build -c release
+Requires the Swift 6.2 toolchain (Xcode 26+ or the matching Command Line Tools).
 
-# Build the app
-xcodebuild build -scheme macOSdb -configuration Release
+```bash
+swift build -c release
 ```
 
 ## CLI usage
@@ -118,7 +112,6 @@ Data is also served as a REST API at [macosdb.com/api/v1/](https://macosdb.com/a
 ```
 Sources/macOSdbKit/     Shared library — models, data provider, scanner pipeline
 Sources/macosdb/        CLI executable (swift-argument-parser)
-macOSdbApp/             SwiftUI app (NavigationSplitView, MVVM with @Observable)
 site/                   Astro static site — release browser, compare view, component
                         pages, JSON API, OG image generation, full-text search
 Tests/                  Swift Testing
@@ -141,8 +134,7 @@ just lint-json      # Validate JSON data files
 just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows (zizmor)
 just periphery      # Scan for unused code
-just build-app      # Build the app with xcodebuild
-just test-xcode     # Run tests with xcodebuild (matches CI)
+just test-xcode     # Run tests with xcodebuild (sanitizers + coverage, matches CI)
 just lychee         # Check the built site for broken links
 just check          # Run all checks (lint, lint-json, typos, audit, periphery, test, site format, site build)
 just install-hooks  # Install git hooks: pre-push check + DCO sign-off (once per clone)

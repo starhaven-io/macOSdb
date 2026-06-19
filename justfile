@@ -4,25 +4,9 @@
 build:
     swift build
 
-# Build the app with xcodebuild
-build-app:
-    xcodebuild \
-        -project macOSdb.xcodeproj \
-        -scheme macOSdb \
-        -destination 'generic/platform=macOS' \
-        -configuration Debug \
-        CODE_SIGN_IDENTITY="" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
-        EXCLUDED_ARCHS=x86_64 \
-        build
-
 # Clean build artifacts
 clean:
     swift package clean
-    xcodebuild clean \
-        -project macOSdb.xcodeproj \
-        -scheme macOSdb
 
 # Test
 
@@ -53,9 +37,10 @@ lint:
 lint-json:
     python3 scripts/lint-json.py
 
-# Scan for unused code (uses .periphery.yml)
+# Scan for unused code. Build first — Periphery can't find swiftbuild's index store.
 periphery:
-    periphery scan
+    swift build --build-tests
+    periphery scan --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
 
 # Check for typos
 typos:
@@ -126,7 +111,8 @@ check:
         skip audit zizmor zizmor
     fi
     if command -v periphery &>/dev/null; then
-        run periphery scan --strict --disable-update-check
+        run swift build --build-tests
+        run periphery scan --strict --disable-update-check --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
     else
         skip periphery periphery periphery
     fi

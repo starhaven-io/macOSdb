@@ -14,9 +14,6 @@ build/
 # SPM
 .swiftpm/
 
-# Sparkle (lives on the appcast branch, not main)
-appcast.xml
-
 # Typos (override global gitignore)
 !_typos.toml
 

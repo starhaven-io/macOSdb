@@ -1,3 +1,2 @@
-project: macOSdb.xcodeproj
-schemes:
-- macOSdb
+# macOSdbKit is a library; retain_public keeps its public API from being flagged.
+retain_public: true
