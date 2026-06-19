@@ -1,6 +1,5 @@
 excluded:
   - .build
-  - DerivedData
   - Package.swift
 
 opt_in_rules:

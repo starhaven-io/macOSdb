@@ -131,8 +131,7 @@ struct SubprocessSmokeTests {
 
     /// Locate the built `macosdb` binary by walking up from the test source file
     /// to the package root, then searching the build output directories for the
-    /// most recently built copy. Handles both `swift test` (binary lives under
-    /// `.build/`) and `xcodebuild test` (under `DerivedData/Build/Products/`).
+    /// most recently built copy under `.build/`.
     /// Swift Testing's runner loads the .xctest dynamically, so `Bundle.allBundles`
     /// doesn't reliably contain it the way it does under XCTest.
     private static func findBinary(testSourcePath: String) throws -> URL {
@@ -148,7 +147,7 @@ struct SubprocessSmokeTests {
     }
 
     private static func locateBinary(under packageRoot: URL) throws -> URL {
-        let searchRoots = [".build", "DerivedData/Build/Products"]
+        let searchRoots = [".build"]
             .map { packageRoot.appendingPathComponent($0) }
             .filter { FileManager.default.fileExists(atPath: $0.path) }
 

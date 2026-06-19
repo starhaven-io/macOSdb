@@ -134,7 +134,7 @@ just lint-json      # Validate JSON data files
 just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows (zizmor)
 just periphery      # Scan for unused code
-just test-xcode     # Run tests with xcodebuild (sanitizers + coverage, matches CI)
+just test-cov       # Run tests with code coverage
 just lychee         # Check the built site for broken links
 just check          # Run all checks (lint, lint-json, typos, audit, periphery, test, site format, site build)
 just install-hooks  # Install git hooks: pre-push check + DCO sign-off (once per clone)

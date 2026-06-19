@@ -2,6 +2,9 @@
 .build/
 build/
 
+# Coverage
+*.profraw
+
 # Claude Code
 .claude/
 
@@ -19,9 +22,3 @@ build/
 
 # Wrangler
 .wrangler/
-
-# Xcode
-DerivedData/
-xcuserdata/
-*.xccheckout
-*.xcscmblueprint
