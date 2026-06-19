@@ -1,40 +1,31 @@
 # macOSdb — Claude Project Context
 
-macOSdb is a native macOS app and CLI that catalogs which versions of open-source components (curl, OpenSSH, SQLite, etc.) ship with each macOS and Xcode release. It scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from binaries, the dyld shared cache, and SDK headers, and stores the results as JSON. The app lets you browse releases, compare component versions across releases, and see which chip families and devices each release supports.
+macOSdb is a CLI and website that catalog which versions of open-source components (curl, OpenSSH, SQLite, etc.) ship with each macOS and Xcode release. It scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from binaries, the dyld shared cache, and SDK headers, and stores the results as JSON. The website lets you browse releases, compare component versions across releases, and see which chip families and devices each release supports.
 
 ## Project overview
 
 - **Platform:** macOS 15.0+ (Apple Silicon only)
-- **Language:** Swift 6.2, SwiftUI (100%)
-- **Architecture:** MVVM using `@Observable` and SwiftUI Environment injection
-- **Structure:** Xcode project (app + bundled CLI) + Swift Package (library, standalone CLI, tests)
-- **Bundle ID:** `io.linnane.macosdb`
+- **Language:** Swift 6.2
+- **Architecture:** `macOSdbKit` library (models, scanner, data provider) consumed by the `macosdb` CLI
+- **Structure:** Swift Package (library, CLI, tests) + Astro site
+- **Logging subsystem:** `io.linnane.macosdb`
 - **License:** AGPL-3.0-only (code), CC-BY-4.0 (data)
-- **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction), Sparkle (app auto-update, Xcode project only)
+- **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction)
 - **Website:** https://macosdb.com (Astro site on Cloudflare Workers — static pages + SSR API)
 
 ## Repository structure
 
 ```
 macOSdb/
-├── macOSdb.xcodeproj/                     # Xcode project (builds app target with bundled CLI)
-├── Package.swift                          # SPM: macOSdbKit lib + standalone macosdb CLI
+├── Package.swift                          # SPM: macOSdbKit lib + macosdb CLI
 ├── Sources/
-│   ├── macOSdbKit/                        # Shared library (consumed by CLI and app)
+│   ├── macOSdbKit/                        # Shared library (consumed by the CLI)
 │   │   ├── Models/                        # ChipFamily, Component, DeviceRegistry, KernelInfo, ProductType, Release, SDKInfo, VersionComparison
 │   │   ├── Scanner/                       # IPSW/Xcode scanning pipeline (see Architecture)
 │   │   ├── DataProvider.swift             # Actor: fetch release JSON from HTTPS or local files
 │   │   └── VersionComparer.swift          # Diff components across releases
 │   └── macosdb/                           # CLI (swift-argument-parser): Cleanup, Compare, Completions,
-│                                          #   List, Scan, Show, Validate + Utilities, MacOSdb (@main)
-├── macOSdbApp/                            # SwiftUI app sources (built by the Xcode project)
-│   ├── Bootstrap/EntryPoint.swift         # @main — dispatches to app or CLI by ProcessInfo.processName
-│   ├── macOSdbApp.swift                   # App struct (no @main — entry point is in Bootstrap/)
-│   ├── Models/AppState.swift              # @Observable @MainActor state container
-│   ├── Views/                             # ContentView, SidebarView, ReleaseDetailView,
-│   │                                      #   ComponentDetailView, CompareView, ChipSupportView, SDKDetailView
-│   ├── Info.plist                         # SUFeedURL, hardened-runtime, category
-│   └── Resources/Assets.xcassets/         # App icon, accent color
+│                                          #   List, Scan, Show, Validate, Version + Utilities, MacOSdb (@main)
 ├── site/                                  # Astro site (macosdb.com)
 │   ├── src/
 │   │   ├── pages/                         # index, {macos,xcode}/release/[slug], compare, components,
@@ -62,7 +53,6 @@ macOSdb/
 ├── .github/
 │   ├── workflows/                        # ci, codeql, zizmor, pinprick-audit, scan-ipsw, scan-xip,
 │   │                                     #   link-check, deploy-site, release
-│   ├── appcast-template.xml              # Sparkle appcast template
 │   ├── dependabot.yml                    # github-actions + npm (site) + swift, grouped, 7-day cooldown
 │   └── FUNDING.yml
 ├── LICENSE                              # AGPL-3.0-only
@@ -120,17 +110,7 @@ Built with swift-argument-parser. Subcommands:
 - `cleanup [--force]` — unmount stale scan DMGs and delete leftover temp dirs (dry-run by default)
 - `completions <zsh|bash|fish>` — emit shell completions
 
-**Two build modes:**
-- **Standalone** (`swift build`): `Sources/macosdb/MacOSdb.swift` carries `@main`.
-- **Bundled in app** (Xcode): CLI sources compile into the app target; `EntryPoint.swift` dispatches on `ProcessInfo.processName`; a `macosdb-tool` symlink in `Contents/MacOS/` invokes CLI mode. The subcommand list is declared in **both** `MacOSdb.swift` (SPM) and `EntryPoint.swift` (app) — keep them in sync.
-
-### App (macOSdbApp)
-
-SwiftUI `NavigationSplitView` app:
-- Sidebar: product + mode (Releases / Components / SDKs) pickers, collapsible major-version groups, pre-release and device-specific toggles.
-- Detail: sortable component table, kernel info, chip/device support; side-by-side compare with color-coded changes.
-- `AppState` (`@Observable @MainActor`): in **DEBUG** builds prefers the repo's local `data/` dir (via `#filePath`); release builds always use `macosdb.com/api/v1/`.
-- Distribution: Developer ID signed + notarized, Sparkle auto-updates (appcast on the `appcast` branch, `SUFeedURL` in `Info.plist`), not sandboxed (needs filesystem access to scan).
+`swift build` produces the `macosdb` executable; `Sources/macosdb/MacOSdb.swift` carries `@main`. The release artifact is a Developer ID-signed, notarized binary distributed via Homebrew (see `release.yml`).
 
 ### Site (site/)
 
@@ -152,27 +132,21 @@ just lint-json                  # python3 scripts/lint-json.py (data schema vali
 just typos                      # typos
 just audit                      # zizmor --persona auditor .github/workflows/
 just periphery                  # unused-code scan (local only; not in CI)
-just build-app / just test-xcode# xcodebuild app build / tests (matches CI)
+just test-xcode                 # xcodebuild test — sanitizers + coverage (matches CI)
 just check                      # lint, lint-json, typos, audit, periphery, swift test, site format + build
 just site-dev / site-build      # Astro dev server / production build (in site/)
 just lychee                     # broken-link check on the built site
 ```
 
-Run `just check` (or at minimum `just lint && just test`) before pushing — CI is not a substitute. The app target only builds via `xcodebuild`/`just build-app`, not `swift build`.
+Run `just check` (or at minimum `just lint && just test`) before pushing — CI is not a substitute.
 
 ## Code style and conventions
 
 - SwiftLint with ~55 opt-in rules (`.swiftlint.yml`); line length warn 150 / error 200; function body warn 60 / error 100; type body 300.
-- Swift 6 approachable concurrency: `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, `SWIFT_APPROACHABLE_CONCURRENCY = YES`.
+- Swift 6 language mode (via tools version); the scanner pipeline is built on actors (`IPSWScanner`, `DataProvider`).
 - Logging via `OSLog` (`Logger(subsystem: "io.linnane.macosdb", category: ...)`).
 - Errors are `LocalizedError` with descriptive messages.
 - Tests use Swift Testing (`@Suite`, `@Test`, `#expect`/`#require`). CI runs them under Thread + Address sanitizers.
-
-## Build settings (Xcode target)
-
-- Apple Silicon only (`ARCHS = arm64`, `EXCLUDED_ARCHS = x86_64`).
-- Hardened runtime enabled; all runtime exceptions explicitly denied.
-- Dead-code stripping enabled. `ENABLE_APP_SANDBOX = NO` (needs filesystem access for scanning).
 
 ## CI workflows (.github/workflows/)
 
@@ -183,18 +157,15 @@ Run `just check` (or at minimum `just lint && just test`) before pushing — CI 
 - **scan-ipsw.yml / scan-xip.yml** — self-hosted, dispatch-only scanners; download an archive, scan it, open + auto-merge a `data/` PR with a signed commit.
 - **link-check.yml** — scheduled lychee broken-link check.
 - **deploy-site.yml** — build + deploy the Astro site to Cloudflare Workers.
-- **release.yml** — manual dispatch: build, sign (Developer ID), notarize, GitHub release with formatted notes, Sparkle appcast update, Homebrew cask bump.
+- **release.yml** — manual dispatch: build the CLI, sign (Developer ID) + notarize the binary, GitHub release with formatted notes, Homebrew cask bump.
 
 Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinned actions, `persist-credentials: false`, scoped GitHub App tokens, signed GraphQL commits. Keep it that way.
 
 ## Gotchas / do-not-touch
 
 - **`data/` is generated** by the scan workflows, not hand-edited. Don't manually add/edit release JSON; `data/LICENSE` is CC-BY-4.0 (different from the AGPL code). `just lint-json` validates the schema.
-- **CLI symlink** is `macosdb-tool`, not `macosdb` — APFS is case-insensitive, so `macosdb`/`macOSdb` would collide.
-- **Subcommand list is duplicated** in `MacOSdb.swift` and `EntryPoint.swift`; add new subcommands to both.
 - **Scanner inputs are untrusted binaries.** Parsers in `Scanner/` (esp. `DyldCacheExtractor`) bounds-check every offset/length read from the archive; preserve those guards when editing.
 - **AEA WKMS 404s have no retry by design** — manual re-dispatch is the chosen fallback.
-- The `appcast.xml` lives on the `appcast` branch (orphan), not `main`.
 
 ## Commit conventions
 
@@ -205,8 +176,8 @@ Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinne
 ## Git workflow
 
 - Never commit directly to `main` — branch and open a PR.
-- Version bumps: bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.pbxproj`, commit as `chore: bump version to X.Y.Z (build N)`, open a PR.
-- Releases: trigger the Release workflow dispatch after the bump PR merges; it reads `MARKETING_VERSION` and creates the tag automatically.
+- Version bumps: bump `MacosdbVersion.current` in `Sources/macosdb/Version.swift`, commit as `chore: bump version to X.Y.Z`, open a PR.
+- Releases: trigger the Release workflow dispatch after the bump PR merges; it reads `Sources/macosdb/Version.swift` and creates the tag automatically.
 
 ## PR conventions
 

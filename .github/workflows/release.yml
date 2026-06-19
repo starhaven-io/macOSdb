@@ -19,38 +19,137 @@ env:
 jobs:
   build:
     name: Build
+    # Releases come from main only — a dispatch from any other branch would
+    # tag and publish whatever that branch contains. Guarding the entry job
+    # skips the whole chain via `needs`.
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-26
     environment:
       name: release
       deployment: false
     outputs:
-      tag: ${{ steps.version.outputs.tag }}
-      build_number: ${{ steps.version.outputs.build_number }}
-      artifact_name: "macOSdb-${{ steps.version.outputs.tag }}.zip"
+      version: ${{ steps.version.outputs.version }}
+      artifact: ${{ steps.package.outputs.artifact }}
     permissions:
-      contents: write # required to create tag
+      contents: read
       attestations: write # required to generate build provenance attestations
       id-token: write # required to generate build provenance attestations
     env:
-      TEMPORARY_CERTIFICATE_FILE: "macosdb_developer_id_certificate.p12"
       TEMPORARY_KEYCHAIN_FILE: "macosdb_signing.keychain-db"
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
 
-      - name: Extract version from Xcode project
+      - name: Extract version
         id: version
         run: |
-          TAG=$(grep -m1 'MARKETING_VERSION' macOSdb.xcodeproj/project.pbxproj | sed 's/.*= *//;s/ *;.*//')
-          if [[ -z "${TAG}" ]]; then
-            echo "::error::Could not extract MARKETING_VERSION from project.pbxproj"
+          VERSION=$(grep -m1 'static let current' Sources/macosdb/Version.swift | sed -E 's/.*"([^"]+)".*/\1/')
+          if [[ -z "${VERSION}" ]]; then
+            echo "::error::Could not extract version from Sources/macosdb/Version.swift"
             exit 1
           fi
-          BUILD_NUMBER=$(grep -m1 'CURRENT_PROJECT_VERSION' macOSdb.xcodeproj/project.pbxproj | sed 's/.*= *//;s/ *;.*//')
-          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
-          echo "build_number=${BUILD_NUMBER}" >> "${GITHUB_OUTPUT}"
-          echo "TAG=${TAG}" >> "${GITHUB_ENV}"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create and unlock temporary macOS keychain
+        run: |
+          TEMPORARY_KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
+          TEMPORARY_KEYCHAIN_PATH="${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          security create-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${TEMPORARY_KEYCHAIN_PATH}"
+          security unlock-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
+
+      - name: Import certificate into keychain
+        env:
+          DEVELOPER_ID_CERTIFICATE: ${{ secrets.DEVELOPER_ID_CERTIFICATE }}
+          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          set +x  # don't xtrace the certificate or its password
+          echo -n "${DEVELOPER_ID_CERTIFICATE}" | base64 --decode --output="${RUNNER_TEMP}/certificate.p12"
+          security import "${RUNNER_TEMP}/certificate.p12" \
+            -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" \
+            -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}" \
+            -t cert -f pkcs12 -A
+          rm -f "${RUNNER_TEMP}/certificate.p12"
+          security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+
+      - name: Build release binary
+        run: |
+          swift build -c release --arch arm64 --product macosdb
+          echo "BINARY=$(swift build -c release --arch arm64 --show-bin-path)/macosdb" >> "${GITHUB_ENV}"
+
+      - name: Codesign binary
+        run: |
+          codesign --sign "Developer ID Application: Patrick Linnane (${DEVELOPMENT_TEAM})" \
+            --options runtime \
+            "${BINARY}"
+
+      # A bare CLI binary cannot be stapled, so notarization is verified online by
+      # Gatekeeper on first run. The cask quarantines on install, so that check runs;
+      # the notarytool submission is what makes it pass.
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+        run: |
+          set +x  # keep the notarization password out of the xtrace log
+          mkdir -p "${RUNNER_TEMP}/notarize-staging"
+          cp "${BINARY}" "${RUNNER_TEMP}/notarize-staging/"
+          ditto -c -k "${RUNNER_TEMP}/notarize-staging" "${RUNNER_TEMP}/macosdb-notarize.zip"
+          xcrun notarytool submit "${RUNNER_TEMP}/macosdb-notarize.zip" \
+            --apple-id "${APPLE_ID}" \
+            --team-id "${DEVELOPMENT_TEAM}" \
+            --password "${NOTARIZATION_PASSWORD}" \
+            --wait
+
+      - name: Clean up temporary keychain
+        if: always()
+        run: |
+          if [[ -f "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" ]]; then
+            security delete-keychain "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          fi
+
+      - name: Package
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ARTIFACT="macosdb-${VERSION}-aarch64-apple-darwin"
+          mkdir -p staging
+          cp "${BINARY}" staging/macosdb
+          cp LICENSE staging/
+          tar czf "${ARTIFACT}.tar.gz" -C staging .
+          echo "artifact=${ARTIFACT}" >> "${GITHUB_OUTPUT}"
+
+      - name: Generate build provenance
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: "${{ steps.package.outputs.artifact }}.tar.gz"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.package.outputs.artifact }}
+          path: "${{ steps.package.outputs.artifact }}.tar.gz"
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-slim
+    environment:
+      name: release
+      deployment: false
+    permissions:
+      contents: write # required to create tags and GitHub releases
+    outputs:
+      version: ${{ needs.build.outputs.version }}
+    env:
+      TAG: ${{ needs.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Create tag
         env:
@@ -62,179 +161,25 @@ jobs:
             -f "ref=refs/tags/${TAG}" \
             -f "sha=${COMMIT_SHA}"
 
-      - name: Create and unlock temporary macOS keychain
-        run: |
-          TEMPORARY_KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
-          TEMPORARY_KEYCHAIN_PATH="${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
-          security create-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
-          security set-keychain-settings -lut 21600 "${TEMPORARY_KEYCHAIN_PATH}"
-          security unlock-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
-
-      - name: Create temporary certificate file
-        env:
-          DEVELOPER_ID_CERTIFICATE: ${{ secrets.DEVELOPER_ID_CERTIFICATE }}
-        run: |
-          set +x  # don't xtrace the base64-encoded certificate
-          echo -n "${DEVELOPER_ID_CERTIFICATE}" |
-            base64 --decode --output="${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
-
-      - name: Import certificate into keychain
-        env:
-          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-        run: |
-          set +x  # don't xtrace the certificate password
-          security import "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}" \
-            -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" \
-            -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}" \
-            -t cert -f pkcs12 -A
-
-      - name: Clean up temporary certificate file
-        if: always()
-        run: rm -f "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
-
-      - name: Open keychain
-        run: security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
-
-      - name: Archive
-        run: |
-          xcodebuild archive \
-            -project macOSdb.xcodeproj \
-            -scheme macOSdb \
-            -destination 'generic/platform=macOS' \
-            -configuration Release \
-            -archivePath "${RUNNER_TEMP}/macOSdb.xcarchive" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
-            EXCLUDED_ARCHS=x86_64
-
-      - name: Export
-        run: |
-          cat > "${RUNNER_TEMP}/ExportOptions.plist" << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>developer-id</string>
-              <key>teamID</key>
-              <string>${DEVELOPMENT_TEAM}</string>
-          </dict>
-          </plist>
-          EOF
-          xcodebuild -exportArchive \
-            -archivePath "${RUNNER_TEMP}/macOSdb.xcarchive" \
-            -exportOptionsPlist "${RUNNER_TEMP}/ExportOptions.plist" \
-            -exportPath "${RUNNER_TEMP}/export"
-
-      - name: Clean up temporary keychain
-        if: always()
-        run: |
-          if [[ -f "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" ]]; then
-            security delete-keychain "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
-          fi
-
-      - name: Package
-        run: |
-          ditto -c -k --keepParent \
-            "${RUNNER_TEMP}/export/macOSdb.app" \
-            "${RUNNER_TEMP}/macOSdb-${TAG}.zip"
-
-      - name: Generate build provenance
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: "${{ runner.temp }}/macOSdb-${{ steps.version.outputs.tag }}.zip"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: "macOSdb-${{ steps.version.outputs.tag }}.zip"
-          path: "${{ runner.temp }}/macOSdb-${{ steps.version.outputs.tag }}.zip"
-
-  release:
-    name: Release
-    needs: build
-    runs-on: macos-26
-    environment:
-      name: release
-      deployment: false
-    permissions:
-      actions: write # required to trigger site deploy workflow
-      contents: write # required to create GitHub releases
-    outputs:
-      version: ${{ needs.build.outputs.tag }}
-    env:
-      TAG: ${{ needs.build.outputs.tag }}
-    steps:
-      - name: Download artifact
+      - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: "${{ needs.build.outputs.artifact_name }}"
-
-      - name: Notarize and staple
-        env:
-          APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
-          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
-          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
-        run: |
-          set +x  # keep the notarization password out of the xtrace log
-          xcrun notarytool submit "${ARTIFACT_NAME}" \
-            --team-id "${DEVELOPMENT_TEAM}" \
-            --apple-id "${APPLE_ID}" \
-            --password "${NOTARIZATION_PASSWORD}" \
-            --wait
-          ditto -xk "${ARTIFACT_NAME}" "${RUNNER_TEMP}/staple"
-          xcrun stapler staple "${RUNNER_TEMP}/staple/macOSdb.app"
-          ditto -c -k --keepParent \
-            "${RUNNER_TEMP}/staple/macOSdb.app" \
-            "${ARTIFACT_NAME}"
-
-      - name: Download Sparkle
-        env:
-          # Keep in lockstep with the Sparkle framework version in Package.resolved
-          # so the sign_update tool matches the runtime that verifies updates.
-          SPARKLE_VERSION: "2.9.2"
-          SPARKLE_SHA256: "1cb340cbbef04c6c0d162078610c25e2221031d794a3449d89f2f56f4df77c95"
-        run: |
-          curl -fL -o "${RUNNER_TEMP}/sparkle.tar.xz" \
-            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
-          echo "${SPARKLE_SHA256}  ${RUNNER_TEMP}/sparkle.tar.xz" | shasum -a 256 -c -
-          mkdir -p "${RUNNER_TEMP}/sparkle"
-          tar xf "${RUNNER_TEMP}/sparkle.tar.xz" -C "${RUNNER_TEMP}/sparkle"
-
-      - name: Sign update with Sparkle EdDSA
-        env:
-          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
-        run: |
-          set +x  # never xtrace the EdDSA private key
-          SPARKLE_KEY_FILE="${RUNNER_TEMP}/sparkle_private_key"
-          echo "${SPARKLE_KEY}" > "${SPARKLE_KEY_FILE}"
-          SIG_OUTPUT=$("${RUNNER_TEMP}/sparkle/bin/sign_update" "${ARTIFACT_NAME}" --ed-key-file "${SPARKLE_KEY_FILE}" 2>&1)
-          rm -f "${SPARKLE_KEY_FILE}"
-          echo "SPARKLE_SIG=$(echo "${SIG_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
-          echo "SPARKLE_LENGTH=$(echo "${SIG_OUTPUT}" | grep -o 'length="[^"]*"' | cut -d'"' -f2)" >> "${GITHUB_ENV}"
+          path: artifacts
 
       - name: Create release with generated notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
           REPOSITORY: ${{ github.repository }}
         run: |
           gh release create "${TAG}" \
             --repo "${REPOSITORY}" \
             --title "${TAG}" \
             --generate-notes \
-            "${ARTIFACT_NAME}"
+            artifacts/**/*.tar.gz
           gh release view "${TAG}" \
             --repo "${REPOSITORY}" \
             --json body \
             --jq '.body' > "${RUNNER_TEMP}/raw_notes.md"
-
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          ref: main
-          persist-credentials: false
 
       - name: Format release notes
         env:
@@ -244,45 +189,9 @@ jobs:
           python3 scripts/format-release-notes.py \
             "${RUNNER_TEMP}/raw_notes.md" "${TAG}" \
             > "${RUNNER_TEMP}/formatted_notes.md"
-          python3 scripts/format-release-notes.py \
-            "${RUNNER_TEMP}/raw_notes.md" "${TAG}" --html \
-            > "${RUNNER_TEMP}/release_notes.html"
           gh release edit "${TAG}" \
             --repo "${REPOSITORY}" \
             --notes-file "${RUNNER_TEMP}/formatted_notes.md"
-
-      - name: Update appcast
-        env:
-          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
-          REPOSITORY: ${{ github.repository }}
-          BUILD_NUMBER: ${{ needs.build.outputs.build_number }}
-        run: |
-          export PUBDATE="$(date -u '+%a, %d %b %Y %H:%M:%S %z')"
-          export DOWNLOAD_URL="https://github.com/${REPOSITORY}/releases/download/${TAG}/${ARTIFACT_NAME}"
-          export RELEASE_NOTES_HTML="$(cat "${RUNNER_TEMP}/release_notes.html")"
-          envsubst < .github/appcast-template.xml > appcast.xml
-
-      - name: Push appcast
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git"
-          cp appcast.xml "${RUNNER_TEMP}/appcast.xml"
-          git fetch origin appcast
-          git checkout appcast
-          cp "${RUNNER_TEMP}/appcast.xml" appcast.xml
-          git add appcast.xml
-          git diff --cached --quiet && exit 0
-          git commit -m "Update appcast for ${TAG}"
-          git push origin appcast
-
-      - name: Trigger site deploy
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run "Deploy Site" --repo "${GITHUB_REPOSITORY}"
 
   bump-cask:
     name: Bump Homebrew cask
@@ -306,6 +215,10 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
+      # REVIEW (yours): the `macosdb` cask in starhaven-io/homebrew-tap needs a
+      # `binary "macosdb"` stanza pointing at the macosdb-<version>-aarch64-apple-darwin
+      # tarball before the first 2.0.0 release; bump-cask-pr only bumps the version
+      # and sha of an already-correct cask.
       - name: Bump Homebrew cask
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ steps.tap-token.outputs.token }}

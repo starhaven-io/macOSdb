@@ -1,3 +1,4 @@
-project: macOSdb.xcodeproj
-schemes:
-- macOSdb
+# Scans the Swift package (auto-detected from Package.swift).
+# macOSdbKit is a library, so retain_public keeps its intentionally public API
+# from being reported as unused.
+retain_public: true

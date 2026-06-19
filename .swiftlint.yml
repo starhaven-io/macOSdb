@@ -38,7 +38,6 @@ opt_in_rules:
   - local_doc_comment
   - overridden_super_call
   - private_action
-  - private_swiftui_state
   - return_value_from_void_function
   - unavailable_function
   - unowned_variable_capture
