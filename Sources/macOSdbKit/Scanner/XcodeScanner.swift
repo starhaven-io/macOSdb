@@ -94,6 +94,10 @@ public actor XcodeScanner {
 
     // MARK: - XIP extraction
 
+    /// Expanding a full Xcode `.xip` is slow (tens of GB); 90 minutes is far past
+    /// a normal expansion but stops a stuck `xip` from wedging the scanner runner.
+    private static let xipExpandTimeout: TimeInterval = 5_400
+
     private func extractXIP(_ xipPath: URL) async throws -> URL {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("macosdb-xcode-\(UUID().uuidString)")
@@ -106,21 +110,17 @@ public actor XcodeScanner {
         do {
             sendVerbose("Extracting XIP to \(tempDir.path)")
 
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/xip")
-            process.arguments = ["--expand", xipPath.path]
-            process.currentDirectoryURL = tempDir
+            let result = try ProcessRunner.run(
+                executableURL: URL(fileURLWithPath: "/usr/bin/xip"),
+                arguments: ["--expand", xipPath.path],
+                currentDirectoryURL: tempDir,
+                capturesStandardOutput: false,
+                capturesStandardError: true,
+                timeout: Self.xipExpandTimeout
+            )
 
-            let stderr = Pipe()
-            process.standardOutput = FileHandle.nullDevice
-            process.standardError = stderr
-
-            try process.run()
-            let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
-
-            guard process.terminationStatus == 0 else {
-                let errorMessage = String(data: errorData, encoding: .utf8) ?? "unknown error"
+            guard result.terminationStatus == 0 else {
+                let errorMessage = String(data: result.stderr, encoding: .utf8) ?? "unknown error"
                 throw ScannerError.xipExtractionFailed(reason: errorMessage)
             }
 
