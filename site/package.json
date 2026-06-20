@@ -6,6 +6,8 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "check:headers": "node scripts/check-security-headers.mjs",
+    "prebuild": "node scripts/check-security-headers.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
