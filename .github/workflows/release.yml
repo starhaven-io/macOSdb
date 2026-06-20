@@ -5,7 +5,9 @@ on:
 
 defaults:
   run:
-    shell: bash -xeuo pipefail {0}
+    # No -x: this workflow handles signing/notarization secrets, generated
+    # keychain passwords, and short-lived app tokens.
+    shell: bash -euo pipefail {0}
 
 concurrency:
   group: release
