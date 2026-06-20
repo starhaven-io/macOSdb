@@ -248,6 +248,10 @@ actor AEADecryptor {
 
     // MARK: - Decryption
 
+    /// `aea decrypt` on a full system image is the heavy step; 15 minutes clears
+    /// normal runs while still bounding a hang.
+    private static let decryptTimeout: TimeInterval = 900
+
     private func runAEADecrypt(input: URL, output: URL, key: String) throws {
         Self.logger.info("Decrypting \(input.lastPathComponent)")
 
@@ -260,7 +264,8 @@ actor AEADecryptor {
                 "-key-value", "base64:\(key)"
             ],
             capturesStandardOutput: false,
-            capturesStandardError: true
+            capturesStandardError: true,
+            timeout: Self.decryptTimeout
         )
 
         guard result.terminationStatus == 0 else {

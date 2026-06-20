@@ -5,6 +5,11 @@ import OSLog
 actor DMGMounter {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "DMGMounter")
 
+    /// Generous ceilings — mounting a local image is normally a few seconds, so
+    /// these only fire if `hdiutil` wedges.
+    private static let attachTimeout: TimeInterval = 300
+    private static let detachTimeout: TimeInterval = 120
+
     struct MountPoint: Sendable {
         let path: String
         /// Device node (e.g. "/dev/disk4s1") for ejection.
@@ -16,7 +21,8 @@ actor DMGMounter {
 
         let result = try ProcessRunner.run(
             executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"),
-            arguments: ["attach", "-nobrowse", "-readonly", "-plist", dmgPath.path]
+            arguments: ["attach", "-nobrowse", "-readonly", "-plist", dmgPath.path],
+            timeout: Self.attachTimeout
         )
 
         guard result.terminationStatus == 0 else {
@@ -36,7 +42,8 @@ actor DMGMounter {
                 executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"),
                 arguments: ["detach", mountPoint.deviceNode, "-force"],
                 capturesStandardOutput: false,
-                capturesStandardError: true
+                capturesStandardError: true,
+                timeout: Self.detachTimeout
             )
 
             if result.terminationStatus != 0 {

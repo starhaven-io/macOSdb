@@ -14,6 +14,7 @@ enum ScannerError: LocalizedError {
     case xipExtractionFailed(reason: String)
     case xcodeAppNotFound(reason: String)
     case versionPlistNotFound(reason: String)
+    case processTimedOut(tool: String, seconds: Int)
 
     var errorDescription: String? {
         switch self {
@@ -43,6 +44,8 @@ enum ScannerError: LocalizedError {
             "Xcode.app not found in extracted archive: \(reason)"
         case .versionPlistNotFound(let reason):
             "Version plist not found: \(reason)"
+        case .processTimedOut(let tool, let seconds):
+            "\(tool) timed out after \(seconds)s"
         }
     }
 }
