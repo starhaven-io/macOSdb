@@ -1,23 +1,20 @@
-# Build
+# Local machine/editor/agent state
+.claude/
+.codex/
+.DS_Store
+.vscode/
+
+# Build outputs
 .build/
 build/
 
 # Coverage
 *.profraw
 
-# Claude Code
-.claude/
-
-# Editors
-.vscode/
-
-# macOS
-.DS_Store
-
-# SPM
+# Swift Package Manager
 .swiftpm/
 
-# Typos (override global gitignore)
+# Tooling
 !_typos.toml
 
 # Wrangler

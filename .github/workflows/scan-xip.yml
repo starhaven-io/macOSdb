@@ -36,7 +36,8 @@ on:
 
 defaults:
   run:
-    shell: bash -xeuo pipefail {0}
+    # No -x: this workflow handles Apple download cookies and mints app tokens.
+    shell: bash -euo pipefail {0}
 
 concurrency:
   group: scan

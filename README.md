@@ -135,7 +135,7 @@ just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows (zizmor)
 just periphery      # Scan for unused code
 just test-cov       # Run tests with code coverage
-just lychee         # Check the built site for broken links
+just lychee         # Check the built site and README for broken links
 just check          # Run all checks (lint, lint-json, typos, audit, periphery, test, site format, site build)
 just install-hooks  # Install git hooks: pre-push check + DCO sign-off (once per clone)
 ```
@@ -158,8 +158,6 @@ just site-format-check  # Check site formatting
 Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format and include a DCO sign-off (`git commit -s`). Run `just install-hooks` once per clone to enable the git hooks (a pre-push `just check` and DCO sign-off enforcement).
 
 ## Acknowledgements
-
-Built with [Claude Code](https://claude.ai/code).
 
 Thanks to [Guilherme Rambo](https://github.com/insidegui) for [VirtualBuddy](https://github.com/insidegui/VirtualBuddy), where contributing to the macOS catalog first sparked my interest in IPSW cataloging.
 

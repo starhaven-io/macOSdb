@@ -1,12 +1,20 @@
-# build output
-dist/
+# Local machine/editor/agent state
+.claude/
+.codex/
+.DS_Store
+.vscode/
 
-# generated types
+# Build outputs
 .astro/
+dist/
+.wrangler/
 
-# dependencies
+# Dependencies
 node_modules/
 
-# environment variables
+# Environment
 .env
 .env.production
+
+# Logs
+npm-debug.log*

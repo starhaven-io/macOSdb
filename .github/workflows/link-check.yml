@@ -43,5 +43,5 @@ jobs:
       - name: Check links
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
-          args: --config lychee.toml --root-dir ${{ github.workspace }}/site/dist/client './site/dist/client/**/*.html'
+          args: --config lychee.toml --root-dir ${{ github.workspace }}/site/dist/client './site/dist/client/**/*.html' README.md
           fail: true
