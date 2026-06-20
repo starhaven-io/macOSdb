@@ -61,15 +61,15 @@ site-format-check:
 
 # Install site dependencies
 site-install:
-    cd site && npm install
+    cd site && npm ci --strict-allow-scripts
 
 # Preview the built site
 site-preview:
     cd site && npm run preview
 
-# Check for broken links in the built site
+# Check for broken links in the built site and README
 lychee: site-build
-    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html'
+    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html' ../README.md
 
 # Check
 

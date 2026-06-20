@@ -1,5 +1,6 @@
 # Configuration for https://github.com/lycheeverse/lychee
-# Checks links in the built Astro site under `site/dist/client/`.
+# Checks links in the built Astro site under `site/dist/client/`
+# and the repo root README.md.
 # Run: `just lychee` (requires `just site-build` first).
 
 max_concurrency = 20
@@ -13,6 +14,6 @@ max_retries = 3
 # gnu.org blocks cloud IP ranges (GitHub Actions runners) with 403.
 # The AGPL license URL is a canonical FSF reference; skip verifying it.
 exclude = [
-    "^file://.*/(macos|xcode)/compare/?$",
+    "^file://.*/(macos|xcode)/compare/?(\\?.*)?$",
     "^https://www\\.gnu\\.org/",
 ]
