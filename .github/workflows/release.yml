@@ -17,12 +17,23 @@ env:
   DEVELOPMENT_TEAM: ${{ vars.DEVELOPMENT_TEAM }}
 
 jobs:
+  validate-dispatch:
+    name: Validate dispatch
+    runs-on: ubuntu-slim
+    permissions: {}
+    steps:
+      - name: Require main branch
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::Release workflow must be dispatched from main, got ${REF_NAME}."
+            exit 1
+          fi
+
   build:
     name: Build
-    # Releases come from main only — a dispatch from any other branch would
-    # tag and publish whatever that branch contains. Guarding the entry job
-    # skips the whole chain via `needs`.
-    if: github.ref == 'refs/heads/main'
+    needs: validate-dispatch
     runs-on: macos-26
     environment:
       name: release
