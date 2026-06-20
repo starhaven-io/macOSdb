@@ -8,7 +8,7 @@ struct ScanCommand: AsyncParsableCommand {
         abstract: "Scan an IPSW or Xcode .xip and extract component versions."
     )
 
-    @Argument(help: "Path to the archive file (.ipsw, .dmg, or .xip) to scan.")
+    @Argument(help: "Path to the archive file (.ipsw or .xip) to scan.")
     var archivePath: String
 
     @Option(name: .shortAndLong, help: "Output directory for the JSON file (default: current directory).")
