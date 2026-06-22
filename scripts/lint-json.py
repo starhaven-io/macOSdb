@@ -168,7 +168,7 @@ BUILD_RE = re.compile(r"(\d*)([A-Za-z]*)(\d*)(.*)")
 def parse_build(build):
     """Split e.g. '24D2082' → (24, 'D', 2082, '') so re-release variants compare
     numerically (24D81 < 24D2082) rather than lexically. Mirrors BuildNumber.parse
-    in Sources/macOSdbKit/Models/Release.swift."""
+    in Sources/macOSdbCore/Models/Release.swift."""
     m = BUILD_RE.match(build)
     cycle = int(m.group(1)) if m.group(1) else 0
     train = m.group(2)

@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import macOSdbKit
+import macOSdbCore
 
 struct ShowCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
