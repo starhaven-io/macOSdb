@@ -1,6 +1,6 @@
 /**
  * Device model identifier to marketing name mapping.
- * Mirrors Sources/macOSdbKit/Models/DeviceRegistry.swift — keep in sync.
+ * Mirrors Sources/macOSdbCore/Models/DeviceRegistry.swift — keep in sync.
  */
 const deviceNames: Record<string, string> = {
   // M1

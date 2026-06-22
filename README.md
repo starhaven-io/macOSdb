@@ -110,7 +110,7 @@ Data is also served as a REST API at [macosdb.com/api/v1/](https://macosdb.com/a
 ## Project structure
 
 ```
-Sources/macOSdbKit/     Shared library — models, data provider, scanner pipeline
+Sources/macOSdbCore/    Internal core target — models, data provider, scanner pipeline
 Sources/macosdb/        CLI executable (swift-argument-parser)
 site/                   Astro static site — release browser, compare view, component
                         pages, JSON API, OG image generation, full-text search

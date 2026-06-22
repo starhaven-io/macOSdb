@@ -8,8 +8,8 @@ macOSdb is a CLI and website that catalog which versions of open-source componen
 
 - **Platform:** macOS 15.0+ (Apple Silicon only)
 - **Language:** Swift 6.2
-- **Architecture:** `macOSdbKit` library (models, scanner, data provider) consumed by the `macosdb` CLI
-- **Structure:** Swift Package (library, CLI, tests) + Astro site
+- **Architecture:** `macOSdbCore` internal target (models, scanner, data provider) consumed by the `macosdb` CLI
+- **Structure:** Swift Package (core target, CLI, tests) + Astro site
 - **Logging subsystem:** `io.linnane.macosdb`
 - **License:** AGPL-3.0-only (code), CC-BY-4.0 (data)
 - **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction)
@@ -19,9 +19,9 @@ macOSdb is a CLI and website that catalog which versions of open-source componen
 
 ```
 macOSdb/
-├── Package.swift                          # SPM: macOSdbKit lib + macosdb CLI
+├── Package.swift                          # SPM: macosdb executable + macOSdbCore target
 ├── Sources/
-│   ├── macOSdbKit/                        # Shared library (consumed by the CLI)
+│   ├── macOSdbCore/                       # Internal core target (consumed by the CLI)
 │   │   ├── Models/                        # ChipFamily, Component, DeviceRegistry, KernelInfo, ProductType, Release, SDKInfo, VersionComparison
 │   │   ├── Scanner/                       # IPSW/Xcode scanning pipeline (see Architecture)
 │   │   ├── DataProvider.swift             # Actor: fetch release JSON from HTTPS or local files
@@ -44,7 +44,7 @@ macOSdb/
 │   ├── public/_headers                    # Cloudflare static-asset headers (CSP etc.)
 │   ├── astro.config.mjs · wrangler.jsonc · package.json
 ├── Tests/
-│   ├── macOSdbKitTests/                   # Swift Testing — library (+ Fixtures/ sample JSON)
+│   ├── macOSdbCoreTests/                  # Swift Testing — core target (+ Fixtures/ sample JSON)
 │   └── macosdbTests/                      # Swift Testing — CLI (parsing + subprocess smoke tests)
 ├── data/                                  # Pre-built JSON (committed, CC-BY-4.0) — see "do not touch"
 │   ├── LICENSE                            # CC-BY-4.0
@@ -58,14 +58,14 @@ macOSdb/
 │   ├── dependabot.yml                    # github-actions + npm (site) + swift, grouped, 7-day cooldown
 │   └── FUNDING.yml
 ├── LICENSE                              # AGPL-3.0-only
-├── .swiftlint.yml · .periphery.yml · _typos.toml · lychee.toml · .mcp.json · .gitignore
+├── .swiftlint.yml · _typos.toml · lychee.toml · .mcp.json · .gitignore
 ```
 
 ## Project-specific notes
 
 ### Architecture details
 
-#### macOSdbKit (shared library)
+#### macOSdbCore (internal core target)
 
 **Models:** `ChipFamily`, `Component`, `ComponentChange`, `DeviceRegistry`, `KernelInfo`, `ProductType`, `Release`, `SDKInfo`, `VersionComparison`
 
@@ -82,7 +82,7 @@ macOSdb/
 6. Assemble and return `Release` with resolved name and auto-detected beta status
 
 **Scanner components:**
-- `IPSWScanner` — IPSW pipeline orchestrator (public actor)
+- `IPSWScanner` — IPSW pipeline orchestrator
 - `XcodeScanner` — `.xip` pipeline; expands via `/usr/bin/xip`, scans toolchain/framework/SDK
 - `IPSWExtractor` — ZIP extraction, BuildManifest/Restore.plist parsing
 - `KernelParser` — kernelcache parsing → KernelInfo
@@ -151,7 +151,7 @@ Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinne
 ## Required checks
 
 ```
-just build / just test          # swift build / swift test (library + CLI)
+just build / just test          # swift build / swift test (core + CLI)
 just lint                       # swiftlint --strict
 just lint-json                  # python3 scripts/lint-json.py (data schema validation)
 just typos                      # typos

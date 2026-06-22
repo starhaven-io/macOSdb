@@ -6,7 +6,6 @@ let package = Package(
     name: "macOSdb",
     platforms: [.macOS(.v15)],
     products: [
-        .library(name: "macOSdbKit", targets: ["macOSdbKit"]),
         .executable(name: "macosdb", targets: ["macosdb"]),
     ],
     dependencies: [
@@ -15,7 +14,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "macOSdbKit",
+            name: "macOSdbCore",
             dependencies: [
                 .product(name: "ZIPFoundation", package: "ZIPFoundation"),
             ]
@@ -23,13 +22,13 @@ let package = Package(
         .executableTarget(
             name: "macosdb",
             dependencies: [
-                "macOSdbKit",
+                "macOSdbCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
         .testTarget(
-            name: "macOSdbKitTests",
-            dependencies: ["macOSdbKit"],
+            name: "macOSdbCoreTests",
+            dependencies: ["macOSdbCore"],
             resources: [.copy("Fixtures")]
         ),
         .testTarget(

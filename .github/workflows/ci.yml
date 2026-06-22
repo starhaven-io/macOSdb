@@ -56,7 +56,7 @@ jobs:
           # Swift, CI workflow, or project tooling changes: lint + sanitizer tests.
           # Tooling paths (scripts/, justfile, hooks, lint configs) are included so a
           # PR touching only those can't merge having run nothing but the commits leg.
-          if echo "${CHANGED}" | grep -qE '\.swift$|^Package\.(swift|resolved)$|^\.swiftlint\.yml$|^\.github/workflows/ci\.yml$|^scripts/|^justfile$|^\.githooks/|^_typos\.toml$|^\.periphery\.yml$|^lychee\.toml$'; then
+          if echo "${CHANGED}" | grep -qE '\.swift$|^Package\.(swift|resolved)$|^\.swiftlint\.yml$|^\.github/workflows/ci\.yml$|^scripts/|^justfile$|^\.githooks/|^_typos\.toml$|^lychee\.toml$'; then
             MATRIX+=',{"name":"Lint","check":"lint","runner":"macos-26"}'
             MATRIX+=',{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true","environment":"codecov"}'
             MATRIX+=',{"name":"Test (Address Sanitizer)","check":"test-asan","runner":"macos-26","sanitize":"address"}'

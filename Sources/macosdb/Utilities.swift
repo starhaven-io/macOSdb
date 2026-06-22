@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import macOSdbKit
+import macOSdbCore
 
 /// Builds a DataProvider from `--data-url`: a local directory path, an https URL, or
 /// the default production endpoint when unset. Throws rather than silently falling

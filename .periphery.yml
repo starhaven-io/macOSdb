@@ -1,2 +1,0 @@
-# macOSdbKit is a library; retain_public keeps its public API from being flagged.
-retain_public: true
