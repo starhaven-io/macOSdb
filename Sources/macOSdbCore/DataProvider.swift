@@ -72,39 +72,6 @@ package actor DataProvider {
         return release
     }
 
-    package func fetchAllReleases(for productType: ProductType = .macOS) async throws -> [Release] {
-        let index = try await fetchReleaseIndex(for: productType)
-
-        let releases = await withTaskGroup(of: Release?.self, returning: [Release].self) { group in
-            for entry in index {
-                group.addTask {
-                    do {
-                        return try await self.fetchRelease(entry)
-                    } catch {
-                        Self.logger.error(
-                            "Skipping \(entry.osVersion) (\(entry.buildNumber)): \(error.localizedDescription)"
-                        )
-                        return nil
-                    }
-                }
-            }
-
-            var releases: [Release] = []
-            for await release in group {
-                if let release {
-                    releases.append(release)
-                }
-            }
-            return releases.sorted()
-        }
-
-        // Surface an all-failed load as an error — an empty array reads as an empty catalog.
-        guard index.isEmpty || !releases.isEmpty else {
-            throw DataProviderError.allReleasesFailed(count: index.count)
-        }
-        return releases
-    }
-
     package func findRelease(osVersion: String, productType: ProductType = .macOS) async throws -> Release? {
         let index = try await fetchReleaseIndex(for: productType)
         let matches = index.filter { $0.osVersion == osVersion }
@@ -134,12 +101,6 @@ package actor DataProvider {
         return (maturity * 2 + universal, entry.betaNumber ?? entry.rcNumber ?? 0)
     }
 
-    package func clearCache() {
-        cachedIndexes.removeAll()
-        cachedReleases.removeAll()
-        URLCache.shared.removeAllCachedResponses()
-    }
-
     private func validateResponse(_ response: URLResponse, url: URL) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             // Local file:// URLs don't return HTTPURLResponse
@@ -154,15 +115,12 @@ package actor DataProvider {
 
 enum DataProviderError: LocalizedError {
     case httpError(statusCode: Int, url: URL)
-    case allReleasesFailed(count: Int)
     case invalidDataFile(String)
 
     var errorDescription: String? {
         switch self {
         case .httpError(let statusCode, let url):
             "HTTP \(statusCode) fetching \(url)"
-        case .allReleasesFailed(let count):
-            "Loaded the release index but failed to fetch any of its \(count) releases"
         case .invalidDataFile(let path):
             "Refusing to fetch release data with an unsafe path: \(path)"
         }
