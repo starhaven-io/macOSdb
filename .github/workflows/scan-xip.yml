@@ -79,17 +79,18 @@ jobs:
         env:
           INPUT_DATE: ${{ inputs.release_date }}
         run: |
+          # Release dates are Pacific, not UTC: `date -u` rolled the day forward on evening scans.
           if [[ -z "${INPUT_DATE}" ]]; then
-            RELEASE_DATE=$(date -u +%Y-%m-%d)
-            echo "No release_date provided; defaulting to today (${RELEASE_DATE})"
+            RELEASE_DATE=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
+            echo "No release_date provided; defaulting to today (${RELEASE_DATE} Pacific)"
           else
             if ! [[ "${INPUT_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
               echo "::error::release_date '${INPUT_DATE}' is not ISO 8601 (YYYY-MM-DD)"
               exit 1
             fi
-            TODAY=$(date -u +%Y-%m-%d)
+            TODAY=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
             if [[ "${INPUT_DATE}" > "${TODAY}" ]]; then
-              echo "::error::release_date '${INPUT_DATE}' is in the future (today is ${TODAY})"
+              echo "::error::release_date '${INPUT_DATE}' is in the future (today is ${TODAY} Pacific)"
               exit 1
             fi
             RELEASE_DATE="${INPUT_DATE}"
