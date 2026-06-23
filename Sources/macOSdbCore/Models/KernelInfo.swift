@@ -49,10 +49,6 @@ package struct KernelInfo: Codable, Identifiable, Hashable, Sendable {
         self.deviceChips = deviceChips
     }
 
-    package var isDevelopment: Bool {
-        file.contains("kernelcache.development.")
-    }
-
     package var chipFamily: ChipFamily? {
         ChipFamily.from(chipName: chip)
     }

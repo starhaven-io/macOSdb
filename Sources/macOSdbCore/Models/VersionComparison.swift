@@ -1,5 +1,8 @@
 package struct VersionComparison: Sendable, Codable {
+    // Read only via Codable when `compare --json` encodes this struct; periphery misses the synthesized encoder.
+    // periphery:ignore
     package let from: Release
+    // periphery:ignore
     package let to: Release
     package let changes: [ComponentChange]
     package let addedComponents: [Component]

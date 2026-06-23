@@ -182,20 +182,6 @@ extension Release {
         }
         return "Beta"
     }
-
-    /// Display label for release candidates, e.g. "RC" or "RC 2".
-    package var rcLabel: String? {
-        guard isRC else { return nil }
-        if let rcNumber {
-            return "RC \(rcNumber)"
-        }
-        return "RC"
-    }
-
-    /// True if this is any kind of pre-release (beta or RC).
-    package var isPrerelease: Bool {
-        isBeta || isRC
-    }
 }
 
 /// An entry in the release index file (`releases.json`).

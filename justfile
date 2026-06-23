@@ -32,9 +32,9 @@ lint:
 lint-json:
     python3 scripts/lint-json.py
 
-# Scan for unused code. Build first — Periphery can't find swiftbuild's index store.
+# Scan for unused code. native build system (deprecated): swiftbuild emits no index store Periphery can find.
 periphery:
-    swift build --build-tests
+    swift build --build-tests --build-system native
     periphery scan --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
 
 # Check for typos
@@ -106,7 +106,8 @@ check:
         skip audit zizmor zizmor
     fi
     if command -v periphery &>/dev/null; then
-        run swift build --build-tests
+        # native build system (deprecated): swiftbuild emits no index store Periphery can find
+        run swift build --build-tests --build-system native
         run periphery scan --strict --disable-update-check --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
     else
         skip periphery periphery periphery
