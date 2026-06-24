@@ -12,7 +12,9 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 concurrency:
-  group: "ci-${{ github.ref }}"
+  # PR body/title edits fire `edited` events; give them their own per-run group so
+  # they can't cancel in-flight tests from the preceding `opened`/`synchronize` run.
+  group: ${{ github.event.action == 'edited' && format('ci-edit-{0}-{1}', github.ref, github.run_id) || format('ci-{0}', github.ref) }}
   cancel-in-progress: true
 
 permissions: {}
@@ -49,7 +51,7 @@ jobs:
           # `edited` (title/body/base) also runs the full path-derived matrix. The
           # aggregate "conclusion" job is the only required status check, so it must
           # certify every relevant leg for the current commit. Collapsing to a
-          # commits-only matrix on `edited` let a green run overwrite a prior failing
+          # commits-only matrix on `edited` lets a green run overwrite a prior failing
           # one on the same SHA, bypassing tests, lint-json, CodeQL and the rest.
           CHANGED=$(git diff --name-only "${BASE_SHA}...HEAD")
 
