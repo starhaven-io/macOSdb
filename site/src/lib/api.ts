@@ -145,16 +145,20 @@ export async function getLatestRelease(product: Product) {
 }
 
 /**
- * The newest GA release and, when one is newer than that GA, the newest
- * pre-release. `prerelease` is null outside beta season (a shipped GA
- * supersedes its own betas/RC), so callers render one line or two.
+ * The newest GA release and, when a higher-version pre-release is still pending,
+ * the newest pre-release. `prerelease` is null once that version ships GA (a
+ * shipped GA supersedes its own betas/RC). Supersession is by version, not date:
+ * a current-series GA can ship after a next-major beta is already out (Xcode 26.6
+ * GA on Jun 25 followed Xcode 27.0 beta 2 on Jun 22), and that must not hide the
+ * still-pending higher-version beta. Callers render one line or two.
  */
 export async function getLatestReleases(product: Product) {
   const allReleases = await getCollection(indexCollection(product));
   const sorted = [...allReleases].sort((a, b) => compareReleasesByRecency(a.data, b.data)).map((r) => r.data);
   const ga = sorted.find((r) => !r.isBeta && !r.isRC) ?? null;
   const newestPre = sorted.find((r) => r.isBeta || r.isRC) ?? null;
-  const prerelease = newestPre && (!ga || compareReleasesByRecency(newestPre, ga) < 0) ? newestPre : null;
+  const prerelease =
+    newestPre && (!ga || compareVersions(ga.osVersion, newestPre.osVersion) === 'upgraded') ? newestPre : null;
   return { ga, prerelease };
 }
 
