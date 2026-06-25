@@ -123,19 +123,19 @@ package actor IPSWScanner {
 
     // MARK: - Kernel parsing
 
+    /// Upper bound on kernelcaches parsed at once. Each parse reads a whole file
+    /// into memory, so an unbounded fan-out over a crafted archive's many
+    /// kernelcache entries could exhaust memory; a real IPSW has only a handful.
+    private static let maxConcurrentKernelParses = 4
+
     private func parseKernels(
         _ kernelcaches: [URL],
         deviceMap: [String: [String]]
     ) async -> [KernelInfo] {
-        let parsed = await withTaskGroup(of: KernelInfo?.self, returning: [KernelInfo].self) { group in
-            for path in kernelcaches {
-                group.addTask { await KernelParser.parse(kernelcachePath: path) }
-            }
-            var results: [KernelInfo] = []
-            for await kernel in group {
-                if let kernel { results.append(kernel) }
-            }
-            return results
+        let parsed = await mapConcurrent(
+            kernelcaches, maxConcurrent: Self.maxConcurrentKernelParses
+        ) { path in
+            await KernelParser.parse(kernelcachePath: path)
         }
 
         let kernels = parsed.map { kernel -> KernelInfo in

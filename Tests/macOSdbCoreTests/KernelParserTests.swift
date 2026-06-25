@@ -6,6 +6,28 @@ import Testing
 @Suite("Kernel parser tests")
 struct KernelParserTests {
 
+    // MARK: - Version scanning
+
+    @Test("scanVersions extracts darwin, xnu, and arch suffix in a single pass")
+    func scanVersionsExtractsFields() {
+        var bytes = [UInt8](
+            "Darwin Kernel Version 24.5.0: xnu-11417.121.6~2/RELEASE_ARM64_T6000".utf8
+        )
+        bytes.append(0x00)
+        let result = KernelParser.scanVersions(in: Data(bytes))
+        #expect(result.darwin == "24.5.0")
+        #expect(result.xnu == "11417.121.6")
+        #expect(result.archSuffix == "T6000")
+        #expect(result.isComplete)
+    }
+
+    @Test("scanVersions leaves darwin empty when no kernel banner is present")
+    func scanVersionsNoBanner() {
+        let result = KernelParser.scanVersions(in: Data("nothing useful here".utf8))
+        #expect(result.darwin.isEmpty)
+        #expect(!result.isComplete)
+    }
+
     @Test("Parse device models from simple filename")
     func parseSimpleDevices() {
         let devices = KernelParser.parseDevicesFromFilename(
