@@ -25,11 +25,10 @@
     "buildNumber" : "17F113",
     "dataFile" : "releases/26/Xcode-26.6-17F113.json",
     "isBeta" : false,
-    "isRC" : true,
+    "isRC" : false,
     "osVersion" : "26.6",
     "productType" : "Xcode",
-    "rcNumber" : 2,
-    "releaseDate" : "2026-06-18",
+    "releaseDate" : "2026-06-25",
     "releaseName" : "Xcode 26.6"
   },
   {
