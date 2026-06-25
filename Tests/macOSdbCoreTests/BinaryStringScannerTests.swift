@@ -84,6 +84,47 @@ struct BinaryStringScannerTests {
         #expect(BinaryStringScanner.extractStrings(from: Data(bytes)) == ["abcd", "efgh"])
     }
 
+    // MARK: - Resource bounds
+
+    @Test("Caps an oversized printable run and resumes after the next delimiter")
+    func capsOversizedRun() {
+        let cap = 16
+        var bytes = [UInt8](repeating: 0x41, count: 100) // a single 100-byte run of 'A'
+        bytes.append(0x00)
+        bytes.append(contentsOf: "tail".utf8)
+        // The over-long run is truncated to the cap; the remainder is skipped, and
+        // the next run after the delimiter is still captured.
+        #expect(
+            BinaryStringScanner.extractStrings(from: Data(bytes), maxStringLength: cap)
+                == [String(repeating: "A", count: cap), "tail"]
+        )
+    }
+
+    @Test("Emits a run sitting exactly at the cap without truncation")
+    func runExactlyAtCap() {
+        let cap = 8
+        let bytes = [UInt8](repeating: 0x42, count: cap) // exactly `cap` bytes, ending at EOF
+        #expect(
+            BinaryStringScanner.extractStrings(from: Data(bytes), maxStringLength: cap)
+                == [String(repeating: "B", count: cap)]
+        )
+    }
+
+    @Test("enumerateStrings stops scanning when the body returns false")
+    func enumerateStringsEarlyExit() {
+        var bytes = [UInt8]("alpha".utf8)
+        bytes.append(0x00)
+        bytes.append(contentsOf: "bravo".utf8)
+        bytes.append(0x00)
+        bytes.append(contentsOf: "charlie".utf8)
+        var seen: [String] = []
+        BinaryStringScanner.enumerateStrings(from: Data(bytes)) { string in
+            seen.append(string)
+            return string != "bravo" // stop after "bravo"; "charlie" must never be visited
+        }
+        #expect(seen == ["alpha", "bravo"])
+    }
+
     // MARK: - findFirst
 
     @Test("findFirst returns the matched substring, not the whole containing string")

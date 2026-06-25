@@ -4,9 +4,22 @@ import OSLog
 enum KernelParser {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "KernelParser")
 
+    /// Skip kernelcaches larger than this before reading them into memory. Real
+    /// kernelcaches are tens of MB (the IM4P payload decompresses under
+    /// `IM4PDecoder.maxDecompressedSize` = 128 MB); this only trips on a crafted
+    /// archive trying to drive a single oversized whole-file read.
+    static let maxKernelcacheBytes = 512 * 1_024 * 1_024 // 512 MB
+
     @concurrent
     static func parse(kernelcachePath: URL) async -> KernelInfo? {
         let filename = kernelcachePath.lastPathComponent
+
+        if let size = try? FileManager.default.attributesOfItem(
+            atPath: kernelcachePath.path
+        )[.size] as? Int, size > maxKernelcacheBytes {
+            logger.warning("Skipping oversized kernelcache \(filename): \(size) bytes exceeds \(maxKernelcacheBytes)")
+            return nil
+        }
 
         guard let data = try? Data(contentsOf: kernelcachePath) else {
             logger.warning("Could not read kernelcache: \(filename)")
@@ -27,17 +40,14 @@ enum KernelParser {
             kernelData = data
         }
 
-        let strings = BinaryStringScanner.extractStrings(from: kernelData)
+        let versions = scanVersions(in: kernelData)
 
-        let darwinVersion = findDarwinVersion(in: strings)
-        let xnuVersion = findXNUVersion(in: strings)
-        let archSuffix = findArchSuffix(in: strings)
-
-        guard !darwinVersion.isEmpty else {
+        guard !versions.darwin.isEmpty else {
             logger.warning("No Darwin version found in \(filename)")
             return nil
         }
 
+        let archSuffix = versions.archSuffix
         let arch = archSuffix.isEmpty ? "ARM64" : "ARM64_\(archSuffix)"
         let chip: String
         if let family = ChipFamily.from(archSuffix: archSuffix) {
@@ -52,47 +62,49 @@ enum KernelParser {
 
         let kernelInfo = KernelInfo(
             file: filename,
-            darwinVersion: darwinVersion,
-            xnuVersion: xnuVersion,
+            darwinVersion: versions.darwin,
+            xnuVersion: versions.xnu,
             arch: arch,
             chip: chip,
             devices: devices
         )
 
-        logger.info("Kernel: Darwin \(darwinVersion) / \(chip) / \(devices.count) devices")
+        logger.info("Kernel: Darwin \(versions.darwin) / \(chip) / \(devices.count) devices")
         return kernelInfo
     }
 
     // MARK: - Version extraction
 
-    private static func findDarwinVersion(in strings: [String]) -> String {
-        let regex = /Darwin Kernel Version (\d+\.\d+\.\d+)/
-        for string in strings {
-            if let match = string.firstMatch(of: regex) {
-                return String(match.1)
-            }
-        }
-        return ""
+    struct KernelVersionStrings {
+        var darwin = ""
+        var xnu: String?
+        var archSuffix = ""
+
+        var isComplete: Bool { !darwin.isEmpty && xnu != nil && !archSuffix.isEmpty }
     }
 
-    private static func findXNUVersion(in strings: [String]) -> String? {
-        let regex = /xnu-(\d+\.\d+\.\d+(?:\.\d+)*)/
-        for string in strings {
-            if let match = string.firstMatch(of: regex) {
-                return String(match.1)
-            }
-        }
-        return nil
-    }
+    /// Single streaming pass over the kernel's printable strings, capturing the
+    /// first match of each version field and stopping once all three are found —
+    /// instead of materializing every string and scanning the array three times.
+    static func scanVersions(in data: Data) -> KernelVersionStrings {
+        let darwinRegex = /Darwin Kernel Version (\d+\.\d+\.\d+)/
+        let xnuRegex = /xnu-(\d+\.\d+\.\d+(?:\.\d+)*)/
+        let archRegex = /RELEASE_ARM64_([A-Za-z0-9]+)/
 
-    private static func findArchSuffix(in strings: [String]) -> String {
-        let regex = /RELEASE_ARM64_([A-Za-z0-9]+)/
-        for string in strings {
-            if let match = string.firstMatch(of: regex) {
-                return String(match.1)
+        var found = KernelVersionStrings()
+        BinaryStringScanner.enumerateStrings(from: data) { string in
+            if found.darwin.isEmpty, let match = string.firstMatch(of: darwinRegex) {
+                found.darwin = String(match.1)
             }
+            if found.xnu == nil, let match = string.firstMatch(of: xnuRegex) {
+                found.xnu = String(match.1)
+            }
+            if found.archSuffix.isEmpty, let match = string.firstMatch(of: archRegex) {
+                found.archSuffix = String(match.1)
+            }
+            return !found.isComplete // stop once every field is filled
         }
-        return ""
+        return found
     }
 
     // MARK: - Device parsing
