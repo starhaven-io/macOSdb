@@ -2,7 +2,8 @@
 import Base from '../layouts/Base.astro';
 import StructuredData from './StructuredData.astro';
 import { getCollection } from 'astro:content';
-import { formatDate, displayName, releaseSlug, compareReleasesByRecency } from '../lib/utils';
+import { formatDate, displayName, releaseSlug } from '../lib/utils';
+import { getLatestReleases } from '../lib/api';
 import type { ProductConfig } from '../lib/products';
 
 interface Props {
@@ -11,16 +12,14 @@ interface Props {
 
 const { product } = Astro.props;
 
-const allReleases = [...(await getCollection(product.indexCollection))].sort((a, b) =>
-  compareReleasesByRecency(a.data, b.data),
-);
-
-const latestGA = allReleases.find((r) => !r.data.isBeta && !r.data.isRC) ?? null;
-const newestPre = allReleases.find((r) => r.data.isBeta || r.data.isRC) ?? null;
-const latestPre =
-  newestPre && (!latestGA || compareReleasesByRecency(newestPre.data, latestGA.data) < 0) ? newestPre : null;
+const allReleases = await getCollection(product.indexCollection);
 const totalReleases = allReleases.length;
 const gaReleases = allReleases.filter((r) => !r.data.isBeta && !r.data.isRC).length;
+
+// Share the home page's notion of "latest stable" vs "latest beta/RC" so the two
+// surfaces never diverge: getLatestReleases supersedes a version's own
+// pre-releases by version, not date.
+const { ga: latestGA, prerelease: latestPre } = await getLatestReleases(product.key);
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -50,21 +49,21 @@ const structuredData = {
     latestGA && (
       <div class="latest-release">
         <span class="latest-label">{latestPre ? 'Latest stable' : 'Latest release'}</span>
-        <a href={`/${product.key}/release/${releaseSlug(latestGA.data)}/`} class="latest-name">
-          {displayName(latestGA.data, product.includeReleaseName, product.label)}
+        <a href={`/${product.key}/release/${releaseSlug(latestGA)}/`} class="latest-name">
+          {displayName(latestGA, product.includeReleaseName, product.label)}
         </a>
-        <span class="latest-date">{formatDate(latestGA.data.releaseDate, 'long')}</span>
+        <span class="latest-date">{formatDate(latestGA.releaseDate, 'long')}</span>
       </div>
     )
   }
   {
     latestPre && (
       <div class="latest-release">
-        <span class="latest-label">{latestPre.data.isBeta ? 'Latest beta' : 'Latest RC'}</span>
-        <a href={`/${product.key}/release/${releaseSlug(latestPre.data)}/`} class="latest-name">
-          {displayName(latestPre.data, product.includeReleaseName, product.label)}
+        <span class="latest-label">{latestPre.isBeta ? 'Latest beta' : 'Latest RC'}</span>
+        <a href={`/${product.key}/release/${releaseSlug(latestPre)}/`} class="latest-name">
+          {displayName(latestPre, product.includeReleaseName, product.label)}
         </a>
-        <span class="latest-date">{formatDate(latestPre.data.releaseDate, 'long')}</span>
+        <span class="latest-date">{formatDate(latestPre.releaseDate, 'long')}</span>
       </div>
     )
   }
