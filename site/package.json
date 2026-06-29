@@ -26,7 +26,7 @@
     "astro-pagefind": "^2.0.0",
     "satori": "^0.26.0",
     "satori-html": "^0.3.2",
-    "sharp": "^0.35.1"
+    "sharp": "^0.35.2"
   },
   "devDependencies": {
     "prettier": "^3.8.4",
