@@ -37,8 +37,6 @@ on:
 
 defaults:
   run:
-    # No -x: this workflow mints app tokens and scans archives that may
-    # produce sensitive extraction material.
     shell: bash -euo pipefail {0}
 
 concurrency:
@@ -51,33 +49,34 @@ jobs:
   scan:
     name: Scan
     runs-on: scanner
-    environment:
-      name: starhaven
-      deployment: false
     permissions:
       contents: read
+    outputs:
+      base_sha: ${{ steps.sync.outputs.base_sha }}
+      basename: ${{ steps.package-release.outputs.basename }}
+      release_date: ${{ steps.release-date.outputs.release_date }}
+      source_url: ${{ steps.resolve-ipsw.outputs.source_url }}
     steps:
       - name: Add Homebrew to PATH
         run: echo "/opt/homebrew/bin" >> "${GITHUB_PATH}"
-
-      - name: Mint bot token
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Sync working tree to latest main
+        id: sync
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          echo "base_sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
       - name: Clean workspace
         run: git clean -fdx data/macos/releases/
 
       - name: Resolve release date
+        id: release-date
         env:
           INPUT_DATE: ${{ inputs.release_date }}
         run: |
@@ -98,8 +97,10 @@ jobs:
             RELEASE_DATE="${INPUT_DATE}"
           fi
           echo "RELEASE_DATE=${RELEASE_DATE}" >> "${GITHUB_ENV}"
+          echo "release_date=${RELEASE_DATE}" >> "${GITHUB_OUTPUT}"
 
       - name: Resolve IPSW path
+        id: resolve-ipsw
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
         run: |
@@ -148,12 +149,30 @@ jobs:
           mkdir -p "${IPSW_DIR}"
           IPSW_FILE="${IPSW_DIR}/macOS-${VERSION}-${BUILD}.ipsw"
           echo "IPSW_FILE=${IPSW_FILE}" >> "${GITHUB_ENV}"
+          echo "source_url=${IPSW_URL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore CLI build cache
+        id: cache-cli
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/release/macosdb
+          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
+
+      - name: Build CLI
+        if: steps.cache-cli.outputs.cache-hit != 'true'
+        run: swift build -c release --product macosdb
+
+      - name: Save CLI build cache
+        if: steps.cache-cli.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/release/macosdb
+          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
 
       - name: Download IPSW
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
         run: |
-          set +x
           if [[ -f "${IPSW_FILE}" ]]; then
             echo "IPSW already cached at ${IPSW_FILE}, skipping download"
           else
@@ -190,30 +209,6 @@ jobs:
           TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
           touch -t "${TOUCH_DATE}" "${IPSW_FILE}"
 
-      - name: Restore CLI build cache
-        id: cache-cli
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .build/release/macosdb
-          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
-
-      - name: Build CLI
-        if: steps.cache-cli.outputs.cache-hit != 'true'
-        run: swift build -c release --product macosdb
-
-      - name: Save CLI build cache
-        if: steps.cache-cli.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .build/release/macosdb
-          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
-
-      - name: Sync working tree to latest main
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
-          echo "BASE_SHA=$(git rev-parse HEAD)" >> "${GITHUB_ENV}"
-
       - name: Scan IPSW
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
@@ -249,6 +244,9 @@ jobs:
           fi
           .build/release/macosdb scan "${SCAN_ARGS[@]}"
 
+      - name: Lint JSON
+        run: python3 scripts/lint-json.py
+
       - name: Generate SHA-256 sidecar
         run: .build/release/macosdb validate "${IPSW_FILE}"
 
@@ -259,24 +257,146 @@ jobs:
             [[ -f "$f" ]] && chflags uchg "$f"
           done
 
+      - name: Package release JSON
+        id: package-release
+        run: |
+          NEW_RELEASE_FILE=""
+          MATCHES=0
+          while IFS= read -r file; do
+            [[ -n "${file}" ]] || continue
+            NEW_RELEASE_FILE="${file}"
+            MATCHES=$((MATCHES + 1))
+          done < <(git ls-files --others --exclude-standard 'data/macos/releases/')
+
+          if (( MATCHES != 1 )); then
+            echo "::error::Expected exactly one new macOS release JSON file, found ${MATCHES}."
+            exit 1
+          fi
+          if [[ ! "${NEW_RELEASE_FILE}" =~ ^data/macos/releases/[0-9]+/macOS-[^/]+\.json$ ]]; then
+            echo "::error::Unexpected release JSON path: ${NEW_RELEASE_FILE}"
+            exit 1
+          fi
+
+          /usr/bin/tar --no-mac-metadata --no-xattrs -czf "${RUNNER_TEMP}/release-json.tgz" data/macos/releases.json "${NEW_RELEASE_FILE}"
+          echo "basename=$(basename "${NEW_RELEASE_FILE}" .json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload release JSON artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-json
+          path: ${{ runner.temp }}/release-json.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish
+    needs: scan
+    runs-on: ubuntu-slim
+    environment:
+      name: starhaven
+      deployment: false
+    outputs:
+      pr_number: ${{ steps.open-pr.outputs.pr_number }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.scan.outputs.base_sha }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download release JSON artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-json
+          path: ${{ runner.temp }}/artifact
+
+      - name: Verify and overlay release JSON
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import shutil
+          import sys
+          import tarfile
+          from pathlib import Path
+
+          tgz = Path(os.environ["RUNNER_TEMP"]) / "artifact" / "release-json.tgz"
+          if not tgz.is_file():
+              print(f"::error::Missing release JSON artifact at {tgz}", file=sys.stderr)
+              sys.exit(1)
+
+          index_path = "data/macos/releases.json"
+          release_re = re.compile(r"^data/macos/releases/[0-9]+/macOS-[^/]+\.json$")
+          index_members = []
+          release_members = []
+
+          with tarfile.open(tgz, "r:gz") as archive:
+              for member in archive.getmembers():
+                  parts = Path(member.name).parts
+                  if member.name.startswith("/") or ".." in parts:
+                      print(f"::error::Unsafe artifact path: {member.name}", file=sys.stderr)
+                      sys.exit(1)
+                  if not member.isfile():
+                      print(f"::error::Artifact contains a non-regular file: {member.name}", file=sys.stderr)
+                      sys.exit(1)
+
+                  if member.name == index_path:
+                      index_members.append(member)
+                  elif release_re.fullmatch(member.name):
+                      release_members.append(member)
+                  else:
+                      print(f"::error::Unexpected artifact entry: {member.name}", file=sys.stderr)
+                      sys.exit(1)
+
+              if len(index_members) != 1 or len(release_members) != 1:
+                  print("::error::Artifact must contain one macOS releases.json and one release JSON file.", file=sys.stderr)
+                  sys.exit(1)
+
+              for member in (index_members[0], release_members[0]):
+                  source = archive.extractfile(member)
+                  if source is None:
+                      print(f"::error::Could not read artifact entry: {member.name}", file=sys.stderr)
+                      sys.exit(1)
+                  target = Path(member.name)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  with target.open("wb") as destination:
+                      shutil.copyfileobj(source, destination)
+          PY
+
+      - name: Lint JSON
+        run: python3 scripts/lint-json.py
+
+      - name: Mint bot token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Create signed commit and open PR
+        id: open-pr
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           REPOSITORY: ${{ github.repository }}
-          IPSW_URL: ${{ inputs.ipsw_url }}
+          SOURCE_URL: ${{ needs.scan.outputs.source_url }}
+          RELEASE_DATE: ${{ needs.scan.outputs.release_date }}
+          BASENAME: ${{ needs.scan.outputs.basename }}
+          BASE_SHA: ${{ needs.scan.outputs.base_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
           BOT_USER="${APP_SLUG}[bot]"
           BOT_ID=$(gh api "/users/${BOT_USER}" --jq .id)
 
-          NEW_RELEASE_FILE=$(git ls-files --others --exclude-standard 'data/macos/releases/')
-          BASENAME=$(basename "${NEW_RELEASE_FILE}" .json)
           BRANCH="feat/data-${BASENAME}"
           TITLE="feat(data): add ${BASENAME}"
-          printf -v PR_BODY '## Summary\n- Scanned from IPSW: `%s`\n- Release date: %s\n\nAuto-generated by the [scan workflow](%s).' \
-            "${IPSW_URL}" "${RELEASE_DATE}" "${RUN_URL}"
+          printf -v PR_BODY "## Summary\n- Scanned from IPSW: \`%s\`\n- Release date: %s\n\nAuto-generated by the [scan workflow](%s)." \
+            "${SOURCE_URL}" "${RELEASE_DATE}" "${RUN_URL}"
           COMMIT_BODY="Signed-off-by: ${BOT_USER} <${BOT_ID}+${BOT_USER}@users.noreply.github.com>"
 
           if [[ -n "${TRIGGERING_ACTOR}" ]]; then
@@ -287,11 +407,17 @@ jobs:
           fi
 
           # Stage untracked files as intent-to-add so git diff sees them.
-          git add -N data/
+          git add -N data/macos/
+          DIFF_FILES=$(git diff --name-only HEAD -- data/macos/)
+          if [[ -z "${DIFF_FILES}" ]]; then
+            echo "::error::No macOS data changes found after overlaying scan artifact."
+            exit 1
+          fi
           ADDITIONS=$(
-            git diff --name-only HEAD -- data/ |
+            printf '%s\n' "${DIFF_FILES}" |
             while IFS= read -r file; do
               CONTENT=$(base64 < "$file" | tr -d '\n')
+              # shellcheck disable=SC2016 # jq needs literal jq variable names.
               jq -n --arg path "$file" --arg contents "$CONTENT" \
                 '{path: $path, contents: $contents}'
             done | jq -s .
@@ -301,6 +427,7 @@ jobs:
             -f "ref=refs/heads/${BRANCH}" \
             -f "sha=${BASE_SHA}"
 
+          # shellcheck disable=SC2016 # jq needs literal GraphQL variable names.
           jq -n \
             --arg repo "${REPOSITORY}" \
             --arg branch "${BRANCH}" \
@@ -320,34 +447,44 @@ jobs:
               }
             }' | gh api graphql --input -
 
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base main \
             --head "${BRANCH}" \
             --title "${TITLE}" \
-            --body "${PR_BODY}"
+            --body "${PR_BODY}")
+          PR_NUMBER="${PR_URL##*/}"
+          if [[ ! "${PR_NUMBER}" =~ ^[0-9]+$ ]]; then
+            echo "::error::Could not parse pull request number from gh output: ${PR_URL}"
+            exit 1
+          fi
+          echo "pr_number=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
 
-          echo "SCAN_BRANCH=${BRANCH}" >> "${GITHUB_ENV}"
-          {
-            echo "COMMIT_BODY<<EOF"
-            echo "${COMMIT_BODY}"
-            echo "EOF"
-          } >> "${GITHUB_ENV}"
+          gh pr merge "${BRANCH}" --squash --auto --delete-branch --body "${COMMIT_BODY}"
 
-      - name: Auto-merge pull request
-        timeout-minutes: 30
+  wait-for-merge:
+    name: Wait for merge
+    needs: publish
+    runs-on: ubuntu-slim
+    timeout-minutes: 30
+    permissions:
+      pull-requests: read # required to poll auto-merge status without the app token
+    steps:
+      - name: Wait for PR to merge
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ needs.publish.outputs.pr_number }}
         run: |
-          gh pr merge "${SCAN_BRANCH}" --squash --auto --delete-branch --body "${COMMIT_BODY}"
-          echo "Waiting for PR to merge..."
+          if [[ ! "${PR_NUMBER}" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid pull request number: ${PR_NUMBER}"
+            exit 1
+          fi
+          echo "Waiting for PR #${PR_NUMBER} to merge..."
           while true; do
-            STATE=$(gh pr view "${SCAN_BRANCH}" --json state -q .state)
-            if [[ "${STATE}" == "MERGED" ]]; then
-              echo "PR merged successfully"
-              break
-            elif [[ "${STATE}" == "CLOSED" ]]; then
-              echo "::error::PR was closed without merging"
-              exit 1
-            fi
+            STATE=$(gh pr view "${PR_NUMBER}" --repo "${REPOSITORY}" --json state -q .state 2>/dev/null || true)
+            case "${STATE}" in
+              MERGED) echo "PR merged successfully"; exit 0 ;;
+              CLOSED) echo "::error::PR was closed without merging"; exit 1 ;;
+            esac
             sleep 30
           done
