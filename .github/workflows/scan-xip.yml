@@ -111,9 +111,42 @@ jobs:
             exit 1
           fi
           ORIG_NAME=$(basename "${XIP_PATH}")
+          if [[ ! "${ORIG_NAME}" =~ ^Xcode_[0-9]+(\.[0-9]+)*(_.+)?\.xip$ ]]; then
+            echo "::error::Refusing Xcode filename '${ORIG_NAME}': expected Xcode_<version>[_<qualifier>].xip."
+            exit 1
+          fi
           VERSION=$(echo "${ORIG_NAME}" | sed -E 's/Xcode_([0-9]+(\.[0-9]+)*).*/\1/')
           MAJOR=${VERSION%%.*}
-          XIP_DIR="/Volumes/macOS-Archive/Xcode/${MAJOR}"
+          # Route to the archive drive whose version range covers this major.
+          # Drives mount at /Volumes/macOS-Archive-<range>: "LO-HI" (sealed) or
+          # "LO+" (active). No hardcoded boundary, so adding or sealing a drive
+          # needs no workflow edit.
+          ARCHIVE_ROOT=""
+          seen=()
+          for vol in /Volumes/macOS-Archive-*; do
+            [[ -d "${vol}" ]] || continue
+            seen+=("${vol##*/}")
+            suffix=${vol##*/macOS-Archive-}
+            if [[ "${suffix}" =~ ^([0-9]+)\+$ ]]; then
+              lo=${BASH_REMATCH[1]}; hi=999999
+            elif [[ "${suffix}" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+              lo=${BASH_REMATCH[1]}; hi=${BASH_REMATCH[2]}
+            else
+              continue
+            fi
+            if (( MAJOR >= lo && MAJOR <= hi )); then
+              if [[ -n "${ARCHIVE_ROOT}" ]]; then
+                echo "::error::Xcode ${MAJOR} matches multiple archive drives (${ARCHIVE_ROOT}, ${vol})."
+                exit 1
+              fi
+              ARCHIVE_ROOT="${vol}"
+            fi
+          done
+          if [[ -z "${ARCHIVE_ROOT}" ]]; then
+            echo "::error::No mounted archive drive covers Xcode ${MAJOR}. Mounted: ${seen[*]:-none}."
+            exit 1
+          fi
+          XIP_DIR="${ARCHIVE_ROOT}/Xcode/${MAJOR}"
           mkdir -p "${XIP_DIR}"
           XIP_FILE="${XIP_DIR}/Xcode-${VERSION}-${BUILD}.xip"
           # adcdownload.apple.com is the CDN the ADCDownloadAuth cookie is
