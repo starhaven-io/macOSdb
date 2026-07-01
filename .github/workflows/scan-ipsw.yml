@@ -115,7 +115,36 @@ jobs:
           VERSION=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_([0-9.]+)_.*/\1/')
           BUILD=$(echo "${ORIG_NAME}" | sed -E 's/UniversalMac_[0-9.]+_([^_]+)_.*/\1/')
           MAJOR=${VERSION%%.*}
-          IPSW_DIR="/Volumes/macOS-Archive/macOS/${MAJOR}"
+          # Route to the archive drive whose version range covers this major.
+          # Drives mount at /Volumes/macOS-Archive-<range>: "LO-HI" (sealed) or
+          # "LO+" (active). No hardcoded boundary, so adding or sealing a drive
+          # needs no workflow edit.
+          ARCHIVE_ROOT=""
+          seen=()
+          for vol in /Volumes/macOS-Archive-*; do
+            [[ -d "${vol}" ]] || continue
+            seen+=("${vol##*/}")
+            suffix=${vol##*/macOS-Archive-}
+            if [[ "${suffix}" =~ ^([0-9]+)\+$ ]]; then
+              lo=${BASH_REMATCH[1]}; hi=999999
+            elif [[ "${suffix}" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+              lo=${BASH_REMATCH[1]}; hi=${BASH_REMATCH[2]}
+            else
+              continue
+            fi
+            if (( MAJOR >= lo && MAJOR <= hi )); then
+              if [[ -n "${ARCHIVE_ROOT}" ]]; then
+                echo "::error::macOS ${MAJOR} matches multiple archive drives (${ARCHIVE_ROOT}, ${vol})."
+                exit 1
+              fi
+              ARCHIVE_ROOT="${vol}"
+            fi
+          done
+          if [[ -z "${ARCHIVE_ROOT}" ]]; then
+            echo "::error::No mounted archive drive covers macOS ${MAJOR}. Mounted: ${seen[*]:-none}."
+            exit 1
+          fi
+          IPSW_DIR="${ARCHIVE_ROOT}/macOS/${MAJOR}"
           mkdir -p "${IPSW_DIR}"
           IPSW_FILE="${IPSW_DIR}/macOS-${VERSION}-${BUILD}.ipsw"
           echo "IPSW_FILE=${IPSW_FILE}" >> "${GITHUB_ENV}"
