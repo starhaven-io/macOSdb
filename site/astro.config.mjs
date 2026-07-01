@@ -46,10 +46,5 @@ export default defineConfig({
   experimental: {
     svgOptimizer: svgoOptimizer(),
     clientPrerender: true,
-    queuedRendering: {
-      enabled: true,
-      contentCache: true,
-    },
-    rustCompiler: true,
   },
 });
