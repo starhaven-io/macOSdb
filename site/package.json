@@ -34,7 +34,10 @@
     "wrangler": "^4.104.0"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "astro-pagefind": {
+      "astro": "$astro"
+    }
   },
   "allowScripts": {
     "esbuild": true,
