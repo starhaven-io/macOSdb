@@ -60,6 +60,17 @@
     "releaseName" : "Tahoe"
   },
   {
+    "buildNumber" : "25F84",
+    "dataFile" : "releases/26/macOS-26.5.2-25F84.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "26.5.2",
+    "productType" : "macOS",
+    "releaseDate" : "2026-06-29",
+    "releaseName" : "Tahoe"
+  },
+  {
     "buildNumber" : "25F80",
     "dataFile" : "releases/26/macOS-26.5.1-25F80.json",
     "isBeta" : false,
