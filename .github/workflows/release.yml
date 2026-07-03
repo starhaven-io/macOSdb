@@ -185,11 +185,23 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           ARTIFACT: ${{ needs.build.outputs.artifact }}
         run: |
-          gh release create "${TAG}" \
+          # Anchor notes to the last published release, not just the newest tag,
+          # so an orphaned tag from a failed release run can't truncate them.
+          NOTES_START=$(gh release list \
             --repo "${REPOSITORY}" \
-            --title "${TAG}" \
-            --generate-notes \
-            "artifacts/${ARTIFACT}.tar.gz"
+            --limit 100 \
+            --json tagName,isDraft,publishedAt \
+            --jq 'map(select(.isDraft | not)) | sort_by(.publishedAt) | last | .tagName // empty')
+
+          create_args=("${TAG}" --repo "${REPOSITORY}" --title "${TAG}" --generate-notes)
+          if [[ -n "${NOTES_START}" ]]; then
+            create_args+=(--notes-start-tag "${NOTES_START}")
+            echo "Generating notes since last published release: ${NOTES_START}"
+          else
+            echo "No prior published release; generating notes from the repository start"
+          fi
+
+          gh release create "${create_args[@]}" "artifacts/${ARTIFACT}.tar.gz"
           gh release view "${TAG}" \
             --repo "${REPOSITORY}" \
             --json body \
