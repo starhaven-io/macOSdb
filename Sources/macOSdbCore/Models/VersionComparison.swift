@@ -8,6 +8,20 @@ package struct VersionComparison: Sendable, Codable {
     package let addedComponents: [Component]
     package let removedComponents: [Component]
 
+    package init(
+        from: Release,
+        to: Release,
+        changes: [ComponentChange],
+        addedComponents: [Component],
+        removedComponents: [Component]
+    ) {
+        self.from = from
+        self.to = to
+        self.changes = changes
+        self.addedComponents = addedComponents
+        self.removedComponents = removedComponents
+    }
+
     package var changedComponents: [ComponentChange] {
         changes.filter { $0.direction != .unchanged }
     }

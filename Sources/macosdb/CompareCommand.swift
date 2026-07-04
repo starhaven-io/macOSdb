@@ -45,7 +45,7 @@ struct CompareCommand: AsyncParsableCommand {
         let comparison = VersionComparer.compare(from: from, to: toRel)
 
         if json {
-            try writeJSON(comparison)
+            try writeJSON(changed ? filteredComparison(comparison) : comparison)
             return
         }
 
@@ -95,5 +95,15 @@ struct CompareCommand: AsyncParsableCommand {
                 print("  - \(comp.name) \(comp.displayVersion)")
             }
         }
+    }
+
+    private func filteredComparison(_ comparison: VersionComparison) -> VersionComparison {
+        VersionComparison(
+            from: comparison.from,
+            to: comparison.to,
+            changes: comparison.changedComponents,
+            addedComponents: comparison.addedComponents,
+            removedComponents: comparison.removedComponents
+        )
     }
 }

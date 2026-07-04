@@ -308,20 +308,7 @@ struct ScanCommand: AsyncParsableCommand {
         )
         entries.append(entry)
 
-        // Sort: newest version first; within same version: releases > RCs > betas
-        entries.sort { lhs, rhs in
-            let lhsParts = lhs.osVersion.split(separator: ".").compactMap { Int($0) }
-            let rhsParts = rhs.osVersion.split(separator: ".").compactMap { Int($0) }
-            for idx in 0..<max(lhsParts.count, rhsParts.count) {
-                let lhsVal = idx < lhsParts.count ? lhsParts[idx] : 0
-                let rhsVal = idx < rhsParts.count ? rhsParts[idx] : 0
-                if lhsVal != rhsVal { return lhsVal > rhsVal }
-            }
-            let lhsRank = lhs.isBeta ? 0 : lhs.isRC ? 1 : 2
-            let rhsRank = rhs.isBeta ? 0 : rhs.isRC ? 1 : 2
-            if lhsRank != rhsRank { return lhsRank > rhsRank }
-            return BuildNumber.less(rhs.buildNumber, lhs.buildNumber)
-        }
+        entries.sort(by: ReleaseIndexEntry.versionDescending)
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]

@@ -124,6 +124,29 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         components.first { $0.name.lowercased() == name.lowercased() }
     }
 
+    package func withComponents(_ components: [Component]) -> Self {
+        Self(
+            productType: productType,
+            osVersion: osVersion,
+            buildNumber: buildNumber,
+            releaseName: releaseName,
+            releaseDate: releaseDate,
+            ipswFile: ipswFile,
+            ipswURL: ipswURL,
+            xipFile: xipFile,
+            xipURL: xipURL,
+            isBeta: isBeta,
+            betaNumber: betaNumber,
+            isRC: isRC,
+            rcNumber: rcNumber,
+            isDeviceSpecific: isDeviceSpecific,
+            kernels: kernels,
+            components: components,
+            sdks: sdks,
+            minimumOSVersion: minimumOSVersion
+        )
+    }
+
     package init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         productType = try container.decodeIfPresent(ProductType.self, forKey: .productType)
@@ -268,29 +291,70 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         }
         try container.encode(dataFile, forKey: .dataFile)
     }
+
+    package static func versionAscending(_ lhs: Self, _ rhs: Self) -> Bool {
+        ReleaseOrdering.versionAscending(lhs, rhs)
+    }
+
+    package static func versionDescending(_ lhs: Self, _ rhs: Self) -> Bool {
+        versionAscending(rhs, lhs)
+    }
 }
+
+extension Release: ReleaseOrderingFields {}
+
+extension ReleaseIndexEntry: ReleaseOrderingFields {}
 
 extension Release: Comparable {
     package static func < (lhs: Release, rhs: Release) -> Bool {
-        if lhs.majorVersion != rhs.majorVersion {
-            return lhs.majorVersion < rhs.majorVersion
+        ReleaseOrdering.versionAscending(lhs, rhs)
+    }
+}
+
+private protocol ReleaseOrderingFields {
+    var osVersion: String { get }
+    var buildNumber: String { get }
+    var isBeta: Bool { get }
+    var betaNumber: Int? { get }
+    var isRC: Bool { get }
+    var rcNumber: Int? { get }
+}
+
+private enum ReleaseOrdering {
+    static func versionAscending<LHS: ReleaseOrderingFields, RHS: ReleaseOrderingFields>(
+        _ lhs: LHS,
+        _ rhs: RHS
+    ) -> Bool {
+        let lhsVersion = versionParts(lhs.osVersion)
+        let rhsVersion = versionParts(rhs.osVersion)
+        if lhsVersion.major != rhsVersion.major {
+            return lhsVersion.major < rhsVersion.major
         }
-        if lhs.minorVersion != rhs.minorVersion {
-            return lhs.minorVersion < rhs.minorVersion
+        if lhsVersion.minor != rhsVersion.minor {
+            return lhsVersion.minor < rhsVersion.minor
         }
-        if lhs.patchVersion != rhs.patchVersion {
-            return lhs.patchVersion < rhs.patchVersion
+        if lhsVersion.patch != rhsVersion.patch {
+            return lhsVersion.patch < rhsVersion.patch
         }
-        // Within same version: releases > RCs > betas
-        if lhs.prereleaseRank != rhs.prereleaseRank {
-            return lhs.prereleaseRank < rhs.prereleaseRank
+        let lhsRank = prereleaseRank(lhs)
+        let rhsRank = prereleaseRank(rhs)
+        if lhsRank != rhsRank {
+            return lhsRank < rhsRank
         }
         return BuildNumber.less(lhs.buildNumber, rhs.buildNumber)
     }
 
-    private var prereleaseRank: (Int, Int) {
-        if isBeta { return (0, betaNumber ?? 0) }
-        if isRC { return (1, rcNumber ?? 0) }
+    private static func versionParts(_ osVersion: String) -> (major: Int, minor: Int, patch: Int) {
+        let parts = osVersion.split(separator: ".")
+        let major = Int(parts.first ?? "") ?? 0
+        let minor = parts.count > 1 ? Int(parts[1]) ?? 0 : 0
+        let patch = parts.count > 2 ? Int(parts[2]) ?? 0 : 0
+        return (major, minor, patch)
+    }
+
+    private static func prereleaseRank<T: ReleaseOrderingFields>(_ release: T) -> (Int, Int) {
+        if release.isBeta { return (0, release.betaNumber ?? 0) }
+        if release.isRC { return (1, release.rcNumber ?? 0) }
         return (2, 0)
     }
 }
