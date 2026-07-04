@@ -63,8 +63,8 @@ enum DyldCacheExtractor {
         }
         defer { try? fileHandle.close() }
 
-        let magicData = fileHandle.readData(ofLength: 16)
-        guard let magic = String(data: magicData, encoding: .utf8),
+        guard let magicData = try? readData(fileHandle: fileHandle, length: 16),
+              let magic = String(data: magicData, encoding: .utf8),
               magic.hasPrefix(cacheMagicPrefix) else {
             logger.warning("Not a valid dyld shared cache: \(cachePath.lastPathComponent)")
             return nil
@@ -106,8 +106,11 @@ enum DyldCacheExtractor {
             "Searching for \(dylibPath) in \(imageTable.count) images (format: \(imageTable.format))"
         )
 
-        fileHandle.seek(toFileOffset: UInt64(imageTable.offset))
-        let imagesData = fileHandle.readData(ofLength: imageTable.count * entrySize)
+        guard let imagesData = readImageTableData(
+            fileHandle: fileHandle,
+            imageTable: imageTable,
+            entrySize: entrySize
+        ) else { return nil }
         guard imagesData.count == imageTable.count * entrySize else {
             logger.warning("dyld image table truncated: wanted \(imageTable.count * entrySize) bytes, got \(imagesData.count)")
             return nil
@@ -149,8 +152,12 @@ enum DyldCacheExtractor {
             }
             defer { try? sourceHandle.close() }
 
-            sourceHandle.seek(toFileOffset: UInt64(result.fileOffset))
-            let dylibData = sourceHandle.readData(ofLength: readSize)
+            guard let dylibData = readDylibData(
+                sourceHandle: sourceHandle,
+                result: result,
+                dylibPath: dylibPath,
+                readSize: readSize
+            ) else { return nil }
             logger.info(
                 "Extracted \(dylibPath): \(dylibData.count) bytes from \(result.sourceFile.lastPathComponent)"
             )
@@ -165,8 +172,8 @@ enum DyldCacheExtractor {
         guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else { return [] }
         defer { try? fileHandle.close() }
 
-        let magicData = fileHandle.readData(ofLength: 16)
-        guard let magic = String(data: magicData, encoding: .utf8),
+        guard let magicData = try? readData(fileHandle: fileHandle, length: 16),
+              let magic = String(data: magicData, encoding: .utf8),
               magic.hasPrefix(cacheMagicPrefix) else { return [] }
 
         let imageTable = readImageTableInfo(fileHandle: fileHandle)
@@ -176,8 +183,11 @@ enum DyldCacheExtractor {
             ? LegacyImageLayout.size
             : TextImageLayout.size
 
-        fileHandle.seek(toFileOffset: UInt64(imageTable.offset))
-        let imagesData = fileHandle.readData(ofLength: imageTable.count * entrySize)
+        guard let imagesData = readImageTableData(
+            fileHandle: fileHandle,
+            imageTable: imageTable,
+            entrySize: entrySize
+        ) else { return [] }
         guard imagesData.count == imageTable.count * entrySize else { return [] }
 
         let pathFieldOffset = imageTable.format == .legacy
@@ -221,7 +231,16 @@ enum DyldCacheExtractor {
             defer { try? subcacheHandle.close() }
 
             // Verify it's a valid cache file
-            let magicData = subcacheHandle.readData(ofLength: 16)
+            let magicData: Data
+            do {
+                magicData = try readData(fileHandle: subcacheHandle, length: 16)
+            } catch {
+                logger.warning(
+                    "Could not read subcache \(subcachePath.lastPathComponent) header: \(error.localizedDescription)"
+                )
+                continue
+            }
+
             guard let magic = String(data: magicData, encoding: .utf8),
                   magic.hasPrefix(cacheMagicPrefix) else {
                 // Some subcache files may not have the standard header — try reading
@@ -268,15 +287,25 @@ enum DyldCacheExtractor {
         fileHandle: FileHandle,
         sourceFile: URL
     ) -> [CacheMapping] {
-        fileHandle.seek(toFileOffset: UInt64(HeaderOffsets.mappingOffset))
-        let header = fileHandle.readData(ofLength: 8)
+        guard let header = try? readData(
+            fileHandle: fileHandle,
+            at: UInt64(HeaderOffsets.mappingOffset),
+            length: 8
+        ) else {
+            return []
+        }
         guard let mappingOffset = loadUInt32(header, at: 0),
               let mappingCount = loadUInt32(header, at: 4),
               mappingCount > 0, mappingCount < 100 else { return [] }
 
-        fileHandle.seek(toFileOffset: UInt64(mappingOffset))
         let expectedBytes = Int(mappingCount) * MappingLayout.size
-        let data = fileHandle.readData(ofLength: expectedBytes)
+        guard let data = try? readData(
+            fileHandle: fileHandle,
+            at: UInt64(mappingOffset),
+            length: expectedBytes
+        ) else {
+            return []
+        }
         guard data.count == expectedBytes else { return [] }
 
         var mappings: [CacheMapping] = []
@@ -315,8 +344,11 @@ enum DyldCacheExtractor {
         let empty = ImageTableInfo(offset: 0, count: 0, format: .legacy)
 
         // Try legacy format (offset at byte 24): dyld_cache_image_info
-        fileHandle.seek(toFileOffset: UInt64(HeaderOffsets.imagesOffsetOld))
-        let legacy = fileHandle.readData(ofLength: 8)
+        let legacy = (try? readData(
+            fileHandle: fileHandle,
+            at: UInt64(HeaderOffsets.imagesOffsetOld),
+            length: 8
+        )) ?? Data()
         if let oldOffset = loadUInt32(legacy, at: 0), let oldCount = loadUInt32(legacy, at: 4),
            // Sanity check; the offset limit is generous for large split caches (macOS 12+).
            oldCount > 0, oldCount < 100_000, oldOffset > 0, oldOffset < 500_000_000 {
@@ -324,8 +356,11 @@ enum DyldCacheExtractor {
         }
 
         // Fall back to dyld4 text image info (offset at byte 136): dyld_cache_image_text_info
-        fileHandle.seek(toFileOffset: UInt64(HeaderOffsets.imagesTextOffset))
-        let text = fileHandle.readData(ofLength: 16)
+        let text = (try? readData(
+            fileHandle: fileHandle,
+            at: UInt64(HeaderOffsets.imagesTextOffset),
+            length: 16
+        )) ?? Data()
         guard let newOffset = loadUInt64(text, at: 0), let newCount = loadUInt64(text, at: 8),
               newCount > 0, newCount < 100_000, newOffset > 0, newOffset < 4_000_000_000 else {
             return empty
@@ -333,7 +368,12 @@ enum DyldCacheExtractor {
         return ImageTableInfo(offset: Int(newOffset), count: Int(newCount), format: .text)
     }
 
-    private struct TranslatedAddress {
+}
+
+private extension DyldCacheExtractor {
+    // MARK: - Bounds-checked reads (cache contents are untrusted)
+
+    struct TranslatedAddress {
         let fileOffset: UInt64
         let remainingSize: UInt64
         let sourceFile: URL
@@ -361,27 +401,70 @@ enum DyldCacheExtractor {
         return nil
     }
 
-    // MARK: - Bounds-checked reads (cache contents are untrusted)
+    private static func readImageTableData(
+        fileHandle: FileHandle,
+        imageTable: ImageTableInfo,
+        entrySize: Int
+    ) -> Data? {
+        do {
+            return try readData(
+                fileHandle: fileHandle,
+                at: UInt64(imageTable.offset),
+                length: imageTable.count * entrySize
+            )
+        } catch {
+            logger.warning("Could not read dyld image table: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    private static func readDylibData(
+        sourceHandle: FileHandle,
+        result: TranslatedAddress,
+        dylibPath: String,
+        readSize: Int
+    ) -> Data? {
+        do {
+            return try readData(fileHandle: sourceHandle, at: result.fileOffset, length: readSize)
+        } catch {
+            logger.warning(
+                "Could not read \(dylibPath) from \(result.sourceFile.lastPathComponent): \(error.localizedDescription)"
+            )
+            return nil
+        }
+    }
 
     /// Loads a little-endian integer only if `data` actually holds the bytes
     /// (`readData` returns a short buffer at EOF, which `load` would over-read).
-    private static func loadUInt32(_ data: Data, at offset: Int) -> UInt32? {
+    static func loadUInt32(_ data: Data, at offset: Int) -> UInt32? {
         guard offset >= 0, offset &+ 4 <= data.count else { return nil }
         return data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: offset, as: UInt32.self) }
     }
 
-    private static func loadUInt64(_ data: Data, at offset: Int) -> UInt64? {
+    static func loadUInt64(_ data: Data, at offset: Int) -> UInt64? {
         guard offset >= 0, offset &+ 8 <= data.count else { return nil }
         return data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: offset, as: UInt64.self) }
     }
 
     /// Reads a NUL-terminated path, bounded to the bytes actually read so a
     /// cache whose path offset points at non-terminated bytes can't over-read.
-    private static func readCString(fileHandle: FileHandle, at offset: UInt64, maxLength: Int = 512) -> String? {
-        fileHandle.seek(toFileOffset: offset)
-        let data = fileHandle.readData(ofLength: maxLength)
+    static func readCString(fileHandle: FileHandle, at offset: UInt64, maxLength: Int = 512) -> String? {
+        guard let data = try? readData(fileHandle: fileHandle, at: offset, length: maxLength) else {
+            return nil
+        }
         let bytes = data.prefix { $0 != 0 }
         guard !bytes.isEmpty else { return nil }
         return String(bytes: bytes, encoding: .utf8)
+    }
+
+    static func readData(
+        fileHandle: FileHandle,
+        at offset: UInt64? = nil,
+        length: Int
+    ) throws -> Data {
+        if let offset {
+            try fileHandle.seek(toOffset: offset)
+        }
+        return try fileHandle.read(upToCount: length) ?? Data()
     }
 }
