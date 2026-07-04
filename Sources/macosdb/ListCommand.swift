@@ -25,14 +25,7 @@ struct ListCommand: AsyncParsableCommand {
         let provider = try makeDataProvider(dataURL: dataURL)
         let index = try await provider.fetchReleaseIndex(for: productType)
 
-        var entries = index.sorted { lhs, rhs in
-            let lhsParts = lhs.osVersion.split(separator: ".").compactMap { Int($0) }
-            let rhsParts = rhs.osVersion.split(separator: ".").compactMap { Int($0) }
-            if lhsParts != rhsParts {
-                return lhsParts.lexicographicallyPrecedes(rhsParts)
-            }
-            return lhs.buildNumber < rhs.buildNumber
-        }
+        var entries = index.sorted(by: ReleaseIndexEntry.versionAscending)
 
         if let major {
             entries = entries.filter { entry in

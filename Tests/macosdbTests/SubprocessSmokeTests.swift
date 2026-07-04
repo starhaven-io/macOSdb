@@ -103,6 +103,89 @@ struct SubprocessSmokeTests {
         #expect(rehashed.stderr.contains("sha256:"))
     }
 
+    @Test("list --json sorts same-version builds numerically")
+    func listSortsBuildNumbersNumerically() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "list", "--major", "15", "--json", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        let entries = try decodeJSONArray(result.stdout)
+        let buildNumbers = entries
+            .filter { $0["osVersion"] as? String == "15.1" }
+            .compactMap { $0["buildNumber"] as? String }
+        #expect(buildNumbers == ["24B83", "24B2083"])
+    }
+
+    @Test("compare --changed --json filters unchanged components")
+    func compareChangedJSONFiltersUnchangedComponents() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "compare", "14.0", "15.0", "--changed", "--json", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        let object = try decodeJSONObject(result.stdout)
+        let changes = try requireArray(object["changes"])
+        let names = changes.compactMap { $0["name"] as? String }
+        #expect(names == ["httpd"])
+
+        let added = try requireArray(object["addedComponents"])
+        #expect(added.compactMap { $0["name"] as? String } == ["newtool"])
+    }
+
+    @Test("compare --json keeps unchanged common components")
+    func compareJSONKeepsUnchangedComponents() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "compare", "14.0", "15.0", "--json", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        let object = try decodeJSONObject(result.stdout)
+        let changes = try requireArray(object["changes"])
+        let curl = changes.first { $0["name"] as? String == "curl" }
+        #expect(curl?["direction"] as? String == "unchanged")
+    }
+
+    @Test("show --component --json keeps the release schema")
+    func showComponentJSONKeepsReleaseSchema() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "show", "15.0", "--component", "curl", "--json", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        let object = try decodeJSONObject(result.stdout)
+        let components = try requireArray(object["components"])
+        #expect(object["buildNumber"] as? String == "24A335")
+        #expect(components.count == 1)
+        #expect(components.first?["name"] as? String == "curl")
+    }
+
+    @Test("show --json prefers the universal build for a duplicate version")
+    func showJSONPrefersUniversalRelease() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "show", "15.1", "--json", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        let object = try decodeJSONObject(result.stdout)
+        #expect(object["buildNumber"] as? String == "24B83")
+    }
+
     // MARK: - Helpers
 
     private struct ProcessResult {
@@ -127,6 +210,33 @@ struct SubprocessSmokeTests {
         let stdout = String(data: stdoutPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
         let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
         return ProcessResult(exitCode: process.terminationStatus, stdout: stdout, stderr: stderr)
+    }
+
+    private enum TestDataError: Error {
+        case invalidJSONShape
+    }
+
+    private func decodeJSONArray(_ string: String) throws -> [[String: Any]] {
+        let data = Data(string.utf8)
+        guard let array = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            throw TestDataError.invalidJSONShape
+        }
+        return array
+    }
+
+    private func decodeJSONObject(_ string: String) throws -> [String: Any] {
+        let data = Data(string.utf8)
+        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw TestDataError.invalidJSONShape
+        }
+        return object
+    }
+
+    private func requireArray(_ value: Any?) throws -> [[String: Any]] {
+        guard let array = value as? [[String: Any]] else {
+            throw TestDataError.invalidJSONShape
+        }
+        return array
     }
 
     /// Locate the built `macosdb` binary by walking up from the test source file
@@ -167,5 +277,142 @@ struct SubprocessSmokeTests {
             fatalError("Could not find a built macosdb binary under \(packageRoot.path) — build the package first")
         }
         return binary
+    }
+}
+
+private enum LocalDataStore {
+    static func make() throws -> URL {
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("macosdb-cli-data-\(UUID().uuidString)", isDirectory: true)
+        let macosDir = root.appendingPathComponent("macos", isDirectory: true)
+        let releases14 = macosDir.appendingPathComponent("releases/14", isDirectory: true)
+        let releases15 = macosDir.appendingPathComponent("releases/15", isDirectory: true)
+        try FileManager.default.createDirectory(at: releases14, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: releases15, withIntermediateDirectories: true)
+
+        try writeIndex(to: macosDir)
+        try writeReleases(releases14: releases14, releases15: releases15)
+        return root
+    }
+
+    private static func writeIndex(to macosDir: URL) throws {
+        try writeJSONObject([
+            indexEntry(
+                version: "14.0",
+                build: "23A344",
+                releaseName: "Sonoma",
+                dataFile: "releases/14/macOS-14.0-23A344.json"
+            ),
+            indexEntry(
+                version: "15.0",
+                build: "24A335",
+                releaseName: "Sequoia",
+                dataFile: "releases/15/macOS-15.0-24A335.json"
+            ),
+            indexEntry(
+                version: "15.1",
+                build: "24B2083",
+                releaseName: "Sequoia",
+                dataFile: "releases/15/macOS-15.1-24B2083.json",
+                isDeviceSpecific: true
+            ),
+            indexEntry(
+                version: "15.1",
+                build: "24B83",
+                releaseName: "Sequoia",
+                dataFile: "releases/15/macOS-15.1-24B83.json"
+            )
+        ], to: macosDir.appendingPathComponent("releases.json"))
+    }
+
+    private static func writeReleases(releases14: URL, releases15: URL) throws {
+        try writeJSONObject(
+            release(
+                version: "14.0",
+                build: "23A344",
+                releaseName: "Sonoma",
+                components: [
+                    component(name: "curl", version: "8.7.1", path: "/usr/bin/curl"),
+                    component(name: "httpd", version: "2.4.59", path: "/usr/sbin/httpd")
+                ]
+            ),
+            to: releases14.appendingPathComponent("macOS-14.0-23A344.json")
+        )
+        try writeJSONObject(
+            release(
+                version: "15.0",
+                build: "24A335",
+                releaseName: "Sequoia",
+                components: [
+                    component(name: "curl", version: "8.7.1", path: "/usr/bin/curl"),
+                    component(name: "httpd", version: "2.4.62", path: "/usr/sbin/httpd"),
+                    component(name: "newtool", version: "1.0", path: "/usr/bin/newtool")
+                ]
+            ),
+            to: releases15.appendingPathComponent("macOS-15.0-24A335.json")
+        )
+        try writeJSONObject(
+            release(
+                version: "15.1",
+                build: "24B83",
+                releaseName: "Sequoia",
+                components: [
+                    component(name: "curl", version: "8.7.1", path: "/usr/bin/curl")
+                ]
+            ),
+            to: releases15.appendingPathComponent("macOS-15.1-24B83.json")
+        )
+    }
+
+    private static func indexEntry(
+        version: String,
+        build: String,
+        releaseName: String,
+        dataFile: String,
+        isDeviceSpecific: Bool = false
+    ) -> [String: Any] {
+        [
+            "osVersion": version,
+            "buildNumber": build,
+            "releaseName": releaseName,
+            "releaseDate": "2025-01-01",
+            "isBeta": false,
+            "isRC": false,
+            "isDeviceSpecific": isDeviceSpecific,
+            "dataFile": dataFile
+        ]
+    }
+
+    private static func release(
+        version: String,
+        build: String,
+        releaseName: String,
+        components: [[String: Any]]
+    ) -> [String: Any] {
+        [
+            "osVersion": version,
+            "buildNumber": build,
+            "releaseName": releaseName,
+            "releaseDate": "2025-01-01",
+            "isBeta": false,
+            "isRC": false,
+            "isDeviceSpecific": false,
+            "kernels": [],
+            "components": components
+        ]
+    }
+
+    private static func component(name: String, version: String, path: String) -> [String: Any] {
+        [
+            "name": name,
+            "version": version,
+            "path": path,
+            "source": "filesystem"
+        ]
+    }
+
+    private static func writeJSONObject(_ object: Any, to url: URL) throws {
+        let data = try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: url)
     }
 }

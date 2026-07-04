@@ -36,12 +36,8 @@ struct ShowCommand: AsyncParsableCommand {
         }
 
         if json {
-            // Honor --component in JSON mode too, mirroring the human output.
-            if component != nil {
-                try writeJSON(filteredComponents(release))
-            } else {
-                try writeJSON(release)
-            }
+            let output = component == nil ? release : release.withComponents(filteredComponents(release))
+            try writeJSON(output)
             return
         }
 
