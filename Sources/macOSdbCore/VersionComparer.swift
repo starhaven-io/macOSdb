@@ -49,20 +49,35 @@ package enum VersionComparer {
         let lhsParts = parseVersion(lhs)
         let rhsParts = parseVersion(rhs)
 
+        guard !lhsParts.isEmpty, !rhsParts.isEmpty else {
+            return .unchanged
+        }
+
         let maxLen = max(lhsParts.count, rhsParts.count)
 
         for idx in 0..<maxLen {
-            let lhsPart = idx < lhsParts.count ? lhsParts[idx] : 0
-            let rhsPart = idx < rhsParts.count ? rhsParts[idx] : 0
-
-            if lhsPart < rhsPart { return .upgraded }
-            if lhsPart > rhsPart { return .downgraded }
+            switch compareToken(
+                idx < lhsParts.count ? lhsParts[idx] : nil,
+                idx < rhsParts.count ? rhsParts[idx] : nil
+            ) {
+            case .orderedAscending:
+                return .upgraded
+            case .orderedDescending:
+                return .downgraded
+            case .orderedSame:
+                continue
+            }
         }
 
         return .unchanged
     }
 
-    private static func parseVersion(_ version: String) -> [Int] {
+    private enum VersionToken: Equatable {
+        case number(Int)
+        case letters(String)
+    }
+
+    private static func parseVersion(_ version: String) -> [VersionToken] {
         // Strip parenthetical suffixes like "(from int 21209)"
         let cleaned = version.replacingOccurrences(
             of: #"\s*\(.*\)"#,
@@ -70,11 +85,64 @@ package enum VersionComparer {
             options: .regularExpression
         ).trimmingCharacters(in: .whitespaces)
 
-        // Split on dots and common separators
-        return cleaned.split(separator: ".").flatMap { segment -> [Int] in
-            // Handle "9p1" → [9, 1] and "8" → [8]
-            let str = String(segment)
-            return str.split { !$0.isNumber }.compactMap { Int($0) }
+        var tokens: [VersionToken] = []
+        var index = cleaned.startIndex
+
+        while index < cleaned.endIndex {
+            let character = cleaned[index]
+
+            if character.isNumber {
+                let start = index
+                while index < cleaned.endIndex, cleaned[index].isNumber {
+                    index = cleaned.index(after: index)
+                }
+                tokens.append(.number(Int(cleaned[start..<index]) ?? 0))
+                continue
+            }
+
+            if character.isLetter, !tokens.isEmpty {
+                let start = index
+                while index < cleaned.endIndex, cleaned[index].isLetter {
+                    index = cleaned.index(after: index)
+                }
+                tokens.append(.letters(String(cleaned[start..<index]).lowercased()))
+                continue
+            }
+
+            index = cleaned.index(after: index)
         }
+
+        return tokens
+    }
+
+    private static func compareToken(_ lhs: VersionToken?, _ rhs: VersionToken?) -> ComparisonResult {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return .orderedSame
+        case (.some(.number(0)), nil), (nil, .some(.number(0))):
+            return .orderedSame
+        case (nil, .some):
+            return .orderedAscending
+        case (.some, nil):
+            return .orderedDescending
+        case let (.some(.number(lhsValue)), .some(.number(rhsValue))):
+            return compare(lhsValue, rhsValue)
+        case let (.some(.letters(lhsValue)), .some(.letters(rhsValue))):
+            return compare(lhsValue, rhsValue)
+        case let (.some(.number(lhsValue)), .some(.letters)):
+            return lhsValue == 0 ? .orderedAscending : .orderedDescending
+        case let (.some(.letters), .some(.number(rhsValue))):
+            return rhsValue == 0 ? .orderedDescending : .orderedAscending
+        }
+    }
+
+    private static func compare<T: Comparable>(_ lhs: T, _ rhs: T) -> ComparisonResult {
+        if lhs < rhs {
+            return .orderedAscending
+        }
+        if lhs > rhs {
+            return .orderedDescending
+        }
+        return .orderedSame
     }
 }

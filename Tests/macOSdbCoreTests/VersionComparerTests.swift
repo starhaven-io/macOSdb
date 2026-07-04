@@ -31,7 +31,22 @@ struct VersionComparerTests {
     @Test("Version with p suffix — OpenSSH style")
     func versionWithPSuffix() {
         #expect(VersionComparer.compareVersionStrings("9.7p1", "9.9p2") == .upgraded)
+        #expect(VersionComparer.compareVersionStrings("9.8p1", "9.8p2") == .upgraded)
         #expect(VersionComparer.compareVersionStrings("9.8p1", "9.8p1") == .unchanged)
+    }
+
+    @Test("Version with letter suffix — OpenSSL style")
+    func versionWithLetterSuffix() {
+        #expect(VersionComparer.compareVersionStrings("1.1.1k", "1.1.1l") == .upgraded)
+        #expect(VersionComparer.compareVersionStrings("1.1.1l", "1.1.1k") == .downgraded)
+        #expect(VersionComparer.compareVersionStrings("1.1.1", "1.1.1a") == .upgraded)
+        #expect(VersionComparer.compareVersionStrings("1.1.1K", "1.1.1l") == .upgraded)
+    }
+
+    @Test("Zero padding sorts below letter suffixes")
+    func zeroPaddingSortsBelowLetterSuffixes() {
+        #expect(VersionComparer.compareVersionStrings("1.2.0", "1.2a") == .upgraded)
+        #expect(VersionComparer.compareVersionStrings("1.2a", "1.2.1") == .upgraded)
     }
 
     @Test("Version with parenthetical suffix stripped")
@@ -52,6 +67,19 @@ struct VersionComparerTests {
     func differentLengthVersions() {
         #expect(VersionComparer.compareVersionStrings("1.2", "1.2.1") == .upgraded)
         #expect(VersionComparer.compareVersionStrings("1.2.1", "1.2") == .downgraded)
+        #expect(VersionComparer.compareVersionStrings("1.2", "1.2.0") == .unchanged)
+    }
+
+    @Test("Leading labels do not affect version comparison")
+    func leadingLabelsAreIgnored() {
+        #expect(VersionComparer.compareVersionStrings("LibreSSL 3.3.6", "LibreSSL 3.3.7") == .upgraded)
+    }
+
+    @Test("Empty or unknown versions are neutral")
+    func emptyVersionsAreNeutral() {
+        #expect(VersionComparer.compareVersionStrings("", "1.2.3") == .unchanged)
+        #expect(VersionComparer.compareVersionStrings("1.2.3", "") == .unchanged)
+        #expect(VersionComparer.compareVersionStrings("unknown", "1.2") == .unchanged)
     }
 
     // MARK: - Release comparison
