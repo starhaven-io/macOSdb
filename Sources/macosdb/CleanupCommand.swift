@@ -43,10 +43,25 @@ struct CleanupCommand: AsyncParsableCommand {
         }
 
         for mount in mounts {
-            unmount(mount)
+            switch recheckStaleMount(mount) {
+            case .stale:
+                unmount(mount)
+            case .ownedByRunningScan:
+                printStatus("Skipped no-longer-stale mount \(mount.mountPoint)")
+            case .unrecognizedWorkDir:
+                printStatus("Skipped mount with unrecognized scan source \(mount.mountPoint)")
+            }
         }
 
-        removeDirectories(tempDirs)
+        var dirsToRemove: [URL] = []
+        for dir in tempDirs {
+            if Self.isStaleTempDir(dir) {
+                dirsToRemove.append(dir)
+            } else {
+                printStatus("Skipped no-longer-stale directory \(dir.lastPathComponent)")
+            }
+        }
+        removeDirectories(dirsToRemove)
     }
 
     // MARK: - Stale mount detection
@@ -55,6 +70,12 @@ struct CleanupCommand: AsyncParsableCommand {
         let imagePath: String
         let mountPoint: String
         let deviceNode: String
+    }
+
+    private enum StaleMountRecheck {
+        case stale
+        case ownedByRunningScan
+        case unrecognizedWorkDir
     }
 
     private func findStaleMounts() -> [StaleMount] {
@@ -148,6 +169,14 @@ struct CleanupCommand: AsyncParsableCommand {
         }
     }
 
+    private func recheckStaleMount(_ mount: StaleMount) -> StaleMountRecheck {
+        let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
+        guard let workDir = scannerWorkDir(forImage: mount.imagePath, tempBase: tempBase) else {
+            return .unrecognizedWorkDir
+        }
+        return ScanWorkspace.isOwnedByRunningScan(workDir) ? .ownedByRunningScan : .stale
+    }
+
     // MARK: - Stale temp directory detection
 
     private func findStaleTempDirs() -> [URL] {
@@ -160,18 +189,22 @@ struct CleanupCommand: AsyncParsableCommand {
             return []
         }
 
-        return contents.filter { url in
-            let name = url.lastPathComponent
-            guard name.hasPrefix("macosdb-") else { return false }
-            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false else { return false }
-            // Don't delete a work dir whose scan is still running.
-            return !ScanWorkspace.isOwnedByRunningScan(url)
-        }.sorted { $0.path < $1.path }
+        return contents.filter(Self.isStaleTempDir).sorted { $0.path < $1.path }
+    }
+
+    static func isStaleTempDir(_ url: URL) -> Bool {
+        let name = url.lastPathComponent
+        guard name.hasPrefix("macosdb-") else { return false }
+        guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false else { return false }
+        // Don't delete a work dir whose scan is still running.
+        return !ScanWorkspace.isOwnedByRunningScan(url)
     }
 
     // MARK: - Temp directory removal
 
     private func removeDirectories(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/rm")
         process.arguments = ["-rf"] + urls.map(\.path)

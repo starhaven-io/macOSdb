@@ -189,7 +189,17 @@ actor AEADecryptor {
                 | (Int(authBytes[offset + 2]) << 16)
                 | (Int(authBytes[offset + 3]) << 24)
 
-            guard fieldSize > 4, offset + fieldSize <= authBytes.count else { break }
+            guard fieldSize > 4 else {
+                Self.logger.warning("Skipping malformed AEA auth field at offset \(offset): size \(fieldSize)")
+                offset += 4
+                continue
+            }
+
+            guard fieldSize <= authBytes.count - offset else {
+                Self.logger.warning("Skipping overrun AEA auth field at offset \(offset): size \(fieldSize)")
+                offset += 4
+                continue
+            }
 
             let fieldData = authBytes[(offset + 4)..<(offset + fieldSize)]
             if let nullIndex = fieldData.firstIndex(of: 0) {
