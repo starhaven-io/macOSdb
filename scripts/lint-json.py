@@ -121,6 +121,9 @@ def warn(msg):
 
 
 def validate_date(value, field, build):
+    if not isinstance(value, str) or not value:
+        error(f"{build}: {field} is empty or not a string")
+        return
     if not DATE_RE.match(value):
         error(f"{build}: {field} '{value}' is not ISO 8601 (YYYY-MM-DD)")
         return
@@ -152,6 +155,8 @@ def validate_download_url(url, field, name):
 
 
 def parse_version(version_str):
+    if not isinstance(version_str, str):
+        return None
     parts = version_str.split(".")
     try:
         major = int(parts[0])
@@ -169,7 +174,11 @@ def parse_build(build):
     """Split e.g. '24D2082' → (24, 'D', 2082, '') so re-release variants compare
     numerically (24D81 < 24D2082) rather than lexically. Mirrors BuildNumber.parse
     in Sources/macOSdbCore/Models/Release.swift."""
+    if not isinstance(build, str):
+        return (0, "", 0, "")
     m = BUILD_RE.match(build)
+    if not m:
+        return (0, "", 0, "")
     cycle = int(m.group(1)) if m.group(1) else 0
     train = m.group(2)
     num = int(m.group(3)) if m.group(3) else 0
@@ -180,9 +189,9 @@ def release_sort_key_desc(entry):
     v = parse_version(entry.get("osVersion", "0.0"))
     if v is None:
         v = (0, 0, 0)
-    if entry.get("isBeta"):
+    if entry.get("isBeta") is True:
         rank = 0
-    elif entry.get("isRC"):
+    elif entry.get("isRC") is True:
         rank = 1
     else:
         rank = 2
@@ -198,6 +207,19 @@ def _desc_build_cmp(a, b):
     if ka[4] != kb[4]:
         return -1 if ka[4] > kb[4] else 1
     return 0
+
+
+def require_string(obj, field, context):
+    value = obj.get(field)
+    if not isinstance(value, str) or not value:
+        error(f"{context}: {field} is empty or not a string")
+        return None
+    return value
+
+
+def validate_product_type(value, expected, context):
+    if value is not None and value != expected:
+        error(f"{context}: productType '{value}' should be '{expected}'")
 
 
 # ---------------------------------------------------------------------------
@@ -245,15 +267,22 @@ def validate_releases(product, catalog):
         if unexpected:
             warn(f"{f.name}: unexpected fields: {', '.join(sorted(unexpected))}")
 
+        build_number = require_string(d, "buildNumber", f.name)
+        os_version = require_string(d, "osVersion", f.name)
+        release_date = require_string(d, "releaseDate", f.name)
+        require_string(d, "releaseName", f.name)
+        product_type = require_string(d, "productType", f.name)
+        validate_product_type(product_type, product["name"], f.name)
+
         # Filename consistency
-        if d["buildNumber"] != build:
-            error(f"{f.name}: buildNumber '{d['buildNumber']}' doesn't match filename '{build}'")
+        if build_number is not None and build_number != build:
+            error(f"{f.name}: buildNumber '{build_number}' doesn't match filename '{build}'")
 
-        if not VERSION_RE.match(d["osVersion"]):
-            error(f"{f.name}: osVersion '{d['osVersion']}' is not a valid version (X.Y or X.Y.Z)")
+        if os_version is not None and not VERSION_RE.match(os_version):
+            error(f"{f.name}: osVersion '{os_version}' is not a valid version (X.Y or X.Y.Z)")
 
-        if d["osVersion"] != filename_version:
-            error(f"{f.name}: osVersion '{d['osVersion']}' doesn't match filename '{filename_version}'")
+        if os_version is not None and os_version != filename_version:
+            error(f"{f.name}: osVersion '{os_version}' doesn't match filename '{filename_version}'")
 
         # Boolean fields
         for field in product["bool_fields"]:
@@ -261,29 +290,31 @@ def validate_releases(product, catalog):
                 error(f"{f.name}: {field} should be bool, got {type(d[field]).__name__}")
 
         # Beta/RC mutual exclusivity and number consistency
-        if d["isBeta"] and d["isRC"]:
-            error(f"{f.name}: isBeta and isRC are both true")
+        is_beta = d["isBeta"]
+        is_rc = d["isRC"]
+        if isinstance(is_beta, bool) and isinstance(is_rc, bool):
+            if is_beta and is_rc:
+                error(f"{f.name}: isBeta and isRC are both true")
 
-        if d["isBeta"]:
-            bn = d.get("betaNumber")
-            if bn is None:
-                warn(f"{f.name}: isBeta is true but betaNumber is missing")
-            elif not isinstance(bn, int) or bn < 1:
-                error(f"{f.name}: betaNumber should be a positive integer, got {bn!r}")
-        else:
-            if d.get("betaNumber") is not None:
+            if is_beta:
+                bn = d.get("betaNumber")
+                if bn is None:
+                    warn(f"{f.name}: isBeta is true but betaNumber is missing")
+                elif not isinstance(bn, int) or bn < 1:
+                    error(f"{f.name}: betaNumber should be a positive integer, got {bn!r}")
+            elif d.get("betaNumber") is not None:
                 error(f"{f.name}: betaNumber set but isBeta is false")
 
-        if d["isRC"]:
-            rn = d.get("rcNumber")
-            if rn is not None and (not isinstance(rn, int) or rn < 1):
-                error(f"{f.name}: rcNumber should be a positive integer, got {rn!r}")
-        else:
-            if d.get("rcNumber") is not None:
+            if is_rc:
+                rn = d.get("rcNumber")
+                if rn is not None and (not isinstance(rn, int) or rn < 1):
+                    error(f"{f.name}: rcNumber should be a positive integer, got {rn!r}")
+            elif d.get("rcNumber") is not None:
                 error(f"{f.name}: rcNumber set but isRC is false")
 
         # Date validation
-        validate_date(d["releaseDate"], "releaseDate", build)
+        if release_date is not None:
+            validate_date(release_date, "releaseDate", build)
 
         # macOS-specific: IPSW file/URL validation
         if prefix == "macOS":
@@ -294,19 +325,19 @@ def validate_releases(product, catalog):
             if not isinstance(ipswfile, str) or not ipswfile:
                 error(f"{f.name}: ipswFile is empty or not a string")
 
-            if url and ipswfile:
+            if isinstance(url, str) and isinstance(ipswfile, str) and url and ipswfile:
                 url_file = url.split("/")[-1]
                 if ipswfile != url_file:
                     error(f"{f.name}: ipswFile '{ipswfile}' doesn't match URL filename '{url_file}'")
 
-            if url:
+            if isinstance(url, str) and url:
                 m = IPSW_FILE_RE.search(url)
                 if m:
                     url_version, url_build = m.group(1), m.group(2)
                     if url_build != build:
                         error(f"{f.name}: build in ipswURL '{url_build}' doesn't match '{build}'")
-                    if url_version != d["osVersion"]:
-                        error(f"{f.name}: version in ipswURL '{url_version}' doesn't match '{d['osVersion']}'")
+                    if os_version is not None and url_version != os_version:
+                        error(f"{f.name}: version in ipswURL '{url_version}' doesn't match '{os_version}'")
 
         # Xcode-specific: xipFile/xipURL parity, minimumOSVersion, sdks
         if prefix == "Xcode":
@@ -316,7 +347,7 @@ def validate_releases(product, catalog):
 
             xip_url = d.get("xipURL", "")
             validate_download_url(xip_url, "xipURL", f.name)
-            if xip_url and xip_file:
+            if isinstance(xip_url, str) and isinstance(xip_file, str) and xip_url and xip_file:
                 url_file = xip_url.split("/")[-1]
                 if xip_file != url_file:
                     error(f"{f.name}: xipFile '{xip_file}' doesn't match URL filename '{url_file}'")
@@ -336,6 +367,9 @@ def validate_releases(product, catalog):
         else:
             seen_names = set()
             for ci, comp in enumerate(components):
+                if not isinstance(comp, dict):
+                    error(f"{f.name}: components[{ci}] should be object, got {type(comp).__name__}")
+                    continue
                 for field in COMPONENT_REQUIRED:
                     if field not in comp:
                         error(f"{f.name}: components[{ci}] missing field '{field}'")
@@ -358,7 +392,7 @@ def validate_releases(product, catalog):
                     error(f"{f.name}: component '{name}' has empty or non-string path")
 
                 source = comp.get("source", "")
-                if source not in valid_sources:
+                if not isinstance(source, str) or source not in valid_sources:
                     error(f"{f.name}: component '{name}' has invalid source '{source}' "
                           f"(expected: {', '.join(sorted(valid_sources))})")
 
@@ -370,6 +404,9 @@ def validate_releases(product, catalog):
             else:
                 kernel_required = ["arch", "chip", "darwinVersion", "xnuVersion", "file", "devices"]
                 for ki, kern in enumerate(kernels):
+                    if not isinstance(kern, dict):
+                        error(f"{f.name}: kernels[{ki}] should be object, got {type(kern).__name__}")
+                        continue
                     for field in kernel_required:
                         if field not in kern:
                             error(f"{f.name}: kernels[{ki}] missing field '{field}'")
@@ -418,21 +455,52 @@ def validate_index(product, catalog):
     except json.JSONDecodeError as e:
         error(f"{index_path.name}: invalid JSON — {e}")
         return
+    if not isinstance(index_entries, list):
+        error(f"{index_path.name}: top-level value should be array, got {type(index_entries).__name__}")
+        return
 
     index_builds = {}
-    for entry in index_entries:
-        b = entry.get("buildNumber", "")
-        if b in index_builds:
-            error(f"{prefix} index: duplicate buildNumber '{b}'")
-        index_builds[b] = entry
+    valid_entries = []
+    for i, entry in enumerate(index_entries):
+        if not isinstance(entry, dict):
+            error(f"{prefix} index[{i}]: should be object, got {type(entry).__name__}")
+            continue
+
+        build_number = entry.get("buildNumber", "")
+        b = build_number if isinstance(build_number, str) and build_number else f"entry {i}"
+        context = f"{prefix} index/{b}"
 
         missing = [field for field in product["index_required"] if field not in entry]
         if missing:
-            error(f"{prefix} index/{b}: missing fields: {', '.join(missing)}")
+            error(f"{context}: missing fields: {', '.join(missing)}")
+            continue
 
-        data_file = entry.get("dataFile", "")
-        if data_file and not (product["data"].parent / data_file).exists():
-            error(f"{prefix} index/{b}: dataFile '{data_file}' does not exist")
+        build_number = require_string(entry, "buildNumber", context)
+        os_version = require_string(entry, "osVersion", context)
+        release_date = require_string(entry, "releaseDate", context)
+        require_string(entry, "releaseName", context)
+        product_type = require_string(entry, "productType", context)
+        data_file = require_string(entry, "dataFile", context)
+        validate_product_type(product_type, product["name"], context)
+
+        for field in product["bool_fields"]:
+            if field in entry and not isinstance(entry[field], bool):
+                error(f"{context}: {field} should be bool, got {type(entry[field]).__name__}")
+
+        if os_version is not None and not VERSION_RE.match(os_version):
+            error(f"{context}: osVersion '{os_version}' is not a valid version (X.Y or X.Y.Z)")
+        if release_date is not None:
+            validate_date(release_date, "releaseDate", context)
+
+        if build_number is None:
+            continue
+        if build_number in index_builds:
+            error(f"{prefix} index: duplicate buildNumber '{b}'")
+        index_builds[build_number] = entry
+        valid_entries.append(entry)
+
+        if data_file is not None and not (product["data"].parent / data_file).exists():
+            error(f"{context}: dataFile '{data_file}' does not exist")
 
     catalog_builds = set(catalog.keys())
     index_build_set = set(index_builds.keys())
@@ -451,10 +519,10 @@ def validate_index(product, catalog):
                       f"index={idx.get(field)!r}, file={release.get(field)!r}")
 
     # Sort order validation
-    if len(index_entries) > 1:
-        expected_order = sorted(index_entries, key=functools.cmp_to_key(_desc_build_cmp))
+    if len(valid_entries) > 1:
+        expected_order = sorted(valid_entries, key=functools.cmp_to_key(_desc_build_cmp))
         expected_builds = [e["buildNumber"] for e in expected_order]
-        actual_builds = [e["buildNumber"] for e in index_entries]
+        actual_builds = [e["buildNumber"] for e in valid_entries]
         if actual_builds != expected_builds:
             for i, (actual, expected) in enumerate(zip(actual_builds, expected_builds)):
                 if actual != expected:
