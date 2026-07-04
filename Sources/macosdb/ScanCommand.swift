@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 import macOSdbCore
 
-struct ScanCommand: AsyncParsableCommand {
+struct ScanCommand: AsyncParsableCommand, Sendable {
     static let configuration = CommandConfiguration(
         commandName: "scan",
         abstract: "Scan an IPSW or Xcode .xip and extract component versions."
@@ -63,6 +63,20 @@ struct ScanCommand: AsyncParsableCommand {
     }
 
     func run() async throws {
+        do {
+            try await SignalCancellation.run(onFirstSignal: { _ in
+                printStatus("")
+                printStatus("Cancellation requested; cleaning up...")
+            }, operation: {
+                try await runScan()
+            })
+        } catch is CancellationError {
+            printError("Scan cancelled")
+            throw ExitCode.failure
+        }
+    }
+
+    private func runScan() async throws {
         let archiveURL = URL(fileURLWithPath: archivePath)
 
         guard FileManager.default.fileExists(atPath: archiveURL.path) else {
@@ -133,6 +147,8 @@ struct ScanCommand: AsyncParsableCommand {
             )
             let aeaKeyPEM = await scanner.aeaPrivateKeyPEM
             return (release, aeaKeyPEM)
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             printError("Scan failed: \(error.localizedDescription)")
             throw ExitCode.failure
@@ -152,6 +168,8 @@ struct ScanCommand: AsyncParsableCommand {
 
         do {
             try await scanner.extractAEAKey(ipswPath: archiveURL)
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             printError("Key extraction failed: \(error.localizedDescription)")
             throw ExitCode.failure
@@ -187,6 +205,8 @@ struct ScanCommand: AsyncParsableCommand {
                 isRC: rc || rcNumber != nil,
                 rcNumber: rcNumber
             )
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             printError("Xcode scan failed: \(error.localizedDescription)")
             throw ExitCode.failure
