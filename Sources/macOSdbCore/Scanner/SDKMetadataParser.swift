@@ -45,6 +45,7 @@ enum SDKMetadataParser {
         var components: [Component] = []
 
         for definition in sdkComponents {
+            guard !Task.isCancelled else { break }
             let filePath = sdkUsrDir.appendingPathComponent(definition.path)
             guard let content = try? String(contentsOf: filePath, encoding: .utf8) else {
                 logger.debug("SDK \(definition.name): file not found at \(filePath.path)")
@@ -90,6 +91,7 @@ enum SDKMetadataParser {
         var parts: [String] = []
 
         for name in names {
+            guard !Task.isCancelled else { return nil }
             let pattern = #"#\s*define\s+"# + name + #"\s+(\S+)"#
             guard let regex = try? Regex(pattern) else {
                 logger.warning("Failed to compile regex for multi-define: \(pattern)")
@@ -123,6 +125,7 @@ enum SDKMetadataParser {
             options: [.skipsHiddenFiles]
         ) {
             for case let fileURL as URL in enumerator {
+                guard !Task.isCancelled else { break }
                 // Only parse SDKs in MacOSX*.sdk directories, skip DriverKit etc.
                 let sdkDir = fileURL.deletingLastPathComponent().lastPathComponent
                 if fileURL.lastPathComponent == "SDKSettings.json",

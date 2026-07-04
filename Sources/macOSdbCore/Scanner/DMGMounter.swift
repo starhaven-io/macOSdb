@@ -19,7 +19,7 @@ actor DMGMounter {
     func mount(dmgPath: URL) async throws -> MountPoint {
         Self.logger.info("Mounting DMG: \(dmgPath.path)")
 
-        let result = try ProcessRunner.run(
+        let result = try await ProcessRunner.run(
             executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"),
             arguments: ["attach", "-nobrowse", "-readonly", "-plist", dmgPath.path],
             timeout: Self.attachTimeout
@@ -38,12 +38,13 @@ actor DMGMounter {
         Self.logger.info("Unmounting: \(mountPoint.path)")
 
         do {
-            let result = try ProcessRunner.run(
+            let result = try await ProcessRunner.run(
                 executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"),
                 arguments: ["detach", mountPoint.deviceNode, "-force"],
                 capturesStandardOutput: false,
                 capturesStandardError: true,
-                timeout: Self.detachTimeout
+                timeout: Self.detachTimeout,
+                respectsCancellation: false
             )
 
             if result.terminationStatus != 0 {

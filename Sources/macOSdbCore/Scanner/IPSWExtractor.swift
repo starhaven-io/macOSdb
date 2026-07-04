@@ -18,6 +18,7 @@ actor IPSWExtractor {
     }
 
     func extract(ipswPath: URL) async throws -> ExtractionResult {
+        try Task.checkCancellation()
         guard FileManager.default.fileExists(atPath: ipswPath.path) else {
             throw ScannerError.ipswNotFound(path: ipswPath.path)
         }
@@ -42,10 +43,13 @@ actor IPSWExtractor {
             }
 
             let classified = classifyEntries(archive)
+            try Task.checkCancellation()
             let metadata = try extractMetadata(
                 from: classified, archive: archive, workDir: workDir, filename: ipswPath.lastPathComponent
             )
+            try Task.checkCancellation()
             let kernelcachePaths = try extractKernels(classified.kernelcaches, archive: archive, workDir: workDir)
+            try Task.checkCancellation()
             let (systemDMGPath, cryptexDMGPath) = try extractDMGs(
                 classified.dmgs,
                 archive: archive,
@@ -87,6 +91,7 @@ actor IPSWExtractor {
     private func classifyEntries(_ archive: Archive) -> ClassifiedEntries {
         var result = ClassifiedEntries()
         for entry in archive {
+            guard !Task.isCancelled else { break }
             let name = entry.path
             let basename = URL(fileURLWithPath: name).lastPathComponent
             if basename.hasPrefix("kernelcache") {
@@ -152,6 +157,7 @@ actor IPSWExtractor {
 
         var paths: [URL] = []
         for entry in entries {
+            try Task.checkCancellation()
             let basename = URL(fileURLWithPath: entry.path).lastPathComponent
             let destPath = kernelsDir.appendingPathComponent(basename)
             _ = try archive.extract(entry, to: destPath)
@@ -195,6 +201,7 @@ actor IPSWExtractor {
         let systemBasename = URL(fileURLWithPath: systemEntry.path).lastPathComponent
         let systemPath = workDir.appendingPathComponent(systemBasename)
         Self.logger.info("Extracting system DMG: \(systemBasename) (\(systemEntry.uncompressedSize) bytes)")
+        try Task.checkCancellation()
         _ = try archive.extract(systemEntry, to: systemPath)
 
         var cryptexPath: URL?
@@ -202,6 +209,7 @@ actor IPSWExtractor {
             let cryptexBasename = URL(fileURLWithPath: cryptexEntry.path).lastPathComponent
             let path = workDir.appendingPathComponent(cryptexBasename)
             Self.logger.info("Extracting cryptex DMG: \(cryptexBasename) (\(cryptexEntry.uncompressedSize) bytes)")
+            try Task.checkCancellation()
             _ = try archive.extract(cryptexEntry, to: path)
             cryptexPath = path
         }
@@ -225,11 +233,14 @@ actor IPSWExtractor {
         var collected = Data()
         do {
             _ = try archive.extract(aeaEntry, skipCRC32: true) { chunk in
+                if Task.isCancelled { throw CancellationError() }
                 collected.append(chunk.prefix(maxBytes - collected.count))
                 if collected.count >= maxBytes { throw HeaderRead.complete }
             }
         } catch HeaderRead.complete {
             // Captured the header prefix; the rest of the entry is intentionally skipped.
+        } catch is CancellationError {
+            throw CancellationError()
         }
         return collected
     }
@@ -293,6 +304,7 @@ actor IPSWExtractor {
 
             // Build kernel → device mapping from all build identities
             for identity in identities {
+                try Task.checkCancellation()
                 guard let productType = identity["Ap,ProductType"] as? String,
                       let manifest = identity["Manifest"] as? [String: Any],
                       let kernelEntry = manifest["KernelCache"] as? [String: Any],

@@ -45,7 +45,7 @@ actor AEADecryptor {
     func decrypt(aeaPath: URL, privateKeyPEM: String? = nil) async throws -> AEADecryptionResult {
         let (key, pemString) = try await deriveKey(from: aeaPath, privateKeyPEM: privateKeyPEM)
         let outputPath = aeaPath.deletingPathExtension()
-        try runAEADecrypt(input: aeaPath, output: outputPath, key: key)
+        try await runAEADecrypt(input: aeaPath, output: outputPath, key: key)
         try? FileManager.default.removeItem(at: aeaPath)
         return AEADecryptionResult(dmgPath: outputPath, privateKeyPEM: pemString)
     }
@@ -252,10 +252,10 @@ actor AEADecryptor {
     /// normal runs while still bounding a hang.
     private static let decryptTimeout: TimeInterval = 900
 
-    private func runAEADecrypt(input: URL, output: URL, key: String) throws {
+    private func runAEADecrypt(input: URL, output: URL, key: String) async throws {
         Self.logger.info("Decrypting \(input.lastPathComponent)")
 
-        let result = try ProcessRunner.run(
+        let result = try await ProcessRunner.run(
             executableURL: URL(fileURLWithPath: "/usr/bin/aea"),
             arguments: [
                 "decrypt",

@@ -17,6 +17,7 @@ enum BinaryStringScanner {
     /// padding, where it emits a bounded prefix and skips the rest of the run so
     /// one giant printable run can't balloon a single `String` allocation.
     static let defaultMaxStringLength = 1 * 1_024 * 1_024 // 1 MiB
+    private static let cancellationCheckInterval = 64 * 1_024
 
     /// Streams runs of printable ASCII (length ≥ `minLength`) to `body` without
     /// building an intermediate array. Each run is truncated to `maxStringLength`
@@ -41,20 +42,31 @@ enum BinaryStringScanner {
             return body(string)
         }
 
-        for byte in data {
-            if byte >= 0x20, byte <= 0x7E {
-                if skippingRun { continue }
-                if current.count >= maxStringLength {
-                    // Cap reached: emit the prefix, then skip the rest of this run.
+        var offset = data.startIndex
+        while offset < data.endIndex {
+            if Task.isCancelled { return }
+            let chunkEnd = data.index(
+                offset,
+                offsetBy: cancellationCheckInterval,
+                limitedBy: data.endIndex
+            ) ?? data.endIndex
+
+            for byte in data[offset..<chunkEnd] {
+                if byte >= 0x20, byte <= 0x7E {
+                    if skippingRun { continue }
+                    if current.count >= maxStringLength {
+                        // Cap reached: emit the prefix, then skip the rest of this run.
+                        if !flush() { return }
+                        skippingRun = true
+                        continue
+                    }
+                    current.append(byte)
+                } else {
+                    skippingRun = false
                     if !flush() { return }
-                    skippingRun = true
-                    continue
                 }
-                current.append(byte)
-            } else {
-                skippingRun = false
-                if !flush() { return }
             }
+            offset = chunkEnd
         }
 
         // Trailing run with no delimiter before EOF.

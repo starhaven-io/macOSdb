@@ -45,25 +45,29 @@ package actor IPSWScanner {
         aeaKeyPEM: String? = nil
     ) async throws -> Release {
         let startTime = Date()
+        try Task.checkCancellation()
 
         // Phase 1: Extract IPSW
         sendProgress(.extractingIPSW)
         Self.logger.info("Starting scan of \(ipswPath.lastPathComponent)")
         let extraction = try await ipswExtractor.extract(ipswPath: ipswPath)
+        try Task.checkCancellation()
 
         let release: Release
         do {
             // Phase 2: Parse kernelcaches
             sendProgress(.parsingKernels(count: extraction.kernelcaches.count))
             Self.logger.info("Parsing \(extraction.kernelcaches.count) kernelcache files")
-            let kernels = await parseKernels(extraction.kernelcaches, deviceMap: extraction.kernelDeviceMap)
+            let kernels = try await parseKernels(extraction.kernelcaches, deviceMap: extraction.kernelDeviceMap)
 
             guard !kernels.isEmpty else {
                 throw ScannerError.noKernelcachesFound
             }
+            try Task.checkCancellation()
 
             // Phases 3–5: Decrypt, mount, and extract components
             let components = try await decryptMountAndExtract(extraction: extraction, aeaKeyPEM: aeaKeyPEM)
+            try Task.checkCancellation()
 
             // Phase 6: Assemble the Release
             sendProgress(.assemblingResults)
@@ -109,12 +113,14 @@ package actor IPSWScanner {
 
     package func extractAEAKey(ipswPath: URL) async throws {
         sendProgress(.extractingIPSW)
+        try Task.checkCancellation()
 
         guard let headerData = try await ipswExtractor.readAEAHeader(ipswPath: ipswPath) else {
             Self.logger.info("No AEA encryption in \(ipswPath.lastPathComponent)")
             sendProgress(.complete)
             return
         }
+        try Task.checkCancellation()
 
         sendProgress(.decryptingAEA)
         aeaPrivateKeyPEM = try await aeaDecryptor.deriveKeyOnly(from: headerData)
@@ -131,12 +137,14 @@ package actor IPSWScanner {
     private func parseKernels(
         _ kernelcaches: [URL],
         deviceMap: [String: [String]]
-    ) async -> [KernelInfo] {
+    ) async throws -> [KernelInfo] {
+        try Task.checkCancellation()
         let parsed = await mapConcurrent(
             kernelcaches, maxConcurrent: Self.maxConcurrentKernelParses
         ) { path in
             await KernelParser.parse(kernelcachePath: path)
         }
+        try Task.checkCancellation()
 
         let kernels = parsed.map { kernel -> KernelInfo in
             guard kernel.devices.isEmpty else { return kernel }
@@ -186,6 +194,7 @@ package actor IPSWScanner {
         extraction: IPSWExtractor.ExtractionResult,
         aeaKeyPEM: String? = nil
     ) async throws -> [Component] {
+        try Task.checkCancellation()
         var systemDMG = extraction.systemDMG
         var cryptexDMG = extraction.cryptexDMG
         let needsAEA = AEADecryptor.isAEA(systemDMG)
@@ -199,6 +208,7 @@ package actor IPSWScanner {
             let result = try await aeaDecryptor.decrypt(aeaPath: systemDMG, privateKeyPEM: aeaKeyPEM)
             systemDMG = result.dmgPath
             aeaPrivateKeyPEM = result.privateKeyPEM
+            try Task.checkCancellation()
         }
         if let cryptex = cryptexDMG, AEADecryptor.isAEA(cryptex) {
             Self.logger.info("Decrypting cryptex AEA: \(cryptex.lastPathComponent)")
@@ -207,32 +217,35 @@ package actor IPSWScanner {
             if aeaPrivateKeyPEM == nil {
                 aeaPrivateKeyPEM = result.privateKeyPEM
             }
+            try Task.checkCancellation()
         }
 
         sendProgress(.mountingDMG)
         Self.logger.info("Mounting system DMG: \(systemDMG.lastPathComponent)")
         let systemMount = try await dmgMounter.mount(dmgPath: systemDMG)
 
-        var fsComponents = await extractFilesystemComponents(mountPoint: systemMount)
-
-        // Unmount the system DMG on every path; a throw here leaks the volume, then cleanup deletes its backing file.
-        let dyldComponents: [Component]
+        let components: [Component]
         do {
+            try Task.checkCancellation()
+            var fsComponents = await extractFilesystemComponents(mountPoint: systemMount)
+            try Task.checkCancellation()
+
+            // Keep the system DMG mounted only while component extraction is active.
+            let dyldComponents: [Component]
             if let cryptexDMG {
-                sendProgress(.mountingCryptex)
-                Self.logger.info("Mounting cryptex DMG: \(cryptexDMG.lastPathComponent)")
-                let cryptexMount = try await dmgMounter.mount(dmgPath: cryptexDMG)
-
-                // Scan filesystem components from cryptex too (macOS 13+ moved some binaries there)
-                let cryptexFsComponents = await extractFilesystemComponents(mountPoint: cryptexMount)
-                fsComponents = merging(fsComponents, overriddenBy: cryptexFsComponents)
-
-                dyldComponents = await extractDyldCacheComponents(mountPoint: cryptexMount)
-                sendProgress(.unmountingDMG)
-                await dmgMounter.unmount(cryptexMount)
+                let extracted = try await extractCryptexComponents(
+                    from: cryptexDMG,
+                    mergingInto: fsComponents
+                )
+                fsComponents = extracted.filesystem
+                dyldComponents = extracted.dyld
             } else {
                 dyldComponents = await extractDyldCacheComponents(mountPoint: systemMount)
+                try Task.checkCancellation()
                 sendProgress(.unmountingDMG)
+            }
+            components = (fsComponents + dyldComponents).sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
         } catch {
             await dmgMounter.unmount(systemMount)
@@ -240,7 +253,7 @@ package actor IPSWScanner {
         }
 
         await dmgMounter.unmount(systemMount)
-        return (fsComponents + dyldComponents).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        return components
     }
 
     // MARK: - Filesystem component extraction
@@ -252,6 +265,7 @@ package actor IPSWScanner {
         let total = filesystemComponents.count
 
         for (index, definition) in filesystemComponents.enumerated() {
+            guard !Task.isCancelled else { break }
             sendProgress(.scanningFilesystem(
                 component: definition.name,
                 current: index + 1,
@@ -290,11 +304,13 @@ package actor IPSWScanner {
         }
 
         let (allDylibs, dylibSet) = logDyldCacheDiagnostics(cachePath: cachePath)
+        guard !Task.isCancelled else { return [] }
 
         var components: [Component] = []
         let total = dyldCacheComponents.count
 
         for (index, definition) in dyldCacheComponents.enumerated() {
+            guard !Task.isCancelled else { break }
             sendProgress(.scanningDyldCache(
                 component: definition.name,
                 current: index + 1,
@@ -344,47 +360,32 @@ package actor IPSWScanner {
         return components
     }
 
-    private func logDyldCacheDiagnostics(
-        cachePath: URL
-    ) -> (allDylibs: [String], dylibSet: Set<String>) {
-        sendVerbose("Found dyld cache: \(cachePath.lastPathComponent)")
+}
 
-        let basePath = cachePath.path
-        var subcacheCount = 0
-        for idx in 1...99 {
-            let unpadded = basePath + ".\(idx)"
-            let padded = basePath + String(format: ".%02d", idx)
-            if FileManager.default.fileExists(atPath: unpadded)
-                || FileManager.default.fileExists(atPath: padded) {
-                subcacheCount += 1
-            } else {
-                break
-            }
+extension IPSWScanner {
+    private func extractCryptexComponents(
+        from cryptexDMG: URL,
+        mergingInto fsComponents: [Component]
+    ) async throws -> (filesystem: [Component], dyld: [Component]) {
+        sendProgress(.mountingCryptex)
+        Self.logger.info("Mounting cryptex DMG: \(cryptexDMG.lastPathComponent)")
+        let cryptexMount = try await dmgMounter.mount(dmgPath: cryptexDMG)
+
+        do {
+            try Task.checkCancellation()
+            let cryptexFsComponents = await extractFilesystemComponents(mountPoint: cryptexMount)
+            let mergedFsComponents = merging(fsComponents, overriddenBy: cryptexFsComponents)
+            try Task.checkCancellation()
+
+            let dyldComponents = await extractDyldCacheComponents(mountPoint: cryptexMount)
+            try Task.checkCancellation()
+            sendProgress(.unmountingDMG)
+            await dmgMounter.unmount(cryptexMount)
+            return (mergedFsComponents, dyldComponents)
+        } catch {
+            await dmgMounter.unmount(cryptexMount)
+            throw error
         }
-        sendVerbose("Subcache files: \(subcacheCount)")
-
-        let allDylibs = DyldCacheExtractor.listDylibs(cachePath: cachePath)
-        let dylibSet = Set(allDylibs)
-        sendVerbose("Image table contains \(allDylibs.count) dylibs")
-        if !allDylibs.isEmpty {
-            let targetPaths = Set(dyldCacheComponents.map(\.path))
-            for path in targetPaths.sorted() {
-                let found = dylibSet.contains(path)
-                sendVerbose("  \(path): \(found ? "found" : "NOT FOUND") in image table")
-            }
-        }
-
-        return (allDylibs, dylibSet)
-    }
-
-    // MARK: - Progress
-
-    private func sendProgress(_ progress: ScanProgress) {
-        onProgress?(progress)
-    }
-
-    private func sendVerbose(_ message: String) {
-        onVerbose?(message)
     }
 }
 
@@ -460,33 +461,3 @@ private func merging(_ system: [Component], overriddenBy cryptex: [Component]) -
     let cryptexNames = Set(cryptex.map(\.name))
     return system.filter { !cryptexNames.contains($0.name) } + cryptex
 }
-
-// MARK: - Board codename device mapping
-
-/// Fallback device mapping for kernelcache filenames that use board codenames
-/// instead of device model identifiers. macOS 11–13 IPSWs use names like
-/// `kernelcache.release.mac13g` rather than `kernelcache.release.MacBookAir10,1_...`.
-/// These mappings are derived from BuildManifest data in later macOS versions.
-private let boardCodeNameDevices: [String: [String]] = [
-    // M1 (H13G) — all M1 base-tier Macs
-    "kernelcache.release.mac13g": [
-        "MacBookAir10,1", "MacBookPro17,1", "Macmini9,1",
-        "iMac21,1", "iMac21,2"
-    ],
-    // M1 Pro/Max (H13J) — all M1 Pro and M1 Max Macs
-    "kernelcache.release.mac13j": [
-        "Mac13,1", "Mac13,2",
-        "MacBookPro18,1", "MacBookPro18,2", "MacBookPro18,3", "MacBookPro18,4"
-    ],
-    // M2 (H14G) — all M2 base-tier Macs
-    "kernelcache.release.mac14g": [
-        "Mac14,2", "Mac14,3", "Mac14,7", "Mac14,15"
-    ],
-    // M2 Pro/Max (H14J) — all M2 Pro and M2 Max Macs
-    "kernelcache.release.mac14j": [
-        "Mac14,5", "Mac14,6", "Mac14,8", "Mac14,9",
-        "Mac14,10", "Mac14,12", "Mac14,13", "Mac14,14"
-    ],
-    // Virtual Mac
-    "kernelcache.release.vma2": ["VirtualMac2,1"]
-]

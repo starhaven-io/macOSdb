@@ -21,6 +21,7 @@ package actor XcodeScanner {
         rcNumber: Int? = nil
     ) async throws -> Release {
         let startTime = Date()
+        try Task.checkCancellation()
 
         guard FileManager.default.fileExists(atPath: xipPath.path) else {
             throw ScannerError.archiveNotFound(path: xipPath.path)
@@ -30,31 +31,23 @@ package actor XcodeScanner {
         sendProgress(.extractingXIP)
         Self.logger.info("Extracting Xcode XIP: \(xipPath.lastPathComponent)")
         let expandedDir = try await extractXIP(xipPath)
+        try Task.checkCancellation()
 
         let release: Release
         do {
             // Phase 2: Locate Xcode.app
             let xcodeApp = try findXcodeApp(in: expandedDir)
             Self.logger.info("Found Xcode.app: \(xcodeApp.path)")
+            try Task.checkCancellation()
 
             // Phase 3: Extract version metadata
             let (osVersion, buildNumber) = try extractVersionMetadata(from: xcodeApp)
             let resolvedName = releaseName ?? "Xcode \(osVersion)"
             let minOS = extractMinimumOSVersion(from: xcodeApp)
             sendVerbose("Xcode version: \(osVersion) (\(buildNumber))")
+            try Task.checkCancellation()
 
-            // Phase 4: Extract toolchain and framework components
-            var components = await extractToolchainComponents(from: xcodeApp)
-            components.append(contentsOf: await extractFrameworkComponents(from: xcodeApp))
-
-            // Phase 5: Parse SDK metadata and extract SDK components
-            sendProgress(.parsingSDKMetadata)
-            let sdks = parseSDKMetadata(from: xcodeApp)
-            let sdkComponents = extractSDKComponents(from: xcodeApp)
-            components.append(contentsOf: sdkComponents)
-            components.sort {
-                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-            }
+            let (components, sdks) = try await extractComponentsAndSDKs(from: xcodeApp)
 
             // Phase 6: Assemble the Release
             sendProgress(.assemblingResults)
@@ -108,9 +101,10 @@ package actor XcodeScanner {
         // Clean up the temp dir if anything after createDirectory throws
         // (including a process.run() failure).
         do {
+            try Task.checkCancellation()
             sendVerbose("Extracting XIP to \(tempDir.path)")
 
-            let result = try ProcessRunner.run(
+            let result = try await ProcessRunner.run(
                 executableURL: URL(fileURLWithPath: "/usr/bin/xip"),
                 arguments: ["--expand", xipPath.path],
                 currentDirectoryURL: tempDir,
@@ -221,6 +215,7 @@ package actor XcodeScanner {
         let total = toolchainComponents.count + developerComponents.count
 
         for (index, definition) in toolchainComponents.enumerated() {
+            guard !Task.isCancelled else { break }
             sendProgress(.scanningToolchain(
                 component: definition.name,
                 current: index + 1,
@@ -236,6 +231,7 @@ package actor XcodeScanner {
         }
 
         for (index, definition) in developerComponents.enumerated() {
+            guard !Task.isCancelled else { break }
             sendProgress(.scanningToolchain(
                 component: definition.name,
                 current: toolchainComponents.count + index + 1,
@@ -292,6 +288,7 @@ package actor XcodeScanner {
 
         // lldb — version is in LLDB.framework, not the lldb binary
         for definition in frameworkComponents {
+            guard !Task.isCancelled else { break }
             let binaryPath = xcodeApp.appendingPathComponent(definition.path)
             guard let data = try? Data(contentsOf: binaryPath) else {
                 sendVerbose("\(definition.name): binary not found at \(binaryPath.path)")
@@ -327,6 +324,7 @@ package actor XcodeScanner {
 
         // Find libpython*.dylib in each version directory
         for versionDir in versions.sorted(by: { $0.lastPathComponent > $1.lastPathComponent }) {
+            guard !Task.isCancelled else { return nil }
             let libDir = versionDir.appendingPathComponent("lib")
             guard let libs = try? fileManager.contentsOfDirectory(
                 at: libDir, includingPropertiesForKeys: nil
@@ -383,6 +381,22 @@ package actor XcodeScanner {
 }
 
 extension XcodeScanner {
+    private func extractComponentsAndSDKs(from xcodeApp: URL) async throws -> (components: [Component], sdks: [SDKInfo]) {
+        var components = await extractToolchainComponents(from: xcodeApp)
+        try Task.checkCancellation()
+        components.append(contentsOf: await extractFrameworkComponents(from: xcodeApp))
+        try Task.checkCancellation()
+
+        sendProgress(.parsingSDKMetadata)
+        let sdks = parseSDKMetadata(from: xcodeApp)
+        components.append(contentsOf: extractSDKComponents(from: xcodeApp))
+        components.sort {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+        try Task.checkCancellation()
+        return (components, sdks)
+    }
+
     // MARK: - Cleanup
 
     private func cleanup(_ directory: URL) {
