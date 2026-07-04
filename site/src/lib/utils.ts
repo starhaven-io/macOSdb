@@ -48,14 +48,58 @@ export function componentSlug(name: string): string {
     .toLowerCase();
 }
 
-function parseVersion(version: string): number[] {
-  const cleaned = version.replace(/\s*\(.*\)/, '').trim();
-  return cleaned.split('.').flatMap((segment) => {
-    return segment
-      .split(/[^0-9]+/)
-      .filter(Boolean)
-      .map(Number);
-  });
+type VersionToken = { kind: 'number'; value: number } | { kind: 'letters'; value: string };
+
+function parseVersion(version: string): VersionToken[] {
+  const cleaned = version.replace(/\s*\([^)]*\)/g, '').trim();
+  const tokens: VersionToken[] = [];
+
+  for (const match of cleaned.matchAll(/\d+|[A-Za-z]+/g)) {
+    const value = match[0];
+    if (/^\d+$/.test(value)) {
+      tokens.push({ kind: 'number', value: Number(value) || 0 });
+    } else if (tokens.length > 0) {
+      tokens.push({ kind: 'letters', value: value.toLowerCase() });
+    }
+  }
+
+  return tokens;
+}
+
+function compareValues<T>(lhs: T, rhs: T): number {
+  if (lhs < rhs) return -1;
+  if (lhs > rhs) return 1;
+  return 0;
+}
+
+function compareToken(lhs: VersionToken | undefined, rhs: VersionToken | undefined): number {
+  if (!lhs && !rhs) return 0;
+  if (lhs?.kind === 'number' && lhs.value === 0 && !rhs) return 0;
+  if (!lhs && rhs?.kind === 'number' && rhs.value === 0) return 0;
+  if (!lhs) return -1;
+  if (!rhs) return 1;
+
+  if (lhs.kind === 'number' && rhs.kind === 'number') {
+    return compareValues(lhs.value, rhs.value);
+  }
+  if (lhs.kind === 'letters' && rhs.kind === 'letters') {
+    return compareValues(lhs.value, rhs.value);
+  }
+  if (lhs.kind === 'number' && rhs.kind === 'letters') {
+    return lhs.value === 0 ? -1 : 1;
+  }
+  return rhs.value === 0 ? 1 : -1;
+}
+
+function compareParsedVersions(lhs: VersionToken[], rhs: VersionToken[]): number {
+  const maxLen = Math.max(lhs.length, rhs.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const result = compareToken(lhs[i], rhs[i]);
+    if (result !== 0) return result;
+  }
+
+  return 0;
 }
 
 // Kernel grouping for release detail pages
@@ -143,14 +187,14 @@ export function groupKernels(kernels: KernelInput[]): KernelSummary | null {
 export function compareVersions(from: string, to: string): 'upgraded' | 'downgraded' | 'unchanged' {
   const fromParts = parseVersion(from);
   const toParts = parseVersion(to);
-  const maxLen = Math.max(fromParts.length, toParts.length);
 
-  for (let i = 0; i < maxLen; i++) {
-    const f = i < fromParts.length ? fromParts[i] : 0;
-    const t = i < toParts.length ? toParts[i] : 0;
-    if (f < t) return 'upgraded';
-    if (f > t) return 'downgraded';
+  if (fromParts.length === 0 || toParts.length === 0) {
+    return 'unchanged';
   }
+
+  const result = compareParsedVersions(fromParts, toParts);
+  if (result < 0) return 'upgraded';
+  if (result > 0) return 'downgraded';
   return 'unchanged';
 }
 
@@ -193,11 +237,8 @@ export function compareReleasesByRecency(a: DatedRelease, b: DatedRelease): numb
   if (byDate !== 0) return byDate;
   const av = parseVersion(a.osVersion);
   const bv = parseVersion(b.osVersion);
-  const len = Math.max(av.length, bv.length);
-  for (let i = 0; i < len; i++) {
-    const diff = (bv[i] ?? 0) - (av[i] ?? 0);
-    if (diff !== 0) return diff;
-  }
+  const byVersion = compareParsedVersions(bv, av);
+  if (byVersion !== 0) return byVersion;
   return compareBuilds(b.buildNumber, a.buildNumber);
 }
 
