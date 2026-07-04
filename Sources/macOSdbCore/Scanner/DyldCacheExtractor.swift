@@ -57,6 +57,7 @@ enum DyldCacheExtractor {
 
     @concurrent
     static func extractDylibData(cachePath: URL, dylibPath: String) async -> Data? {
+        guard !Task.isCancelled else { return nil }
         guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else {
             logger.warning("Could not open dyld cache: \(cachePath.path)")
             return nil
@@ -71,6 +72,7 @@ enum DyldCacheExtractor {
         }
 
         let imageTable = readImageTableInfo(fileHandle: fileHandle)
+        guard !Task.isCancelled else { return nil }
 
         guard !imageTable.isEmpty, imageTable.count < 100_000 else {
             logger.warning("Invalid images count: \(imageTable.count)")
@@ -78,6 +80,7 @@ enum DyldCacheExtractor {
         }
 
         let allMappings = readAllMappings(mainCachePath: cachePath, mainFileHandle: fileHandle)
+        guard !Task.isCancelled else { return nil }
 
         if allMappings.isEmpty {
             logger.warning("No mappings found in dyld cache")
@@ -124,6 +127,7 @@ enum DyldCacheExtractor {
             : TextImageLayout.loadAddressOffset
 
         for imageIndex in 0..<imageTable.count {
+            guard !Task.isCancelled else { return nil }
             let entryOffset = imageIndex * entrySize
 
             // Read path offset — different field position depending on format
@@ -169,6 +173,7 @@ enum DyldCacheExtractor {
     }
 
     static func listDylibs(cachePath: URL) -> [String] {
+        guard !Task.isCancelled else { return [] }
         guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else { return [] }
         defer { try? fileHandle.close() }
 
@@ -196,6 +201,7 @@ enum DyldCacheExtractor {
 
         var paths: [String] = []
         for imageIndex in 0..<imageTable.count {
+            guard !Task.isCancelled else { break }
             let entryOffset = imageIndex * entrySize
 
             guard let pathFileOffset = loadUInt32(imagesData, at: entryOffset + pathFieldOffset) else { continue }
@@ -224,6 +230,7 @@ enum DyldCacheExtractor {
         }
 
         for subcachePath in subcacheFiles {
+            guard !Task.isCancelled else { break }
             guard let subcacheHandle = try? FileHandle(forReadingFrom: subcachePath) else {
                 logger.debug("Could not open subcache: \(subcachePath.lastPathComponent)")
                 continue
@@ -310,6 +317,7 @@ enum DyldCacheExtractor {
 
         var mappings: [CacheMapping] = []
         for mappingIndex in 0..<Int(mappingCount) {
+            guard !Task.isCancelled else { break }
             let entryOffset = mappingIndex * MappingLayout.size
             guard let address = loadUInt64(data, at: entryOffset + MappingLayout.addressOffset),
                   let size = loadUInt64(data, at: entryOffset + MappingLayout.sizeOffset),

@@ -12,6 +12,7 @@ enum KernelParser {
 
     @concurrent
     static func parse(kernelcachePath: URL) async -> KernelInfo? {
+        guard !Task.isCancelled else { return nil }
         let filename = kernelcachePath.lastPathComponent
 
         if let size = try? FileManager.default.attributesOfItem(
@@ -25,6 +26,7 @@ enum KernelParser {
             logger.warning("Could not read kernelcache: \(filename)")
             return nil
         }
+        guard !Task.isCancelled else { return nil }
 
         logger.debug("Parsing kernelcache: \(filename) (\(data.count) bytes)")
 
@@ -39,6 +41,7 @@ enum KernelParser {
         } else {
             kernelData = data
         }
+        guard !Task.isCancelled else { return nil }
 
         let versions = scanVersions(in: kernelData)
 
