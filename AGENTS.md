@@ -180,6 +180,7 @@ Run `just check` (or at minimum `just lint && just test`) before pushing — CI 
 - **Scanner inputs are untrusted binaries.** Parsers in `Scanner/` (esp. `DyldCacheExtractor`) bounds-check every offset/length read from the archive; preserve those guards when editing.
 - **AEA WKMS 404s have no retry by design** — manual re-dispatch is the chosen fallback.
 
+<!-- fleet:block commit-and-pr-conventions -->
 ## Commit and PR conventions
 
 - Conventional Commits: `type(scope): description`. Valid types: `feat`,
@@ -189,8 +190,12 @@ Run `just check` (or at minimum `just lint && just test`) before pushing — CI 
   enable it).
 - When authored with an AI coding agent, add a `Co-Authored-By` trailer after
   `Signed-off-by`, naming the agent and model. Current example:
-  `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`. Bump the model
+  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. Bump the model
   version as newer ones ship.
 - Never commit directly to `main`; create a feature branch and open a PR.
 - PR descriptions should contain only a concise summary of changes. Do not add
   test-plan sections, bot attribution, or generated-with footers.
+- Comments must earn their keep: a comment states a constraint or rationale the
+  code cannot express. Never add comments that narrate what the code does,
+  restate names, or explain a change to its reviewer.
+<!-- fleet:end -->

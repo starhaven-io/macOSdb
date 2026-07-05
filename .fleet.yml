@@ -1,0 +1,44 @@
+schema: 1
+license: "agpl"
+params:
+  astro-docs: true
+  dependabot:
+    - package-ecosystem: "github-actions"
+      group: "github-actions"
+      directory: "/"
+    - package-ecosystem: "npm"
+      group: "npm-dependencies"
+      directory: "/site"
+    - package-ecosystem: "swift"
+      group: "swift-dependencies"
+      directory: "/"
+  link-check:
+    targets: "--config lychee.toml --root-dir ${{ github.workspace }}/site/dist/client './site/dist/client/**/*.html' README.md"
+    build-site: true
+    site-directory: "site"
+    authenticated-github: false
+    schedule: "0 14 * * 1"
+    concurrency-group: "link-check"
+  codeql:
+    languages: ["swift"]
+    paths: ["Sources/**", "Package.swift", "Package.resolved"]
+    runner: "macos-26"
+    timeout-minutes: 30
+    build-mode: "manual"
+    build-profile: "swift-package"
+  pinprick-audit:
+    advanced-security: "${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}"
+    fail-on-findings: true
+  readme:
+    badges:
+      workflow: "ci.yml"
+      extra:
+        - "[![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)"
+    license:
+      text: |-
+        This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
+
+        The release data in `data/` is licensed separately under [CC-BY-4.0](data/LICENSE).
+
+        Copyright (C) 2026 Patrick Linnane
+exceptions: {}
