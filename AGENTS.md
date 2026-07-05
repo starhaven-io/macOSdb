@@ -148,6 +148,15 @@ Astro site at [macosdb.com](https://macosdb.com), deployed to Cloudflare Workers
 
 Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinned actions, `persist-credentials: false`, scoped GitHub App tokens, signed GraphQL commits. Keep it that way.
 
+### Release flow
+
+- Version bumps: bump `MacosdbVersion.current` in
+  `Sources/macosdb/Version.swift`, commit as `chore: bump version to X.Y.Z`,
+  open a PR.
+- Releases: trigger the Release workflow dispatch after the bump PR merges;
+  `validate-dispatch` requires `main`, then the workflow reads
+  `Sources/macosdb/Version.swift` and creates the tag automatically.
+
 ## Required checks
 
 ```
@@ -173,18 +182,15 @@ Run `just check` (or at minimum `just lint && just test`) before pushing — CI 
 
 ## Commit and PR conventions
 
-### Commits
-
-- Conventional Commits: `type(scope): description` (types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `style`).
-- Sign off every commit with `git commit -s` for DCO (enforced by the `.githooks/commit-msg` hook — run `just install-hooks` once per clone to enable it).
-- When authored with an AI coding agent, add a `Co-Authored-By` trailer after `Signed-off-by`, naming the agent and model. Current examples: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` or `Co-Authored-By: Codex GPT-5 <noreply@openai.com>`. Bump the model version as newer ones ship.
-
-### Git workflow
-
-- Never commit directly to `main` — branch and open a PR.
-- Version bumps: bump `MacosdbVersion.current` in `Sources/macosdb/Version.swift`, commit as `chore: bump version to X.Y.Z`, open a PR.
-- Releases: trigger the Release workflow dispatch after the bump PR merges; `validate-dispatch` requires `main`, then the workflow reads `Sources/macosdb/Version.swift` and creates the tag automatically.
-
-### Pull requests
-
-- PR descriptions are a summary of the changes only — no test-plan sections, no bot attribution, no generated-with footers.
+- Conventional Commits: `type(scope): description`. Valid types: `feat`,
+  `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
+- Sign off every commit with `git commit -s` for DCO (enforced by the
+  `.githooks/commit-msg` hook; run `just install-hooks` once per clone to
+  enable it).
+- When authored with an AI coding agent, add a `Co-Authored-By` trailer after
+  `Signed-off-by`, naming the agent and model. Current example:
+  `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`. Bump the model
+  version as newer ones ship.
+- Never commit directly to `main`; create a feature branch and open a PR.
+- PR descriptions should contain only a concise summary of changes. Do not add
+  test-plan sections, bot attribution, or generated-with footers.
