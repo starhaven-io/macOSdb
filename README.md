@@ -1,9 +1,11 @@
 # macOSdb
 
 <!-- fleet:block badges -->
+
 [![CI](https://github.com/starhaven-io/macOSdb/actions/workflows/ci.yml/badge.svg)](https://github.com/starhaven-io/macOSdb/actions/workflows/ci.yml)
 [![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg)](LICENSE)
 [![Data: CC-BY-4.0](https://img.shields.io/badge/Data-CC--BY--4.0-green.svg)](data/LICENSE)
+
 <!-- fleet:end -->
 
 A CLI and website that catalog which versions of open-source components ship with each macOS and Xcode release.
@@ -172,6 +174,7 @@ Device identification and release metadata sourced from [Apple Support](https://
 Apple, macOS, and related trademarks are property of Apple Inc.
 
 <!-- fleet:block license-section -->
+
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
@@ -179,4 +182,5 @@ This project is licensed under the [GNU Affero General Public License v3.0](LICE
 The release data in `data/` is licensed separately under [CC-BY-4.0](data/LICENSE).
 
 Copyright (C) 2026 Patrick Linnane
+
 <!-- fleet:end -->
