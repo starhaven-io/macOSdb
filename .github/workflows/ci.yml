@@ -23,6 +23,7 @@ jobs:
   generate-matrix:
     name: Generate matrix
     runs-on: ubuntu-slim
+    timeout-minutes: 15
     permissions:
       contents: read
     outputs:
@@ -91,6 +92,7 @@ jobs:
     name: ${{ matrix.name }}
     needs: generate-matrix
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     environment:
       name: ${{ matrix.environment }}
       deployment: false
@@ -108,7 +110,6 @@ jobs:
           fetch-depth: ${{ matrix.fetch_depth || 1 }}
           persist-credentials: false
 
-      # --- Conventional Commits ---
 
       - name: Check PR title
         if: matrix.check == 'commits'
@@ -157,7 +158,6 @@ jobs:
             exit 1
           fi
 
-      # --- Lint ---
 
       - name: Install lint tools
         if: matrix.check == 'lint'
@@ -174,13 +174,11 @@ jobs:
         if: matrix.check == 'lint'
         run: typos
 
-      # --- Lint JSON ---
 
       - name: Lint JSON
         if: matrix.check == 'lint-json'
         run: python3 scripts/lint-json.py
 
-      # --- Site ---
 
       - name: Setup Node
         if: matrix.check == 'site'
@@ -211,7 +209,6 @@ jobs:
         env:
           WRANGLER_SEND_METRICS: "false"
 
-      # --- Tests ---
 
       - name: Test
         if: startsWith(matrix.check, 'test-')
@@ -258,7 +255,6 @@ jobs:
           files: coverage.lcov
           fail_ci_if_error: false
 
-      # --- CodeQL ---
 
       - name: Initialize CodeQL
         if: matrix.check == 'codeql'
@@ -277,7 +273,6 @@ jobs:
         with:
           category: "/language:swift"
 
-      # --- zizmor ---
 
       - name: Run zizmor
         if: matrix.check == 'zizmor'
@@ -289,6 +284,7 @@ jobs:
     name: conclusion
     needs: check
     runs-on: ubuntu-slim
+    timeout-minutes: 15
     if: always()
     steps:
       - name: Result

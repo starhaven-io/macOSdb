@@ -49,6 +49,7 @@ jobs:
   scan:
     name: Scan
     runs-on: scanner
+    timeout-minutes: 60
     permissions:
       contents: read
     outputs:
@@ -292,6 +293,7 @@ jobs:
     name: Publish
     needs: scan
     runs-on: ubuntu-slim
+    timeout-minutes: 60
     environment:
       name: starhaven
       deployment: false
