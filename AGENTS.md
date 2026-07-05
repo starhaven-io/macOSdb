@@ -181,6 +181,7 @@ Run `just check` (or at minimum `just lint && just test`) before pushing — CI 
 - **AEA WKMS 404s have no retry by design** — manual re-dispatch is the chosen fallback.
 
 <!-- fleet:block commit-and-pr-conventions -->
+
 ## Commit and PR conventions
 
 - Conventional Commits: `type(scope): description`. Valid types: `feat`,
@@ -198,4 +199,5 @@ Run `just check` (or at minimum `just lint && just test`) before pushing — CI 
 - Comments must earn their keep: a comment states a constraint or rationale the
   code cannot express. Never add comments that narrate what the code does,
   restate names, or explain a change to its reviewer.
+
 <!-- fleet:end -->
