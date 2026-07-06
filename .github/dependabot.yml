@@ -12,7 +12,7 @@ updates:
       # Fleet pins are owned by the sync; Dependabot never writes them.
       - dependency-name: "starhaven-io/.github/*"
     groups:
-      github-actions:
+      "github-actions":
         patterns:
           - "*"
   - package-ecosystem: "npm"
@@ -22,7 +22,7 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      npm-dependencies:
+      "npm-dependencies":
         patterns:
           - "*"
   - package-ecosystem: "swift"
@@ -32,6 +32,6 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      swift-dependencies:
+      "swift-dependencies":
         patterns:
           - "*"
