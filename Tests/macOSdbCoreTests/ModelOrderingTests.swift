@@ -24,6 +24,39 @@ struct BuildNumberOrderingTests {
     func equalBuilds() {
         #expect(!BuildNumber.less("24G90", "24G90"))
     }
+
+    @Test("Release index descending uses build number after maturity")
+    func releaseIndexDescendingUsesBuildNumberAfterMaturity() {
+        let entries = [
+            entry(build: "20B28", isRC: true, rcNumber: 2),
+            entry(build: "20B5011a", isBeta: true, betaNumber: 2),
+            entry(build: "20B5012d", isBeta: true, betaNumber: 1),
+            entry(build: "20B5022a", isRC: true),
+            entry(build: "20B29")
+        ].sorted(by: ReleaseIndexEntry.versionDescending)
+
+        #expect(entries.map(\.buildNumber) == ["20B29", "20B5022a", "20B28", "20B5012d", "20B5011a"])
+    }
+
+    private func entry(
+        build: String,
+        isBeta: Bool = false,
+        betaNumber: Int? = nil,
+        isRC: Bool = false,
+        rcNumber: Int? = nil
+    ) -> ReleaseIndexEntry {
+        ReleaseIndexEntry(
+            osVersion: "11.0.1",
+            buildNumber: build,
+            releaseName: "Big Sur",
+            releaseDate: "2020-11-01",
+            isBeta: isBeta,
+            betaNumber: betaNumber,
+            isRC: isRC,
+            rcNumber: rcNumber,
+            dataFile: "releases/11/macOS-11.0.1-\(build).json"
+        )
+    }
 }
 
 @Suite("Chip family resolution")
