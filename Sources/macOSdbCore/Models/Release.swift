@@ -315,9 +315,7 @@ private protocol ReleaseOrderingFields {
     var osVersion: String { get }
     var buildNumber: String { get }
     var isBeta: Bool { get }
-    var betaNumber: Int? { get }
     var isRC: Bool { get }
-    var rcNumber: Int? { get }
 }
 
 private enum ReleaseOrdering {
@@ -352,10 +350,10 @@ private enum ReleaseOrdering {
         return (major, minor, patch)
     }
 
-    private static func prereleaseRank<T: ReleaseOrderingFields>(_ release: T) -> (Int, Int) {
-        if release.isBeta { return (0, release.betaNumber ?? 0) }
-        if release.isRC { return (1, release.rcNumber ?? 0) }
-        return (2, 0)
+    private static func prereleaseRank<T: ReleaseOrderingFields>(_ release: T) -> Int {
+        if release.isBeta { return 0 }
+        if release.isRC { return 1 }
+        return 2
     }
 }
 
