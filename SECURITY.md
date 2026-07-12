@@ -13,5 +13,4 @@ investigate it, and coordinate disclosure with you.
 
 ## Supported versions
 
-Security fixes are made against the current `main` branch and the latest released
-version of macOSdb.
+Only the latest released version of macOSdb is supported with security fixes.
