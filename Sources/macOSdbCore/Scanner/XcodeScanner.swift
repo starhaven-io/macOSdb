@@ -17,6 +17,7 @@ package actor XcodeScanner {
         xipURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil
     ) async throws -> Release {
@@ -62,6 +63,7 @@ package actor XcodeScanner {
                 xipURL: xipURL,
                 isBeta: resolvedBeta,
                 betaNumber: resolvedBeta ? betaNumber : nil,
+                betaRevision: resolvedBeta ? betaRevision : nil,
                 isRC: isRC,
                 rcNumber: rcNumber,
                 components: components,

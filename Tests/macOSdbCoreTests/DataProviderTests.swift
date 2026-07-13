@@ -26,6 +26,62 @@ struct DataProviderTests {
         #expect(decoded.dataFile == entry.dataFile)
     }
 
+    @Test("Release metadata round-trip preserves a beta revision")
+    func betaRevisionRoundTrip() throws {
+        let release = Release(
+            osVersion: "27.0",
+            buildNumber: "26A5378n",
+            releaseName: "Golden Gate",
+            isBeta: true,
+            betaNumber: 3,
+            betaRevision: 2
+        )
+        let entry = ReleaseIndexEntry(
+            osVersion: release.osVersion,
+            buildNumber: release.buildNumber,
+            releaseName: release.releaseName,
+            isBeta: release.isBeta,
+            betaNumber: release.betaNumber,
+            betaRevision: release.betaRevision,
+            dataFile: "releases/27/macOS-27.0-26A5378n.json"
+        )
+
+        let decodedRelease = try JSONDecoder().decode(Release.self, from: JSONEncoder().encode(release))
+        let decodedEntry = try JSONDecoder().decode(ReleaseIndexEntry.self, from: JSONEncoder().encode(entry))
+
+        #expect(decodedRelease.betaRevision == 2)
+        #expect(decodedEntry.betaRevision == 2)
+    }
+
+    @Test("Encoding omits an absent beta revision")
+    func absentBetaRevisionIsOmitted() throws {
+        let release = Release(
+            osVersion: "27.0",
+            buildNumber: "26A5378j",
+            releaseName: "Golden Gate",
+            isBeta: true,
+            betaNumber: 3
+        )
+        let entry = ReleaseIndexEntry(
+            osVersion: release.osVersion,
+            buildNumber: release.buildNumber,
+            releaseName: release.releaseName,
+            isBeta: release.isBeta,
+            betaNumber: release.betaNumber,
+            dataFile: "releases/27/macOS-27.0-26A5378j.json"
+        )
+
+        let releaseJSON = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(release)) as? [String: Any]
+        )
+        let entryJSON = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(entry)) as? [String: Any]
+        )
+
+        #expect(releaseJSON["betaRevision"] == nil)
+        #expect(entryJSON["betaRevision"] == nil)
+    }
+
     @Test("Release round-trip encoding")
     func releaseRoundTrip() throws {
         let release = Release(

@@ -5,6 +5,7 @@ interface ReleaseEntry {
   isBeta: boolean;
   isRC: boolean;
   betaNumber?: number;
+  betaRevision?: number;
   rcNumber?: number;
 }
 
@@ -28,6 +29,9 @@ export function displayName(release: ReleaseEntry, includeReleaseName = false, p
   }
   if (release.isBeta && release.betaNumber) {
     name += ` beta ${release.betaNumber}`;
+    if (release.betaRevision) {
+      name += ` v.${release.betaRevision}`;
+    }
   } else if (release.isRC) {
     name += ' RC';
     if (release.rcNumber) {

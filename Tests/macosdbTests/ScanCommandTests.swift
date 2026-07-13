@@ -17,6 +17,7 @@ struct ScanCommandTests {
         #expect(cmd.releaseDate == nil)
         #expect(cmd.beta == false)
         #expect(cmd.betaNumber == nil)
+        #expect(cmd.betaRevision == nil)
         #expect(cmd.rc == false)
         #expect(cmd.rcNumber == nil)
         #expect(cmd.downloadURL == nil)
@@ -37,6 +38,7 @@ struct ScanCommandTests {
             "--release-date", "2025-07-07",
             "--beta",
             "--beta-number", "3",
+            "--beta-revision", "2",
             "--ipsw-url", "https://example.com/x.ipsw",
             "--device-specific",
             "--update-index",
@@ -50,6 +52,7 @@ struct ScanCommandTests {
         #expect(cmd.releaseDate == "2025-07-07")
         #expect(cmd.beta == true)
         #expect(cmd.betaNumber == 3)
+        #expect(cmd.betaRevision == 2)
         #expect(cmd.downloadURL == "https://example.com/x.ipsw")
         #expect(cmd.deviceSpecific == true)
         #expect(cmd.updateIndex == true)
@@ -101,6 +104,24 @@ struct ScanCommandTests {
     func validateRejectsUpdateIndexWithoutReleaseDate() {
         #expect(throws: (any Error).self) {
             _ = try ScanCommand.parse(["archive.ipsw", "--update-index"])
+        }
+    }
+
+    @Test("Parse rejects --beta-revision without --beta-number")
+    func validateRejectsBetaRevisionWithoutNumber() {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.ipsw", "--beta-revision", "2"])
+        }
+    }
+
+    @Test("Parse rejects a first beta revision")
+    func validateRejectsFirstBetaRevision() {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse([
+                "archive.ipsw",
+                "--beta-number", "3",
+                "--beta-revision", "1"
+            ])
         }
     }
 }

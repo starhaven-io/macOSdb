@@ -14,6 +14,7 @@ struct ReleaseSelectionTests {
         version: String = "15.1",
         beta: Bool = false,
         betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
         rc: Bool = false,
         rcNumber: Int? = nil,
         deviceSpecific: Bool = false
@@ -24,6 +25,7 @@ struct ReleaseSelectionTests {
             releaseName: "macOS",
             isBeta: beta,
             betaNumber: betaNumber,
+            betaRevision: betaRevision,
             isRC: rc,
             rcNumber: rcNumber,
             isDeviceSpecific: deviceSpecific,
@@ -68,6 +70,24 @@ struct ReleaseSelectionTests {
             entry("20A5395g", version: "11.0", beta: true, betaNumber: 9)
         ]
         #expect(DataProvider.preferredRelease(among: entries)?.buildNumber == "20A5395g")
+    }
+
+    @Test("Prefers a replacement revision of the same beta")
+    func prefersReplacementBetaRevision() {
+        let entries = [
+            entry("26A5378j", version: "27.0", beta: true, betaNumber: 3),
+            entry("26A5378n", version: "27.0", beta: true, betaNumber: 3, betaRevision: 2)
+        ]
+        #expect(DataProvider.preferredRelease(among: entries)?.buildNumber == "26A5378n")
+    }
+
+    @Test("Uses the build number to break an otherwise identical beta tie")
+    func betaTieUsesBuildNumber() {
+        let entries = [
+            entry("26A5378j", version: "27.0", beta: true, betaNumber: 3),
+            entry("26A5378n", version: "27.0", beta: true, betaNumber: 3)
+        ]
+        #expect(DataProvider.preferredRelease(among: entries)?.buildNumber == "26A5378n")
     }
 
     @Test("Empty input returns nil")

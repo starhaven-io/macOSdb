@@ -9,7 +9,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case productType, osVersion, buildNumber, releaseName, releaseDate
         case ipswFile, ipswURL, xipFile, xipURL
-        case isBeta, betaNumber, isRC, rcNumber, isDeviceSpecific
+        case isBeta, betaNumber, betaRevision, isRC, rcNumber, isDeviceSpecific
         case kernels, components, sdks, minimumOSVersion
     }
 
@@ -24,6 +24,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
     package let xipURL: String?
     package let isBeta: Bool
     package let betaNumber: Int?
+    package let betaRevision: Int?
     package let isRC: Bool
     package let rcNumber: Int?
     package let isDeviceSpecific: Bool
@@ -44,6 +45,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         xipURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
         isDeviceSpecific: Bool = false,
@@ -63,6 +65,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         self.xipURL = xipURL
         self.isBeta = isBeta
         self.betaNumber = betaNumber
+        self.betaRevision = betaRevision
         self.isRC = isRC
         self.rcNumber = rcNumber
         self.isDeviceSpecific = isDeviceSpecific
@@ -137,6 +140,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
             xipURL: xipURL,
             isBeta: isBeta,
             betaNumber: betaNumber,
+            betaRevision: betaRevision,
             isRC: isRC,
             rcNumber: rcNumber,
             isDeviceSpecific: isDeviceSpecific,
@@ -160,6 +164,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         xipURL = try container.decodeIfPresent(String.self, forKey: .xipURL)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
+        betaRevision = try container.decodeIfPresent(Int.self, forKey: .betaRevision)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
         isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
@@ -182,6 +187,7 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         try container.encodeIfPresent(xipURL, forKey: .xipURL)
         try container.encode(isBeta, forKey: .isBeta)
         try container.encodeIfPresent(betaNumber, forKey: .betaNumber)
+        try container.encodeIfPresent(betaRevision, forKey: .betaRevision)
         try container.encode(isRC, forKey: .isRC)
         try container.encodeIfPresent(rcNumber, forKey: .rcNumber)
         if productType != .xcode {
@@ -197,11 +203,12 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
 }
 
 extension Release {
-    /// Display label for beta releases, e.g. "Developer Beta 3" or "Beta".
+    /// Display label for beta releases, e.g. "Developer Beta 3 v.2" or "Beta".
     package var betaLabel: String? {
         guard isBeta else { return nil }
         if let betaNumber {
-            return "Developer Beta \(betaNumber)"
+            let revision = betaRevision.map { " v.\($0)" } ?? ""
+            return "Developer Beta \(betaNumber)\(revision)"
         }
         return "Beta"
     }
@@ -213,7 +220,7 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case productType, osVersion, buildNumber, releaseName, releaseDate
-        case isBeta, betaNumber, isRC, rcNumber, isDeviceSpecific
+        case isBeta, betaNumber, betaRevision, isRC, rcNumber, isDeviceSpecific
         case dataFile
     }
 
@@ -224,6 +231,7 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
     package let releaseDate: String?
     package let isBeta: Bool
     package let betaNumber: Int?
+    package let betaRevision: Int?
     package let isRC: Bool
     package let rcNumber: Int?
     package let isDeviceSpecific: Bool
@@ -242,6 +250,7 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         releaseDate: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
         isDeviceSpecific: Bool = false,
@@ -254,6 +263,7 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         self.releaseDate = releaseDate
         self.isBeta = isBeta
         self.betaNumber = betaNumber
+        self.betaRevision = betaRevision
         self.isRC = isRC
         self.rcNumber = rcNumber
         self.isDeviceSpecific = isDeviceSpecific
@@ -269,6 +279,7 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         releaseDate = try container.decodeIfPresent(String.self, forKey: .releaseDate)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
+        betaRevision = try container.decodeIfPresent(Int.self, forKey: .betaRevision)
         isRC = try container.decodeIfPresent(Bool.self, forKey: .isRC) ?? false
         rcNumber = try container.decodeIfPresent(Int.self, forKey: .rcNumber)
         isDeviceSpecific = try container.decodeIfPresent(Bool.self, forKey: .isDeviceSpecific) ?? false
@@ -284,6 +295,7 @@ package struct ReleaseIndexEntry: Codable, Identifiable, Hashable, Sendable {
         try container.encodeIfPresent(releaseDate, forKey: .releaseDate)
         try container.encode(isBeta, forKey: .isBeta)
         try container.encodeIfPresent(betaNumber, forKey: .betaNumber)
+        try container.encodeIfPresent(betaRevision, forKey: .betaRevision)
         try container.encode(isRC, forKey: .isRC)
         try container.encodeIfPresent(rcNumber, forKey: .rcNumber)
         if resolvedProductType != .xcode {

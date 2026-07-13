@@ -39,6 +39,7 @@ package actor IPSWScanner {
         ipswURL: String? = nil,
         isBeta: Bool? = nil,
         betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
         isRC: Bool = false,
         rcNumber: Int? = nil,
         isDeviceSpecific: Bool = false,
@@ -87,7 +88,8 @@ package actor IPSWScanner {
                 ipswURL: ipswURL,
 
                 isBeta: resolvedBeta,
-                betaNumber: betaNumber,
+                betaNumber: resolvedBeta ? betaNumber : nil,
+                betaRevision: resolvedBeta ? betaRevision : nil,
                 isRC: isRC,
                 rcNumber: rcNumber,
                 isDeviceSpecific: isDeviceSpecific,

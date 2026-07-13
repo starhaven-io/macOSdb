@@ -89,16 +89,24 @@ package actor DataProvider {
     /// device-specific 24B2083 ahead of the GA 24B83 — so a naive first match would
     /// resolve `show`/`compare` to the wrong build.
     static func preferredRelease(among entries: [ReleaseIndexEntry]) -> ReleaseIndexEntry? {
-        entries.max { selectionRank($0) < selectionRank($1) }
+        entries.max { lhs, rhs in
+            let lhsRank = selectionRank(lhs)
+            let rhsRank = selectionRank(rhs)
+            if lhsRank != rhsRank {
+                return lhsRank < rhsRank
+            }
+            return BuildNumber.less(lhs.buildNumber, rhs.buildNumber)
+        }
     }
 
     /// Ranking key (higher is preferred). The first element orders GA > RC > beta and,
-    /// within a maturity tier, universal > device-specific; the second breaks ties
-    /// toward the later prerelease.
-    private static func selectionRank(_ entry: ReleaseIndexEntry) -> (Int, Int) {
+    /// within a maturity tier, universal > device-specific; the remaining elements
+    /// break ties toward the later prerelease and replacement revision.
+    private static func selectionRank(_ entry: ReleaseIndexEntry) -> (Int, Int, Int) {
         let maturity = entry.isBeta ? 0 : (entry.isRC ? 1 : 2)
         let universal = entry.isDeviceSpecific ? 0 : 1
-        return (maturity * 2 + universal, entry.betaNumber ?? entry.rcNumber ?? 0)
+        let revision = entry.isBeta ? entry.betaRevision ?? 1 : 0
+        return (maturity * 2 + universal, entry.betaNumber ?? entry.rcNumber ?? 0, revision)
     }
 
     private func validateResponse(_ response: URLResponse, url: URL) throws {

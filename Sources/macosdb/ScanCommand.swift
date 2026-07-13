@@ -26,6 +26,9 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
     @Option(name: .long, help: "Developer beta number (e.g. 3 for \"Developer Beta 3\").")
     var betaNumber: Int?
 
+    @Option(name: .long, help: "Replacement revision of a numbered beta (e.g. 2 for \"Developer Beta 3 v.2\").")
+    var betaRevision: Int?
+
     @Flag(name: .long, help: "Mark as a Release Candidate.")
     var rc = false
 
@@ -59,6 +62,12 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         }
         if let releaseDate, releaseDate.wholeMatch(of: /\d{4}-\d{2}-\d{2}/) == nil {
             throw ValidationError("--release-date must be ISO 8601 (YYYY-MM-DD), got '\(releaseDate)'")
+        }
+        if betaRevision != nil, betaNumber == nil {
+            throw ValidationError("--beta-revision requires --beta-number")
+        }
+        if let betaRevision, betaRevision < 2 {
+            throw ValidationError("--beta-revision must be 2 or greater")
         }
     }
 
@@ -140,6 +149,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
                 ipswURL: downloadURL,
                 isBeta: (beta || betaNumber != nil) ? true : nil,
                 betaNumber: betaNumber,
+                betaRevision: betaRevision,
                 isRC: rc || rcNumber != nil,
                 rcNumber: rcNumber,
                 isDeviceSpecific: deviceSpecific,
@@ -202,6 +212,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
                 xipURL: downloadURL,
                 isBeta: beta || betaNumber != nil,
                 betaNumber: betaNumber,
+                betaRevision: betaRevision,
                 isRC: rc || rcNumber != nil,
                 rcNumber: rcNumber
             )
@@ -321,6 +332,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
             releaseDate: release.releaseDate,
             isBeta: release.isBeta,
             betaNumber: release.betaNumber,
+            betaRevision: release.betaRevision,
             isRC: release.isRC,
             rcNumber: release.rcNumber,
             isDeviceSpecific: release.isDeviceSpecific,

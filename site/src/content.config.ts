@@ -13,6 +13,7 @@ const releaseIndexBaseSchema = z.object({
   isBeta: z.boolean(),
   isRC: z.boolean(),
   betaNumber: z.number().optional(),
+  betaRevision: z.number().optional(),
   rcNumber: z.number().optional(),
   dataFile: z.string(),
 });
@@ -52,6 +53,7 @@ const releaseDetailBaseSchema = z.object({
   isBeta: z.boolean(),
   isRC: z.boolean(),
   betaNumber: z.number().optional(),
+  betaRevision: z.number().optional(),
   rcNumber: z.number().optional(),
   components: z.array(componentSchema),
 });

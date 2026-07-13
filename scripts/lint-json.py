@@ -35,14 +35,14 @@ XCODE_REQUIRED = SHARED_REQUIRED + ["xipFile", "xipURL", "minimumOSVersion", "sd
 MACOS_ALLOWED = {
     "buildNumber", "osVersion", "releaseDate", "releaseName",
     "productType", "isBeta", "isRC", "isDeviceSpecific",
-    "ipswFile", "ipswURL", "betaNumber", "rcNumber",
+    "ipswFile", "ipswURL", "betaNumber", "betaRevision", "rcNumber",
     "components", "kernels",
 }
 XCODE_ALLOWED = {
     "buildNumber", "osVersion", "releaseDate", "releaseName",
     "productType", "isBeta", "isRC",
     "xipFile", "xipURL", "minimumOSVersion", "sdks",
-    "betaNumber", "rcNumber", "components",
+    "betaNumber", "betaRevision", "rcNumber", "components",
 }
 
 INDEX_SHARED_REQUIRED = [
@@ -56,7 +56,7 @@ XCODE_INDEX_REQUIRED = INDEX_SHARED_REQUIRED
 PARITY_FIELDS = [
     "osVersion", "releaseDate", "releaseName",
     "isBeta", "isRC", "productType",
-    "betaNumber", "rcNumber",
+    "betaNumber", "betaRevision", "rcNumber",
 ]
 
 MACOS_PARITY_FIELDS = PARITY_FIELDS + ["isDeviceSpecific"]
@@ -302,8 +302,17 @@ def validate_releases(product, catalog):
                     warn(f"{f.name}: isBeta is true but betaNumber is missing")
                 elif not isinstance(bn, int) or bn < 1:
                     error(f"{f.name}: betaNumber should be a positive integer, got {bn!r}")
+
+                revision = d.get("betaRevision")
+                if revision is not None:
+                    if bn is None:
+                        error(f"{f.name}: betaRevision requires betaNumber")
+                    if not isinstance(revision, int) or isinstance(revision, bool) or revision < 2:
+                        error(f"{f.name}: betaRevision should be an integer of 2 or greater, got {revision!r}")
             elif d.get("betaNumber") is not None:
                 error(f"{f.name}: betaNumber set but isBeta is false")
+            elif d.get("betaRevision") is not None:
+                error(f"{f.name}: betaRevision set but isBeta is false")
 
             if is_rc:
                 rn = d.get("rcNumber")
