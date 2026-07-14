@@ -209,10 +209,19 @@ jobs:
             mv "${IPSW_FILE}.part" "${IPSW_FILE}"
           fi
 
-      - name: Set IPSW modification time to release date
+      - name: Set or verify IPSW modification time
         run: |
-          TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
-          touch -t "${TOUCH_DATE}" "${IPSW_FILE}"
+          if [[ "$(stat -f '%Sf' "${IPSW_FILE}")" == *uchg* ]]; then
+            ARCHIVE_DATE=$(stat -f '%Sm' -t '%Y-%m-%d' "${IPSW_FILE}")
+            if [[ "${ARCHIVE_DATE}" != "${RELEASE_DATE}" ]]; then
+              echo "::error::Cached IPSW is immutable with modification date ${ARCHIVE_DATE}; expected ${RELEASE_DATE}. Re-dispatch with release_date=${ARCHIVE_DATE}, or unlock and correct the archive if that date is wrong."
+              exit 1
+            fi
+            echo "IPSW already immutable with release-date mtime ${ARCHIVE_DATE}, leaving unchanged"
+          else
+            TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
+            touch -t "${TOUCH_DATE}" "${IPSW_FILE}"
+          fi
 
       - name: Scan IPSW
         env:
@@ -261,7 +270,11 @@ jobs:
 
       - name: Lock archive files
         run: |
-          touch -r "${IPSW_FILE}" "${IPSW_FILE}.sha256"
+          if [[ "$(stat -f '%Sf' "${IPSW_FILE}.sha256")" == *uchg* ]]; then
+            echo "SHA-256 sidecar already immutable, preserving its mtime"
+          else
+            touch -r "${IPSW_FILE}" "${IPSW_FILE}.sha256"
+          fi
           for f in "${IPSW_FILE}" "${IPSW_FILE}.pem" "${IPSW_FILE}.sha256"; do
             [[ -f "$f" ]] && chflags uchg "$f"
           done
