@@ -28,7 +28,10 @@ let package = Package(
         ),
         .testTarget(
             name: "macOSdbCoreTests",
-            dependencies: ["macOSdbCore"],
+            dependencies: [
+                "macOSdbCore",
+                .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+            ],
             resources: [.copy("Fixtures")]
         ),
         .testTarget(
