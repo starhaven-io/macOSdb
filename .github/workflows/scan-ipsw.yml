@@ -423,20 +423,20 @@ jobs:
             echo "::error::No macOS data changes found after overlaying scan artifact."
             exit 1
           fi
-          ADDITIONS=$(
-            printf '%s\n' "${DIFF_FILES}" |
+          ADDITIONS_FILE="${RUNNER_TEMP}/additions.json"
+          # shellcheck disable=SC2094 # Output is under RUNNER_TEMP, outside data/.
+          printf '%s\n' "${DIFF_FILES}" |
             while IFS= read -r file; do
-              CONTENT=$(base64 < "$file" | tr -d '\n')
               # shellcheck disable=SC2016 # jq needs literal jq variable names.
-              jq -n --arg path "$file" --arg contents "$CONTENT" \
-                '{path: $path, contents: $contents}'
-            done | jq -s .
-          )
+              base64 < "$file" | tr -d '\n' |
+                jq -Rs --arg path "$file" '{path: $path, contents: .}'
+            done | jq -s . > "${ADDITIONS_FILE}"
 
           gh api "repos/${REPOSITORY}/git/refs" -X POST \
             -f "ref=refs/heads/${BRANCH}" \
             -f "sha=${BASE_SHA}"
 
+          REQUEST_FILE="${RUNNER_TEMP}/create-commit.json"
           # shellcheck disable=SC2016 # jq needs literal GraphQL variable names.
           jq -n \
             --arg repo "${REPOSITORY}" \
@@ -444,18 +444,19 @@ jobs:
             --arg title "${TITLE}" \
             --arg body "${COMMIT_BODY}" \
             --arg head "${BASE_SHA}" \
-            --argjson additions "${ADDITIONS}" \
+            --slurpfile additions "${ADDITIONS_FILE}" \
             '{
               query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid url } } }",
               variables: {
                 input: {
                   branch: { repositoryNameWithOwner: $repo, branchName: $branch },
                   message: { headline: $title, body: $body },
-                  fileChanges: { additions: $additions },
+                  fileChanges: { additions: $additions[0] },
                   expectedHeadOid: $head
                 }
               }
-            }' | gh api graphql --input -
+            }' > "${REQUEST_FILE}"
+          gh api graphql --input "${REQUEST_FILE}"
 
           PR_URL=$(gh pr create \
             --base main \
