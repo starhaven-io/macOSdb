@@ -27,11 +27,15 @@ export const GET: APIRoute = async ({ props }) => {
     isBeta: boolean;
     isRC: boolean;
     betaNumber?: number;
+    betaRevision?: number;
   };
 
   let title = `macOS ${release.osVersion} ${release.releaseName}`;
   if (release.isBeta && release.betaNumber) {
     title += ` beta ${release.betaNumber}`;
+    if (release.betaRevision) {
+      title += ` v.${release.betaRevision}`;
+    }
   } else if (release.isRC) {
     title += ' RC';
   }

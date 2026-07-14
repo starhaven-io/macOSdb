@@ -20,6 +20,10 @@ on:
         description: "Beta number (e.g. 3)"
         required: false
         type: string
+      beta_revision:
+        description: "Replacement beta revision (e.g. 2 for beta 3 v.2)"
+        required: false
+        type: string
       rc:
         description: "Is this a Release Candidate?"
         required: false
@@ -215,6 +219,7 @@ jobs:
           IPSW_URL: ${{ inputs.ipsw_url }}
           IS_BETA: ${{ inputs.beta }}
           BETA_NUMBER: ${{ inputs.beta_number }}
+          BETA_REVISION: ${{ inputs.beta_revision }}
           IS_RC: ${{ inputs.rc }}
           RC_NUMBER: ${{ inputs.rc_number }}
           IS_DEVICE_SPECIFIC: ${{ inputs.device_specific }}
@@ -233,6 +238,9 @@ jobs:
           fi
           if [[ -n "${BETA_NUMBER}" ]]; then
             SCAN_ARGS+=(--beta-number "${BETA_NUMBER}")
+          fi
+          if [[ -n "${BETA_REVISION}" ]]; then
+            SCAN_ARGS+=(--beta-revision "${BETA_REVISION}")
           fi
           if [[ "${IS_RC}" == "true" ]]; then
             SCAN_ARGS+=(--rc)

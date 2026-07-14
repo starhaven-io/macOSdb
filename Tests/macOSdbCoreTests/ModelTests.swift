@@ -86,6 +86,19 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(release.displayName == "macOS 15.6.1 Sequoia")
     }
 
+    @Test("Replacement beta displayName includes its revision")
+    func replacementBetaDisplayName() {
+        let release = Release(
+            osVersion: "27.0",
+            buildNumber: "26A5378n",
+            releaseName: "Golden Gate",
+            isBeta: true,
+            betaNumber: 3,
+            betaRevision: 2
+        )
+        #expect(release.displayName == "macOS 27.0 Golden Gate Developer Beta 3 v.2")
+    }
+
     @Test("Release sorting — newer versions sort higher")
     func releaseSorting() {
         let older = Release(osVersion: "14.6.1", buildNumber: "23G93", releaseName: "Sonoma")
