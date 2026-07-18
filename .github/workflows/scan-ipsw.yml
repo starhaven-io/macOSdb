@@ -1,5 +1,9 @@
 name: Scan IPSW
 
+# The dispatching client locates its run by this id in the run-name;
+# removing the marker forces it back to a fragile createdAt guess.
+run-name: "Scan IPSW${{ inputs.dispatch_id && format(' [{0}]', inputs.dispatch_id) || '' }}"
+
 on:
   workflow_dispatch:
     inputs:
@@ -38,6 +42,10 @@ on:
         required: false
         type: boolean
         default: false
+      dispatch_id:
+        description: "Opaque token echoed into run-name so the dispatching client can match this run. Set automatically on dispatch; leave blank for manual runs."
+        required: false
+        type: string
 
 defaults:
   run:
