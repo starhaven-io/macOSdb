@@ -64,6 +64,12 @@ site-format-check:
 site-install:
     cd site && npm ci --strict-allow-scripts
 
+# fleet:block npm-policy
+# Verify every dependency install script is denied or exactly approved
+npm-policy:
+    node scripts/check-npm-install-policy.mjs site
+# fleet:end
+
 # Preview the built site
 site-preview:
     cd site && npm run preview
@@ -90,6 +96,7 @@ check:
         echo "--- $1 --- skipped ($2 not found)"
         skipped+=("$2 (brew install $3)")
     }
+    run node scripts/check-npm-install-policy.mjs site
     if command -v swiftlint &>/dev/null; then
         run swiftlint --strict
     else
