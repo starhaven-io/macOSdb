@@ -157,6 +157,10 @@ just site-format        # Format site files with Prettier
 just site-format-check  # Check site formatting
 ```
 
+The site's current dependency install scripts are explicitly denied. `just
+npm-policy` verifies the lockfile policy, and clean installs fail if a new
+script-bearing dependency has not been reviewed.
+
 ## Contributing
 
 Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format and include a DCO sign-off (`git commit -s`). Run `just install-hooks` once per clone to enable the git hooks (a pre-push `just check` and DCO sign-off enforcement).

@@ -40,9 +40,9 @@
     }
   },
   "allowScripts": {
-    "esbuild": true,
-    "fsevents": true,
-    "sharp": true,
-    "workerd": true
+    "esbuild": false,
+    "fsevents": false,
+    "sharp": false,
+    "workerd": false
   }
 }

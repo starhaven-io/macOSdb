@@ -169,6 +169,7 @@ just periphery                  # unused-code scan (local only; not in CI)
 just test-cov                   # swift test --enable-code-coverage
 just check                      # lint, lint-json, typos, audit, periphery, swift test, site format + build
 just site-dev / site-build      # Astro dev server / production build (in site/)
+just npm-policy                 # Verify dependency install-script policy
 just lychee                     # broken-link check on the built site
 ```
 
