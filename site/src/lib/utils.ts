@@ -135,7 +135,10 @@ export interface KernelSummary {
  * Returns [generation, tierRank] for sorting (higher generation first,
  * base < Pro < Max < Ultra within a generation).
  */
-function chipSortKey(chip: string): [number, number] {
+export function chipSortKey(chip: string): [number, number] {
+  // A18 Pro is the entry tier in the Mac17/M5 family.
+  if (chip === 'A18 Pro') return [5, 4];
+
   const match = chip.match(/^M(\d+)\s*(Pro|Max|Ultra)?$/);
   if (!match) {
     if (chip.includes('Virtual')) return [0, 0];
@@ -202,7 +205,7 @@ export function compareVersions(from: string, to: string): 'upgraded' | 'downgra
   return 'unchanged';
 }
 
-interface DatedRelease {
+export interface DatedRelease {
   osVersion: string;
   buildNumber: string;
   releaseDate: string;
@@ -214,13 +217,13 @@ interface DatedRelease {
  * Order Apple build numbers within a train numerically, e.g. 25F71 < 25F5068a.
  * Splits "25F5068a" into [cycle 25, train "F", build 5068, suffix "a"].
  */
-function parseBuild(build: string): [number, string, number, string] {
-  const m = build.match(/^(\d+)([A-Za-z]+)(\d+)(.*)$/);
+export function parseBuild(build: string): [number, string, number, string] {
+  const m = build.match(/^(\d*)([A-Za-z]*)(\d*)(.*)$/);
   if (!m) return [0, '', 0, build];
-  return [Number(m[1]), m[2], Number(m[3]), m[4]];
+  return [Number(m[1]) || 0, m[2], Number(m[3]) || 0, m[4]];
 }
 
-function compareBuilds(a: string, b: string): number {
+export function compareBuilds(a: string, b: string): number {
   const [aCycle, aTrain, aBuild, aSuffix] = parseBuild(a);
   const [bCycle, bTrain, bBuild, bSuffix] = parseBuild(b);
   if (aCycle !== bCycle) return aCycle - bCycle;
@@ -244,6 +247,17 @@ export function compareReleasesByRecency(a: DatedRelease, b: DatedRelease): numb
   const byVersion = compareParsedVersions(bv, av);
   if (byVersion !== 0) return byVersion;
   return compareBuilds(b.buildNumber, a.buildNumber);
+}
+
+export function pickLatestReleases<T extends DatedRelease>(releases: T[]): { ga: T | null; prerelease: T | null } {
+  const sorted = [...releases].sort(compareReleasesByRecency);
+  const ga = sorted.find((release) => !release.isBeta && !release.isRC) ?? null;
+  const newestPrerelease = sorted.find((release) => release.isBeta || release.isRC) ?? null;
+  const prerelease =
+    newestPrerelease && (!ga || compareVersions(ga.osVersion, newestPrerelease.osVersion) === 'upgraded')
+      ? newestPrerelease
+      : null;
+  return { ga, prerelease };
 }
 
 /**

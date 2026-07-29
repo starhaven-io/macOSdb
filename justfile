@@ -33,6 +33,10 @@ lint:
 lint-json:
     python3 scripts/lint-json.py
 
+# Test repository scripts
+test-scripts:
+    python3 -m unittest discover -s scripts/tests
+
 # Scan for unused code. native build system (deprecated): swiftbuild emits no index store Periphery can find.
 periphery:
     swift build --build-tests --build-system native
@@ -51,6 +55,10 @@ site-build:
 # Start the site dev server
 site-dev:
     cd site && npm run dev
+
+# Run site unit tests
+site-test:
+    cd site && npm test
 
 # Format site files with Prettier
 site-format:
@@ -103,6 +111,7 @@ check:
         skip lint swiftlint swiftlint
     fi
     run python3 scripts/lint-json.py
+    run python3 -m unittest discover -s scripts/tests
     if command -v typos &>/dev/null; then
         run typos
     else
@@ -123,6 +132,8 @@ check:
     run swift test
     echo "--- site-format-check ---"
     (cd site && npm run format:check) || failed=1
+    echo "--- site-test ---"
+    (cd site && npm test) || failed=1
     echo "--- site-build ---"
     (cd site && npm run build) || failed=1
     echo "--- site-deploy-dry ---"

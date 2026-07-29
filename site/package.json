@@ -11,6 +11,7 @@
     "prebuild": "node scripts/check-security-headers.mjs",
     "build": "astro build",
     "preview": "astro preview",
+    "test": "node --test 'test/*.test.ts'",
     "astro": "astro",
     "deploy": "wrangler deploy --config dist/server/wrangler.json",
     "deploy:dry": "npm run deploy -- --dry-run",

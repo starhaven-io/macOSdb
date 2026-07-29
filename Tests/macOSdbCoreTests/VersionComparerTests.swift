@@ -55,6 +55,9 @@ struct VersionComparerTests {
         #expect(VersionComparer.compareVersionStrings(
             "2.9.13 (beta)", "2.12.9 (release)"
         ) == .upgraded)
+        #expect(VersionComparer.compareVersionStrings(
+            "2.0 (a) p1 (b)", "2.0 p1"
+        ) == .unchanged)
     }
 
     @Test("Two-component version")

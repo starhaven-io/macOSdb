@@ -1,0 +1,39 @@
+{
+  "comment": "Shared ordering vectors for Swift, TypeScript, and Python implementations.",
+  "osVersions": [
+    { "lhs": "11.0", "rhs": "11.0.1", "expected": "lt" },
+    { "lhs": "11.0", "rhs": "11.0.0", "expected": "eq" },
+    { "lhs": "15.9", "rhs": "15.10", "expected": "lt" },
+    { "lhs": "12.6.1", "rhs": "12.7", "expected": "lt" },
+    { "lhs": "26.1", "rhs": "27.0", "expected": "lt" },
+    { "lhs": "14.7.1", "rhs": "14.7.1", "expected": "eq" },
+    { "lhs": "13.7.10", "rhs": "13.7.9", "expected": "gt" }
+  ],
+  "componentVersions": [
+    { "lhs": "8.7.1", "rhs": "8.7.4", "expected": "lt" },
+    { "lhs": "9.8p1", "rhs": "9.8p2", "expected": "lt" },
+    { "lhs": "9.8", "rhs": "9.8p1", "expected": "lt" },
+    { "lhs": "1.0", "rhs": "1.0a", "expected": "lt" },
+    { "lhs": "1.0A", "rhs": "1.0a", "expected": "eq" },
+    { "lhs": "1.0.0", "rhs": "1.0", "expected": "eq" },
+    { "lhs": "v1.2", "rhs": "1.2", "expected": "eq" },
+    { "lhs": "3.2.57(1)", "rhs": "3.2.57", "expected": "eq" },
+    { "lhs": "1.1.1 (compat)", "rhs": "1.1.1", "expected": "eq" },
+    { "lhs": "2.0 (a) p1 (b)", "rhs": "2.0 p1", "expected": "eq" },
+    { "lhs": "5.9 (build 21G72)", "rhs": "5.9 (build 22A100)", "expected": "eq" },
+    { "lhs": "10", "rhs": "9", "expected": "gt" },
+    { "lhs": "2.11.4", "rhs": "2.9.13", "expected": "gt" }
+  ],
+  "builds": [
+    { "lhs": "24B83", "rhs": "24B2083", "expected": "lt" },
+    { "lhs": "20G165", "rhs": "21A5268h", "expected": "lt" },
+    { "lhs": "24A5331a", "rhs": "24A5331b", "expected": "lt" },
+    { "lhs": "24A5331", "rhs": "24A5331a", "expected": "lt" },
+    { "lhs": "25F71", "rhs": "25F5068a", "expected": "lt" },
+    { "lhs": "24B83", "rhs": "24B83", "expected": "eq" },
+    { "lhs": "24B", "rhs": "24B1", "expected": "lt" },
+    { "lhs": "23Z99", "rhs": "24B", "expected": "lt" },
+    { "lhs": "26A5388g", "rhs": "26A5378n", "expected": "gt" },
+    { "lhs": "24D81", "rhs": "24D2082", "expected": "lt" }
+  ]
+}
