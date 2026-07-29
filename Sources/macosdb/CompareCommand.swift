@@ -8,10 +8,10 @@ struct CompareCommand: AsyncParsableCommand {
         abstract: "Compare components between two releases."
     )
 
-    @Argument(help: "First (older) version (e.g. 15.1).")
+    @Argument(help: "First (older) version (e.g. 15.1), or a version-build slug (e.g. 15.1-24B2083).")
     var fromVersion: String
 
-    @Argument(help: "Second (newer) version (e.g. 15.2).")
+    @Argument(help: "Second (newer) version (e.g. 15.2), or a version-build slug.")
     var toVersion: String
 
     @Option(name: .long, help: "Product type: macOS or Xcode (default: macOS).")
@@ -30,8 +30,8 @@ struct CompareCommand: AsyncParsableCommand {
         let productType = try parseProductType(product)
         let provider = try makeDataProvider(dataURL: dataURL)
 
-        async let fromRelease = provider.findRelease(osVersion: fromVersion, productType: productType)
-        async let toRelease = provider.findRelease(osVersion: toVersion, productType: productType)
+        async let fromRelease = resolveRelease(fromVersion, provider: provider, productType: productType)
+        async let toRelease = resolveRelease(toVersion, provider: provider, productType: productType)
 
         guard let from = try await fromRelease else {
             printError("\(productType.displayName) \(fromVersion) not found.")
@@ -49,36 +49,11 @@ struct CompareCommand: AsyncParsableCommand {
             return
         }
 
-        print("Comparing \(from.displayName) → \(toRel.displayName)")
+        print("Comparing \(from.displayName) (\(from.buildNumber)) → \(toRel.displayName) (\(toRel.buildNumber))")
         print(comparison.summary)
         print("")
 
-        let displayChanges = changed ? comparison.changedComponents : comparison.changes
-        if !displayChanges.isEmpty {
-            print(
-                "Component".padding(toLength: 24, withPad: " ", startingAt: 0)
-                    + from.osVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
-                    + toRel.osVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
-                    + "Status"
-            )
-            print(String(repeating: "-", count: 80))
-
-            for change in displayChanges {
-                let symbol: String
-                switch change.direction {
-                case .upgraded: symbol = "↑"
-                case .downgraded: symbol = "↓"
-                case .unchanged: symbol = "="
-                }
-
-                print(
-                    change.name.padding(toLength: 24, withPad: " ", startingAt: 0)
-                        + change.fromVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
-                        + change.toVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
-                        + symbol
-                )
-            }
-        }
+        printChanges(changed ? comparison.changedComponents : comparison.changes, from: from, to: toRel)
 
         if !comparison.addedComponents.isEmpty {
             print("")
@@ -94,6 +69,40 @@ struct CompareCommand: AsyncParsableCommand {
             for comp in comparison.removedComponents {
                 print("  - \(comp.name) \(comp.displayVersion)")
             }
+        }
+    }
+
+    private func printChanges(_ displayChanges: [ComponentChange], from: Release, to toRel: Release) {
+        guard !displayChanges.isEmpty else { return }
+
+        // Two builds of one version share an osVersion, so label those columns
+        // by build instead (e.g. `compare 15.1-24B83 15.1-24B2083`).
+        let sameVersion = from.osVersion == toRel.osVersion
+        let fromLabel = sameVersion ? from.buildNumber : from.osVersion
+        let toLabel = sameVersion ? toRel.buildNumber : toRel.osVersion
+
+        print(
+            "Component".padding(toLength: 24, withPad: " ", startingAt: 0)
+                + fromLabel.padding(toLength: 20, withPad: " ", startingAt: 0)
+                + toLabel.padding(toLength: 20, withPad: " ", startingAt: 0)
+                + "Status"
+        )
+        print(String(repeating: "-", count: 80))
+
+        for change in displayChanges {
+            let symbol: String
+            switch change.direction {
+            case .upgraded: symbol = "↑"
+            case .downgraded: symbol = "↓"
+            case .unchanged: symbol = "="
+            }
+
+            print(
+                change.name.padding(toLength: 24, withPad: " ", startingAt: 0)
+                    + change.fromVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
+                    + change.toVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
+                    + symbol
+            )
         }
     }
 

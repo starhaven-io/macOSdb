@@ -44,6 +44,35 @@ nonisolated func writeJSON<T: Encodable>(_ value: T) throws {
     FileHandle.standardOutput.write(data)
 }
 
+/// Resolves a plain version, a version-build slug, or an explicit build.
+nonisolated func resolveRelease(
+    _ spec: String,
+    build: String? = nil,
+    provider: DataProvider,
+    productType: ProductType
+) async throws -> Release? {
+    if let build {
+        return try await provider.findRelease(
+            osVersion: spec, buildNumber: build, productType: productType
+        )
+    }
+
+    if let dashIndex = spec.firstIndex(of: "-") {
+        let version = String(spec[..<dashIndex])
+        let buildPart = String(spec[spec.index(after: dashIndex)...])
+        guard !version.isEmpty, !buildPart.isEmpty else {
+            throw ValidationError(
+                "Invalid release spec '\(spec)'. Use 'version' or 'version-build' (e.g. 15.1-24B83)."
+            )
+        }
+        return try await provider.findRelease(
+            osVersion: version, buildNumber: buildPart, productType: productType
+        )
+    }
+
+    return try await provider.findRelease(osVersion: spec, productType: productType)
+}
+
 /// Parses a product type from the CLI `--product` option. Accepts case-insensitive
 /// "macOS"/"xcode", defaults to `.macOS` when nil, and throws on an unrecognized
 /// value rather than silently defaulting (which fed scripts the wrong product).

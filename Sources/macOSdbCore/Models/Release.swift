@@ -124,7 +124,19 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
     }
 
     package func component(named name: String) -> Component? {
-        components.first { $0.name.lowercased() == name.lowercased() }
+        let target = name.lowercased()
+        if let exact = components.first(where: { $0.name.lowercased() == target }) {
+            return exact
+        }
+        let strippedTarget = Self.strippingParenthetical(target)
+        return components.first {
+            Self.strippingParenthetical($0.name.lowercased()) == strippedTarget
+        }
+    }
+
+    private static func strippingParenthetical(_ name: String) -> String {
+        name.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
     }
 
     package func withComponents(_ components: [Component]) -> Self {

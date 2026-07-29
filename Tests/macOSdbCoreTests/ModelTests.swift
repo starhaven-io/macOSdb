@@ -127,13 +127,16 @@ struct ModelTests { // swiftlint:disable:this type_body_length
             releaseName: "Sequoia",
             components: [
                 Component(name: "curl", version: "8.7.1", path: "/usr/bin/curl"),
-                Component(name: "OpenSSH", version: "9.9p2", path: "/usr/bin/ssh")
+                Component(name: "OpenSSH", version: "9.9p2", path: "/usr/bin/ssh"),
+                Component(name: "libbz2 (bzip2)", version: "1.0.8", path: "/usr/lib/libbz2.dylib")
             ]
         )
 
         #expect(release.component(named: "curl")?.version == "8.7.1")
         #expect(release.component(named: "CURL")?.version == "8.7.1")
         #expect(release.component(named: "openssh")?.version == "9.9p2")
+        #expect(release.component(named: "libbz2")?.version == "1.0.8")
+        #expect(release.component(named: "libbz2 (bzip2)")?.version == "1.0.8")
         #expect(release.component(named: "nonexistent") == nil)
     }
 

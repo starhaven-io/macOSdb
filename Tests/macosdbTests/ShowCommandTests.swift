@@ -10,11 +10,19 @@ struct ShowCommandTests {
         let cmd = try ShowCommand.parse(["15.6.1"])
 
         #expect(cmd.version == "15.6.1")
+        #expect(cmd.build == nil)
         #expect(cmd.product == nil)
         #expect(cmd.component == nil)
         #expect(cmd.detailed == false)
         #expect(cmd.json == false)
         #expect(cmd.dataURL == nil)
+    }
+
+    @Test("Parses an explicit --build")
+    func parsesBuild() throws {
+        let cmd = try ShowCommand.parse(["15.1", "--build", "24B2083"])
+        #expect(cmd.version == "15.1")
+        #expect(cmd.build == "24B2083")
     }
 
     @Test("Parses product, component, detail, JSON, and data URL options")

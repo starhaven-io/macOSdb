@@ -107,8 +107,8 @@ macOSdb/
 
 Built with swift-argument-parser. Subcommands:
 - `list [--major N] [--product macos|xcode] [--json]` — list known releases
-- `show <version> [--component name] [--detailed] [--product] [--json]` — show a release's components
-- `compare <v1> <v2> [--changed] [--product] [--json]` — diff components between releases
+- `show <version|version-build> [--build build] [--component name] [--detailed] [--product] [--json]` — show a release's components
+- `compare <version|version-build> <version|version-build> [--changed] [--product] [--json]` — diff components between releases
 - `scan <archive> [--output dir] [--release-name] [--release-date] [--beta|--beta-number N] [--rc|--rc-number N] [--device-specific] [--ipsw-url|--xip-url URL] [--save-aea-key] [--aea-key path] [--key-only] [--update-index] [--verbose]` — scan an IPSW or `.xip` → release JSON
 - `validate <paths...> [--dir path] [--rehash]` — create SHA-256 sidecars, or verify against existing ones
 - `cleanup [--force]` — unmount stale scan DMGs and delete leftover temp dirs (dry-run by default)
