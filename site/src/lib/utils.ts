@@ -135,7 +135,10 @@ export interface KernelSummary {
  * Returns [generation, tierRank] for sorting (higher generation first,
  * base < Pro < Max < Ultra within a generation).
  */
-function chipSortKey(chip: string): [number, number] {
+export function chipSortKey(chip: string): [number, number] {
+  // A18 Pro is the entry tier in the Mac17/M5 family.
+  if (chip === 'A18 Pro') return [5, 4];
+
   const match = chip.match(/^M(\d+)\s*(Pro|Max|Ultra)?$/);
   if (!match) {
     if (chip.includes('Virtual')) return [0, 0];
