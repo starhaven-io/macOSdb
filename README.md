@@ -56,11 +56,14 @@ macosdb list --product xcode
 macosdb show 15.2
 macosdb show 15.2 --component curl
 macosdb show 15.2 --detailed
+macosdb show 15.1 --build 24B2083
+macosdb show 15.1-24B2083
 macosdb show 16.2 --product xcode
 
 # Compare components between releases
 macosdb compare 15.1 15.2
 macosdb compare 15.1 15.2 --changed
+macosdb compare 15.1-24B83 15.1-24B2083
 macosdb compare 16.1 16.2 --product xcode
 
 # Scan an IPSW to produce release JSON
@@ -79,6 +82,18 @@ macosdb validate --dir /path/to/archive
 macosdb cleanup            # dry run — list what would be removed
 macosdb cleanup --force    # actually unmount and delete
 ```
+
+### Offline and local data
+
+Every read command (`list`, `show`, `compare`) accepts `--data-url` with either an alternative API base URL or a path to a local data directory. This supports offline use, CI, and working directly against the repository's CC-BY-licensed `data/`:
+
+```bash
+git clone https://github.com/starhaven-io/macOSdb
+macosdb list --data-url macOSdb/data
+macosdb show 15.2 --data-url macOSdb/data
+```
+
+The default is the production API at `https://macosdb.com/api/v1/`.
 
 ### Shell completions
 

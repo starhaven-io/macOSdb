@@ -81,6 +81,21 @@ package actor DataProvider {
         return try await fetchRelease(entry)
     }
 
+    /// Fetches one exact build when a version has multiple entries.
+    package func findRelease(
+        osVersion: String,
+        buildNumber: String,
+        productType: ProductType = .macOS
+    ) async throws -> Release? {
+        let index = try await fetchReleaseIndex(for: productType)
+        guard let entry = index.first(where: {
+            $0.osVersion == osVersion && $0.buildNumber == buildNumber
+        }) else {
+            return nil
+        }
+        return try await fetchRelease(entry)
+    }
+
     /// Selects the most representative build among index entries that share an
     /// `osVersion`, preferring a final release over RCs/betas and a universal build
     /// over device-specific re-releases. Returns `nil` for empty input.

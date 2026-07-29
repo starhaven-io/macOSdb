@@ -8,8 +8,11 @@ struct ShowCommand: AsyncParsableCommand {
         abstract: "Show components for a specific release."
     )
 
-    @Argument(help: "Version to show (e.g. 15.6.1).")
+    @Argument(help: "Version to show (e.g. 15.6.1), or a version-build slug (e.g. 15.1-24B2083).")
     var version: String
+
+    @Option(name: .long, help: "Exact build number to show (e.g. 24B2083) when a version has several.")
+    var build: String?
 
     @Option(name: .long, help: "Product type: macOS or Xcode (default: macOS).")
     var product: String?
@@ -23,15 +26,18 @@ struct ShowCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Output as JSON.")
     var json = false
 
-    @Option(name: .long, help: "Base URL for release data (default: GitHub).")
+    @Option(name: .long, help: "Base URL or local data directory for release data (default: https://macosdb.com/api/v1/).")
     var dataURL: String?
 
     func run() async throws {
         let productType = try parseProductType(product)
         let provider = try makeDataProvider(dataURL: dataURL)
 
-        guard let release = try await provider.findRelease(osVersion: version, productType: productType) else {
-            printError("\(productType.displayName) \(version) not found.")
+        guard let release = try await resolveRelease(
+            version, build: build, provider: provider, productType: productType
+        ) else {
+            let spec = build.map { "\(version) (\($0))" } ?? version
+            printError("\(productType.displayName) \(spec) not found.")
             throw ExitCode.failure
         }
 
@@ -86,6 +92,9 @@ struct ShowCommand: AsyncParsableCommand {
 
     private func filteredComponents(_ release: Release) -> [Component] {
         guard let componentFilter = component else { return release.components }
+        if let exact = release.component(named: componentFilter) {
+            return [exact]
+        }
         return release.components.filter { $0.name.lowercased().contains(componentFilter.lowercased()) }
     }
 
