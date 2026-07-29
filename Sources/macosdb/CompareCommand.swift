@@ -23,7 +23,7 @@ struct CompareCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Output as JSON.")
     var json = false
 
-    @Option(name: .long, help: "Base URL for release data (default: GitHub).")
+    @Option(name: .long, help: "Base URL or local data directory for release data (default: https://macosdb.com/api/v1/).")
     var dataURL: String?
 
     func run() async throws {
