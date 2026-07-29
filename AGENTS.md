@@ -163,12 +163,14 @@ Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinne
 just build / just test          # swift build / swift test (core + CLI)
 just lint                       # swiftlint --strict
 just lint-json                  # python3 scripts/lint-json.py (data schema validation)
+just test-scripts               # python3 -m unittest discover -s scripts/tests
 just typos                      # typos
 just audit                      # zizmor --persona auditor .github/workflows/
 just periphery                  # unused-code scan (local only; not in CI)
 just test-cov                   # swift test --enable-code-coverage
-just check                      # lint, lint-json, typos, audit, periphery, swift test, site format + build
+just check                      # lint, script tests, Swift tests, site tests + build, and remaining gates
 just site-dev / site-build      # Astro dev server / production build (in site/)
+just site-test                  # site unit tests (node:test)
 just npm-policy                 # Verify dependency install-script policy
 just lychee                     # broken-link check on the built site
 ```

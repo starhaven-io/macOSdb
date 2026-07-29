@@ -16,6 +16,7 @@ build/
 .swiftpm/
 
 # Tooling
+__pycache__/
 !_typos.toml
 
 # Wrangler

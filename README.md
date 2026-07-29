@@ -120,7 +120,7 @@ site/                   Astro static site — release browser, compare view, com
                         pages, JSON API, OG image generation, full-text search
 Tests/                  Swift Testing
 data/                   Pre-built release JSON (CC-BY-4.0)
-scripts/                JSON linting, release note formatting
+scripts/                JSON linting, release note formatting, script tests
 .github/workflows/      CI (build, lint, test), CodeQL, deploy site, release pipeline
 justfile                Task runner for common operations
 ```
@@ -135,12 +135,13 @@ just clean          # Clean Swift build artifacts
 just test           # Run Swift tests
 just lint           # Run SwiftLint (--strict)
 just lint-json      # Validate JSON data files
+just test-scripts   # Run Python script tests
 just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows (zizmor)
 just periphery      # Scan for unused code
 just test-cov       # Run tests with code coverage
 just lychee         # Check the built site and README for broken links
-just check          # Run all checks (lint, lint-json, typos, audit, periphery, test, site format, site build)
+just check          # Run all checks, including Swift, script, and site tests
 just install-hooks  # Install git hooks: pre-push check + DCO sign-off (once per clone)
 ```
 
@@ -155,6 +156,7 @@ just site-build         # Production build
 just site-preview       # Preview the built site
 just site-format        # Format site files with Prettier
 just site-format-check  # Check site formatting
+just site-test          # Run site unit tests
 ```
 
 The site's current dependency install scripts are explicitly denied. `just
