@@ -78,9 +78,9 @@ package enum VersionComparer {
     }
 
     private static func parseVersion(_ version: String) -> [VersionToken] {
-        // Strip parenthetical suffixes like "(from int 21209)"
+        // Strip each parenthetical group without consuming text between groups.
         let cleaned = version.replacingOccurrences(
-            of: #"\s*\(.*\)"#,
+            of: #"\s*\([^)]*\)"#,
             with: "",
             options: .regularExpression
         ).trimmingCharacters(in: .whitespaces)
