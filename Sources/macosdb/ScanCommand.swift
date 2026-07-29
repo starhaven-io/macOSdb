@@ -305,9 +305,12 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         }
     }
 
-    // MARK: - Index management
+}
 
-    private func updateReleasesIndex(release: Release, outputDir: URL) throws {
+// MARK: - Index management and key sidecars
+
+extension ScanCommand {
+    func updateReleasesIndex(release: Release, outputDir: URL) throws {
         let productType = release.resolvedProductType
         // Index lives alongside the output directory (e.g. data/releases.json for data/releases/)
         // because dataFile paths include the output directory name (e.g. "releases/15/...")
@@ -317,9 +320,16 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
 
         var entries: [ReleaseIndexEntry] = []
 
-        if FileManager.default.fileExists(atPath: indexPath.path),
-           let data = try? Data(contentsOf: indexPath) {
-            entries = (try? JSONDecoder().decode([ReleaseIndexEntry].self, from: data)) ?? []
+        if FileManager.default.fileExists(atPath: indexPath.path) {
+            do {
+                let data = try Data(contentsOf: indexPath)
+                entries = try JSONDecoder().decode([ReleaseIndexEntry].self, from: data)
+            } catch {
+                throw ValidationError(
+                    "Refusing to rewrite \(indexPath.path): the existing index could not be read"
+                        + " (\(error.localizedDescription)). Fix or remove it, then re-run."
+                )
+            }
         }
 
         entries.removeAll { $0.buildNumber == release.buildNumber }

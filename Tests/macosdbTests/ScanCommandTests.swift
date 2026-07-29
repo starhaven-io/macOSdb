@@ -1,4 +1,5 @@
 import Foundation
+import macOSdbCore
 import Testing
 
 @testable import macosdb
@@ -123,5 +124,70 @@ struct ScanCommandTests {
                 "--beta-revision", "1"
             ])
         }
+    }
+
+    // MARK: - Index updates
+
+    private func makeIndexWorkspace() throws -> (root: URL, outputDir: URL, indexPath: URL) {
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("macosdb-index-\(UUID().uuidString)", isDirectory: true)
+        let outputDir = root.appendingPathComponent("releases", isDirectory: true)
+        try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
+        return (root, outputDir, root.appendingPathComponent("releases.json"))
+    }
+
+    @Test("--update-index refuses to rewrite a corrupt index")
+    func updateIndexRefusesCorruptIndex() throws {
+        let (root, outputDir, indexPath) = try makeIndexWorkspace()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let corrupt = "{not valid json"
+        try Data(corrupt.utf8).write(to: indexPath)
+
+        let cmd = try ScanCommand.parse(["archive.ipsw"])
+        let release = Release(osVersion: "15.0", buildNumber: "24A335", releaseName: "Sequoia")
+
+        #expect(throws: (any Error).self) {
+            try cmd.updateReleasesIndex(release: release, outputDir: outputDir)
+        }
+        #expect(try String(contentsOf: indexPath, encoding: .utf8) == corrupt)
+    }
+
+    @Test("--update-index merges and replaces same-build entries")
+    func updateIndexMergesExistingEntries() throws {
+        let (root, outputDir, indexPath) = try makeIndexWorkspace()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let existing = [
+            ReleaseIndexEntry(
+                osVersion: "15.0",
+                buildNumber: "24A335",
+                releaseName: "Sequoia",
+                dataFile: "releases/15/macOS-15.0-24A335.json"
+            ),
+            ReleaseIndexEntry(
+                osVersion: "15.1",
+                buildNumber: "24B83",
+                releaseName: "Sequoia",
+                dataFile: "releases/15/macOS-15.1-24B83.json"
+            )
+        ]
+        try JSONEncoder().encode(existing).write(to: indexPath)
+
+        let cmd = try ScanCommand.parse(["archive.ipsw"])
+        let rescanned = Release(
+            osVersion: "15.1",
+            buildNumber: "24B83",
+            releaseName: "Sequoia",
+            releaseDate: "2024-10-28"
+        )
+        try cmd.updateReleasesIndex(release: rescanned, outputDir: outputDir)
+
+        let updated = try JSONDecoder().decode(
+            [ReleaseIndexEntry].self, from: Data(contentsOf: indexPath)
+        )
+        #expect(updated.count == 2)
+        #expect(updated.map(\.buildNumber) == ["24B83", "24A335"])
+        #expect(updated.first?.releaseDate == "2024-10-28")
     }
 }
