@@ -83,6 +83,18 @@ macosdb cleanup            # dry run — list what would be removed
 macosdb cleanup --force    # actually unmount and delete
 ```
 
+### Offline and local data
+
+Every read command (`list`, `show`, `compare`) accepts `--data-url` with either an alternative API base URL or a path to a local data directory. This supports offline use, CI, and working directly against the repository's CC-BY-licensed `data/`:
+
+```bash
+git clone https://github.com/starhaven-io/macOSdb
+macosdb list --data-url macOSdb/data
+macosdb show 15.2 --data-url macOSdb/data
+```
+
+The default is the production API at `https://macosdb.com/api/v1/`.
+
 ### Shell completions
 
 Generate completions for your shell:
