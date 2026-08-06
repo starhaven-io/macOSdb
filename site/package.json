@@ -19,11 +19,11 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.1.6",
-    "@astrojs/compiler-rs": "^0.3.1",
+    "@astrojs/cloudflare": "^14.1.7",
+    "@astrojs/compiler-rs": "^0.3.2",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource/inter": "^5.3.0",
-    "astro": "^7.1.5",
+    "astro": "^7.1.6",
     "astro-pagefind": "^2.0.1",
     "satori": "^0.29.0",
     "satori-html": "^0.3.2",
