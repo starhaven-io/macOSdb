@@ -70,31 +70,20 @@ package actor IPSWScanner {
             let components = try await decryptMountAndExtract(extraction: extraction, aeaKeyPEM: aeaKeyPEM)
             try Task.checkCancellation()
 
-            // Phase 6: Assemble the Release
-            sendProgress(.assemblingResults)
-            let resolvedName = releaseName ?? MacOSRelease.name(
-                forMajorVersion: Int(extraction.osVersion.split(separator: ".").first ?? "") ?? 0
-            )
-
-            let resolvedBeta = isRC ? false : (isBeta ?? BuildNumber.isBeta(extraction.buildNumber))
-
-            release = Release(
-                productType: .macOS,
-                osVersion: extraction.osVersion,
-                buildNumber: extraction.buildNumber,
-                releaseName: resolvedName,
+            release = assembleRelease(
+                extraction: extraction,
+                kernels: kernels,
+                components: components,
+                sourceFilename: ipswPath.lastPathComponent,
+                releaseName: releaseName,
                 releaseDate: releaseDate,
-                ipswFile: ipswURL.flatMap { URL(string: $0)?.lastPathComponent } ?? ipswPath.lastPathComponent,
                 ipswURL: ipswURL,
-
-                isBeta: resolvedBeta,
-                betaNumber: resolvedBeta ? betaNumber : nil,
-                betaRevision: resolvedBeta ? betaRevision : nil,
+                isBeta: isBeta,
+                betaNumber: betaNumber,
+                betaRevision: betaRevision,
                 isRC: isRC,
                 rcNumber: rcNumber,
-                isDeviceSpecific: isDeviceSpecific,
-                kernels: kernels,
-                components: components
+                isDeviceSpecific: isDeviceSpecific
             )
         } catch {
             await ipswExtractor.cleanup(workDirectory: extraction.workDirectory)
@@ -136,7 +125,7 @@ package actor IPSWScanner {
     /// kernelcache entries could exhaust memory; a real IPSW has only a handful.
     private static let maxConcurrentKernelParses = 4
 
-    private func parseKernels(
+    func parseKernels(
         _ kernelcaches: [URL],
         deviceMap: [String: [String]]
     ) async throws -> [KernelInfo] {
@@ -260,7 +249,7 @@ package actor IPSWScanner {
 
     // MARK: - Filesystem component extraction
 
-    private func extractFilesystemComponents(
+    func extractFilesystemComponents(
         mountPoint: DMGMounter.MountPoint
     ) async -> [Component] {
         var components: [Component] = []
@@ -295,7 +284,7 @@ package actor IPSWScanner {
 
     // MARK: - dyld cache component extraction
 
-    private func extractDyldCacheComponents(
+    func extractDyldCacheComponents(
         mountPoint: DMGMounter.MountPoint
     ) async -> [Component] {
         let cachePath = findDyldCache(mountPoint: mountPoint.path)
@@ -365,6 +354,46 @@ package actor IPSWScanner {
 }
 
 extension IPSWScanner {
+    func assembleRelease(
+        extraction: IPSWExtractor.ExtractionResult,
+        kernels: [KernelInfo],
+        components: [Component],
+        sourceFilename: String,
+        releaseName: String? = nil,
+        releaseDate: String? = nil,
+        ipswURL: String? = nil,
+        isBeta: Bool? = nil,
+        betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
+        isRC: Bool = false,
+        rcNumber: Int? = nil,
+        isDeviceSpecific: Bool = false
+    ) -> Release {
+        sendProgress(.assemblingResults)
+        let resolvedName = releaseName ?? MacOSRelease.name(
+            forMajorVersion: Int(extraction.osVersion.split(separator: ".").first ?? "") ?? 0
+        )
+        let resolvedBeta = isRC ? false : (isBeta ?? BuildNumber.isBeta(extraction.buildNumber))
+
+        return Release(
+            productType: .macOS,
+            osVersion: extraction.osVersion,
+            buildNumber: extraction.buildNumber,
+            releaseName: resolvedName,
+            releaseDate: releaseDate,
+            ipswFile: ipswURL.flatMap { URL(string: $0)?.lastPathComponent } ?? sourceFilename,
+            ipswURL: ipswURL,
+            isBeta: resolvedBeta,
+            betaNumber: resolvedBeta ? betaNumber : nil,
+            betaRevision: resolvedBeta ? betaRevision : nil,
+            isRC: isRC,
+            rcNumber: rcNumber,
+            isDeviceSpecific: isDeviceSpecific,
+            kernels: kernels,
+            components: components
+        )
+    }
+
     private func extractCryptexComponents(
         from cryptexDMG: URL,
         mergingInto fsComponents: [Component]
@@ -393,7 +422,7 @@ extension IPSWScanner {
 
 // MARK: - dyld cache helpers
 
-private func findDyldCache(mountPoint: String) -> URL? {
+func findDyldCache(mountPoint: String) -> URL? {
     let fileManager = FileManager.default
 
     let candidates = [
@@ -434,7 +463,7 @@ private func findDyldCache(mountPoint: String) -> URL? {
 }
 
 /// Falls back to prefix matching when the soversion differs.
-private func resolveDylibPath(
+func resolveDylibPath(
     _ expectedPath: String,
     in dylibSet: Set<String>,
     allPaths: [String]
@@ -458,7 +487,7 @@ private func resolveDylibPath(
 }
 
 /// Merges cryptex components over system ones, with cryptex winning on name collisions.
-private func merging(_ system: [Component], overriddenBy cryptex: [Component]) -> [Component] {
+func merging(_ system: [Component], overriddenBy cryptex: [Component]) -> [Component] {
     guard !cryptex.isEmpty else { return system }
     let cryptexNames = Set(cryptex.map(\.name))
     return system.filter { !cryptexNames.contains($0.name) } + cryptex

@@ -66,7 +66,7 @@ struct CleanupCommand: AsyncParsableCommand {
 
     // MARK: - Stale mount detection
 
-    private struct StaleMount {
+    struct StaleMount {
         let imagePath: String
         let mountPoint: String
         let deviceNode: String
@@ -99,12 +99,16 @@ struct CleanupCommand: AsyncParsableCommand {
         process.waitUntilExit()
 
         guard process.terminationStatus == 0 else { return [] }
+
+        let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
+        return Self.staleMounts(from: data, tempBase: tempBase)
+    }
+
+    static func staleMounts(from data: Data, tempBase: String) -> [StaleMount] {
         guard let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
               let images = plist["images"] as? [[String: Any]] else {
             return []
         }
-
-        let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
 
         var results: [StaleMount] = []
         for image in images {
@@ -136,17 +140,30 @@ struct CleanupCommand: AsyncParsableCommand {
     /// The `macosdb-…` work dir that contains a scanner-created image, or nil if the
     /// image isn't one of ours — so `--force` only ever detaches volumes from the
     /// scanner's own work dirs under the temp dir, never unrelated user volumes.
-    private func scannerWorkDir(forImage imagePath: String, tempBase: String) -> URL? {
-        let resolved = URL(fileURLWithPath: imagePath).resolvingSymlinksInPath()
-        guard resolved.path.hasPrefix(tempBase) else { return nil }
-        var dir = resolved.deletingLastPathComponent()
-        while dir.path.hasPrefix(tempBase) {
+    static func scannerWorkDir(forImage imagePath: String, tempBase: String) -> URL? {
+        let resolvedPath = normalizedTemporaryPath(imagePath)
+        let resolvedBase = normalizedTemporaryPath(tempBase)
+        let basePrefix = resolvedBase + "/"
+        guard resolvedPath.hasPrefix(basePrefix) else { return nil }
+        var dir = URL(fileURLWithPath: resolvedPath).deletingLastPathComponent()
+        while dir.path == resolvedBase || dir.path.hasPrefix(basePrefix) {
             if dir.lastPathComponent.hasPrefix("macosdb-") { return dir }
             let parent = dir.deletingLastPathComponent()
             if parent == dir { break }
             dir = parent
         }
         return nil
+    }
+
+    private static func normalizedTemporaryPath(_ path: String) -> String {
+        let resolved = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        // Foundation can preserve /private for a missing leaf while spelling an
+        // existing equivalent temporary directory as /var or /tmp.
+        for privatePrefix in ["/private/var", "/private/tmp"]
+            where resolved == privatePrefix || resolved.hasPrefix(privatePrefix + "/") {
+            return String(resolved.dropFirst("/private".count))
+        }
+        return resolved
     }
 
     private func unmount(_ mount: StaleMount) {
@@ -171,7 +188,7 @@ struct CleanupCommand: AsyncParsableCommand {
 
     private func recheckStaleMount(_ mount: StaleMount) -> StaleMountRecheck {
         let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
-        guard let workDir = scannerWorkDir(forImage: mount.imagePath, tempBase: tempBase) else {
+        guard let workDir = Self.scannerWorkDir(forImage: mount.imagePath, tempBase: tempBase) else {
             return .unrecognizedWorkDir
         }
         return ScanWorkspace.isOwnedByRunningScan(workDir) ? .ownedByRunningScan : .stale

@@ -190,4 +190,50 @@ struct ScanCommandTests {
         #expect(updated.map(\.buildNumber) == ["24B83", "24A335"])
         #expect(updated.first?.releaseDate == "2024-10-28")
     }
+
+    @Test("Writes product output into its major-version directory")
+    func writesProductOutput() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-output-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let cmd = try ScanCommand.parse(["archive.xip", "--output", root.path])
+        let release = Release(
+            productType: .xcode,
+            osVersion: "26.1",
+            buildNumber: "17B123",
+            releaseName: "Xcode 26.1",
+            components: [Component(name: "Swift", version: "6.2.1", path: "/usr/bin/swift")],
+            sdks: [SDKInfo(sdkVersion: "26.1", buildVersion: "25B123")]
+        )
+
+        try cmd.writeOutput(release: release)
+
+        let output = root.appendingPathComponent("26/Xcode-26.1-17B123.json")
+        let data = try Data(contentsOf: output)
+        #expect(data.last == 0x0a)
+        #expect(try JSONDecoder().decode(Release.self, from: data) == release)
+    }
+
+    @Test("AEA key sidecars preserve mtime and are not overwritten")
+    func writesAEAKeySidecarOnce() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-key-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let archive = root.appendingPathComponent("fixture.ipsw")
+        try Data("archive".utf8).write(to: archive)
+        let modificationDate = Date(timeIntervalSince1970: 1_700_000_000)
+        try FileManager.default.setAttributes([.modificationDate: modificationDate], ofItemAtPath: archive.path)
+
+        let cmd = try ScanCommand.parse(["archive.ipsw"])
+        cmd.writeAEAKey("first", for: archive)
+        cmd.writeAEAKey("second", for: archive)
+
+        let sidecar = archive.appendingPathExtension("pem")
+        #expect(try String(contentsOf: sidecar, encoding: .utf8) == "first")
+        let sidecarDate = try FileManager.default.attributesOfItem(atPath: sidecar.path)[.modificationDate] as? Date
+        #expect(sidecarDate == modificationDate)
+    }
 }

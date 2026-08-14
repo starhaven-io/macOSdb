@@ -120,6 +120,61 @@ struct SubprocessSmokeTests {
         #expect(buildNumbers == ["24B83", "24B2083"])
     }
 
+}
+
+extension SubprocessSmokeTests {
+
+    @Test("cleanup dry-run reports scanner temp directories without deleting them")
+    func cleanupDryRunReportsStaleDirectory() throws {
+        let staleDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-cleanup-test-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: staleDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: staleDirectory) }
+
+        let result = try runMacosdb(["cleanup"])
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.contains(staleDirectory.path))
+        #expect(result.stderr.contains("Run with --force to clean up."))
+        #expect(FileManager.default.fileExists(atPath: staleDirectory.path))
+    }
+
+    @Test("scan rejects a missing AEA key before opening the archive")
+    func scanRejectsMissingAEAKey() throws {
+        let archive = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-scan-key-test-\(UUID().uuidString).ipsw")
+        try Data("fixture".utf8).write(to: archive)
+        defer { try? FileManager.default.removeItem(at: archive) }
+        let missingKey = archive.deletingLastPathComponent()
+            .appendingPathComponent("missing-\(UUID().uuidString).pem")
+
+        let result = try runMacosdb(["scan", archive.path, "--aea-key", missingKey.path])
+
+        #expect(result.exitCode != 0)
+        #expect(result.stderr.contains("AEA key file not found"))
+        #expect(result.stderr.contains(missingKey.path))
+    }
+
+    @Test("list renders its table and empty state")
+    func listRendersPlainTextAndEmptyState() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let populated = try runMacosdb([
+            "list", "--major", "15", "--data-url", dataRoot.path
+        ])
+        #expect(populated.exitCode == 0)
+        #expect(populated.stdout.contains("Version     Build"))
+        #expect(populated.stdout.contains("15.0        24A335"))
+        #expect(populated.stdout.contains("15.1        24B2083"))
+
+        let empty = try runMacosdb([
+            "list", "--major", "99", "--data-url", dataRoot.path
+        ])
+        #expect(empty.exitCode == 0)
+        #expect(empty.stdout.contains("No releases found."))
+    }
+
     @Test("compare --changed --json filters unchanged components")
     func compareChangedJSONFiltersUnchangedComponents() throws {
         let dataRoot = try LocalDataStore.make()
@@ -210,6 +265,60 @@ struct SubprocessSmokeTests {
         let slugComponents = try requireArray(try decodeJSONObject(slug.stdout)["components"])
         #expect(slugComponents.count == 1)
         #expect(slugComponents.first?["name"] as? String == "libbz2 (bzip2)")
+    }
+
+    @Test("show renders release, SDK, kernel, and component details")
+    func showRendersDetailedPlainText() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "show", "15.0", "--detailed", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        #expect(result.stdout.contains("macOS 15.0 Sequoia (24A335)"))
+        #expect(result.stdout.contains("Released: 2025-01-01"))
+        #expect(result.stdout.contains("IPSW: https://example.com/macOS-15.0.ipsw"))
+        #expect(result.stdout.contains("SDK 15.0 (24A335)"))
+        #expect(result.stdout.contains("M4 — Darwin 24.0.0 / XNU 11215.1.10"))
+        #expect(result.stdout.contains("Devices: Mac16,1"))
+        #expect(result.stdout.contains("Supported chips: M4"))
+        #expect(result.stdout.contains("Component"))
+        #expect(result.stdout.contains("httpd"))
+    }
+
+    @Test("show supports substring filters and an empty result")
+    func showRendersFilteredAndEmptyComponents() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let filtered = try runMacosdb([
+            "show", "15.0", "--component", "bz2", "--data-url", dataRoot.path
+        ])
+        #expect(filtered.exitCode == 0)
+        #expect(filtered.stdout.contains("libbz2 (bzip2)"))
+        #expect(filtered.stdout.contains("libbz2-extra"))
+        #expect(!filtered.stdout.contains("httpd"))
+
+        let empty = try runMacosdb([
+            "show", "15.0", "--component", "missing", "--data-url", dataRoot.path
+        ])
+        #expect(empty.exitCode == 0)
+        #expect(empty.stdout.contains("No components found."))
+    }
+
+    @Test("show identifies a device-specific release")
+    func showRendersDeviceSpecificMetadata() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+
+        let result = try runMacosdb([
+            "show", "15.1-24B2083", "--data-url", dataRoot.path
+        ])
+
+        #expect(result.exitCode == 0)
+        #expect(result.stdout.contains("Type: Device-specific build"))
     }
 
     @Test("compare labels same-version builds by build number")

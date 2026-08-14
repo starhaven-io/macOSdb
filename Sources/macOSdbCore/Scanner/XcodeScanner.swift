@@ -36,39 +36,17 @@ package actor XcodeScanner {
 
         let release: Release
         do {
-            // Phase 2: Locate Xcode.app
-            let xcodeApp = try findXcodeApp(in: expandedDir)
-            Self.logger.info("Found Xcode.app: \(xcodeApp.path)")
-            try Task.checkCancellation()
-
-            // Phase 3: Extract version metadata
-            let (osVersion, buildNumber) = try extractVersionMetadata(from: xcodeApp)
-            let resolvedName = releaseName ?? "Xcode \(osVersion)"
-            let minOS = extractMinimumOSVersion(from: xcodeApp)
-            sendVerbose("Xcode version: \(osVersion) (\(buildNumber))")
-            try Task.checkCancellation()
-
-            let (components, sdks) = try await extractComponentsAndSDKs(from: xcodeApp)
-
-            // Phase 6: Assemble the Release
-            sendProgress(.assemblingResults)
-            let resolvedBeta = isRC ? false : isBeta
-            release = Release(
-                productType: .xcode,
-                osVersion: osVersion,
-                buildNumber: buildNumber,
-                releaseName: resolvedName,
+            release = try await scanExpandedDirectory(
+                expandedDir,
+                sourceFilename: xipPath.lastPathComponent,
+                releaseName: releaseName,
                 releaseDate: releaseDate,
-                xipFile: Self.xipFilename(fromURLString: xipURL) ?? xipPath.lastPathComponent,
                 xipURL: xipURL,
-                isBeta: resolvedBeta,
-                betaNumber: resolvedBeta ? betaNumber : nil,
-                betaRevision: resolvedBeta ? betaRevision : nil,
+                isBeta: isBeta,
+                betaNumber: betaNumber,
+                betaRevision: betaRevision,
                 isRC: isRC,
-                rcNumber: rcNumber,
-                components: components,
-                sdks: sdks.isEmpty ? nil : sdks,
-                minimumOSVersion: minOS
+                rcNumber: rcNumber
             )
         } catch {
             cleanup(expandedDir)
@@ -345,7 +323,7 @@ package actor XcodeScanner {
                     source: .filesystem,
                     // Match standalone "3.x.y" — anchored to full string to avoid false matches
                     // from unrelated version numbers embedded in the binary
-                    pattern: #"^3\.[2-9][0-9]*\.[0-9]+$"#,
+                    pattern: #"^3\.(?:[2-9]|[1-9][0-9]+)\.[0-9]+$"#,
                     normalize: { $0 },
                     strategy: .regex
                 )
@@ -383,6 +361,51 @@ package actor XcodeScanner {
 }
 
 extension XcodeScanner {
+    func scanExpandedDirectory(
+        _ expandedDirectory: URL,
+        sourceFilename: String,
+        releaseName: String? = nil,
+        releaseDate: String? = nil,
+        xipURL: String? = nil,
+        isBeta: Bool = false,
+        betaNumber: Int? = nil,
+        betaRevision: Int? = nil,
+        isRC: Bool = false,
+        rcNumber: Int? = nil
+    ) async throws -> Release {
+        let xcodeApp = try findXcodeApp(in: expandedDirectory)
+        Self.logger.info("Found Xcode.app: \(xcodeApp.path)")
+        try Task.checkCancellation()
+
+        let (osVersion, buildNumber) = try extractVersionMetadata(from: xcodeApp)
+        let resolvedName = releaseName ?? "Xcode \(osVersion)"
+        let minOS = extractMinimumOSVersion(from: xcodeApp)
+        sendVerbose("Xcode version: \(osVersion) (\(buildNumber))")
+        try Task.checkCancellation()
+
+        let (components, sdks) = try await extractComponentsAndSDKs(from: xcodeApp)
+
+        sendProgress(.assemblingResults)
+        let resolvedBeta = isRC ? false : isBeta
+        return Release(
+            productType: .xcode,
+            osVersion: osVersion,
+            buildNumber: buildNumber,
+            releaseName: resolvedName,
+            releaseDate: releaseDate,
+            xipFile: Self.xipFilename(fromURLString: xipURL) ?? sourceFilename,
+            xipURL: xipURL,
+            isBeta: resolvedBeta,
+            betaNumber: resolvedBeta ? betaNumber : nil,
+            betaRevision: resolvedBeta ? betaRevision : nil,
+            isRC: isRC,
+            rcNumber: rcNumber,
+            components: components,
+            sdks: sdks.isEmpty ? nil : sdks,
+            minimumOSVersion: minOS
+        )
+    }
+
     private func extractComponentsAndSDKs(from xcodeApp: URL) async throws -> (components: [Component], sdks: [SDKInfo]) {
         var components = await extractToolchainComponents(from: xcodeApp)
         try Task.checkCancellation()

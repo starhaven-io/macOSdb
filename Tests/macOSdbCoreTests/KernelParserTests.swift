@@ -6,6 +6,53 @@ import Testing
 @Suite("Kernel parser tests")
 struct KernelParserTests {
 
+    @Test("Parse a raw kernelcache file")
+    func parseRawKernelcache() async throws {
+        let path = try writeKernelcache(
+            name: "kernelcache.release.Mac16,1_2",
+            data: Data(
+                "Darwin Kernel Version 24.6.0: xnu-12377.140.9/RELEASE_ARM64_T8132".utf8
+            )
+        )
+        defer { try? FileManager.default.removeItem(at: path.deletingLastPathComponent()) }
+
+        let kernel = try #require(await KernelParser.parse(kernelcachePath: path))
+        #expect(kernel.file == "kernelcache.release.Mac16,1_2")
+        #expect(kernel.darwinVersion == "24.6.0")
+        #expect(kernel.xnuVersion == "12377.140.9")
+        #expect(kernel.arch == "ARM64_T8132")
+        #expect(kernel.chip == "M4")
+        #expect(kernel.devices == ["Mac16,1", "Mac16,2"])
+    }
+
+    @Test("Unreadable and versionless kernelcaches are ignored")
+    func ignoresUnreadableAndVersionlessKernelcaches() async throws {
+        let missing = FileManager.default.temporaryDirectory
+            .appendingPathComponent("missing-kernelcache-\(UUID().uuidString)")
+        #expect(await KernelParser.parse(kernelcachePath: missing) == nil)
+
+        let versionless = try writeKernelcache(
+            name: "kernelcache.release.Mac16,1",
+            data: Data("not a kernel banner".utf8)
+        )
+        defer { try? FileManager.default.removeItem(at: versionless.deletingLastPathComponent()) }
+        #expect(await KernelParser.parse(kernelcachePath: versionless) == nil)
+    }
+
+    @Test("Oversized kernelcaches are rejected before reading")
+    func rejectsOversizedKernelcache() async throws {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kernelcache.release.oversized-\(UUID().uuidString)")
+        #expect(FileManager.default.createFile(atPath: path.path, contents: nil))
+        defer { try? FileManager.default.removeItem(at: path) }
+
+        let handle = try FileHandle(forWritingTo: path)
+        try handle.truncate(atOffset: UInt64(KernelParser.maxKernelcacheBytes + 1))
+        try handle.close()
+
+        #expect(await KernelParser.parse(kernelcachePath: path) == nil)
+    }
+
     // MARK: - Version scanning
 
     @Test("scanVersions extracts darwin, xnu, and arch suffix in a single pass")
@@ -99,5 +146,14 @@ struct KernelParserTests {
             "kernelcache.development.mac13g"
         )
         #expect(devices.isEmpty)
+    }
+
+    private func writeKernelcache(name: String, data: Data) throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-kernel-test-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let path = directory.appendingPathComponent(name)
+        try data.write(to: path)
+        return path
     }
 }

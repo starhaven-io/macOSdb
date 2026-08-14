@@ -58,7 +58,7 @@ actor DMGMounter {
 
     // MARK: - Private
 
-    private func parseMountOutput(_ data: Data, dmgPath: String) throws -> MountPoint {
+    func parseMountOutput(_ data: Data, dmgPath: String) throws -> MountPoint {
         let parsed: Any
         do {
             parsed = try PropertyListSerialization.propertyList(from: data, format: nil)

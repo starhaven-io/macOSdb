@@ -61,21 +61,7 @@ enum LocalDataStore {
             ),
             to: releases14.appendingPathComponent("macOS-14.0-23A344.json")
         )
-        try writeJSONObject(
-            release(
-                version: "15.0",
-                build: "24A335",
-                releaseName: "Sequoia",
-                components: [
-                    component(name: "curl", version: "8.7.1", path: "/usr/bin/curl"),
-                    component(name: "httpd", version: "2.4.62", path: "/usr/sbin/httpd"),
-                    component(name: "libbz2 (bzip2)", version: "1.0.8", path: "/usr/lib/libbz2.dylib"),
-                    component(name: "libbz2-extra", version: "1.0.8", path: "/usr/lib/libbz2-extra.dylib"),
-                    component(name: "newtool", version: "1.0", path: "/usr/bin/newtool")
-                ]
-            ),
-            to: releases15.appendingPathComponent("macOS-15.0-24A335.json")
-        )
+        try writeMacOS15Release(to: releases15)
         try writeJSONObject(
             release(
                 version: "15.1",
@@ -98,6 +84,34 @@ enum LocalDataStore {
                 isDeviceSpecific: true
             ),
             to: releases15.appendingPathComponent("macOS-15.1-24B2083.json")
+        )
+    }
+
+    private static func writeMacOS15Release(to releases15: URL) throws {
+        try writeJSONObject(
+            release(
+                version: "15.0",
+                build: "24A335",
+                releaseName: "Sequoia",
+                components: [
+                    component(name: "curl", version: "8.7.1", path: "/usr/bin/curl"),
+                    component(name: "httpd", version: "2.4.62", path: "/usr/sbin/httpd"),
+                    component(name: "libbz2 (bzip2)", version: "1.0.8", path: "/usr/lib/libbz2.dylib"),
+                    component(name: "libbz2-extra", version: "1.0.8", path: "/usr/lib/libbz2-extra.dylib"),
+                    component(name: "newtool", version: "1.0", path: "/usr/bin/newtool")
+                ],
+                kernels: [[
+                    "file": "kernelcache.release.Mac16,1",
+                    "darwinVersion": "24.0.0",
+                    "xnuVersion": "11215.1.10",
+                    "arch": "ARM64_T8132",
+                    "chip": "M4",
+                    "devices": ["Mac16,1"]
+                ]],
+                sdks: [["sdkVersion": "15.0", "buildVersion": "24A335"]],
+                ipswURL: "https://example.com/macOS-15.0.ipsw"
+            ),
+            to: releases15.appendingPathComponent("macOS-15.0-24A335.json")
         )
     }
 
@@ -125,9 +139,12 @@ enum LocalDataStore {
         build: String,
         releaseName: String,
         components: [[String: Any]],
-        isDeviceSpecific: Bool = false
+        isDeviceSpecific: Bool = false,
+        kernels: [[String: Any]] = [],
+        sdks: [[String: Any]]? = nil,
+        ipswURL: String? = nil
     ) -> [String: Any] {
-        [
+        var object: [String: Any] = [
             "osVersion": version,
             "buildNumber": build,
             "releaseName": releaseName,
@@ -135,9 +152,16 @@ enum LocalDataStore {
             "isBeta": false,
             "isRC": false,
             "isDeviceSpecific": isDeviceSpecific,
-            "kernels": [],
+            "kernels": kernels,
             "components": components
         ]
+        if let sdks {
+            object["sdks"] = sdks
+        }
+        if let ipswURL {
+            object["ipswURL"] = ipswURL
+        }
+        return object
     }
 
     private static func component(name: String, version: String, path: String) -> [String: Any] {
