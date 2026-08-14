@@ -269,7 +269,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         }
     }
 
-    private func writeOutput(release: Release) throws {
+    func writeOutput(release: Release) throws {
         let productType = release.resolvedProductType
 
         printStatus("")
@@ -361,7 +361,7 @@ extension ScanCommand {
         printStatus("Updated index: \(indexPath.path) (\(entries.count) releases)")
     }
 
-    private func writeAEAKey(_ pem: String, for ipswURL: URL) {
+    func writeAEAKey(_ pem: String, for ipswURL: URL) {
         let sidecarPath = ipswURL.appendingPathExtension("pem")
         guard !FileManager.default.fileExists(atPath: sidecarPath.path) else {
             return

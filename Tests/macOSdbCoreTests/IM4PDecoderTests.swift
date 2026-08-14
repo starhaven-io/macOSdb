@@ -1,3 +1,4 @@
+import Compression
 import Foundation
 import Testing
 
@@ -39,6 +40,27 @@ struct IM4PDecoderTests {
         let result = IM4PDecoder.extractPayload(from: im4pData)
         #expect(result != nil)
         #expect(result == payload)
+    }
+
+    @Test("Decompresses an LZFSE payload")
+    func extractLZFSEPayload() throws {
+        let payload = Data((0..<4_096).map {
+            UInt8(truncatingIfNeeded: ($0 * 73) ^ ($0 >> 3))
+        })
+        let compressed = try #require(compressLZFSE(payload))
+        let im4pData = buildIM4P(type: "krnl", description: "compressed", payload: compressed)
+
+        #expect(IM4PDecoder.extractPayload(from: im4pData) == payload)
+    }
+
+    @Test("Rejects an IM4P marker outside a DER sequence")
+    func rejectInvalidSequenceTag() {
+        let payload = Data("kernel".utf8)
+        var im4pData = buildIM4P(type: "krnl", description: "test", payload: payload)
+        im4pData[0] = 0x31
+
+        #expect(IM4PDecoder.isIM4P(im4pData))
+        #expect(IM4PDecoder.extractPayload(from: im4pData) == nil)
     }
 
     @Test("Returns nil for truncated IM4P")
@@ -117,5 +139,29 @@ struct IM4PDecoderTests {
             data.append(UInt8((length >> 8) & 0xFF))
             data.append(UInt8(length & 0xFF))
         }
+    }
+
+    private func compressLZFSE(_ data: Data) -> Data? {
+        let capacity = max(data.count * 2, 64)
+        var compressed = Data(count: capacity)
+        let compressedSize = compressed.withUnsafeMutableBytes { destination in
+            data.withUnsafeBytes { source in
+                guard let destinationAddress = destination.baseAddress,
+                      let sourceAddress = source.baseAddress else {
+                    return 0
+                }
+                return compression_encode_buffer(
+                    destinationAddress.assumingMemoryBound(to: UInt8.self),
+                    capacity,
+                    sourceAddress.assumingMemoryBound(to: UInt8.self),
+                    data.count,
+                    nil,
+                    COMPRESSION_LZFSE
+                )
+            }
+        }
+        guard compressedSize > 0 else { return nil }
+        compressed.removeSubrange(compressedSize..<compressed.count)
+        return compressed
     }
 }

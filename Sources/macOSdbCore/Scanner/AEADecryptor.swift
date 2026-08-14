@@ -130,8 +130,9 @@ actor AEADecryptor {
         return parseFields(from: authBlob)
     }
 
-    private func parseAuthData(from data: Data) -> [String: String] {
+    func parseAuthData(from data: Data) -> [String: String] {
         guard data.count >= 12 else { return [:] }
+        let base = data.startIndex
         let header = data.prefix(12)
         let authSize: Int
         do {
@@ -141,7 +142,7 @@ actor AEADecryptor {
             return [:]
         }
         guard data.count >= 12 + authSize else { return [:] }
-        return parseFields(from: data.subdata(in: 12..<(12 + authSize)))
+        return parseFields(from: data.subdata(in: (base + 12)..<(base + 12 + authSize)))
     }
 
     private func validateHeader(_ header: Data) throws -> Int {
