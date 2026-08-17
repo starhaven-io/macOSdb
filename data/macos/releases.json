@@ -77,7 +77,7 @@
     "dataFile" : "releases/26/macOS-26.6.2-25G82.json",
     "isBeta" : false,
     "isDeviceSpecific" : false,
-    "isRC" : false,
+    "isRC" : true,
     "osVersion" : "26.6.2",
     "productType" : "macOS",
     "releaseDate" : "2026-08-10",
