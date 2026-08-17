@@ -1,5 +1,17 @@
 [
   {
+    "betaNumber" : 6,
+    "buildNumber" : "26A5416b",
+    "dataFile" : "releases/27/macOS-27.0-26A5416b.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "27.0",
+    "productType" : "macOS",
+    "releaseDate" : "2026-08-17",
+    "releaseName" : "Golden Gate"
+  },
+  {
     "betaNumber" : 5,
     "buildNumber" : "26A5406e",
     "dataFile" : "releases/27/macOS-27.0-26A5406e.json",
