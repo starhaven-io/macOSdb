@@ -73,6 +73,17 @@
     "releaseName" : "Golden Gate"
   },
   {
+    "buildNumber" : "25G83",
+    "dataFile" : "releases/26/macOS-26.6.2-25G83.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "26.6.2",
+    "productType" : "macOS",
+    "releaseDate" : "2026-08-17",
+    "releaseName" : "Tahoe"
+  },
+  {
     "buildNumber" : "25G82",
     "dataFile" : "releases/26/macOS-26.6.2-25G82.json",
     "isBeta" : false,
