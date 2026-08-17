@@ -108,7 +108,7 @@
   "ipswURL" : "https://updates.cdn-apple.com/2026SummerFCS/fullrestores/140-83731/E1F24412-C22B-42A2-AE01-09E5E18573E1/UniversalMac_26.6.2_25G82_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,
-  "isRC" : false,
+  "isRC" : true,
   "kernels" : [
     {
       "arch" : "ARM64_T8103",
