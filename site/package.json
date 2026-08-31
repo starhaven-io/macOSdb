@@ -25,7 +25,7 @@
     "@fontsource/inter": "^5.3.0",
     "astro": "^7.2.4",
     "astro-pagefind": "^2.0.1",
-    "satori": "^0.33.0",
+    "satori": "^0.33.3",
     "satori-html": "^0.3.2",
     "sharp": "^0.35.3"
   },
