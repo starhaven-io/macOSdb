@@ -4,9 +4,9 @@ import OSLog
 /// Minimal parser for Apple's dyld_shared_cache format. Supports both legacy
 /// single-file (macOS 11) and split subcache (macOS 12+) formats.
 enum DyldCacheExtractor {
-    private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "DyldCacheExtractor")
+    static let logger = Logger(subsystem: "io.linnane.macosdb", category: "DyldCacheExtractor")
 
-    private static let cacheMagicPrefix = "dyld_v1"
+    static let cacheMagicPrefix = "dyld_v1"
 
     // MARK: - Cache header structures (matching dyld_cache_format.h)
 
@@ -41,24 +41,14 @@ enum DyldCacheExtractor {
         static let pathOffsetOffset: Int = 28        // uint32_t (after uint32_t textSegmentSize)
     }
 
-    private enum MappingLayout { // dyld_cache_mapping_info, 32 bytes
-        static let size: Int = 32
-        static let addressOffset: Int = 0            // uint64_t
-        static let sizeOffset: Int = 8               // uint64_t
-        static let fileOffsetOffset: Int = 16        // uint64_t
-    }
-
-    private struct CacheMapping {
-        let address: UInt64
-        let size: UInt64
-        let fileOffset: UInt64
-        let sourceFile: URL
-    }
-
     @concurrent
-    static func extractDylibData(cachePath: URL, dylibPath: String) async -> Data? {
+    static func extractDylibData(
+        cachePath: URL,
+        dylibPath: String,
+        confinedTo root: URL
+    ) async -> Data? {
         guard !Task.isCancelled else { return nil }
-        guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else {
+        guard let fileHandle = try? ScannerFileReader.fileHandle(at: cachePath, confinedTo: root) else {
             logger.warning("Could not open dyld cache: \(cachePath.path)")
             return nil
         }
@@ -79,7 +69,11 @@ enum DyldCacheExtractor {
             return nil
         }
 
-        let allMappings = readAllMappings(mainCachePath: cachePath, mainFileHandle: fileHandle)
+        let allMappings = readAllMappings(
+            mainCachePath: cachePath,
+            mainFileHandle: fileHandle,
+            confinedTo: root
+        )
         guard !Task.isCancelled else { return nil }
 
         if allMappings.isEmpty {
@@ -91,7 +85,8 @@ enum DyldCacheExtractor {
             dylibPath: dylibPath,
             fileHandle: fileHandle,
             imageTable: imageTable,
-            mappings: allMappings
+            mappings: allMappings,
+            confinedTo: root
         )
     }
 
@@ -99,7 +94,8 @@ enum DyldCacheExtractor {
         dylibPath: String,
         fileHandle: FileHandle,
         imageTable: ImageTableInfo,
-        mappings: [CacheMapping]
+        mappings: [CacheMapping],
+        confinedTo root: URL
     ) -> Data? {
         let entrySize = imageTable.format == .legacy
             ? LegacyImageLayout.size
@@ -150,7 +146,10 @@ enum DyldCacheExtractor {
             let readSize = Int(min(result.remainingSize, 2 * 1_024 * 1_024))
 
             // Read from the correct cache file (may be a subcache)
-            guard let sourceHandle = try? FileHandle(forReadingFrom: result.sourceFile) else {
+            guard let sourceHandle = try? ScannerFileReader.fileHandle(
+                at: result.sourceFile,
+                confinedTo: root
+            ) else {
                 logger.warning("Could not open subcache: \(result.sourceFile.lastPathComponent)")
                 return nil
             }
@@ -172,9 +171,9 @@ enum DyldCacheExtractor {
         return nil
     }
 
-    static func listDylibs(cachePath: URL) -> [String] {
+    static func listDylibs(cachePath: URL, confinedTo root: URL) -> [String] {
         guard !Task.isCancelled else { return [] }
-        guard let fileHandle = try? FileHandle(forReadingFrom: cachePath) else { return [] }
+        guard let fileHandle = try? ScannerFileReader.fileHandle(at: cachePath, confinedTo: root) else { return [] }
         defer { try? fileHandle.close() }
 
         guard let magicData = try? readData(fileHandle: fileHandle, length: 16),
@@ -211,125 +210,6 @@ enum DyldCacheExtractor {
             }
         }
         return paths
-    }
-
-    // MARK: - Mapping collection
-
-    private static func readAllMappings(
-        mainCachePath: URL,
-        mainFileHandle: FileHandle
-    ) -> [CacheMapping] {
-        var allMappings = readMappingsFromFile(
-            fileHandle: mainFileHandle,
-            sourceFile: mainCachePath
-        )
-
-        let subcacheFiles = findSubcacheFiles(mainCachePath: mainCachePath)
-        if !subcacheFiles.isEmpty {
-            logger.info("Found \(subcacheFiles.count) subcache files")
-        }
-
-        for subcachePath in subcacheFiles {
-            guard !Task.isCancelled else { break }
-            guard let subcacheHandle = try? FileHandle(forReadingFrom: subcachePath) else {
-                logger.debug("Could not open subcache: \(subcachePath.lastPathComponent)")
-                continue
-            }
-            defer { try? subcacheHandle.close() }
-
-            // Verify it's a valid cache file
-            let magicData: Data
-            do {
-                magicData = try readData(fileHandle: subcacheHandle, length: 16)
-            } catch {
-                logger.warning(
-                    "Could not read subcache \(subcachePath.lastPathComponent) header: \(error.localizedDescription)"
-                )
-                continue
-            }
-
-            guard let magic = String(data: magicData, encoding: .utf8),
-                  magic.hasPrefix(cacheMagicPrefix) else {
-                // Some subcache files may not have the standard header — try reading
-                // them as raw data extensions (they share the main file's address space)
-                logger.debug("Subcache \(subcachePath.lastPathComponent) has non-standard header")
-                continue
-            }
-
-            let subcacheMappings = readMappingsFromFile(
-                fileHandle: subcacheHandle,
-                sourceFile: subcachePath
-            )
-            allMappings.append(contentsOf: subcacheMappings)
-        }
-
-        logger.debug("Total mappings: \(allMappings.count) across \(1 + subcacheFiles.count) files")
-        return allMappings
-    }
-
-    /// Checks both `.1` (macOS 12) and `.01` (macOS 13+) naming conventions.
-    private static func findSubcacheFiles(mainCachePath: URL) -> [URL] {
-        let basePath = mainCachePath.path
-        var subcaches: [URL] = []
-
-        for idx in 1...99 {
-            // Try non-padded first (.1, .2) — used by macOS 12 Monterey
-            let unpadded = URL(fileURLWithPath: basePath + ".\(idx)")
-            // Then zero-padded (.01, .02) — used by macOS 13+
-            let padded = URL(fileURLWithPath: basePath + String(format: ".%02d", idx))
-
-            if FileManager.default.fileExists(atPath: unpadded.path) {
-                subcaches.append(unpadded)
-            } else if FileManager.default.fileExists(atPath: padded.path) {
-                subcaches.append(padded)
-            } else {
-                break // Subcaches are sequential; stop at first gap
-            }
-        }
-
-        return subcaches
-    }
-
-    private static func readMappingsFromFile(
-        fileHandle: FileHandle,
-        sourceFile: URL
-    ) -> [CacheMapping] {
-        guard let header = try? readData(
-            fileHandle: fileHandle,
-            at: UInt64(HeaderOffsets.mappingOffset),
-            length: 8
-        ) else {
-            return []
-        }
-        guard let mappingOffset = loadUInt32(header, at: 0),
-              let mappingCount = loadUInt32(header, at: 4),
-              mappingCount > 0, mappingCount < 100 else { return [] }
-
-        let expectedBytes = Int(mappingCount) * MappingLayout.size
-        guard let data = try? readData(
-            fileHandle: fileHandle,
-            at: UInt64(mappingOffset),
-            length: expectedBytes
-        ) else {
-            return []
-        }
-        guard data.count == expectedBytes else { return [] }
-
-        var mappings: [CacheMapping] = []
-        for mappingIndex in 0..<Int(mappingCount) {
-            guard !Task.isCancelled else { break }
-            let entryOffset = mappingIndex * MappingLayout.size
-            guard let address = loadUInt64(data, at: entryOffset + MappingLayout.addressOffset),
-                  let size = loadUInt64(data, at: entryOffset + MappingLayout.sizeOffset),
-                  let fileOff = loadUInt64(data, at: entryOffset + MappingLayout.fileOffsetOffset) else { continue }
-            mappings.append(CacheMapping(
-                address: address,
-                size: size,
-                fileOffset: fileOff,
-                sourceFile: sourceFile
-            ))
-        }
-        return mappings
     }
 
     // MARK: - Private helpers
@@ -378,7 +258,7 @@ enum DyldCacheExtractor {
 
 }
 
-private extension DyldCacheExtractor {
+extension DyldCacheExtractor {
     // MARK: - Bounds-checked reads (cache contents are untrusted)
 
     struct TranslatedAddress {

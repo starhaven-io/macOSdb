@@ -162,6 +162,52 @@ struct IPSWExtractorTests {
         #expect(try await extractor.readAEAHeader(ipswPath: plainFixture.archiveURL) == nil)
     }
 
+    @Test("Archive entry and metadata limits enforce their boundaries")
+    func enforcesArchiveLimits() throws {
+        try IPSWExtractor.validateEntryCounts(
+            total: IPSWExtractor.maxArchiveEntries,
+            kernels: IPSWExtractor.maxKernelEntries,
+            dmgs: IPSWExtractor.maxDMGEntries
+        )
+        #expect(throws: ScannerError.self) {
+            try IPSWExtractor.validateEntryCounts(
+                total: IPSWExtractor.maxArchiveEntries + 1,
+                kernels: 0,
+                dmgs: 0
+            )
+        }
+        #expect(throws: ScannerError.self) {
+            try IPSWExtractor.validateEntryCounts(
+                total: IPSWExtractor.maxKernelEntries + 1,
+                kernels: IPSWExtractor.maxKernelEntries + 1,
+                dmgs: 0
+            )
+        }
+        #expect(throws: ScannerError.self) {
+            try IPSWExtractor.validateEntryCounts(
+                total: IPSWExtractor.maxDMGEntries + 1,
+                kernels: 0,
+                dmgs: IPSWExtractor.maxDMGEntries + 1
+            )
+        }
+        #expect(IPSWExtractor.isMetadataSizeAllowed(IPSWExtractor.maxMetadataSize))
+        #expect(!IPSWExtractor.isMetadataSizeAllowed(IPSWExtractor.maxMetadataSize + 1))
+
+        try IPSWExtractor.validateDeclaredSizes(
+            [4, 6], individualLimit: 6, totalLimit: 10
+        )
+        #expect(throws: ScannerError.self) {
+            try IPSWExtractor.validateDeclaredSizes(
+                [7], individualLimit: 6, totalLimit: 10
+            )
+        }
+        #expect(throws: ScannerError.self) {
+            try IPSWExtractor.validateDeclaredSizes(
+                [6, 5], individualLimit: 6, totalLimit: 10
+            )
+        }
+    }
+
     private static func buildManifest() throws -> Data {
         let systemManifest: [String: Any] = [
             "OS": ["Info": ["Path": "Firmware/System.dmg", "ProductVersion": "15.6.1"]],

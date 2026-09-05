@@ -73,10 +73,10 @@ const structuredData = {
   </div>
 
   <div class="filter-bar" role="group" aria-label="Filter releases by type">
-    <button class="filter-btn active" data-filter="all">All</button>
-    <button class="filter-btn" data-filter="release">Release</button>
-    <button class="filter-btn" data-filter="beta">Beta</button>
-    <button class="filter-btn" data-filter="rc">RC</button>
+    <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
+    <button class="filter-btn" data-filter="release" aria-pressed="false">Release</button>
+    <button class="filter-btn" data-filter="beta" aria-pressed="false">Beta</button>
+    <button class="filter-btn" data-filter="rc" aria-pressed="false">RC</button>
   </div>
 
   {
@@ -90,19 +90,19 @@ const structuredData = {
             <colgroup>
               {isXcode ? (
                 <>
-                  <col style="width: 22%" />
-                  <col style="width: 14%" />
-                  <col style="width: 18%" />
-                  <col style="width: 14%" />
-                  <col style="width: 10%" />
-                  <col style="width: 22%" />
+                  <col class="xcode-release" />
+                  <col class="xcode-build" />
+                  <col class="xcode-date" />
+                  <col class="xcode-minimum" />
+                  <col class="xcode-sdk" />
+                  <col class="xcode-type" />
                 </>
               ) : (
                 <>
-                  <col style="width: 30%" />
-                  <col style="width: 18%" />
-                  <col style="width: 22%" />
-                  <col style="width: 30%" />
+                  <col class="macos-release" />
+                  <col class="macos-build" />
+                  <col class="macos-date" />
+                  <col class="macos-type" />
                 </>
               )}
             </colgroup>
@@ -206,6 +206,37 @@ const structuredData = {
     min-width: 500px;
   }
 
+  .xcode-release,
+  .xcode-type {
+    width: 22%;
+  }
+
+  .xcode-build,
+  .xcode-minimum {
+    width: 14%;
+  }
+
+  .xcode-date {
+    width: 18%;
+  }
+
+  .xcode-sdk {
+    width: 10%;
+  }
+
+  .macos-release,
+  .macos-type {
+    width: 30%;
+  }
+
+  .macos-build {
+    width: 18%;
+  }
+
+  .macos-date {
+    width: 22%;
+  }
+
   .filter-bar {
     display: flex;
     gap: 0.5rem;
@@ -298,7 +329,9 @@ const structuredData = {
         row.classList.toggle('filtered', filter !== 'all' && row.dataset.type !== filter);
       });
       buttons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
+        const active = btn.dataset.filter === filter;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
       });
       document.querySelectorAll('tbody').forEach((tbody) => {
         let i = 0;
@@ -313,7 +346,8 @@ const structuredData = {
       });
     }
 
-    const saved = localStorage.getItem(key) || 'all';
+    const stored = localStorage.getItem(key);
+    const saved = ['all', 'release', 'beta', 'rc'].includes(stored ?? '') ? stored! : 'all';
     apply(saved);
 
     buttons.forEach((btn) => {
@@ -325,5 +359,5 @@ const structuredData = {
     });
   }
 
-  document.addEventListener('astro:page-load', init);
+  init();
 </script>

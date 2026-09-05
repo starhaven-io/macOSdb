@@ -64,42 +64,52 @@ jobs:
             echo "::error::Could not extract version from Sources/macosdb/Version.swift"
             exit 1
           fi
+          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release version '${VERSION}' is not a canonical semantic version."
+            exit 1
+          fi
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-
-      - name: Create and unlock temporary macOS keychain
-        run: |
-          # Keep xtrace disabled here: this password is generated at runtime and is not a registered secret.
-          TEMPORARY_KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
-          echo "::add-mask::${TEMPORARY_KEYCHAIN_PASSWORD}"
-          TEMPORARY_KEYCHAIN_PATH="${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
-          security create-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
-          security set-keychain-settings -lut 21600 "${TEMPORARY_KEYCHAIN_PATH}"
-          security unlock-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
-
-      - name: Import certificate into keychain
-        env:
-          DEVELOPER_ID_CERTIFICATE: ${{ secrets.DEVELOPER_ID_CERTIFICATE }}
-          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-        run: |
-          set +x  # don't xtrace the certificate or its password
-          echo -n "${DEVELOPER_ID_CERTIFICATE}" | base64 --decode --output="${RUNNER_TEMP}/certificate.p12"
-          security import "${RUNNER_TEMP}/certificate.p12" \
-            -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" \
-            -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}" \
-            -t cert -f pkcs12 -A
-          rm -f "${RUNNER_TEMP}/certificate.p12"
-          security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
 
       - name: Build release binary
         run: |
           swift build -c release --arch arm64 --product macosdb
           echo "BINARY=$(swift build -c release --arch arm64 --show-bin-path)/macosdb" >> "${GITHUB_ENV}"
 
+      - name: Create signing keychain and import certificate
+        env:
+          DEVELOPER_ID_CERTIFICATE: ${{ secrets.DEVELOPER_ID_CERTIFICATE }}
+          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          set +x
+          if [[ -z "${DEVELOPMENT_TEAM}" ]]; then
+            echo "::error::DEVELOPMENT_TEAM repository variable is not configured."
+            exit 1
+          fi
+          TEMPORARY_KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
+          echo "::add-mask::${TEMPORARY_KEYCHAIN_PASSWORD}"
+          TEMPORARY_KEYCHAIN_PATH="${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          security create-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${TEMPORARY_KEYCHAIN_PATH}"
+          security unlock-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
+          echo -n "${DEVELOPER_ID_CERTIFICATE}" | base64 --decode --output="${RUNNER_TEMP}/certificate.p12"
+          security import "${RUNNER_TEMP}/certificate.p12" \
+            -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" \
+            -P "${DEVELOPER_ID_CERTIFICATE_PASSWORD}" \
+            -t cert -f pkcs12 \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "${TEMPORARY_KEYCHAIN_PASSWORD}" \
+            "${TEMPORARY_KEYCHAIN_PATH}"
+          rm -f "${RUNNER_TEMP}/certificate.p12"
+          security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+
       - name: Codesign binary
         run: |
           codesign --sign "Developer ID Application: Patrick Linnane (${DEVELOPMENT_TEAM})" \
             --options runtime \
             "${BINARY}"
+          codesign --verify --strict --verbose=2 "${BINARY}"
 
       - name: Notarize binary
         env:
@@ -115,12 +125,29 @@ jobs:
             --team-id "${DEVELOPMENT_TEAM}" \
             --password "${NOTARIZATION_PASSWORD}" \
             --wait
+          for attempt in 1 2 3; do
+            if codesign --verify --strict -R='notarized' --check-notarization --verbose=4 "${BINARY}"; then
+              break
+            else
+              status=$?
+            fi
+            if (( status != 3 || attempt == 3 )); then
+              echo "::error::Notarization requirement verification failed after ${attempt} attempt(s)."
+              exit "${status}"
+            fi
+            echo "::warning::Notarization ticket verification failed; retrying in 10 seconds (${attempt}/3)."
+            sleep 10
+          done
 
       - name: Clean up temporary keychain
         if: always()
         run: |
           if [[ -f "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" ]]; then
             security delete-keychain "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
+          fi
+          rm -f "${RUNNER_TEMP}/certificate.p12" "${RUNNER_TEMP}/macosdb-notarize.zip"
+          if [[ -d "${RUNNER_TEMP}/notarize-staging" ]]; then
+            rm -rf "${RUNNER_TEMP}/notarize-staging"
           fi
 
       - name: Package
@@ -133,6 +160,7 @@ jobs:
           cp "${BINARY}" staging/macosdb
           cp LICENSE staging/
           /usr/bin/tar --no-mac-metadata --no-xattrs -czf "${ARTIFACT}.tar.gz" -C staging .
+          shasum -a 256 "${ARTIFACT}.tar.gz" > "${ARTIFACT}.tar.gz.sha256"
           echo "artifact=${ARTIFACT}" >> "${GITHUB_OUTPUT}"
 
       - name: Generate build provenance
@@ -144,7 +172,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.package.outputs.artifact }}
-          path: "${{ steps.package.outputs.artifact }}.tar.gz"
+          path: |
+            ${{ steps.package.outputs.artifact }}.tar.gz
+            ${{ steps.package.outputs.artifact }}.tar.gz.sha256
           if-no-files-found: error
 
   release:
@@ -156,6 +186,7 @@ jobs:
       name: release
       deployment: false
     permissions:
+      attestations: read # required to verify build provenance on resumptions
       contents: write # required to create tags and GitHub releases
     outputs:
       version: ${{ needs.build.outputs.version }}
@@ -166,51 +197,130 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Create tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-          COMMIT_SHA: ${{ github.sha }}
-        run: |
-          gh api "repos/${REPOSITORY}/git/refs" \
-            -f "ref=refs/tags/${TAG}" \
-            -f "sha=${COMMIT_SHA}"
-
       - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ needs.build.outputs.artifact }}
           path: artifacts
 
-      - name: Create release with generated notes
+      - name: Verify release assets
+        env:
+          ARTIFACT: ${{ needs.build.outputs.artifact }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          test -s "artifacts/${ARTIFACT}.tar.gz"
+          test -s "artifacts/${ARTIFACT}.tar.gz.sha256"
+          (cd artifacts && shasum -a 256 -c "${ARTIFACT}.tar.gz.sha256")
+          /usr/bin/tar -tzf "artifacts/${ARTIFACT}.tar.gz" >/dev/null
+          gh attestation verify "artifacts/${ARTIFACT}.tar.gz" \
+            --repo "${REPOSITORY}" \
+            --signer-workflow "${REPOSITORY}/.github/workflows/release.yml" \
+            --source-digest "${GITHUB_SHA}" \
+            --source-ref refs/heads/main \
+            --deny-self-hosted-runners
+
+      - name: Create or verify tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if EXISTING_SHA=$(gh api "repos/${REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null); then
+            if [[ "${EXISTING_SHA}" != "${COMMIT_SHA}" ]]; then
+              echo "::error::Immutable tag ${TAG} points to ${EXISTING_SHA}, expected ${COMMIT_SHA}."
+              exit 1
+            fi
+            echo "Tag ${TAG} already points to the expected commit; resuming release."
+          else
+            gh api "repos/${REPOSITORY}/git/refs" \
+              -f "ref=refs/tags/${TAG}" \
+              -f "sha=${COMMIT_SHA}"
+          fi
+
+      - name: Create or resume release
+        id: create-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           ARTIFACT: ${{ needs.build.outputs.artifact }}
         run: |
-          # Anchor notes to the last published release, not just the newest tag,
-          # so an orphaned tag from a failed release run can't truncate them.
-          NOTES_START=$(gh release list \
-            --repo "${REPOSITORY}" \
-            --limit 100 \
-            --json tagName,isDraft,publishedAt \
-            --jq 'map(select(.isDraft | not)) | sort_by(.publishedAt) | last | .tagName // empty')
+          if gh release view "${TAG}" --repo "${REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; verifying its assets."
+            mapfile -t ASSET_NAMES < <(
+              gh release view "${TAG}" --repo "${REPOSITORY}" --json assets --jq '.assets[].name'
+            )
+            ARCHIVE_PRESENT=false
+            CHECKSUM_PRESENT=false
+            for asset in "${ASSET_NAMES[@]}"; do
+              [[ "${asset}" == "${ARTIFACT}.tar.gz" ]] && ARCHIVE_PRESENT=true
+              [[ "${asset}" == "${ARTIFACT}.tar.gz.sha256" ]] && CHECKSUM_PRESENT=true
+            done
 
-          create_args=("${TAG}" --repo "${REPOSITORY}" --title "${TAG}" --generate-notes)
-          if [[ -n "${NOTES_START}" ]]; then
-            create_args+=(--notes-start-tag "${NOTES_START}")
-            echo "Generating notes since last published release: ${NOTES_START}"
+            if [[ "${ARCHIVE_PRESENT}" != "${CHECKSUM_PRESENT}" ]]; then
+              echo "::error::Release ${TAG} contains only one member of the archive/checksum pair."
+              exit 1
+            fi
+            if [[ "${ARCHIVE_PRESENT}" == false ]]; then
+              gh release upload "${TAG}" \
+                "artifacts/${ARTIFACT}.tar.gz" \
+                "artifacts/${ARTIFACT}.tar.gz.sha256" \
+                --repo "${REPOSITORY}"
+            fi
+
+            REMOTE_ASSETS="${RUNNER_TEMP}/remote-release-assets"
+            mkdir -p "${REMOTE_ASSETS}"
+            # A tag can be moved but an asset id cannot, so fetch each asset by id and
+            # bind the bytes to the digest the API reports before trusting them.
+            RELEASE_ASSETS=$(gh api "repos/${REPOSITORY}/releases/tags/${TAG}" --jq '.assets')
+            for name in "${ARTIFACT}.tar.gz" "${ARTIFACT}.tar.gz.sha256"; do
+              ASSET_ID=$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${RELEASE_ASSETS}")
+              ASSET_DIGEST=$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .digest // empty' <<< "${RELEASE_ASSETS}")
+              if [[ ! "${ASSET_ID}" =~ ^[0-9]+$ || ! "${ASSET_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+                echo "::error::Release asset ${name} does not have exactly one id with a SHA-256 digest."
+                exit 1
+              fi
+              gh api -H "Accept: application/octet-stream" "repos/${REPOSITORY}/releases/assets/${ASSET_ID}" > "${REMOTE_ASSETS}/${name}"
+              echo "${ASSET_DIGEST#sha256:}  ${REMOTE_ASSETS}/${name}" | sha256sum --check
+            done
+            (cd "${REMOTE_ASSETS}" && shasum -a 256 -c "${ARTIFACT}.tar.gz.sha256")
+            gh attestation verify "${REMOTE_ASSETS}/${ARTIFACT}.tar.gz" \
+              --repo "${REPOSITORY}" \
+              --signer-workflow "${REPOSITORY}/.github/workflows/release.yml" \
+              --source-digest "${GITHUB_SHA}" \
+              --source-ref refs/heads/main \
+              --deny-self-hosted-runners
           else
-            echo "No prior published release; generating notes from the repository start"
+            NOTES_START=$(gh release list \
+              --repo "${REPOSITORY}" \
+              --limit 100 \
+              --json tagName,isDraft,publishedAt \
+              --jq 'map(select(.isDraft | not)) | sort_by(.publishedAt) | last | .tagName // empty')
+
+            create_args=("${TAG}" --repo "${REPOSITORY}" --title "${TAG}" --generate-notes)
+            if [[ -n "${NOTES_START}" ]]; then
+              create_args+=(--notes-start-tag "${NOTES_START}")
+              echo "Generating notes since last published release: ${NOTES_START}"
+            else
+              echo "No prior published release; generating notes from the repository start"
+            fi
+            gh release create "${create_args[@]}" \
+              "artifacts/${ARTIFACT}.tar.gz" \
+              "artifacts/${ARTIFACT}.tar.gz.sha256"
           fi
 
-          gh release create "${create_args[@]}" "artifacts/${ARTIFACT}.tar.gz"
           gh release view "${TAG}" \
             --repo "${REPOSITORY}" \
             --json body \
             --jq '.body' > "${RUNNER_TEMP}/raw_notes.md"
+          if grep -Fqx "## macOSdb ${TAG}" "${RUNNER_TEMP}/raw_notes.md"; then
+            echo "needs_format=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "needs_format=true" >> "${GITHUB_OUTPUT}"
+          fi
 
       - name: Format release notes
+        if: steps.create-release.outputs.needs_format == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository }}

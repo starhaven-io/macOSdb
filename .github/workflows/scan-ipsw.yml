@@ -58,71 +58,81 @@ concurrency:
 permissions: {}
 
 jobs:
+  prepare:
+    name: Establish trusted inputs
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      base_sha: ${{ steps.inputs.outputs.base_sha }}
+      release_date: ${{ steps.inputs.outputs.release_date }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Resolve trusted base and release date
+        id: inputs
+        env:
+          INPUT_DATE: ${{ inputs.release_date }}
+        run: |
+          RELEASE_DATE="${INPUT_DATE:-$(TZ='America/Los_Angeles' date +%Y-%m-%d)}"
+          if ! [[ "${RELEASE_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] \
+            || [[ "$(date -u -d "${RELEASE_DATE}" +%Y-%m-%d 2>/dev/null || true)" != "${RELEASE_DATE}" ]]; then
+            echo "::error::release_date '${RELEASE_DATE}' is not a real ISO 8601 calendar date."
+            exit 1
+          fi
+          TODAY=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
+          if [[ "${RELEASE_DATE}" > "${TODAY}" ]]; then
+            echo "::error::release_date '${RELEASE_DATE}' is in the future (today is ${TODAY} Pacific)."
+            exit 1
+          fi
+          echo "base_sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+          echo "release_date=${RELEASE_DATE}" >> "${GITHUB_OUTPUT}"
+
   scan:
     name: Scan
+    needs: prepare
     runs-on: scanner
     timeout-minutes: 60
     permissions:
       contents: read
-    outputs:
-      base_sha: ${{ steps.sync.outputs.base_sha }}
-      basename: ${{ steps.package-release.outputs.basename }}
-      release_date: ${{ steps.release-date.outputs.release_date }}
-      source_url: ${{ steps.resolve-ipsw.outputs.source_url }}
     steps:
       - name: Add Homebrew to PATH
         run: echo "/opt/homebrew/bin" >> "${GITHUB_PATH}"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
           persist-credentials: false
           fetch-depth: 0
-
-      - name: Sync working tree to latest main
-        id: sync
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
-          echo "base_sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
       - name: Clean workspace
         run: git clean -fdx data/macos/releases/
 
       - name: Resolve release date
-        id: release-date
         env:
-          INPUT_DATE: ${{ inputs.release_date }}
+          TRUSTED_DATE: ${{ needs.prepare.outputs.release_date }}
         run: |
-          # Release dates are Pacific, not UTC: `date -u` rolled the day forward on evening scans.
-          if [[ -z "${INPUT_DATE}" ]]; then
-            RELEASE_DATE=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
-            echo "No release_date provided; defaulting to today (${RELEASE_DATE} Pacific)"
-          else
-            if ! [[ "${INPUT_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-              echo "::error::release_date '${INPUT_DATE}' is not ISO 8601 (YYYY-MM-DD)"
-              exit 1
-            fi
-            TODAY=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
-            if [[ "${INPUT_DATE}" > "${TODAY}" ]]; then
-              echo "::error::release_date '${INPUT_DATE}' is in the future (today is ${TODAY} Pacific)"
-              exit 1
-            fi
-            RELEASE_DATE="${INPUT_DATE}"
-          fi
-          echo "RELEASE_DATE=${RELEASE_DATE}" >> "${GITHUB_ENV}"
-          echo "release_date=${RELEASE_DATE}" >> "${GITHUB_OUTPUT}"
+          echo "RELEASE_DATE=${TRUSTED_DATE}" >> "${GITHUB_ENV}"
 
       - name: Resolve IPSW path
         id: resolve-ipsw
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
         run: |
+          if [[ "${IPSW_URL}" == *$'\n'* || "${IPSW_URL}" == *$'\r'* ]]; then
+            echo "::error::Refusing an IPSW URL containing control characters."
+            exit 1
+          fi
           if [[ ! "${IPSW_URL}" =~ ^https://updates\.cdn-apple\.com/.+\.ipsw([?#].*)?$ ]]; then
             echo "::error::Refusing IPSW URL '${IPSW_URL}': expected an https://updates.cdn-apple.com/... .ipsw URL."
             exit 1
           fi
           ORIG_NAME=$(basename "${IPSW_URL%%\?*}")
-          if [[ ! "${ORIG_NAME}" =~ ^UniversalMac_[0-9]+(\.[0-9]+){1,2}_[A-Za-z0-9]+_Restore\.ipsw$ ]]; then
+          if [[ ! "${ORIG_NAME}" =~ ^UniversalMac_[0-9]+(\.[0-9]+){1,2}_[0-9]+[A-Z][0-9]+[a-z]?_Restore\.ipsw$ ]]; then
             echo "::error::Refusing IPSW filename '${ORIG_NAME}': expected UniversalMac_<version>_<build>_Restore.ipsw."
             exit 1
           fi
@@ -160,8 +170,17 @@ jobs:
           fi
           IPSW_DIR="${ARCHIVE_ROOT}/macOS/${MAJOR}"
           mkdir -p "${IPSW_DIR}"
+          IPSW_DIR=$(cd "${IPSW_DIR}" && pwd -P)
           IPSW_FILE="${IPSW_DIR}/macOS-${VERSION}-${BUILD}.ipsw"
-          echo "IPSW_FILE=${IPSW_FILE}" >> "${GITHUB_ENV}"
+          if [[ "${IPSW_FILE}" != "${IPSW_DIR}/"* ]]; then
+            echo "::error::Resolved IPSW path escaped its archive directory."
+            exit 1
+          fi
+          {
+            printf 'IPSW_FILE=%s\n' "${IPSW_FILE}"
+            printf 'EXPECTED_VERSION=%s\n' "${VERSION}"
+            printf 'EXPECTED_BUILD=%s\n' "${BUILD}"
+          } >> "${GITHUB_ENV}"
           echo "source_url=${IPSW_URL}" >> "${GITHUB_OUTPUT}"
 
       - name: Restore CLI build cache
@@ -186,10 +205,24 @@ jobs:
         env:
           IPSW_URL: ${{ inputs.ipsw_url }}
         run: |
+          if [[ -L "${IPSW_FILE}" || -L "${IPSW_FILE}.part" \
+            || -L "${IPSW_FILE}.sha256" || -L "${IPSW_FILE}.pem" ]]; then
+            echo "::error::Refusing a symbolic link at the resolved IPSW path."
+            exit 1
+          fi
+          if [[ -e "${IPSW_FILE}" && ! -f "${IPSW_FILE}" ]]; then
+            echo "::error::Refusing a non-regular file at the resolved IPSW path."
+            exit 1
+          fi
           if [[ -f "${IPSW_FILE}" ]]; then
+            if [[ -f "${IPSW_FILE}.sha256" ]]; then
+              .build/release/macosdb validate "${IPSW_FILE}"
+            fi
             echo "IPSW already cached at ${IPSW_FILE}, skipping download"
           else
-            TOTAL=$(curl -fsSLI --retry 5 --retry-connrefused "${IPSW_URL}" | grep -i content-length | tail -1 | tr -dc '0-9' || true)
+            TOTAL=$(curl -fsSLI --proto '=https' --proto-redir '=https' \
+              --connect-timeout 30 --max-time 60 --retry 5 --retry-connrefused \
+              "${IPSW_URL}" | grep -i content-length | tail -1 | tr -dc '0-9' || true)
             if [[ -n "${TOTAL}" ]] && (( TOTAL > 0 )); then
               TOTAL_MB=$(( TOTAL / 1048576 ))
               TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
@@ -198,7 +231,9 @@ jobs:
               TOTAL_MB=0
               echo "Downloading IPSW (unknown size)..."
             fi
-            curl -fsSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o "${IPSW_FILE}.part" "${IPSW_URL}" &
+            curl -fsSL --proto '=https' --proto-redir '=https' \
+              --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors \
+              -C - -o "${IPSW_FILE}.part" "${IPSW_URL}" &
             CURL_PID=$!
             while kill -0 "${CURL_PID}" 2>/dev/null; do
               if [[ -f "${IPSW_FILE}.part" ]]; then
@@ -216,6 +251,16 @@ jobs:
             wait "${CURL_PID}"
             mv "${IPSW_FILE}.part" "${IPSW_FILE}"
           fi
+
+      - name: Validate IPSW
+        run: |
+          FILE_SIZE=$(stat -f%z "${IPSW_FILE}")
+          FILE_TYPE=$(file -b "${IPSW_FILE}")
+          if (( FILE_SIZE < 104857600 )) || [[ "${FILE_TYPE}" != *"Zip archive"* ]]; then
+            echo "::error::Downloaded file is not a valid IPSW (${FILE_TYPE}, $(( FILE_SIZE / 1024 )) KB)."
+            exit 1
+          fi
+          echo "IPSW validated: $(( FILE_SIZE / 1073741824 )) GB, ${FILE_TYPE}"
 
       - name: Set or verify IPSW modification time
         run: |
@@ -302,8 +347,15 @@ jobs:
             echo "::error::Expected exactly one new macOS release JSON file, found ${MATCHES}."
             exit 1
           fi
-          if [[ ! "${NEW_RELEASE_FILE}" =~ ^data/macos/releases/[0-9]+/macOS-[^/]+\.json$ ]]; then
+          EXPECTED_RELEASE_FILE="data/macos/releases/${EXPECTED_VERSION%%.*}/macOS-${EXPECTED_VERSION}-${EXPECTED_BUILD}.json"
+          if [[ "${NEW_RELEASE_FILE}" != "${EXPECTED_RELEASE_FILE}" ]]; then
             echo "::error::Unexpected release JSON path: ${NEW_RELEASE_FILE}"
+            exit 1
+          fi
+          if ! jq -e --arg version "${EXPECTED_VERSION}" --arg build "${EXPECTED_BUILD}" \
+            '.osVersion == $version and .buildNumber == $build and .productType == "macOS"' \
+            "${NEW_RELEASE_FILE}" >/dev/null; then
+            echo "::error::Scanned macOS metadata does not match the source version/build."
             exit 1
           fi
 
@@ -320,7 +372,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: scan
+    needs: [prepare, scan]
     runs-on: ubuntu-slim
     timeout-minutes: 60
     environment:
@@ -333,7 +385,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.scan.outputs.base_sha }}
+          ref: ${{ needs.prepare.outputs.base_sha }}
           persist-credentials: false
           fetch-depth: 0
 
@@ -344,57 +396,30 @@ jobs:
           path: ${{ runner.temp }}/artifact
 
       - name: Verify and overlay release JSON
+        id: verify-release
+        env:
+          ARTIFACT: ${{ runner.temp }}/artifact/release-json.tgz
+          SOURCE_URL: ${{ inputs.ipsw_url }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
+          IS_BETA: ${{ inputs.beta }}
+          BETA_NUMBER: ${{ inputs.beta_number }}
+          BETA_REVISION: ${{ inputs.beta_revision }}
+          IS_RC: ${{ inputs.rc }}
+          RC_NUMBER: ${{ inputs.rc_number }}
+          IS_DEVICE_SPECIFIC: ${{ inputs.device_specific }}
         run: |
-          python3 - <<'PY'
-          import os
-          import re
-          import shutil
-          import sys
-          import tarfile
-          from pathlib import Path
-
-          tgz = Path(os.environ["RUNNER_TEMP"]) / "artifact" / "release-json.tgz"
-          if not tgz.is_file():
-              print(f"::error::Missing release JSON artifact at {tgz}", file=sys.stderr)
-              sys.exit(1)
-
-          index_path = "data/macos/releases.json"
-          release_re = re.compile(r"^data/macos/releases/[0-9]+/macOS-[^/]+\.json$")
-          index_members = []
-          release_members = []
-
-          with tarfile.open(tgz, "r:gz") as archive:
-              for member in archive.getmembers():
-                  parts = Path(member.name).parts
-                  if member.name.startswith("/") or ".." in parts:
-                      print(f"::error::Unsafe artifact path: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-                  if not member.isfile():
-                      print(f"::error::Artifact contains a non-regular file: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-
-                  if member.name == index_path:
-                      index_members.append(member)
-                  elif release_re.fullmatch(member.name):
-                      release_members.append(member)
-                  else:
-                      print(f"::error::Unexpected artifact entry: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-
-              if len(index_members) != 1 or len(release_members) != 1:
-                  print("::error::Artifact must contain one macOS releases.json and one release JSON file.", file=sys.stderr)
-                  sys.exit(1)
-
-              for member in (index_members[0], release_members[0]):
-                  source = archive.extractfile(member)
-                  if source is None:
-                      print(f"::error::Could not read artifact entry: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-                  target = Path(member.name)
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  with target.open("wb") as destination:
-                      shutil.copyfileobj(source, destination)
-          PY
+          python3 scripts/verify-release-artifact.py \
+            --artifact "${ARTIFACT}" \
+            --product macos \
+            --source-url "${SOURCE_URL}" \
+            --release-date "${RELEASE_DATE}" \
+            --beta "${IS_BETA}" \
+            --beta-number "${BETA_NUMBER}" \
+            --beta-revision "${BETA_REVISION}" \
+            --rc "${IS_RC}" \
+            --rc-number "${RC_NUMBER}" \
+            --device-specific "${IS_DEVICE_SPECIFIC}" \
+            --github-output "${GITHUB_OUTPUT}"
 
       - name: Lint JSON
         run: python3 scripts/lint-json.py
@@ -414,13 +439,13 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           REPOSITORY: ${{ github.repository }}
-          SOURCE_URL: ${{ needs.scan.outputs.source_url }}
-          RELEASE_DATE: ${{ needs.scan.outputs.release_date }}
-          BASENAME: ${{ needs.scan.outputs.basename }}
-          BASE_SHA: ${{ needs.scan.outputs.base_sha }}
+          SOURCE_URL: ${{ steps.verify-release.outputs.source_url }}
+          RELEASE_DATE: ${{ steps.verify-release.outputs.release_date }}
+          BASENAME: ${{ steps.verify-release.outputs.basename }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
+          BASE_SHA=$(git rev-parse HEAD)
           BOT_USER="${APP_SLUG}[bot]"
           BOT_ID=$(gh api "/users/${BOT_USER}" --jq .id)
 
@@ -431,9 +456,12 @@ jobs:
           COMMIT_BODY="Signed-off-by: ${BOT_USER} <${BOT_ID}+${BOT_USER}@users.noreply.github.com>"
 
           if [[ -n "${TRIGGERING_ACTOR}" ]]; then
-            ACTOR_NAME=$(gh api "/users/${TRIGGERING_ACTOR}" --jq '.name // .login')
-            ACTOR_EMAIL=$(gh api "/users/${TRIGGERING_ACTOR}" --jq '.email // "\(.id)+\(.login)@users.noreply.github.com"')
-            COAUTHOR="Co-authored-by: ${ACTOR_NAME} <${ACTOR_EMAIL}>"
+            if [[ ! "${TRIGGERING_ACTOR}" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]]; then
+              echo "::error::Invalid triggering actor login."
+              exit 1
+            fi
+            ACTOR_ID=$(gh api "/users/${TRIGGERING_ACTOR}" --jq .id)
+            COAUTHOR="Co-authored-by: ${TRIGGERING_ACTOR} <${ACTOR_ID}+${TRIGGERING_ACTOR}@users.noreply.github.com>"
             COMMIT_BODY="${COMMIT_BODY}"$'\n'"${COAUTHOR}"
           fi
 

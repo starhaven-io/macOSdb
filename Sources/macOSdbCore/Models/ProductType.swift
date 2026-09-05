@@ -28,4 +28,13 @@ package enum ProductType: String, Codable, Sendable, CaseIterable {
         case .xcode: "Xcode"
         }
     }
+
+    package func canonicalDataFile(osVersion: String, buildNumber: String) -> String? {
+        guard osVersion.wholeMatch(of: /[0-9]+\.[0-9]+(?:\.[0-9]+)?/) != nil,
+              buildNumber.wholeMatch(of: /[0-9]+[A-Z][0-9]+[a-z]?/) != nil,
+              let major = osVersion.split(separator: ".", maxSplits: 1).first else {
+            return nil
+        }
+        return "releases/\(major)/\(filePrefix)-\(osVersion)-\(buildNumber).json"
+    }
 }

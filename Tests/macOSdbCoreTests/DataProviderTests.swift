@@ -265,8 +265,8 @@ struct DataProviderTests {
         }
     }
 
-    @Test("DataProvider treats absolute data files as local product-relative misses")
-    func absoluteDataFileDoesNotEscapeDataRoot() async throws {
+    @Test("DataProvider rejects absolute data files")
+    func rejectsAbsoluteDataFile() async throws {
         let dataRoot = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("macosdb-provider-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: dataRoot, withIntermediateDirectories: true)
@@ -283,10 +283,10 @@ struct DataProviderTests {
         do {
             _ = try await provider.fetchRelease(entry)
             Issue.record("Expected absolute dataFile fetch to fail under the data root")
-        } catch DataProviderError.invalidDataFile {
-            Issue.record("Absolute paths should not be treated as traversal")
+        } catch DataProviderError.invalidDataFile(let path) {
+            #expect(path == "/etc/passwd")
         } catch {
-            #expect(true)
+            Issue.record("Expected invalidDataFile, got \(error)")
         }
     }
 
@@ -336,7 +336,7 @@ struct DataProviderTests {
 
 }
 
-private func makeLocalDataStore() throws -> URL {
+func makeLocalDataStore() throws -> URL {
     let root = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent("macosdb-provider-\(UUID().uuidString)", isDirectory: true)
     let macosDir = root.appendingPathComponent("macos", isDirectory: true)
@@ -457,7 +457,7 @@ private func makeXcodeDataStore() throws -> URL {
     return root
 }
 
-private func release(
+func release(
     version: String,
     build: String,
     name: String,
@@ -475,7 +475,7 @@ private func release(
     )
 }
 
-private func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
+func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
     var data = try encoder.encode(value)

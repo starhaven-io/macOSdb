@@ -7,9 +7,11 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "check": "astro check",
     "check:headers": "node scripts/check-security-headers.mjs",
+    "audit": "npm audit --audit-level=moderate",
     "prebuild": "node scripts/check-security-headers.mjs",
-    "build": "astro build",
+    "build": "astro build && node scripts/check-built-csp.mjs && node scripts/check-built-api.mjs",
     "preview": "astro preview",
     "test": "node --test 'test/*.test.ts'",
     "astro": "astro",
@@ -30,13 +32,19 @@
     "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^6.0.3",
     "wrangler": "4.127.0"
   },
   "allowScripts": {
     "esbuild": false,
     "fsevents": false,
     "workerd": false
+  },
+  "overrides": {
+    "fflate": "0.7.5",
+    "nanoid": "3.3.18"
   }
 }

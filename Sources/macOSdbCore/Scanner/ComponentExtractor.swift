@@ -48,11 +48,11 @@ enum ComponentExtractor {
         using definition: ComponentDefinition
     ) -> Component? {
         let minLength = definition.minLength ?? BinaryStringScanner.defaultMinLength
-        let matches = BinaryStringScanner.findAll(in: data, matching: definition.pattern, minLength: minLength)
-
-        // Take the numerically highest match. A lexicographic sort would rank
-        // different-width integers wrong — e.g. "9" sorts above "21209".
-        guard let intValue = Set(matches).compactMap({ Int($0) }).max() else {
+        guard let intValue = BinaryStringScanner.findMaximumInteger(
+            in: data,
+            matching: definition.pattern,
+            minLength: minLength
+        ) else {
             logger.debug("\(definition.name): no integer version found")
             return nil
         }

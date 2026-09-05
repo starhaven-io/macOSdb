@@ -87,6 +87,28 @@ struct XcodeScannerTests {
         }
     }
 
+    @Test("An expanded archive cannot ambiguously select between app bundles")
+    func expandedArchiveRejectsMultipleXcodeApps() async throws {
+        let fixture = try ExpandedXcodeFixture()
+        defer { fixture.cleanup() }
+        try FileManager.default.createDirectory(
+            at: fixture.root.appendingPathComponent("Xcode.app"),
+            withIntermediateDirectories: true
+        )
+
+        do {
+            _ = try await XcodeScanner().scanExpandedDirectory(
+                fixture.root,
+                sourceFilename: "fixture.xip"
+            )
+            Issue.record("Expected ambiguous Xcode apps to fail")
+        } catch ScannerError.xcodeAppNotFound(let reason) {
+            #expect(reason.contains("multiple Xcode app"))
+        } catch {
+            Issue.record("Expected an ambiguous Xcode app error, got \(error)")
+        }
+    }
+
     @Test("xipFilename prefers `path` query parameter (services-account portal URL)")
     func xipFilenameFromServicesAccountURL() {
         let url = "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_26.5_beta_3/Xcode_26.5_beta_3_Apple_silicon.xip"

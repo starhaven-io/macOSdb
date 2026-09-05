@@ -18,6 +18,17 @@ struct ProcessRunnerTests {
         #expect(String(data: result.stdout, encoding: .utf8) == "hello\n")
     }
 
+    @Test("Spawned tools receive a readable null standard input")
+    func standardInputIsOpen() async throws {
+        let result = try await ProcessRunner.run(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "if [[ -r /dev/fd/0 ]]; then printf open; else printf closed; fi"]
+        )
+
+        #expect(result.terminationStatus == 0)
+        #expect(String(data: result.stdout, encoding: .utf8) == "open")
+    }
+
     @Test("A process that finishes inside its timeout succeeds normally")
     func capturesOutputWithinTimeout() async throws {
         let result = try await ProcessRunner.run(
@@ -75,7 +86,8 @@ struct ProcessRunnerTests {
         }
 
         // It must return far sooner than the 30s the process would otherwise sleep.
-        #expect(ContinuousClock.now - start < .seconds(20))
+        let elapsed = ContinuousClock.now - start
+        #expect(elapsed < .seconds(20))
         guard case .processTimedOut = thrown as? ScannerError else {
             Issue.record("expected ScannerError.processTimedOut, got \(String(describing: thrown))")
             return
@@ -107,7 +119,8 @@ struct ProcessRunnerTests {
         }
 
         #expect(FileManager.default.fileExists(atPath: readyURL.path))
-        #expect(ContinuousClock.now - start < .seconds(5))
+        let elapsed = ContinuousClock.now - start
+        #expect(elapsed < .seconds(5))
         guard case .processTimedOut = thrown as? ScannerError else {
             Issue.record("expected ScannerError.processTimedOut, got \(String(describing: thrown))")
             return
@@ -174,6 +187,95 @@ struct ProcessRunnerTests {
         let result = try await task.value
         #expect(result.terminationStatus == 0)
         #expect(String(data: result.stdout, encoding: .utf8) == "done\n")
+    }
+
+    @Test("Captured output is bounded before it is loaded into memory")
+    func capturedOutputIsBounded() async {
+        let start = ContinuousClock.now
+        do {
+            _ = try await ProcessRunner.run(
+                executableURL: URL(fileURLWithPath: "/usr/bin/yes"),
+                arguments: [],
+                gracePeriod: 0.2,
+                maxCapturedOutputBytes: 1_024
+            )
+            Issue.record("expected oversized output to be rejected")
+        } catch ScannerError.processOutputTooLarge(let tool, let limit) {
+            #expect(tool == "yes")
+            #expect(limit == 1_024)
+        } catch {
+            Issue.record("expected processOutputTooLarge, got \(error)")
+        }
+        #expect(ContinuousClock.now - start < .seconds(5))
+    }
+
+    @Test("Output overflow terminates descendants in the spawned process group")
+    func outputOverflowTerminatesDescendants() async throws {
+        let pidURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-process-child-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: pidURL) }
+
+        do {
+            _ = try await ProcessRunner.run(
+                executableURL: URL(fileURLWithPath: "/bin/sh"),
+                arguments: [
+                    "-c",
+                    """
+                    /bin/sh -c 'trap "" TERM; printf "%s" "$$" > "$1"; exec /bin/sleep 30' child "$1" &
+                    while [[ ! -s "$1" ]]; do /bin/sleep 0.01; done
+                    exec /usr/bin/yes
+                    """,
+                    "macosdb-process-group-test",
+                    pidURL.path
+                ],
+                gracePeriod: 0.2,
+                maxCapturedOutputBytes: 1_024
+            )
+            Issue.record("expected oversized output to be rejected")
+        } catch ScannerError.processOutputTooLarge {
+            // Expected.
+        }
+
+        let childPIDString = try String(contentsOf: pidURL, encoding: .utf8)
+        let childPID = try #require(pid_t(childPIDString))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while kill(childPID, 0) == 0, ContinuousClock.now < deadline {
+            usleep(10_000)
+        }
+        #expect(kill(childPID, 0) == -1)
+        #expect(errno == ESRCH)
+    }
+
+    @Test("A successful leader does not leave captured-output descendants running")
+    func successfulLeaderTerminatesDescendants() async throws {
+        let pidURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-process-success-child-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: pidURL) }
+
+        let start = ContinuousClock.now
+        let result = try await ProcessRunner.run(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [
+                "-c",
+                "/bin/sleep 30 & printf '%s' \"$!\" > \"$1\"; printf 'done\\n'",
+                "macosdb-process-success-test",
+                pidURL.path
+            ],
+            gracePeriod: 0.2
+        )
+
+        #expect(result.terminationStatus == 0)
+        #expect(String(data: result.stdout, encoding: .utf8) == "done\n")
+        #expect(ContinuousClock.now - start < .seconds(5))
+
+        let childPIDString = try String(contentsOf: pidURL, encoding: .utf8)
+        let childPID = try #require(pid_t(childPIDString))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while kill(childPID, 0) == 0, ContinuousClock.now < deadline {
+            usleep(10_000)
+        }
+        #expect(kill(childPID, 0) == -1)
+        #expect(errno == ESRCH)
     }
 }
 

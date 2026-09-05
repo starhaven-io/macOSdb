@@ -1,8 +1,12 @@
 import ArgumentParser
+import Darwin
 import Foundation
 import macOSdbCore
 
 struct CleanupCommand: AsyncParsableCommand {
+    private static let quarantineMarkerName = "io.linnane.macosdb.cleanup"
+    private static let quarantineMarkerValue = Array("macosdb-cleanup-v1".utf8)
+
     static let configuration = CommandConfiguration(
         commandName: "cleanup",
         abstract: "Find and remove leftover temp directories and mounted DMGs from aborted scans."
@@ -118,8 +122,7 @@ struct CleanupCommand: AsyncParsableCommand {
                 continue
             }
 
-            // Leave volumes mounted by a scan that is still running.
-            if ScanWorkspace.isOwnedByRunningScan(workDir) { continue }
+            guard ScanWorkspace.ownershipState(workDir) == .stale else { continue }
 
             for entity in entities {
                 guard let mountPoint = entity["mount-point"] as? String,
@@ -137,9 +140,8 @@ struct CleanupCommand: AsyncParsableCommand {
         return results
     }
 
-    /// The `macosdb-…` work dir that contains a scanner-created image, or nil if the
-    /// image isn't one of ours — so `--force` only ever detaches volumes from the
-    /// scanner's own work dirs under the temp dir, never unrelated user volumes.
+    /// The scanner work dir that contains an image, or nil if the source is outside
+    /// the temporary directory or does not use a production scanner workspace name.
     static func scannerWorkDir(forImage imagePath: String, tempBase: String) -> URL? {
         let resolvedPath = normalizedTemporaryPath(imagePath)
         let resolvedBase = normalizedTemporaryPath(tempBase)
@@ -147,7 +149,7 @@ struct CleanupCommand: AsyncParsableCommand {
         guard resolvedPath.hasPrefix(basePrefix) else { return nil }
         var dir = URL(fileURLWithPath: resolvedPath).deletingLastPathComponent()
         while dir.path == resolvedBase || dir.path.hasPrefix(basePrefix) {
-            if dir.lastPathComponent.hasPrefix("macosdb-") { return dir }
+            if ScanWorkspace.isValidWorkspaceName(dir.lastPathComponent) { return dir }
             let parent = dir.deletingLastPathComponent()
             if parent == dir { break }
             dir = parent
@@ -191,17 +193,32 @@ struct CleanupCommand: AsyncParsableCommand {
         guard let workDir = Self.scannerWorkDir(forImage: mount.imagePath, tempBase: tempBase) else {
             return .unrecognizedWorkDir
         }
-        return ScanWorkspace.isOwnedByRunningScan(workDir) ? .ownedByRunningScan : .stale
+        switch ScanWorkspace.ownershipState(workDir) {
+        case .running:
+            return .ownedByRunningScan
+        case .stale:
+            let stillMounted = findStaleMounts().contains {
+                $0.imagePath == mount.imagePath
+                    && $0.mountPoint == mount.mountPoint
+                    && $0.deviceNode == mount.deviceNode
+            }
+            return stillMounted ? .stale : .unrecognizedWorkDir
+        case .unrecognized:
+            return .unrecognizedWorkDir
+        }
     }
 
     // MARK: - Stale temp directory detection
 
     private func findStaleTempDirs() -> [URL] {
-        let tempDir = FileManager.default.temporaryDirectory
+        Self.staleTempDirs(in: FileManager.default.temporaryDirectory)
+    }
+
+    static func staleTempDirs(in tempDir: URL) -> [URL] {
         guard let contents = try? FileManager.default.contentsOfDirectory(
             at: tempDir,
             includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            options: []
         ) else {
             return []
         }
@@ -211,47 +228,72 @@ struct CleanupCommand: AsyncParsableCommand {
 
     static func isStaleTempDir(_ url: URL) -> Bool {
         let name = url.lastPathComponent
-        guard name.hasPrefix("macosdb-") else { return false }
-        guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false else { return false }
-        // Don't delete a work dir whose scan is still running.
-        return !ScanWorkspace.isOwnedByRunningScan(url)
+        guard ScanWorkspace.isValidWorkspaceName(name) else { return false }
+        guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]),
+              values.isDirectory == true,
+              values.isSymbolicLink != true else {
+            return false
+        }
+        let ownership = ScanWorkspace.ownershipState(url)
+        if ownership == .stale {
+            return true
+        }
+        return ownership == .unrecognized
+            && ScanWorkspace.isValidCleanupQuarantineName(name)
+            && hasCleanupQuarantineMarker(url)
     }
 
     // MARK: - Temp directory removal
 
     private func removeDirectories(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/rm")
-        process.arguments = ["-rf"] + urls.map(\.path)
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-
-        let spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-        var frame = 0
-
-        do {
-            try process.run()
-        } catch {
-            printStatus("Failed to remove directories: \(error.localizedDescription)")
-            return
-        }
-
-        while process.isRunning {
-            printInline("\(spinner[frame % spinner.count]) Removing \(urls.count) directory(s)...")
-            frame += 1
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-
-        printInline("")
-        if process.terminationStatus == 0 {
-            for url in urls {
+        for url in urls {
+            let quarantine = url.deletingLastPathComponent()
+                .appendingPathComponent(".macosdb-cleanup-\(UUID().uuidString)")
+            do {
+                try FileManager.default.moveItem(at: url, to: quarantine)
+                guard Self.isStaleOwnedDirectory(quarantine) else {
+                    if !FileManager.default.fileExists(atPath: url.path) {
+                        try? FileManager.default.moveItem(at: quarantine, to: url)
+                    }
+                    printStatus("Skipped changed directory \(url.lastPathComponent)")
+                    continue
+                }
+                try Self.markCleanupQuarantine(quarantine)
+                try FileManager.default.removeItem(at: quarantine)
                 printStatus("Removed \(url.lastPathComponent)")
+            } catch {
+                printStatus("Failed to remove \(url.lastPathComponent): \(error.localizedDescription)")
             }
-        } else {
-            printStatus("Failed to remove directories")
         }
+    }
+
+    private static func isStaleOwnedDirectory(_ url: URL) -> Bool {
+        isStaleTempDir(url)
+    }
+
+    static func markCleanupQuarantine(_ url: URL) throws {
+        let result = url.path.withCString { path in
+            quarantineMarkerName.withCString { name in
+                quarantineMarkerValue.withUnsafeBytes { marker in
+                    setxattr(path, name, marker.baseAddress, marker.count, 0, XATTR_NOFOLLOW)
+                }
+            }
+        }
+        guard result == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+    }
+
+    private static func hasCleanupQuarantineMarker(_ url: URL) -> Bool {
+        var value = [UInt8](repeating: 0, count: quarantineMarkerValue.count)
+        let count = url.path.withCString { path in
+            quarantineMarkerName.withCString { name in
+                value.withUnsafeMutableBytes { marker in
+                    getxattr(path, name, marker.baseAddress, marker.count, 0, XATTR_NOFOLLOW)
+                }
+            }
+        }
+        return count == quarantineMarkerValue.count && value == quarantineMarkerValue
     }
 
 }

@@ -4,6 +4,14 @@ import ZIPFoundation
 
 actor IPSWExtractor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "IPSWExtractor")
+    static let maxArchiveEntries = 100_000
+    static let maxMetadataSize: UInt64 = 32 * 1_024 * 1_024
+    static let maxKernelEntries = 2_048
+    static let maxDMGEntries = 512
+    static let maxKernelSize: UInt64 = 1 * 1_024 * 1_024 * 1_024
+    static let maxKernelBytes: UInt64 = 8 * 1_024 * 1_024 * 1_024
+    static let maxDMGSize: UInt64 = 32 * 1_024 * 1_024 * 1_024
+    static let maxDMGBytes: UInt64 = 48 * 1_024 * 1_024 * 1_024
 
     struct ExtractionResult: Sendable {
         let workDirectory: URL
@@ -28,7 +36,12 @@ actor IPSWExtractor {
         let workDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("macosdb-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
-        ScanWorkspace.markOwned(workDir)
+        do {
+            try ScanWorkspace.markOwned(workDir)
+        } catch {
+            try? FileManager.default.removeItem(at: workDir)
+            throw error
+        }
 
         // Clean up the work dir if anything after its creation throws; the caller
         // only cleans up once it holds the ExtractionResult.
@@ -42,7 +55,7 @@ actor IPSWExtractor {
                 )
             }
 
-            let classified = classifyEntries(archive)
+            let classified = try classifyEntries(archive)
             try Task.checkCancellation()
             let metadata = try extractMetadata(
                 from: classified, archive: archive, workDir: workDir, filename: ipswPath.lastPathComponent
@@ -71,9 +84,11 @@ actor IPSWExtractor {
             throw error
         }
     }
+}
 
-    // MARK: - Extraction helpers
+// MARK: - Extraction helpers
 
+extension IPSWExtractor {
     private struct ClassifiedEntries {
         var kernelcaches: [Entry] = []
         var dmgs: [Entry] = []
@@ -88,23 +103,54 @@ actor IPSWExtractor {
         let kernelDeviceMap: [String: [String]]
     }
 
-    private func classifyEntries(_ archive: Archive) -> ClassifiedEntries {
+    private func classifyEntries(_ archive: Archive) throws -> ClassifiedEntries {
         var result = ClassifiedEntries()
+        var entryCount = 0
         for entry in archive {
-            guard !Task.isCancelled else { break }
+            try Task.checkCancellation()
+            entryCount += 1
             let name = entry.path
             let basename = URL(fileURLWithPath: name).lastPathComponent
             if basename.hasPrefix("kernelcache") {
+                try Self.requireRegularArchiveEntry(entry)
                 result.kernelcaches.append(entry)
             } else if name.hasSuffix(".dmg") || name.hasSuffix(".dmg.aea") {
+                try Self.requireRegularArchiveEntry(entry)
                 result.dmgs.append(entry)
             } else if basename == "BuildManifest.plist" {
+                try Self.requireRegularArchiveEntry(entry)
                 result.buildManifest = entry
             } else if basename == "Restore.plist" {
+                try Self.requireRegularArchiveEntry(entry)
                 result.restorePlist = entry
             }
+            try Self.validateEntryCounts(
+                total: entryCount,
+                kernels: result.kernelcaches.count,
+                dmgs: result.dmgs.count
+            )
         }
         return result
+    }
+
+    private static func requireRegularArchiveEntry(_ entry: Entry) throws {
+        guard entry.type == .file else {
+            throw ScannerError.ipswExtractionFailed(
+                reason: "Selected archive entry is not a regular file: \(entry.path)"
+            )
+        }
+    }
+
+    static func validateEntryCounts(total: Int, kernels: Int, dmgs: Int) throws {
+        guard total <= maxArchiveEntries else {
+            throw ScannerError.ipswExtractionFailed(reason: "Archive contains too many entries")
+        }
+        guard kernels <= maxKernelEntries else {
+            throw ScannerError.ipswExtractionFailed(reason: "Archive contains too many kernelcache entries")
+        }
+        guard dmgs <= maxDMGEntries else {
+            throw ScannerError.ipswExtractionFailed(reason: "Archive contains too many disk images")
+        }
     }
 
     private func extractMetadata(
@@ -119,8 +165,18 @@ actor IPSWExtractor {
         var kernelDeviceMap: [String: [String]] = [:]
 
         if let manifestEntry = entries.buildManifest {
+            try validateMetadataSize(manifestEntry)
             let manifestPath = workDir.appendingPathComponent("BuildManifest.plist")
-            _ = try archive.extract(manifestEntry, to: manifestPath)
+            _ = try extractBoundedEntry(
+                manifestEntry,
+                from: archive,
+                to: manifestPath,
+                budget: ExtractionBudget(
+                    individualLimit: Self.maxMetadataSize,
+                    totalSoFar: 0,
+                    totalLimit: Self.maxMetadataSize
+                )
+            )
             let parsed = try parseManifest(at: manifestPath)
             osVersion = parsed.osVersion
             buildNumber = parsed.buildNumber
@@ -128,8 +184,18 @@ actor IPSWExtractor {
             kernelDeviceMap = parsed.kernelDeviceMap
             Self.logger.info("Detected: macOS \(osVersion) (\(buildNumber))")
         } else if let restoreEntry = entries.restorePlist {
+            try validateMetadataSize(restoreEntry)
             let restorePath = workDir.appendingPathComponent("Restore.plist")
-            _ = try archive.extract(restoreEntry, to: restorePath)
+            _ = try extractBoundedEntry(
+                restoreEntry,
+                from: archive,
+                to: restorePath,
+                budget: ExtractionBudget(
+                    individualLimit: Self.maxMetadataSize,
+                    totalSoFar: 0,
+                    totalLimit: Self.maxMetadataSize
+                )
+            )
             (osVersion, buildNumber) = try parseRestorePlist(at: restorePath)
             Self.logger.info("Detected from Restore.plist: macOS \(osVersion) (\(buildNumber))")
         }
@@ -151,16 +217,44 @@ actor IPSWExtractor {
         )
     }
 
+    private func validateMetadataSize(_ entry: Entry) throws {
+        guard Self.isMetadataSizeAllowed(entry.uncompressedSize) else {
+            throw ScannerError.metadataExtractionFailed(
+                reason: "\(entry.path) exceeds the \(Self.maxMetadataSize)-byte metadata limit"
+            )
+        }
+    }
+
+    static func isMetadataSizeAllowed(_ size: UInt64) -> Bool {
+        size <= maxMetadataSize
+    }
+
     private func extractKernels(_ entries: [Entry], archive: Archive, workDir: URL) throws -> [URL] {
+        try Self.validateDeclaredSizes(
+            entries,
+            individualLimit: Self.maxKernelSize,
+            totalLimit: Self.maxKernelBytes,
+            kind: "kernelcache"
+        )
         let kernelsDir = workDir.appendingPathComponent("kernels")
         try FileManager.default.createDirectory(at: kernelsDir, withIntermediateDirectories: true)
 
         var paths: [URL] = []
+        var extractedBytes: UInt64 = 0
         for entry in entries {
             try Task.checkCancellation()
             let basename = URL(fileURLWithPath: entry.path).lastPathComponent
             let destPath = kernelsDir.appendingPathComponent(basename)
-            _ = try archive.extract(entry, to: destPath)
+            extractedBytes += try extractBoundedEntry(
+                entry,
+                from: archive,
+                to: destPath,
+                budget: ExtractionBudget(
+                    individualLimit: Self.maxKernelSize,
+                    totalSoFar: extractedBytes,
+                    totalLimit: Self.maxKernelBytes
+                )
+            )
             paths.append(destPath)
             Self.logger.debug("Extracted kernel: \(basename)")
         }
@@ -199,10 +293,26 @@ actor IPSWExtractor {
         }
 
         let systemBasename = URL(fileURLWithPath: systemEntry.path).lastPathComponent
+        let selectedDMGs = [systemEntry, cryptexEntry].compactMap { $0 }
+        try Self.validateDeclaredSizes(
+            selectedDMGs,
+            individualLimit: Self.maxDMGSize,
+            totalLimit: Self.maxDMGBytes,
+            kind: "disk image"
+        )
         let systemPath = workDir.appendingPathComponent(systemBasename)
         Self.logger.info("Extracting system DMG: \(systemBasename) (\(systemEntry.uncompressedSize) bytes)")
         try Task.checkCancellation()
-        _ = try archive.extract(systemEntry, to: systemPath)
+        var extractedBytes = try extractBoundedEntry(
+            systemEntry,
+            from: archive,
+            to: systemPath,
+            budget: ExtractionBudget(
+                individualLimit: Self.maxDMGSize,
+                totalSoFar: 0,
+                totalLimit: Self.maxDMGBytes
+            )
+        )
 
         var cryptexPath: URL?
         if let cryptexEntry {
@@ -210,16 +320,60 @@ actor IPSWExtractor {
             let path = workDir.appendingPathComponent(cryptexBasename)
             Self.logger.info("Extracting cryptex DMG: \(cryptexBasename) (\(cryptexEntry.uncompressedSize) bytes)")
             try Task.checkCancellation()
-            _ = try archive.extract(cryptexEntry, to: path)
+            extractedBytes += try extractBoundedEntry(
+                cryptexEntry,
+                from: archive,
+                to: path,
+                budget: ExtractionBudget(
+                    individualLimit: Self.maxDMGSize,
+                    totalSoFar: extractedBytes,
+                    totalLimit: Self.maxDMGBytes
+                )
+            )
             cryptexPath = path
         }
 
         return (systemPath, cryptexPath)
     }
 
+    static func validateDeclaredSizes(
+        _ sizes: [UInt64],
+        individualLimit: UInt64,
+        totalLimit: UInt64
+    ) throws {
+        var total: UInt64 = 0
+        for size in sizes {
+            guard size <= individualLimit,
+                  size <= totalLimit,
+                  total <= totalLimit - size else {
+                throw ScannerError.ipswExtractionFailed(reason: "Archive expansion exceeds its byte budget")
+            }
+            total += size
+        }
+    }
+
+    private static func validateDeclaredSizes(
+        _ entries: [Entry],
+        individualLimit: UInt64,
+        totalLimit: UInt64,
+        kind: String
+    ) throws {
+        do {
+            try validateDeclaredSizes(
+                entries.map(\.uncompressedSize),
+                individualLimit: individualLimit,
+                totalLimit: totalLimit
+            )
+        } catch {
+            throw ScannerError.ipswExtractionFailed(
+                reason: "Selected \(kind) entries exceed the extraction byte budget"
+            )
+        }
+    }
+
     func readAEAHeader(ipswPath: URL, maxBytes: Int = 256 * 1_024) throws -> Data? {
         let archive = try Archive(url: ipswPath, accessMode: .read)
-        let classified = classifyEntries(archive)
+        let classified = try classifyEntries(archive)
 
         guard let aeaEntry = classified.dmgs.first(where: {
             URL(fileURLWithPath: $0.path).pathExtension == "aea"
@@ -256,105 +410,4 @@ actor IPSWExtractor {
         }
     }
 
-    // MARK: - Metadata parsing
-
-    private struct ManifestData {
-        let osVersion: String
-        let buildNumber: String
-        let dmgRoles: [String: String]
-        let kernelDeviceMap: [String: [String]]
-    }
-
-    private func parseManifest(at path: URL) throws -> ManifestData {
-        let data = try Data(contentsOf: path)
-        guard let plist = try PropertyListSerialization.propertyList(
-            from: data, format: nil
-        ) as? [String: Any] else {
-            throw ScannerError.metadataExtractionFailed(reason: "Invalid BuildManifest.plist format")
-        }
-
-        var osVersion = ""
-        var buildNumber = ""
-        var dmgRoles: [String: String] = [:]
-        var kernelDeviceMap: [String: Set<String>] = [:]
-
-        if let identities = plist["BuildIdentities"] as? [[String: Any]] {
-            if let firstIdentity = identities.first {
-                if let info = firstIdentity["Info"] as? [String: Any] {
-                    buildNumber = info["BuildNumber"] as? String ?? ""
-                }
-                if let manifest = firstIdentity["Manifest"] as? [String: Any] {
-                    if let osEntry = manifest["OS"] as? [String: Any],
-                       let info = osEntry["Info"] as? [String: Any] {
-                        osVersion = info["ProductVersion"] as? String ?? ""
-                    }
-
-                    // Map manifest role names to DMG filenames
-                    for (roleName, roleValue) in manifest {
-                        if let roleDict = roleValue as? [String: Any],
-                           let info = roleDict["Info"] as? [String: Any],
-                           let filePath = info["Path"] as? String,
-                           filePath.hasSuffix(".dmg") || filePath.hasSuffix(".dmg.aea") {
-                            let filename = URL(fileURLWithPath: filePath).lastPathComponent
-                            dmgRoles[roleName] = filename
-                        }
-                    }
-                }
-            }
-
-            // Build kernel → device mapping from all build identities
-            for identity in identities {
-                try Task.checkCancellation()
-                guard let productType = identity["Ap,ProductType"] as? String,
-                      let manifest = identity["Manifest"] as? [String: Any],
-                      let kernelEntry = manifest["KernelCache"] as? [String: Any],
-                      let kernelInfo = kernelEntry["Info"] as? [String: Any],
-                      let kernelPath = kernelInfo["Path"] as? String else {
-                    continue
-                }
-                let kernelFilename = URL(fileURLWithPath: kernelPath).lastPathComponent
-                kernelDeviceMap[kernelFilename, default: []].insert(productType)
-            }
-        }
-
-        if osVersion.isEmpty {
-            osVersion = plist["ProductVersion"] as? String ?? ""
-        }
-        if buildNumber.isEmpty {
-            buildNumber = plist["ProductBuildVersion"] as? String ?? ""
-        }
-
-        // Convert sets to sorted arrays for deterministic output
-        let sortedMap = kernelDeviceMap.mapValues { $0.sorted() }
-
-        return ManifestData(
-            osVersion: osVersion,
-            buildNumber: buildNumber,
-            dmgRoles: dmgRoles,
-            kernelDeviceMap: sortedMap
-        )
-    }
-
-    private func parseRestorePlist(at path: URL) throws -> (osVersion: String, buildNumber: String) {
-        let data = try Data(contentsOf: path)
-        guard let plist = try PropertyListSerialization.propertyList(
-            from: data, format: nil
-        ) as? [String: Any] else {
-            throw ScannerError.metadataExtractionFailed(reason: "Invalid Restore.plist format")
-        }
-
-        let osVersion = plist["ProductVersion"] as? String ?? ""
-        let buildNumber = plist["ProductBuildVersion"] as? String ?? ""
-        return (osVersion, buildNumber)
-    }
-
-    /// Parse OS version and build from IPSW filename as a last resort.
-    /// Example: "UniversalMac_15.6.1_24G90_Restore.ipsw" → ("15.6.1", "24G90")
-    private func parseFromFilename(_ filename: String) -> (osVersion: String, buildNumber: String) {
-        let regex = /UniversalMac_(\d+\.\d+(?:\.\d+)?)_([A-Za-z0-9]+)_Restore/
-        guard let match = filename.firstMatch(of: regex) else {
-            return ("", "")
-        }
-        return (String(match.1), String(match.2))
-    }
 }

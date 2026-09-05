@@ -9,12 +9,16 @@ import Base from '../../layouts/Base.astro';
 
   <h1>API</h1>
   <p class="subtitle">
-    All endpoints return JSON and are served from <code>macosdb.com/api/v1/</code>. Data is rebuilt on each release and
-    served as static files &mdash; no authentication or rate limits.
+    Successful endpoint responses are JSON and are served from <code>macosdb.com/api/v1/</code>. Unknown prerendered
+    release and component paths use the site's HTML not-found response. The API is public and requires no
+    authentication. Static release data and Worker-rendered comparisons may be cached or rate-limited by the hosting
+    platform.
   </p>
 
   <p class="subtitle">
-    Data is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>.
+    Data is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>. See the <a
+      href="/openapi.json">OpenAPI 3.1 description</a
+    > for a machine-readable contract.
   </p>
 
   <section class="endpoint-group">

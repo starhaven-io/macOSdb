@@ -15,15 +15,15 @@ enum KernelParser {
         guard !Task.isCancelled else { return nil }
         let filename = kernelcachePath.lastPathComponent
 
-        if let size = try? FileManager.default.attributesOfItem(
-            atPath: kernelcachePath.path
-        )[.size] as? Int, size > maxKernelcacheBytes {
-            logger.warning("Skipping oversized kernelcache \(filename): \(size) bytes exceeds \(maxKernelcacheBytes)")
-            return nil
-        }
-
-        guard let data = try? Data(contentsOf: kernelcachePath) else {
-            logger.warning("Could not read kernelcache: \(filename)")
+        let data: Data
+        do {
+            data = try ScannerFileReader.data(
+                at: kernelcachePath,
+                confinedTo: kernelcachePath.deletingLastPathComponent(),
+                maxBytes: maxKernelcacheBytes
+            )
+        } catch {
+            logger.warning("Could not safely read kernelcache \(filename): \(error.localizedDescription)")
             return nil
         }
         guard !Task.isCancelled else { return nil }

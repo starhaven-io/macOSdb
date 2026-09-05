@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import { ClientRouter } from 'astro:transitions';
 import Search from 'astro-pagefind/components/Search.astro';
 
 interface Props {
@@ -54,14 +53,13 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
     <link rel="apple-touch-icon" sizes="64x64" href="/apple-touch-icon.png" />
 
     <title>{title}</title>
-    <ClientRouter />
     <slot name="head" />
   </head>
   <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <header>
       <nav aria-label="Main navigation">
-        <a href="/" class="site-title" transition:name="site-title">macOSdb</a>
+        <a href="/" class="site-title">macOSdb</a>
         <div class="nav-links">
           <a href="/macos/">macOS</a>
           <a href="/xcode/">Xcode</a>
@@ -75,7 +73,7 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
               className="header-search"
               searchboxOptions={{ placeholder: 'Search', 'hide-shortcut': true, 'show-keyboard-hints': false }}
             />
-            <script is:inline>
+            <script>
               function labelSearchInput() {
                 const sb = document.querySelector('.header-search');
                 if (!sb) return;
@@ -93,7 +91,6 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
                 }).observe(sb, { childList: true, subtree: true });
               }
               labelSearchInput();
-              document.addEventListener('astro:page-load', labelSearchInput);
             </script>
           </div>
           <a href="https://github.com/starhaven-io/macOSdb" class="github-link" aria-label="GitHub repository">
@@ -112,7 +109,12 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
               ></path>
             </svg>
           </a>
-          <button class="menu-toggle" aria-label="Open navigation menu" aria-expanded="false">
+          <button
+            class="menu-toggle"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="mobile-navigation"
+          >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path
                 d="M2 4.5h16M2 10h16M2 15.5h16"
@@ -125,8 +127,8 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
         </div>
       </nav>
     </header>
-    <div class="mobile-nav-overlay" aria-hidden="true">
-      <div class="mobile-nav">
+    <div class="mobile-nav-overlay" aria-hidden="true" inert>
+      <div id="mobile-navigation" class="mobile-nav" role="dialog" aria-modal="true" aria-label="Site navigation">
         <button class="mobile-nav-close" aria-label="Close navigation menu">&times;</button>
         <a href="/macos/">macOS</a>
         <a href="/xcode/">Xcode</a>
@@ -402,29 +404,64 @@ const ogImageURL = ogImage ? new URL(ogImage, Astro.site).toString() : undefined
 
 <script>
   function initMobileNav() {
-    const toggle = document.querySelector('.menu-toggle');
-    const overlay = document.querySelector('.mobile-nav-overlay');
-    const close = document.querySelector('.mobile-nav-close');
+    const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+    const overlay = document.querySelector<HTMLElement>('.mobile-nav-overlay');
+    const close = document.querySelector<HTMLButtonElement>('.mobile-nav-close');
     if (!toggle || !overlay || !close) return;
+    const toggleButton = toggle;
+    const overlayElement = overlay;
+    const closeButton = close;
+    if (toggleButton.dataset.initialized === 'true') return;
+    toggleButton.dataset.initialized = 'true';
+
+    let lastFocused: HTMLElement | null = null;
 
     function open() {
-      overlay.classList.add('open');
-      overlay.setAttribute('aria-hidden', 'false');
-      toggle.setAttribute('aria-expanded', 'true');
+      lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      overlayElement.classList.add('open');
+      overlayElement.removeAttribute('inert');
+      overlayElement.setAttribute('aria-hidden', 'false');
+      toggleButton.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('nav-open');
+      closeButton.focus();
     }
 
-    function shut() {
-      overlay.classList.remove('open');
-      overlay.setAttribute('aria-hidden', 'true');
-      toggle.setAttribute('aria-expanded', 'false');
+    function shut(restoreFocus = true) {
+      overlayElement.classList.remove('open');
+      overlayElement.setAttribute('inert', '');
+      overlayElement.setAttribute('aria-hidden', 'true');
+      toggleButton.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('nav-open');
+      if (restoreFocus) lastFocused?.focus();
     }
 
-    toggle.addEventListener('click', open);
-    close.addEventListener('click', shut);
-    overlay.addEventListener('click', (e: Event) => {
-      if (e.target === overlay) shut();
+    toggleButton.addEventListener('click', open);
+    closeButton.addEventListener('click', () => shut());
+    overlayElement.addEventListener('click', (e: Event) => {
+      if (e.target === overlayElement) shut();
+    });
+    overlayElement.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => shut(false)));
+    overlayElement.addEventListener('keydown', (keyEvent: KeyboardEvent) => {
+      if (keyEvent.key === 'Escape') {
+        keyEvent.preventDefault();
+        shut();
+        return;
+      }
+      if (keyEvent.key !== 'Tab') return;
+
+      const focusable = [...overlayElement.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (keyEvent.shiftKey && document.activeElement === first) {
+        keyEvent.preventDefault();
+        last.focus();
+      } else if (!keyEvent.shiftKey && document.activeElement === last) {
+        keyEvent.preventDefault();
+        first.focus();
+      }
     });
   }
 
-  document.addEventListener('astro:page-load', initMobileNav);
+  initMobileNav();
 </script>

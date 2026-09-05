@@ -49,62 +49,68 @@ concurrency:
 permissions: {}
 
 jobs:
+  prepare:
+    name: Establish trusted inputs
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      base_sha: ${{ steps.inputs.outputs.base_sha }}
+      release_date: ${{ steps.inputs.outputs.release_date }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Resolve trusted base and release date
+        id: inputs
+        env:
+          INPUT_DATE: ${{ inputs.release_date }}
+        run: |
+          RELEASE_DATE="${INPUT_DATE:-$(TZ='America/Los_Angeles' date +%Y-%m-%d)}"
+          if ! [[ "${RELEASE_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] \
+            || [[ "$(date -u -d "${RELEASE_DATE}" +%Y-%m-%d 2>/dev/null || true)" != "${RELEASE_DATE}" ]]; then
+            echo "::error::release_date '${RELEASE_DATE}' is not a real ISO 8601 calendar date."
+            exit 1
+          fi
+          TODAY=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
+          if [[ "${RELEASE_DATE}" > "${TODAY}" ]]; then
+            echo "::error::release_date '${RELEASE_DATE}' is in the future (today is ${TODAY} Pacific)."
+            exit 1
+          fi
+          echo "base_sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+          echo "release_date=${RELEASE_DATE}" >> "${GITHUB_OUTPUT}"
+
   scan:
     name: Scan
+    needs: prepare
     runs-on: scanner
-    timeout-minutes: 60
+    timeout-minutes: 180
     environment:
       name: starhaven
       deployment: false
     permissions:
       contents: read
-    outputs:
-      base_sha: ${{ steps.sync.outputs.base_sha }}
-      basename: ${{ steps.package-release.outputs.basename }}
-      release_date: ${{ steps.release-date.outputs.release_date }}
-      source_url: ${{ steps.resolve-xip.outputs.source_url }}
     steps:
       - name: Add Homebrew to PATH
         run: echo "/opt/homebrew/bin" >> "${GITHUB_PATH}"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
           persist-credentials: false
           fetch-depth: 0
-
-      - name: Sync working tree to latest main
-        id: sync
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
-          echo "base_sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
       - name: Clean workspace
         run: git clean -fdx data/xcode/releases/
 
       - name: Resolve release date
-        id: release-date
         env:
-          INPUT_DATE: ${{ inputs.release_date }}
+          TRUSTED_DATE: ${{ needs.prepare.outputs.release_date }}
         run: |
-          # Release dates are Pacific, not UTC: `date -u` rolled the day forward on evening scans.
-          if [[ -z "${INPUT_DATE}" ]]; then
-            RELEASE_DATE=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
-            echo "No release_date provided; defaulting to today (${RELEASE_DATE} Pacific)"
-          else
-            if ! [[ "${INPUT_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-              echo "::error::release_date '${INPUT_DATE}' is not ISO 8601 (YYYY-MM-DD)"
-              exit 1
-            fi
-            TODAY=$(TZ='America/Los_Angeles' date +%Y-%m-%d)
-            if [[ "${INPUT_DATE}" > "${TODAY}" ]]; then
-              echo "::error::release_date '${INPUT_DATE}' is in the future (today is ${TODAY} Pacific)"
-              exit 1
-            fi
-            RELEASE_DATE="${INPUT_DATE}"
-          fi
-          echo "RELEASE_DATE=${RELEASE_DATE}" >> "${GITHUB_ENV}"
-          echo "release_date=${RELEASE_DATE}" >> "${GITHUB_OUTPUT}"
+          echo "RELEASE_DATE=${TRUSTED_DATE}" >> "${GITHUB_ENV}"
 
       - name: Resolve XIP path
         id: resolve-xip
@@ -117,16 +123,30 @@ jobs:
           # Reject anything that isn't a clean absolute .xip path so a value like
           # "@evil.example.com/x.xip" can't redirect curl (and the cookie) to another host.
           if [[ ! "${XIP_PATH}" =~ ^/[A-Za-z0-9._~%/+-]+\.xip$ ]]; then
-            echo "::error::Refusing to use download path '${XIP_PATH}': not a clean absolute .xip path."
+            echo "::error::Refusing to use the supplied download path: not a clean absolute .xip path."
+            exit 1
+          fi
+          LOWER_XIP_PATH=$(printf '%s' "${XIP_PATH}" | tr '[:upper:]' '[:lower:]')
+          if [[ "${XIP_PATH}" == *'//'* ]] \
+            || [[ "${XIP_PATH}" =~ (^|/)\.{1,2}(/|$) ]] \
+            || [[ "${LOWER_XIP_PATH}" =~ %(00|0a|0d|2f|5c) ]]; then
+            echo "::error::Refusing a download path containing ambiguous or encoded separators."
             exit 1
           fi
           ORIG_NAME=$(basename "${XIP_PATH}")
-          if [[ ! "${ORIG_NAME}" =~ ^Xcode_[0-9]+(\.[0-9]+)*(_.+)?\.xip$ ]]; then
+          if [[ ! "${ORIG_NAME}" =~ ^Xcode_[0-9]+(\.[0-9]+)*(_[A-Za-z0-9._~%+-]+)?\.xip$ ]]; then
             echo "::error::Refusing Xcode filename '${ORIG_NAME}': expected Xcode_<version>[_<qualifier>].xip."
             exit 1
           fi
           VERSION=$(echo "${ORIG_NAME}" | sed -E 's/Xcode_([0-9]+(\.[0-9]+)*).*/\1/')
+          if [[ "${VERSION}" != *.* ]]; then
+            VERSION="${VERSION}.0"
+          fi
           MAJOR=${VERSION%%.*}
+          if ! /bin/bash scripts/validate-xcode-build.sh "${BUILD}"; then
+            echo "::error::build_number is not an Apple build number."
+            exit 1
+          fi
           # Route to the archive drive whose version range covers this major.
           # Drives mount at /Volumes/macOS-Archive-<range>: "LO-HI" (sealed) or
           # "LO+" (active). No hardcoded boundary, so adding or sealing a drive
@@ -158,7 +178,12 @@ jobs:
           fi
           XIP_DIR="${ARCHIVE_ROOT}/Xcode/${MAJOR}"
           mkdir -p "${XIP_DIR}"
+          XIP_DIR=$(cd "${XIP_DIR}" && pwd -P)
           XIP_FILE="${XIP_DIR}/Xcode-${VERSION}-${BUILD}.xip"
+          if [[ "${XIP_FILE}" != "${XIP_DIR}/"* ]]; then
+            echo "::error::Resolved XIP path escaped its archive directory."
+            exit 1
+          fi
           # adcdownload.apple.com is the CDN the ADCDownloadAuth cookie is
           # scoped to; the services-account URL is the auth-aware portal
           # link (what developer.apple.com hands out), which is what we
@@ -167,9 +192,11 @@ jobs:
           CDN_URL="https://adcdownload.apple.com${XIP_PATH}"
           PUBLIC_URL="https://developer.apple.com/services-account/download?path=${XIP_PATH}"
           {
-            echo "XIP_FILE=${XIP_FILE}"
-            echo "CDN_URL=${CDN_URL}"
-            echo "PUBLIC_URL=${PUBLIC_URL}"
+            printf 'XIP_FILE=%s\n' "${XIP_FILE}"
+            printf 'CDN_URL=%s\n' "${CDN_URL}"
+            printf 'PUBLIC_URL=%s\n' "${PUBLIC_URL}"
+            printf 'EXPECTED_VERSION=%s\n' "${VERSION}"
+            printf 'EXPECTED_BUILD=%s\n' "${BUILD}"
           } >> "${GITHUB_ENV}"
           echo "source_url=${PUBLIC_URL}" >> "${GITHUB_OUTPUT}"
 
@@ -192,17 +219,31 @@ jobs:
           key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
 
       - name: Download XIP
+        id: download-xip
         env:
           ADC_DOWNLOAD_AUTH: ${{ secrets.ADC_DOWNLOAD_AUTH }}
         run: |
+          if [[ -L "${XIP_FILE}" || -L "${XIP_FILE}.part" || -L "${XIP_FILE}.sha256" ]]; then
+            echo "::error::Refusing a symbolic link at the resolved XIP path."
+            exit 1
+          fi
+          if [[ -e "${XIP_FILE}" && ! -f "${XIP_FILE}" ]]; then
+            echo "::error::Refusing a non-regular file at the resolved XIP path."
+            exit 1
+          fi
+          if [[ -e "${XIP_FILE}.sha256" && ! -f "${XIP_FILE}.sha256" ]]; then
+            echo "::error::Refusing a non-regular file at the resolved XIP checksum path."
+            exit 1
+          fi
           if [[ -f "${XIP_FILE}" ]]; then
             FILE_TYPE=$(file -b "${XIP_FILE}")
             if [[ "${FILE_TYPE}" == *"xar"* || "${FILE_TYPE}" == *"XAR"* ]]; then
+              echo "downloaded=false" >> "${GITHUB_OUTPUT}"
               echo "XIP already cached at ${XIP_FILE}, skipping download"
               exit 0
             fi
-            echo "Cached file is not a valid XIP (${FILE_TYPE}), removing and re-downloading"
-            rm -f "${XIP_FILE}"
+            echo "::error::Cached file is not a valid XIP (${FILE_TYPE}). Preserving it for investigation instead of replacing persistent cache state."
+            exit 1
           fi
 
           if [[ -z "${ADC_DOWNLOAD_AUTH}" ]]; then
@@ -217,31 +258,51 @@ jobs:
             exit 1
           fi
 
-          TOTAL=$(curl -sSI -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}" | grep -i content-length | tail -1 | tr -dc '0-9')
-          TOTAL_MB=$(( TOTAL / 1048576 ))
-          TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
-          echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
-          curl -sSL --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" -o "${XIP_FILE}.part" "${CDN_URL}" &
+          TOTAL=$(curl -sSI -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" "${CDN_URL}" | awk 'tolower($1) == "content-length:" { gsub("\r", "", $2); value=$2 } END { print value }')
+          if [[ "${TOTAL}" =~ ^[0-9]+$ ]] && (( TOTAL > 0 )); then
+            TOTAL_MB=$(( TOTAL / 1048576 ))
+            TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
+            echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
+          else
+            TOTAL=0
+            TOTAL_MB=0
+            echo "Downloading XIP (server did not provide a content length)..."
+          fi
+          curl -sS --fail --proto '=https' --max-redirs 0 \
+            --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors \
+            -C - -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" \
+            -o "${XIP_FILE}.part" "${CDN_URL}" &
           CURL_PID=$!
           while kill -0 "${CURL_PID}" 2>/dev/null; do
             if [[ -f "${XIP_FILE}.part" ]]; then
               SIZE=$(stat -f%z "${XIP_FILE}.part" 2>/dev/null || echo 0)
               SIZE_MB=$(( SIZE / 1048576 ))
-              PCT=$(( SIZE_MB * 100 / TOTAL_MB ))
-              echo "${PCT}% (${SIZE_MB} MB / ${TOTAL_MB} MB)"
+              if (( TOTAL_MB > 0 )); then
+                PCT=$(( SIZE_MB * 100 / TOTAL_MB ))
+                echo "${PCT}% (${SIZE_MB} MB / ${TOTAL_MB} MB)"
+              else
+                echo "${SIZE_MB} MB downloaded"
+              fi
             fi
             sleep 30
           done
           wait "${CURL_PID}"
           mv "${XIP_FILE}.part" "${XIP_FILE}"
+          echo "downloaded=true" >> "${GITHUB_OUTPUT}"
 
       - name: Validate XIP
+        env:
+          DOWNLOADED: ${{ steps.download-xip.outputs.downloaded }}
         run: |
           FILE_SIZE=$(stat -f%z "${XIP_FILE}")
           FILE_TYPE=$(file -b "${XIP_FILE}")
           if (( FILE_SIZE < 104857600 )) || { [[ "${FILE_TYPE}" != *"xar"* ]] && [[ "${FILE_TYPE}" != *"XAR"* ]]; }; then
-            echo "::error::Downloaded file is not a valid XIP (${FILE_TYPE}, $(( FILE_SIZE / 1024 )) KB). The ADC_DOWNLOAD_AUTH cookie may be expired — refresh it from developer.apple.com and update the secret."
-            rm -f "${XIP_FILE}"
+            echo "::error::Archive file is not a valid XIP (${FILE_TYPE}, $(( FILE_SIZE / 1024 )) KB). The ADC_DOWNLOAD_AUTH cookie may be expired — refresh it from developer.apple.com and update the secret."
+            if [[ "${DOWNLOADED}" == "true" ]]; then
+              rm -f "${XIP_FILE}"
+            else
+              echo "Preserving the invalid preexisting cache entry for investigation."
+            fi
             exit 1
           fi
           echo "XIP validated: $(( FILE_SIZE / 1073741824 )) GB, ${FILE_TYPE}"
@@ -259,6 +320,20 @@ jobs:
             TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
             touch -t "${TOUCH_DATE}" "${XIP_FILE}"
           fi
+
+      - name: Create or verify SHA-256 sidecar
+        run: .build/release/macosdb validate "${XIP_FILE}"
+
+      - name: Lock archive files
+        run: |
+          if [[ "$(stat -f '%Sf' "${XIP_FILE}.sha256")" == *uchg* ]]; then
+            echo "SHA-256 sidecar already immutable, preserving its mtime"
+          else
+            touch -r "${XIP_FILE}" "${XIP_FILE}.sha256"
+          fi
+          for f in "${XIP_FILE}" "${XIP_FILE}.sha256"; do
+            [[ -f "$f" ]] && chflags uchg "$f"
+          done
 
       - name: Scan XIP
         env:
@@ -296,20 +371,6 @@ jobs:
       - name: Lint JSON
         run: python3 scripts/lint-json.py
 
-      - name: Generate SHA-256 sidecar
-        run: .build/release/macosdb validate "${XIP_FILE}"
-
-      - name: Lock archive files
-        run: |
-          if [[ "$(stat -f '%Sf' "${XIP_FILE}.sha256")" == *uchg* ]]; then
-            echo "SHA-256 sidecar already immutable, preserving its mtime"
-          else
-            touch -r "${XIP_FILE}" "${XIP_FILE}.sha256"
-          fi
-          for f in "${XIP_FILE}" "${XIP_FILE}.sha256"; do
-            [[ -f "$f" ]] && chflags uchg "$f"
-          done
-
       - name: Package release JSON
         id: package-release
         run: |
@@ -325,8 +386,15 @@ jobs:
             echo "::error::Expected exactly one new Xcode release JSON file, found ${MATCHES}."
             exit 1
           fi
-          if [[ ! "${NEW_RELEASE_FILE}" =~ ^data/xcode/releases/[0-9]+/Xcode-[^/]+\.json$ ]]; then
+          EXPECTED_RELEASE_FILE="data/xcode/releases/${EXPECTED_VERSION%%.*}/Xcode-${EXPECTED_VERSION}-${EXPECTED_BUILD}.json"
+          if [[ "${NEW_RELEASE_FILE}" != "${EXPECTED_RELEASE_FILE}" ]]; then
             echo "::error::Unexpected release JSON path: ${NEW_RELEASE_FILE}"
+            exit 1
+          fi
+          if ! jq -e --arg version "${EXPECTED_VERSION}" --arg build "${EXPECTED_BUILD}" \
+            '.osVersion == $version and .buildNumber == $build and .productType == "Xcode"' \
+            "${NEW_RELEASE_FILE}" >/dev/null; then
+            echo "::error::Scanned Xcode metadata does not match the dispatched version/build."
             exit 1
           fi
 
@@ -343,7 +411,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: scan
+    needs: [prepare, scan]
     runs-on: ubuntu-slim
     timeout-minutes: 60
     environment:
@@ -356,7 +424,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.scan.outputs.base_sha }}
+          ref: ${{ needs.prepare.outputs.base_sha }}
           persist-credentials: false
           fetch-depth: 0
 
@@ -367,57 +435,30 @@ jobs:
           path: ${{ runner.temp }}/artifact
 
       - name: Verify and overlay release JSON
+        id: verify-release
+        env:
+          ARTIFACT: ${{ runner.temp }}/artifact/release-json.tgz
+          SOURCE_URL: ${{ inputs.xip_url }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
+          IS_BETA: ${{ inputs.beta }}
+          BETA_NUMBER: ${{ inputs.beta_number }}
+          BETA_REVISION: ${{ inputs.beta_revision }}
+          IS_RC: ${{ inputs.rc }}
+          RC_NUMBER: ${{ inputs.rc_number }}
         run: |
-          python3 - <<'PY'
-          import os
-          import re
-          import shutil
-          import sys
-          import tarfile
-          from pathlib import Path
-
-          tgz = Path(os.environ["RUNNER_TEMP"]) / "artifact" / "release-json.tgz"
-          if not tgz.is_file():
-              print(f"::error::Missing release JSON artifact at {tgz}", file=sys.stderr)
-              sys.exit(1)
-
-          index_path = "data/xcode/releases.json"
-          release_re = re.compile(r"^data/xcode/releases/[0-9]+/Xcode-[^/]+\.json$")
-          index_members = []
-          release_members = []
-
-          with tarfile.open(tgz, "r:gz") as archive:
-              for member in archive.getmembers():
-                  parts = Path(member.name).parts
-                  if member.name.startswith("/") or ".." in parts:
-                      print(f"::error::Unsafe artifact path: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-                  if not member.isfile():
-                      print(f"::error::Artifact contains a non-regular file: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-
-                  if member.name == index_path:
-                      index_members.append(member)
-                  elif release_re.fullmatch(member.name):
-                      release_members.append(member)
-                  else:
-                      print(f"::error::Unexpected artifact entry: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-
-              if len(index_members) != 1 or len(release_members) != 1:
-                  print("::error::Artifact must contain one Xcode releases.json and one release JSON file.", file=sys.stderr)
-                  sys.exit(1)
-
-              for member in (index_members[0], release_members[0]):
-                  source = archive.extractfile(member)
-                  if source is None:
-                      print(f"::error::Could not read artifact entry: {member.name}", file=sys.stderr)
-                      sys.exit(1)
-                  target = Path(member.name)
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  with target.open("wb") as destination:
-                      shutil.copyfileobj(source, destination)
-          PY
+          python3 scripts/verify-release-artifact.py \
+            --artifact "${ARTIFACT}" \
+            --product xcode \
+            --source-url "${SOURCE_URL}" \
+            --build-number "${BUILD_NUMBER}" \
+            --release-date "${RELEASE_DATE}" \
+            --beta "${IS_BETA}" \
+            --beta-number "${BETA_NUMBER}" \
+            --beta-revision "${BETA_REVISION}" \
+            --rc "${IS_RC}" \
+            --rc-number "${RC_NUMBER}" \
+            --github-output "${GITHUB_OUTPUT}"
 
       - name: Lint JSON
         run: python3 scripts/lint-json.py
@@ -437,13 +478,13 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           REPOSITORY: ${{ github.repository }}
-          SOURCE_URL: ${{ needs.scan.outputs.source_url }}
-          RELEASE_DATE: ${{ needs.scan.outputs.release_date }}
-          BASENAME: ${{ needs.scan.outputs.basename }}
-          BASE_SHA: ${{ needs.scan.outputs.base_sha }}
+          SOURCE_URL: ${{ steps.verify-release.outputs.source_url }}
+          RELEASE_DATE: ${{ steps.verify-release.outputs.release_date }}
+          BASENAME: ${{ steps.verify-release.outputs.basename }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
+          BASE_SHA=$(git rev-parse HEAD)
           BOT_USER="${APP_SLUG}[bot]"
           BOT_ID=$(gh api "/users/${BOT_USER}" --jq .id)
 
@@ -454,9 +495,12 @@ jobs:
           COMMIT_BODY="Signed-off-by: ${BOT_USER} <${BOT_ID}+${BOT_USER}@users.noreply.github.com>"
 
           if [[ -n "${TRIGGERING_ACTOR}" ]]; then
-            ACTOR_NAME=$(gh api "/users/${TRIGGERING_ACTOR}" --jq '.name // .login')
-            ACTOR_EMAIL=$(gh api "/users/${TRIGGERING_ACTOR}" --jq '.email // "\(.id)+\(.login)@users.noreply.github.com"')
-            COAUTHOR="Co-authored-by: ${ACTOR_NAME} <${ACTOR_EMAIL}>"
+            if [[ ! "${TRIGGERING_ACTOR}" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]]; then
+              echo "::error::Invalid triggering actor login."
+              exit 1
+            fi
+            ACTOR_ID=$(gh api "/users/${TRIGGERING_ACTOR}" --jq .id)
+            COAUTHOR="Co-authored-by: ${TRIGGERING_ACTOR} <${ACTOR_ID}+${TRIGGERING_ACTOR}@users.noreply.github.com>"
             COMMIT_BODY="${COMMIT_BODY}"$'\n'"${COAUTHOR}"
           fi
 

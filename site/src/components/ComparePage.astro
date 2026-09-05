@@ -103,6 +103,7 @@ const hasChanges =
         </div>
 
         <table id="changes-table" class="hide-unchanged">
+          <caption class="visually-hidden">Component versions in the selected releases</caption>
           <thead>
             <tr>
               <th>Component</th>
@@ -198,7 +199,7 @@ const hasChanges =
       table.classList.toggle('hide-unchanged', checkbox.checked);
     });
   }
-  document.addEventListener('astro:page-load', initFilter);
+  initFilter();
 </script>
 
 <style>

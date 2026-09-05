@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
-import fs from 'node:fs';
 import path from 'node:path';
+import { readReleaseIndex } from '../../../../lib/releaseFiles';
 
 export const GET: APIRoute = () => {
   const dataDir = path.resolve('..', 'data');
-  const releases = fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8');
+  const { source } = readReleaseIndex(dataDir, 'macos', 'macOS');
 
-  return new Response(releases, {
+  return new Response(source, {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

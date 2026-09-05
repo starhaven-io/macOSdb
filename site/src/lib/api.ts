@@ -17,7 +17,7 @@ interface VersionChange {
   firstReleaseDate: string;
   firstReleaseBeta: boolean;
   firstReleaseRC: boolean;
-  direction: 'upgraded' | 'downgraded' | 'added' | '';
+  direction: 'upgraded' | 'downgraded' | 'added' | 'unchanged';
 }
 
 interface ComponentHistory {

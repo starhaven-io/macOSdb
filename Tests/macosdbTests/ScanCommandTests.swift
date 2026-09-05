@@ -126,6 +126,52 @@ struct ScanCommandTests {
         }
     }
 
+    @Test("Parse rejects unsupported archive extensions")
+    func validateRejectsUnsupportedArchive() {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.zip"])
+        }
+    }
+
+    @Test("Parse rejects impossible release dates")
+    func validateRejectsImpossibleDate() {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.ipsw", "--release-date", "2025-02-30"])
+        }
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.ipsw", "--release-date", "٢٠٢٥-٠٢-٢٨"])
+        }
+    }
+
+    @Test("Parse rejects conflicting beta and RC options")
+    func validateRejectsConflictingPrereleaseOptions() {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.ipsw", "--beta", "--rc-number", "2"])
+        }
+    }
+
+    @Test("Parse rejects non-positive prerelease numbers")
+    func validateRejectsInvalidPrereleaseNumbers() {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.ipsw", "--beta-number", "0"])
+        }
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.ipsw", "--rc-number", "-1"])
+        }
+    }
+
+    @Test("Parse rejects IPSW-only options for XIP archives")
+    func validateRejectsIPSWOptionsForXIP() {
+        for option in ["--device-specific", "--save-aea-key", "--key-only"] {
+            #expect(throws: (any Error).self) {
+                _ = try ScanCommand.parse(["archive.xip", option])
+            }
+        }
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse(["archive.xip", "--aea-key", "key.pem"])
+        }
+    }
+
     // MARK: - Index updates
 
     private func makeIndexWorkspace() throws -> (root: URL, outputDir: URL, indexPath: URL) {
@@ -151,6 +197,56 @@ struct ScanCommandTests {
             try cmd.updateReleasesIndex(release: release, outputDir: outputDir)
         }
         #expect(try String(contentsOf: indexPath, encoding: .utf8) == corrupt)
+    }
+
+    @Test("A corrupt index is detected before release detail is written")
+    func writeOutputRefusesCorruptIndexTransactionally() throws {
+        let (root, outputDir, indexPath) = try makeIndexWorkspace()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data("{not valid json".utf8).write(to: indexPath)
+
+        let cmd = try ScanCommand.parse([
+            "archive.ipsw",
+            "--output", outputDir.path,
+            "--update-index",
+            "--release-date", "2024-09-16"
+        ])
+        let release = Release(
+            osVersion: "15.0",
+            buildNumber: "24A335",
+            releaseName: "Sequoia",
+            releaseDate: "2024-09-16"
+        )
+
+        #expect(throws: (any Error).self) {
+            try cmd.writeOutput(release: release)
+        }
+        #expect(!FileManager.default.fileExists(atPath: outputDir.appendingPathComponent("15/macOS-15.0-24A335.json").path))
+    }
+
+    @Test("An incomplete release is rejected before publication writes")
+    func writeOutputRejectsIncompletePublicationTransactionally() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-incomplete-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let cmd = try ScanCommand.parse([
+            "archive.ipsw",
+            "--output", root.path,
+            "--update-index",
+            "--release-date", "2024-09-16"
+        ])
+        let release = Release(
+            osVersion: "15.0",
+            buildNumber: "24A335",
+            releaseName: "Sequoia",
+            releaseDate: "2024-09-16"
+        )
+
+        #expect(throws: (any Error).self) {
+            try cmd.writeOutput(release: release)
+        }
+        #expect(!FileManager.default.fileExists(atPath: root.path))
     }
 
     @Test("--update-index merges and replaces same-build entries")
@@ -235,5 +331,21 @@ struct ScanCommandTests {
         #expect(try String(contentsOf: sidecar, encoding: .utf8) == "first")
         let sidecarDate = try FileManager.default.attributesOfItem(atPath: sidecar.path)[.modificationDate] as? Date
         #expect(sidecarDate == modificationDate)
+        let permissions = try FileManager.default.attributesOfItem(atPath: sidecar.path)[.posixPermissions] as? NSNumber
+        #expect(permissions?.intValue == 0o600)
+    }
+
+    @Test("Invalid scanner identifiers cannot become output paths")
+    func rejectsInvalidOutputIdentifiers() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-invalid-output-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let cmd = try ScanCommand.parse(["archive.ipsw", "--output", root.path])
+        let release = Release(osVersion: "../../tmp", buildNumber: "bad/build", releaseName: "Invalid")
+
+        #expect(throws: (any Error).self) {
+            try cmd.writeOutput(release: release)
+        }
+        #expect(!FileManager.default.fileExists(atPath: root.path))
     }
 }

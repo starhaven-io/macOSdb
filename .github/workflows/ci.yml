@@ -29,7 +29,9 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       run_codeql: ${{ steps.matrix.outputs.run_codeql }}
+      run_codeql_interpreted: ${{ steps.matrix.outputs.run_codeql_interpreted }}
       run_zizmor: ${{ steps.matrix.outputs.run_zizmor }}
+      run_links: ${{ steps.matrix.outputs.run_links }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -48,14 +50,18 @@ jobs:
             {
               echo 'matrix=[{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true","environment":"codecov"}]'
               echo "run_codeql=false"
+              echo "run_codeql_interpreted=false"
               echo "run_zizmor=false"
+              echo "run_links=false"
             } >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
           MATRIX='[]'
           RUN_CODEQL=false
+          RUN_CODEQL_INTERPRETED=false
           RUN_ZIZMOR=false
+          RUN_LINKS=false
           add_check() {
             local entry="$1"
             if [[ "${MATRIX}" == "[]" ]]; then
@@ -70,46 +76,71 @@ jobs:
           # certify every relevant leg for the current commit. Collapsing to a
           # commits-only matrix on `edited` lets a green run overwrite a prior failing
           # one on the same SHA, bypassing tests, lint-json, CodeQL and the rest.
-          CHANGED=$(git diff --name-only "${BASE_SHA}...HEAD")
+          CHANGED_PATHS_FILE="${RUNNER_TEMP}/changed-paths.z"
+          git diff --name-only -z "${BASE_SHA}...HEAD" > "${CHANGED_PATHS_FILE}"
+          mapfile -d '' -t CHANGED < "${CHANGED_PATHS_FILE}"
+          matches_changed_path() {
+            local pattern="$1"
+            local changed_path
+            for changed_path in "${CHANGED[@]}"; do
+              if [[ "${changed_path}" =~ ${pattern} ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
 
           # Swift, CI workflow, or project tooling changes: lint + sanitizer tests.
           # Tooling paths (scripts/, justfile, hooks, lint configs) are included so a
           # PR touching only those can't merge having run nothing but the commits leg.
-          if echo "${CHANGED}" | grep -qE '\.swift$|^Package\.(swift|resolved)$|^\.swiftlint\.yml$|^\.github/workflows/ci\.yml$|^scripts/|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$|^justfile$|^\.githooks/|^_typos\.toml$|^lychee\.toml$'; then
+          if matches_changed_path '\.swift$|^Package\.(swift|resolved)$|^\.swiftlint\.yml$|^\.github/|^scripts/|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$|^justfile$|^\.githooks/|^_typos\.toml$|^lychee\.toml$|^README\.md$|^SECURITY\.md$|^CONTRIBUTING\.md$|^docs/|^LICENSE$'; then
             add_check '{"name":"Lint","check":"lint","runner":"macos-26"}'
             add_check '{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true","environment":"codecov"}'
             add_check '{"name":"Test (Address Sanitizer)","check":"test-asan","runner":"macos-26","sanitize":"address"}'
           fi
 
           # Source changes: CodeQL
-          if echo "${CHANGED}" | grep -qE '^Sources/|^Package\.(swift|resolved)$'; then
+          if matches_changed_path '^Sources/|^Package\.(swift|resolved)$'; then
             RUN_CODEQL=true
+          fi
+
+          # Site and repository-script changes: interpreted-language CodeQL.
+          if matches_changed_path '^site/|^scripts/'; then
+            RUN_CODEQL_INTERPRETED=true
           fi
 
           # Data changes — and changes to the linter that gates them — run lint-json
           # so a modified scripts/lint-json.py is re-validated against existing data.
-          if echo "${CHANGED}" | grep -qE '^data/|^scripts/'; then
+          if matches_changed_path '^data/|^scripts/'; then
             add_check '{"name":"Lint JSON","check":"lint-json","runner":"ubuntu-slim"}'
           fi
 
-          if echo "${CHANGED}" | grep -qE '^scripts/|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$'; then
+          # Workflow changes run the script contracts that enforce release and
+          # scanner invariants, not only the Actions syntax/security audits.
+          if matches_changed_path '^\.github/workflows/|^scripts/|^Sources/macOSdbCore/Scanner/(ScannerConfig|XcodeScanner)\.swift$|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$'; then
             add_check '{"name":"Script Tests","check":"script-tests","runner":"ubuntu-slim"}'
           fi
 
           # Site or data changes: format check + build
-          if echo "${CHANGED}" | grep -qE '^site/|^data/|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$'; then
+          if matches_changed_path '^site/|^data/|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$'; then
             add_check '{"name":"Site","check":"site","runner":"ubuntu-slim"}'
           fi
 
           # Workflow changes: Actions security audit
-          if echo "${CHANGED}" | grep -qE '^\.github/workflows/'; then
+          if matches_changed_path '^\.github/workflows/'; then
             RUN_ZIZMOR=true
+          fi
+
+          if matches_changed_path '^site/|^data/|^README\.md$|^SECURITY\.md$|^CONTRIBUTING\.md$|^docs/|^LICENSE$|^lychee\.toml$'; then
+            RUN_LINKS=true
           fi
 
           {
             echo "matrix=${MATRIX}"
             echo "run_codeql=${RUN_CODEQL}"
+            echo "run_codeql_interpreted=${RUN_CODEQL_INTERPRETED}"
             echo "run_zizmor=${RUN_ZIZMOR}"
+            echo "run_links=${RUN_LINKS}"
           } >> "${GITHUB_OUTPUT}"
 
   commits:
@@ -147,11 +178,15 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_ENV_HINTS: 1
-        run: brew install swiftlint typos-cli
+        run: brew install actionlint swiftlint typos-cli
+
+      - name: Actionlint
+        if: matrix.check == 'lint'
+        run: actionlint -no-color
 
       - name: SwiftLint
         if: matrix.check == 'lint'
-        run: swiftlint --strict
+        run: swiftlint --strict --no-cache
 
       - name: Typos
         if: matrix.check == 'lint'
@@ -191,6 +226,16 @@ jobs:
         if: matrix.check == 'site'
         working-directory: site
         run: npm test
+
+      - name: Type-check site
+        if: matrix.check == 'site'
+        working-directory: site
+        run: npm run check
+
+      - name: Audit site dependencies
+        if: matrix.check == 'site'
+        working-directory: site
+        run: npm run audit
 
       - name: Build site
         if: matrix.check == 'site'
@@ -248,7 +293,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.lcov
-          fail_ci_if_error: false
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]' }}
 
 
   codeql:
@@ -266,6 +311,18 @@ jobs:
       build-mode: "manual"
       build-profile: "swift-package"
 
+  codeql-interpreted:
+    name: CodeQL (site and scripts)
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.run_codeql_interpreted == 'true'
+    permissions:
+      contents: read
+      security-events: write # required to upload SARIF results
+    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@b1fbde19ff11c4a6ccefe2e46872f3bb7cf4ba0b # v2026.09.04.1
+    with:
+      languages: '["javascript-typescript","python"]'
+      runner: "ubuntu-slim"
+
   zizmor:
     name: zizmor
     needs: generate-matrix
@@ -275,21 +332,40 @@ jobs:
       security-events: write # required for zizmor SARIF upload
     uses: starhaven-io/.github/.github/workflows/reusable-zizmor.yml@b1fbde19ff11c4a6ccefe2e46872f3bb7cf4ba0b # v2026.09.04.1
 
+  links:
+    name: Check links
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.run_links == 'true'
+    permissions:
+      contents: read
+    uses: starhaven-io/.github/.github/workflows/reusable-link-check.yml@b1fbde19ff11c4a6ccefe2e46872f3bb7cf4ba0b # v2026.09.04.1
+    with:
+      args: "--config lychee.toml --root-dir site/dist/client './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'"
+      build-site: true
+      site-directory: "site"
+      authenticated-github: false
+
   conclusion:
     name: conclusion
-    needs: [commits, check, codeql, zizmor]
+    needs: [generate-matrix, commits, check, codeql, codeql-interpreted, zizmor, links]
     runs-on: ubuntu-slim
     timeout-minutes: 15
     if: always()
     steps:
       - name: Result
         env:
+          GENERATE_MATRIX_RESULT: ${{ needs.generate-matrix.result }}
           COMMITS_RESULT: ${{ needs.commits.result }}
           CHECK_RESULT: ${{ needs.check.result }}
           CODEQL_RESULT: ${{ needs.codeql.result }}
+          CODEQL_INTERPRETED_RESULT: ${{ needs.codeql-interpreted.result }}
           ZIZMOR_RESULT: ${{ needs.zizmor.result }}
+          LINKS_RESULT: ${{ needs.links.result }}
         run: |
+          test "${GENERATE_MATRIX_RESULT}" = "success"
           test "${COMMITS_RESULT}" = "success" || test "${COMMITS_RESULT}" = "skipped"
           test "${CHECK_RESULT}" = "success" || test "${CHECK_RESULT}" = "skipped"
           test "${CODEQL_RESULT}" = "success" || test "${CODEQL_RESULT}" = "skipped"
+          test "${CODEQL_INTERPRETED_RESULT}" = "success" || test "${CODEQL_INTERPRETED_RESULT}" = "skipped"
           test "${ZIZMOR_RESULT}" = "success" || test "${ZIZMOR_RESULT}" = "skipped"
+          test "${LINKS_RESULT}" = "success" || test "${LINKS_RESULT}" = "skipped"

@@ -1,0 +1,27 @@
+name: CodeQL (site and scripts)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - "scripts/**"
+      - ".github/workflows/codeql-interpreted.yml"
+
+concurrency:
+  group: "codeql-interpreted-${{ github.ref }}"
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  analyze:
+    name: Analyze
+    permissions:
+      contents: read
+      security-events: write # required to upload SARIF results
+    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@b1fbde19ff11c4a6ccefe2e46872f3bb7cf4ba0b # v2026.09.04.1
+    with:
+      languages: '["javascript-typescript","python"]'
+      runner: "ubuntu-slim"

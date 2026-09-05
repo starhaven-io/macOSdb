@@ -18,7 +18,7 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 # ---------------------------------------------------------------------------
 # Product configurations
@@ -65,10 +65,36 @@ MACOS_BOOL_FIELDS = ["isBeta", "isRC", "isDeviceSpecific"]
 XCODE_BOOL_FIELDS = ["isBeta", "isRC"]
 COMPONENT_REQUIRED = ["name", "version", "path", "source"]
 
-IPSW_FILE_RE = re.compile(r"UniversalMac_([\d.]+)_([A-Za-z0-9]+)_Restore\.ipsw$")
-VERSION_RE = re.compile(r"^\d+\.\d+(\.\d+)?$")
-DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+MACOS_EXPECTED_COMPONENTS = {
+    "curl", "httpd", "libbz2 (bzip2)", "libcurl", "libexpat", "libncurses",
+    "libpcap", "LibreSSL", "libsqlite3", "libssl (LibreSSL)", "libxml2",
+    "OpenSSH", "Ruby", "SQLite", "sudo", "vim", "zsh",
+}
+XCODE_EXPECTED_COMPONENTS = {
+    "Apple Clang", "bzip2", "cctools", "expat", "Git", "ld", "libcurl",
+    "libexslt", "libffi", "libxml2", "libxslt", "lldb", "ncurses", "Python",
+    "sqlite3", "Swift", "zlib",
+}
+
+IPSW_FILE_RE = re.compile(
+    r"^UniversalMac_([0-9]+(?:\.[0-9]+){1,2})_([0-9]+[A-Z][0-9]+[a-z]?)_Restore\.ipsw$"
+)
+XCODE_FILE_RE = re.compile(r"^Xcode_([0-9]+(?:\.[0-9]+)*)(?:_[A-Za-z0-9._~%+-]+)?\.xip$")
+VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+(\.[0-9]+)?$")
+BUILD_IDENTIFIER_RE = re.compile(r"^[0-9]+[A-Z][0-9]+[a-z]?$")
+DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 TODAY = date.today()
+MAX_INDEX_BYTES = 4 * 1024 * 1024
+MAX_RELEASE_BYTES = 16 * 1024 * 1024
+MACOS_RELEASE_NAMES = {
+    "11": "Big Sur",
+    "12": "Monterey",
+    "13": "Ventura",
+    "14": "Sonoma",
+    "15": "Sequoia",
+    "26": "Tahoe",
+    "27": "Golden Gate",
+}
 
 # IPSW/XIP download URLs are rendered as <a href> links on the site, so restrict
 # them to Apple's https endpoints — a javascript:/http:/foreign value must never
@@ -87,6 +113,7 @@ PRODUCTS = [
         "parity_fields": MACOS_PARITY_FIELDS,
         "bool_fields": MACOS_BOOL_FIELDS,
         "component_sources": {"filesystem", "dyldCache"},
+        "expected_components": MACOS_EXPECTED_COMPONENTS,
         "expect_kernels": True,
     },
     {
@@ -100,6 +127,7 @@ PRODUCTS = [
         "parity_fields": PARITY_FIELDS,
         "bool_fields": XCODE_BOOL_FIELDS,
         "component_sources": {"filesystem", "sdk"},
+        "expected_components": XCODE_EXPECTED_COMPONENTS,
         "expect_kernels": False,
     },
 ]
@@ -118,6 +146,28 @@ def warn(msg):
     global warnings
     warnings += 1
     print(f"  WARNING: {msg}", file=sys.stderr)
+
+
+def read_json(path, max_bytes):
+    """Read bounded, strict JSON so every consumer sees the same document."""
+    if path.stat().st_size > max_bytes:
+        raise ValueError(f"file exceeds the {max_bytes}-byte size limit")
+    data = path.read_bytes()
+    if len(data) > max_bytes:
+        raise ValueError(f"file exceeds the {max_bytes}-byte size limit")
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON key {key!r}")
+            result[key] = value
+        return result
+
+    def reject_constant(value):
+        raise ValueError(f"non-finite JSON number {value}")
+
+    return json.loads(data, object_pairs_hook=unique_object, parse_constant=reject_constant)
 
 
 def validate_date(value, field, build):
@@ -150,8 +200,35 @@ def validate_download_url(url, field, name):
         error(f"{name}: {field} must use https, got '{parsed.scheme or url[:16]}'")
         return
     host = parsed.hostname or ""
+    if parsed.username is not None or parsed.password is not None:
+        error(f"{name}: {field} must not contain URL credentials")
     if host != "apple.com" and not host.endswith(APPLE_DOWNLOAD_HOST_SUFFIXES):
         error(f"{name}: {field} host '{host}' is not an Apple download domain")
+
+
+def download_filename(url, query_parameter=None):
+    """Return the decoded path filename, optionally from an Apple wrapper query."""
+    if not isinstance(url, str):
+        return ""
+    parsed = urlparse(url)
+    source_path = parsed.path
+    if query_parameter:
+        for field in parsed.query.split("&"):
+            key, separator, value = field.partition("=")
+            if separator and unquote(key) == query_parameter:
+                source_path = unquote(value)
+                break
+    return unquote(source_path.rsplit("/", 1)[-1])
+
+
+def xcode_file_version(filename):
+    if not isinstance(filename, str):
+        return None
+    match = XCODE_FILE_RE.fullmatch(filename)
+    if match is None:
+        return None
+    version = match.group(1)
+    return version if "." in version else f"{version}.0"
 
 
 def parse_version(version_str):
@@ -233,6 +310,7 @@ def validate_releases(product, catalog):
     required = product["required"]
     allowed = product["allowed"]
     valid_sources = product["component_sources"]
+    expected_components = product["expected_components"]
     expect_kernels = product["expect_kernels"]
 
     all_component_names = defaultdict(int)
@@ -246,8 +324,8 @@ def validate_releases(product, catalog):
         filename_version = "-".join(parts[1:-1])
 
         try:
-            d = json.loads(f.read_text())
-        except json.JSONDecodeError as e:
+            d = read_json(f, MAX_RELEASE_BYTES)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as e:
             error(f"{f.name}: invalid JSON — {e}")
             continue
 
@@ -265,24 +343,35 @@ def validate_releases(product, catalog):
         # Unexpected fields
         unexpected = set(d.keys()) - allowed
         if unexpected:
-            warn(f"{f.name}: unexpected fields: {', '.join(sorted(unexpected))}")
+            error(f"{f.name}: unexpected fields: {', '.join(sorted(unexpected))}")
 
         build_number = require_string(d, "buildNumber", f.name)
         os_version = require_string(d, "osVersion", f.name)
         release_date = require_string(d, "releaseDate", f.name)
-        require_string(d, "releaseName", f.name)
+        release_name = require_string(d, "releaseName", f.name)
         product_type = require_string(d, "productType", f.name)
         validate_product_type(product_type, product["name"], f.name)
 
         # Filename consistency
         if build_number is not None and build_number != build:
             error(f"{f.name}: buildNumber '{build_number}' doesn't match filename '{build}'")
+        if build_number is not None and not BUILD_IDENTIFIER_RE.fullmatch(build_number):
+            error(f"{f.name}: buildNumber '{build_number}' is not a canonical Apple build identifier")
 
         if os_version is not None and not VERSION_RE.match(os_version):
             error(f"{f.name}: osVersion '{os_version}' is not a valid version (X.Y or X.Y.Z)")
 
         if os_version is not None and os_version != filename_version:
             error(f"{f.name}: osVersion '{os_version}' doesn't match filename '{filename_version}'")
+
+        if os_version is not None and release_name is not None:
+            if prefix == "Xcode":
+                expected_name = f"Xcode {os_version}"
+            else:
+                major = os_version.split(".", 1)[0]
+                expected_name = MACOS_RELEASE_NAMES.get(major, f"macOS {major}")
+            if release_name != expected_name:
+                error(f"{f.name}: releaseName '{release_name}' should be '{expected_name}'")
 
         # Boolean fields
         for field in product["bool_fields"]:
@@ -331,16 +420,18 @@ def validate_releases(product, catalog):
             ipswfile = d["ipswFile"]
 
             validate_download_url(url, "ipswURL", f.name)
+            if isinstance(url, str) and urlparse(url).hostname != "updates.cdn-apple.com":
+                error(f"{f.name}: ipswURL must use updates.cdn-apple.com")
             if not isinstance(ipswfile, str) or not ipswfile:
                 error(f"{f.name}: ipswFile is empty or not a string")
 
             if isinstance(url, str) and isinstance(ipswfile, str) and url and ipswfile:
-                url_file = url.split("/")[-1]
+                url_file = download_filename(url)
                 if ipswfile != url_file:
                     error(f"{f.name}: ipswFile '{ipswfile}' doesn't match URL filename '{url_file}'")
 
             if isinstance(url, str) and url:
-                m = IPSW_FILE_RE.search(url)
+                m = IPSW_FILE_RE.fullmatch(download_filename(url))
                 if m:
                     url_version, url_build = m.group(1), m.group(2)
                     if url_build != build:
@@ -356,10 +447,17 @@ def validate_releases(product, catalog):
 
             xip_url = d.get("xipURL", "")
             validate_download_url(xip_url, "xipURL", f.name)
+            if isinstance(xip_url, str) and urlparse(xip_url).hostname != "developer.apple.com":
+                error(f"{f.name}: xipURL must use developer.apple.com")
             if isinstance(xip_url, str) and isinstance(xip_file, str) and xip_url and xip_file:
-                url_file = xip_url.split("/")[-1]
+                url_file = download_filename(xip_url, query_parameter="path")
                 if xip_file != url_file:
                     error(f"{f.name}: xipFile '{xip_file}' doesn't match URL filename '{url_file}'")
+            file_version = xcode_file_version(xip_file)
+            if file_version is None:
+                error(f"{f.name}: xipFile '{xip_file}' is not canonical")
+            elif os_version is not None and file_version != os_version:
+                error(f"{f.name}: version in xipFile '{file_version}' doesn't match '{os_version}'")
 
             min_os = d.get("minimumOSVersion", "")
             if not isinstance(min_os, str) or not min_os:
@@ -367,12 +465,19 @@ def validate_releases(product, catalog):
 
             sdks = d.get("sdks", [])
             if not isinstance(sdks, list) or len(sdks) == 0:
-                warn(f"{f.name}: sdks array is empty")
+                error(f"{f.name}: sdks array is empty")
+            else:
+                for si, sdk in enumerate(sdks):
+                    if not isinstance(sdk, dict):
+                        error(f"{f.name}: sdks[{si}] should be object, got {type(sdk).__name__}")
+                        continue
+                    require_string(sdk, "sdkVersion", f"{f.name}: sdks[{si}]")
+                    require_string(sdk, "buildVersion", f"{f.name}: sdks[{si}]")
 
         # Components validation
         components = d["components"]
         if not isinstance(components, list) or len(components) == 0:
-            warn(f"{f.name}: components array is empty")
+            error(f"{f.name}: components array is empty")
         else:
             seen_names = set()
             for ci, comp in enumerate(components):
@@ -405,11 +510,18 @@ def validate_releases(product, catalog):
                     error(f"{f.name}: component '{name}' has invalid source '{source}' "
                           f"(expected: {', '.join(sorted(valid_sources))})")
 
+            missing_components = expected_components - seen_names
+            unexpected_components = seen_names - expected_components
+            if missing_components:
+                error(f"{f.name}: missing tracked components: {', '.join(sorted(missing_components))}")
+            if unexpected_components:
+                error(f"{f.name}: unconfigured components: {', '.join(sorted(unexpected_components))}")
+
         # Kernels validation
         kernels = d.get("kernels", [])
         if expect_kernels:
             if not isinstance(kernels, list) or len(kernels) == 0:
-                warn(f"{f.name}: kernels array is empty")
+                error(f"{f.name}: kernels array is empty")
             else:
                 kernel_required = ["arch", "chip", "darwinVersion", "xnuVersion", "file", "devices"]
                 for ki, kern in enumerate(kernels):
@@ -433,7 +545,7 @@ def validate_releases(product, catalog):
                     }
                     if not isinstance(devices, list) or len(devices) == 0:
                         if not is_dtk and not is_early_vm:
-                            warn(f"{f.name}: kernels[{ki}] devices is empty")
+                            error(f"{f.name}: kernels[{ki}] devices is empty")
                     elif not all(isinstance(d_item, str) for d_item in devices):
                         error(f"{f.name}: kernels[{ki}] devices contains non-string entries")
 
@@ -460,8 +572,8 @@ def validate_index(product, catalog):
         return
 
     try:
-        index_entries = json.loads(index_path.read_text())
-    except json.JSONDecodeError as e:
+        index_entries = read_json(index_path, MAX_INDEX_BYTES)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as e:
         error(f"{index_path.name}: invalid JSON — {e}")
         return
     if not isinstance(index_entries, list):
@@ -503,13 +615,27 @@ def validate_index(product, catalog):
 
         if build_number is None:
             continue
+        if not BUILD_IDENTIFIER_RE.fullmatch(build_number):
+            error(f"{context}: buildNumber '{build_number}' is not a canonical Apple build identifier")
         if build_number in index_builds:
             error(f"{prefix} index: duplicate buildNumber '{b}'")
         index_builds[build_number] = entry
         valid_entries.append(entry)
 
-        if data_file is not None and not (product["data"].parent / data_file).exists():
-            error(f"{context}: dataFile '{data_file}' does not exist")
+        if data_file is not None and os_version is not None:
+            major = os_version.split(".", 1)[0]
+            expected_data_file = f"releases/{major}/{prefix}-{os_version}-{build_number}.json"
+            if data_file != expected_data_file:
+                error(f"{context}: dataFile '{data_file}' should be '{expected_data_file}'")
+
+            product_root = product["data"].parent.resolve()
+            candidate = (product_root / data_file).resolve()
+            if not candidate.is_relative_to(product_root):
+                error(f"{context}: dataFile '{data_file}' escapes {product_root}")
+            elif not candidate.is_file():
+                error(f"{context}: dataFile '{data_file}' does not exist")
+            elif build_number in catalog and candidate != catalog[build_number]["path"].resolve():
+                error(f"{context}: dataFile '{data_file}' does not identify build '{build_number}'")
 
     catalog_builds = set(catalog.keys())
     index_build_set = set(index_builds.keys())

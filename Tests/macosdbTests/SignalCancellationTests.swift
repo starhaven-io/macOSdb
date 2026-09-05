@@ -25,7 +25,7 @@ struct SignalCancellationTests {
 
         do {
             try await SignalCancellation.run {
-                try await Task.sleep(for: .seconds(1))
+                try await Task.sleep(for: .seconds(10))
             }
             Issue.record("expected CancellationError")
         } catch is CancellationError {

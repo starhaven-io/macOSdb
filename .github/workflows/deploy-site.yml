@@ -20,8 +20,24 @@ defaults:
     shell: bash -euo pipefail {0}
 
 jobs:
+  validate-ref:
+    name: Require main branch
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Validate deployment ref
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::Production deployment must run from main, got ${REF_NAME}."
+            exit 1
+          fi
+
   deploy:
     name: Deploy
+    needs: validate-ref
     runs-on: ubuntu-slim
     timeout-minutes: 60
     permissions:
@@ -37,6 +53,9 @@ jobs:
           node-version: 26
           package-manager-cache: false
 
+      - name: Validate release data
+        run: python3 scripts/lint-json.py
+
       - name: Check npm install-script policy
         run: node scripts/check-npm-install-policy.mjs site
 
@@ -44,6 +63,18 @@ jobs:
         working-directory: site
         # Fail if an unreviewed dependency install script is introduced.
         run: npm ci --strict-allow-scripts
+
+      - name: Type-check site
+        working-directory: site
+        run: npm run check
+
+      - name: Test site
+        working-directory: site
+        run: npm test
+
+      - name: Audit site dependencies
+        working-directory: site
+        run: npm run audit
 
       - name: Build site
         working-directory: site
@@ -56,3 +87,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           WRANGLER_SEND_METRICS: "false"
+
+      - name: Verify production security headers
+        working-directory: site
+        run: node scripts/check-production-headers.mjs https://macosdb.com

@@ -1,4 +1,5 @@
 import CryptoKit
+import Darwin
 import Foundation
 import OSLog
 
@@ -23,6 +24,7 @@ struct AEADecryptionResult: Sendable {
 actor AEADecryptor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "AEADecryptor")
     private static let maxAuthDataSize = 1 * 1_024 * 1_024
+    private static let maxWKMSResponseBytes = 64 * 1_024
     private static let allowedWKMSHostSuffixes = ["apple.com", "cdn-apple.com"]
 
     static func isAEA(_ url: URL) -> Bool {
@@ -240,7 +242,7 @@ actor AEADecryptor {
         let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
         defer { session.finishTasksAndInvalidate() }
 
-        let (data, response) = try await session.data(for: request)
+        let (bytes, response) = try await session.bytes(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -248,6 +250,19 @@ actor AEADecryptor {
             throw ScannerError.aeaDecryptionFailed(
                 reason: "WKMS key fetch failed (HTTP \(status)): \(urlString)"
             )
+        }
+
+        guard response.expectedContentLength <= Int64(Self.maxWKMSResponseBytes) else {
+            throw ScannerError.aeaDecryptionFailed(reason: "WKMS key response is too large")
+        }
+
+        var data = Data()
+        data.reserveCapacity(max(0, Int(response.expectedContentLength)))
+        for try await byte in bytes {
+            guard data.count < Self.maxWKMSResponseBytes else {
+                throw ScannerError.aeaDecryptionFailed(reason: "WKMS key response is too large")
+            }
+            data.append(byte)
         }
 
         guard let pem = String(data: data, encoding: .utf8) else {
@@ -266,13 +281,36 @@ actor AEADecryptor {
     private func runAEADecrypt(input: URL, output: URL, key: String) async throws {
         Self.logger.info("Decrypting \(input.lastPathComponent)")
 
+        let keyFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-aea-key-\(UUID().uuidString)")
+        let keyData = Data("base64:\(key)\n".utf8)
+        let descriptor = open(
+            keyFile.path,
+            O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+            0o600
+        )
+        guard descriptor >= 0 else {
+            throw ScannerError.aeaDecryptionFailed(reason: "Could not create temporary AEA key file")
+        }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+        do {
+            try handle.write(contentsOf: keyData)
+            try handle.synchronize()
+            try handle.close()
+        } catch {
+            try? handle.close()
+            try? FileManager.default.removeItem(at: keyFile)
+            throw ScannerError.aeaDecryptionFailed(reason: "Could not write temporary AEA key file")
+        }
+        defer { try? FileManager.default.removeItem(at: keyFile) }
+
         let result = try await ProcessRunner.run(
             executableURL: URL(fileURLWithPath: "/usr/bin/aea"),
             arguments: [
                 "decrypt",
                 "-i", input.path,
                 "-o", output.path,
-                "-key-value", "base64:\(key)"
+                "-key", keyFile.path
             ],
             capturesStandardOutput: false,
             capturesStandardError: true,

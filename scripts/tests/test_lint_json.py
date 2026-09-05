@@ -5,6 +5,7 @@ import functools
 import importlib.util
 import io
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -62,6 +63,24 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(lint.parse_build(None), (0, "", 0, ""))
 
 
+class StrictJSONTests(unittest.TestCase):
+    def test_duplicate_keys_and_nonfinite_numbers_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "fixture.json"
+            for source in ['{"field": 1, "field": 2}', '{"field": NaN}']:
+                with self.subTest(source=source):
+                    path.write_text(source)
+                    with self.assertRaises(ValueError):
+                        lint.read_json(path, 1_024)
+
+    def test_size_limit_is_enforced_before_parsing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "fixture.json"
+            path.write_text('{"field": "too large"}')
+            with self.assertRaisesRegex(ValueError, "size limit"):
+                lint.read_json(path, 4)
+
+
 class IndexOrderTests(unittest.TestCase):
     def _sort(self, entries):
         return [
@@ -104,6 +123,93 @@ class DownloadURLTests(unittest.TestCase):
         self.assertEqual(self._errors_for("javascript:alert(1)"), 1)
         self.assertEqual(self._errors_for("https://evil.example.com/a.ipsw"), 1)
         self.assertEqual(self._errors_for("https://apple.com.evil.example/a.ipsw"), 1)
+
+    def test_download_filenames_are_parsed_from_paths_and_wrapper_queries(self):
+        self.assertEqual(
+            lint.download_filename(
+                "https://updates.cdn-apple.com/a/UniversalMac_26.1_25B78_Restore.ipsw?token=one"
+            ),
+            "UniversalMac_26.1_25B78_Restore.ipsw",
+        )
+        self.assertEqual(
+            lint.download_filename(
+                "https://developer.apple.com/services-account/download?"
+                "path=/Developer_Tools/Xcode_26.1/Xcode_26.1_Release_Candidate.xip",
+                query_parameter="path",
+            ),
+            "Xcode_26.1_Release_Candidate.xip",
+        )
+
+    def test_identifier_regexes_use_ascii_digits(self):
+        self.assertIsNone(lint.VERSION_RE.fullmatch("٢٦.١"))
+        self.assertIsNone(lint.BUILD_IDENTIFIER_RE.fullmatch("٢٥B78"))
+
+    def test_major_only_xcode_archive_versions_normalize_to_dot_zero(self):
+        self.assertEqual(lint.xcode_file_version("Xcode_26_Universal.xip"), "26.0")
+        self.assertEqual(lint.xcode_file_version("Xcode_26.1_beta.xip"), "26.1")
+        self.assertIsNone(lint.xcode_file_version("not-xcode.xip"))
+
+
+class IndexPointerTests(unittest.TestCase):
+    def setUp(self):
+        lint.errors = 0
+
+    def tearDown(self):
+        lint.errors = 0
+
+    def _product(self, root):
+        return {
+            "name": "macOS",
+            "prefix": "macOS",
+            "data": root / "releases",
+            "index": root / "releases.json",
+            "index_required": lint.MACOS_INDEX_REQUIRED,
+            "parity_fields": lint.MACOS_PARITY_FIELDS,
+            "bool_fields": lint.MACOS_BOOL_FIELDS,
+        }
+
+    def _entry(self, data_file):
+        return {
+            "buildNumber": "24A335",
+            "osVersion": "15.0",
+            "releaseName": "Sequoia",
+            "releaseDate": "2024-09-16",
+            "isBeta": False,
+            "isRC": False,
+            "isDeviceSpecific": False,
+            "productType": "macOS",
+            "dataFile": data_file,
+        }
+
+    def test_index_rejects_swapped_or_traversing_data_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            expected = root / "releases/15/macOS-15.0-24A335.json"
+            expected.parent.mkdir(parents=True)
+            expected.write_text("{}")
+            catalog = {"24A335": {"path": expected, "data": self._entry("unused")}}
+
+            for pointer in ["releases/15/macOS-15.1-24B83.json", "../outside.json"]:
+                (root / "releases.json").write_text(json.dumps([self._entry(pointer)]))
+                lint.errors = 0
+                with contextlib.redirect_stderr(io.StringIO()):
+                    lint.validate_index(self._product(root), catalog)
+                self.assertGreater(lint.errors, 0, pointer)
+
+    def test_index_accepts_canonical_data_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            expected = root / "releases/15/macOS-15.0-24A335.json"
+            expected.parent.mkdir(parents=True)
+            release = self._entry("unused")
+            expected.write_text(json.dumps(release))
+            pointer = "releases/15/macOS-15.0-24A335.json"
+            (root / "releases.json").write_text(json.dumps([self._entry(pointer)]))
+            catalog = {"24A335": {"path": expected, "data": release}}
+
+            with contextlib.redirect_stderr(io.StringIO()):
+                lint.validate_index(self._product(root), catalog)
+            self.assertEqual(lint.errors, 0)
 
 
 if __name__ == "__main__":
