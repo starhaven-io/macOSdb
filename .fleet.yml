@@ -16,7 +16,7 @@ params:
   npm-policy:
     projects: ["site"]
   link-check:
-    targets: "--config lychee.toml --root-dir site/dist/client './site/dist/client/**/*.html' README.md"
+    targets: "--config lychee.toml --root-dir site/dist/client './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'"
     build-site: true
     site-directory: "site"
     authenticated-github: false
