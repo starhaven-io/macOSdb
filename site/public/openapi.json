@@ -1,0 +1,271 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "macOSdb API",
+    "version": "1.0.0",
+    "description": "Public, read-only release and component data. The data is licensed under CC-BY-4.0."
+  },
+  "servers": [{ "url": "https://macosdb.com" }],
+  "paths": {
+    "/api/v1/{product}/releases.json": {
+      "get": {
+        "summary": "List releases",
+        "parameters": [{ "$ref": "#/components/parameters/Product" }],
+        "responses": {
+          "200": {
+            "description": "Newest-first release index",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ReleaseIndex" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/{product}/releases/{major}/{file}.json": {
+      "get": {
+        "summary": "Get release details",
+        "parameters": [
+          { "$ref": "#/components/parameters/Product" },
+          { "name": "major", "in": "path", "required": true, "schema": { "type": "integer", "minimum": 1 } },
+          {
+            "name": "file",
+            "in": "path",
+            "required": true,
+            "description": "Canonical macOS-{version}-{build} or Xcode-{version}-{build} filename without .json",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Release details",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReleaseDetail" } } }
+          },
+          "404": { "$ref": "#/components/responses/StaticNotFound" }
+        }
+      }
+    },
+    "/api/v1/{product}/releases/latest.json": {
+      "get": {
+        "summary": "Get the newest stable release",
+        "parameters": [{ "$ref": "#/components/parameters/Product" }],
+        "responses": {
+          "200": {
+            "description": "Newest non-beta, non-RC release",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReleaseIndex" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/{product}/components.json": {
+      "get": {
+        "summary": "List tracked components",
+        "parameters": [{ "$ref": "#/components/parameters/Product" }],
+        "responses": {
+          "200": {
+            "description": "Components and their newest recorded versions",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Component" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/{product}/components/{name}.json": {
+      "get": {
+        "summary": "Get component history",
+        "parameters": [
+          { "$ref": "#/components/parameters/Product" },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Lowercase component slug",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Component version history",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ComponentHistory" } } }
+          },
+          "404": { "$ref": "#/components/responses/StaticNotFound" }
+        }
+      }
+    },
+    "/api/v1/{product}/compare/{from}/{to}.json": {
+      "get": {
+        "summary": "Compare two releases",
+        "parameters": [
+          { "$ref": "#/components/parameters/Product" },
+          {
+            "name": "from",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/ReleaseIdentifier" }
+          },
+          {
+            "name": "to",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/ReleaseIdentifier" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Component comparison",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Comparison" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Product": {
+        "name": "product",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "enum": ["macos", "xcode"] }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "The requested release or component does not exist",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "StaticNotFound": {
+        "description": "The requested prerendered resource does not exist; the site returns its HTML not-found page",
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      }
+    },
+    "schemas": {
+      "ReleaseIdentifier": {
+        "type": "string",
+        "pattern": "^[0-9]+\\.[0-9]+(?:\\.[0-9]+)?-[0-9]+[A-Z][0-9]+[a-z]?$",
+        "examples": ["15.1-24B83"]
+      },
+      "ReleaseMetadata": {
+        "type": "object",
+        "required": ["productType", "osVersion", "buildNumber", "releaseName", "releaseDate", "isBeta", "isRC"],
+        "properties": {
+          "productType": { "type": "string", "enum": ["macOS", "Xcode"] },
+          "osVersion": { "type": "string" },
+          "buildNumber": { "type": "string" },
+          "releaseName": { "type": "string" },
+          "releaseDate": { "type": "string", "format": "date" },
+          "isBeta": { "type": "boolean" },
+          "betaNumber": { "type": "integer", "minimum": 1 },
+          "betaRevision": { "type": "integer", "minimum": 2 },
+          "isRC": { "type": "boolean" },
+          "rcNumber": { "type": "integer", "minimum": 1 },
+          "isDeviceSpecific": { "type": "boolean" }
+        }
+      },
+      "ReleaseIndex": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ReleaseMetadata" },
+          { "type": "object", "required": ["dataFile"], "properties": { "dataFile": { "type": "string" } } }
+        ]
+      },
+      "Component": {
+        "type": "object",
+        "required": ["name", "version", "path", "source"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "path": { "type": "string" },
+          "source": { "type": "string", "enum": ["filesystem", "dyldCache", "sdk"] }
+        }
+      },
+      "Kernel": {
+        "type": "object",
+        "required": ["file", "arch", "chip", "darwinVersion", "xnuVersion", "devices"],
+        "properties": {
+          "file": { "type": "string" },
+          "arch": { "type": "string" },
+          "chip": { "type": "string" },
+          "darwinVersion": { "type": "string" },
+          "xnuVersion": { "type": "string" },
+          "devices": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SDK": {
+        "type": "object",
+        "required": ["sdkVersion", "buildVersion"],
+        "properties": { "sdkVersion": { "type": "string" }, "buildVersion": { "type": "string" } }
+      },
+      "ReleaseDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ReleaseMetadata" },
+          {
+            "type": "object",
+            "required": ["components"],
+            "properties": {
+              "components": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/Component" } },
+              "kernels": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/Kernel" } },
+              "ipswFile": { "type": "string" },
+              "ipswURL": { "type": "string", "format": "uri" },
+              "minimumOSVersion": { "type": "string" },
+              "sdks": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/SDK" } },
+              "xipFile": { "type": "string" },
+              "xipURL": { "type": "string", "format": "uri" }
+            }
+          }
+        ]
+      },
+      "HistoryChange": {
+        "type": "object",
+        "required": [
+          "version",
+          "firstRelease",
+          "firstReleaseSlug",
+          "firstReleaseDate",
+          "firstReleaseBeta",
+          "firstReleaseRC",
+          "direction"
+        ],
+        "properties": {
+          "version": { "type": "string" },
+          "firstRelease": { "type": "string" },
+          "firstReleaseSlug": { "type": "string" },
+          "firstReleaseDate": { "type": "string", "format": "date" },
+          "firstReleaseBeta": { "type": "boolean" },
+          "firstReleaseRC": { "type": "boolean" },
+          "direction": { "type": "string", "enum": ["upgraded", "downgraded", "added", "unchanged"] }
+        }
+      },
+      "ComponentHistory": {
+        "type": "object",
+        "required": ["name", "source", "path", "changes"],
+        "properties": {
+          "name": { "type": "string" },
+          "source": { "type": "string" },
+          "path": { "type": "string" },
+          "changes": { "type": "array", "items": { "$ref": "#/components/schemas/HistoryChange" } }
+        }
+      },
+      "Comparison": {
+        "type": "object",
+        "required": ["from", "to", "summary", "changes", "added", "removed"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "summary": {
+            "type": "object",
+            "required": ["upgraded", "downgraded", "added", "removed", "unchanged"],
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          },
+          "changes": { "type": "array", "items": { "type": "object" } },
+          "added": { "type": "array", "items": { "type": "object" } },
+          "removed": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "Error": { "type": "object", "required": ["error"], "properties": { "error": { "type": "string" } } }
+    }
+  }
+}

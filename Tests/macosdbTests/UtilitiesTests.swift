@@ -25,4 +25,14 @@ struct UtilitiesTests {
             _ = try parseProductType("ios")
         }
     }
+
+    @Test("Data providers reject remote schemes other than HTTPS")
+    func dataProviderRejectsInsecureRemoteScheme() {
+        #expect(throws: (any Error).self) {
+            _ = try makeDataProvider(dataURL: "http://example.test/api/v1")
+        }
+        #expect(throws: (any Error).self) {
+            _ = try makeDataProvider(dataURL: "file:///tmp/macosdb-data")
+        }
+    }
 }

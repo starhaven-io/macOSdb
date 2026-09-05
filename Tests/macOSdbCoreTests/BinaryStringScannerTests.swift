@@ -215,4 +215,23 @@ struct BinaryStringScannerTests {
         let data = Data("anything here".utf8)
         #expect(BinaryStringScanner.findAll(in: data, matching: "(").isEmpty)
     }
+
+    @Test("Materialized string and match results honor their caps")
+    func materializedResultsAreCapped() {
+        let data = Data("one\0two\0three\0four\0".utf8)
+        #expect(
+            BinaryStringScanner.extractStrings(from: data, minLength: 1, maxResults: 2)
+                == ["one", "two"]
+        )
+        #expect(
+            BinaryStringScanner.findAll(in: data, matching: #"[a-z]+"#, minLength: 1, maxResults: 3)
+                == ["one", "two", "three"]
+        )
+    }
+
+    @Test("Integer maximum streams across all matches")
+    func integerMaximumStreams() {
+        let data = Data("9\0value=21209\0last=42\0".utf8)
+        #expect(BinaryStringScanner.findMaximumInteger(in: data, matching: #"[0-9]+"#) == 21_209)
+    }
 }

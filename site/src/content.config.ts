@@ -1,11 +1,11 @@
 import { defineCollection } from 'astro:content';
-import { file } from 'astro/loaders';
 import { z } from 'astro/zod';
-import fs from 'node:fs';
 import path from 'node:path';
+import { loadReleaseDetails, loadReleaseIndex } from './lib/releaseFiles';
 
 const releaseIndexBaseSchema = z.object({
   id: z.string(),
+  productType: z.enum(['macOS', 'Xcode']),
   buildNumber: z.string(),
   osVersion: z.string(),
   releaseName: z.string(),
@@ -24,7 +24,7 @@ const macosReleaseIndexEntrySchema = releaseIndexBaseSchema.extend({
 
 const componentSchema = z.object({
   name: z.string(),
-  version: z.string().nullable().optional(),
+  version: z.string(),
   path: z.string(),
   source: z.enum(['filesystem', 'dyldCache', 'sdk']),
 });
@@ -37,7 +37,7 @@ const deviceChipSchema = z.object({
 const kernelSchema = z.object({
   file: z.string(),
   darwinVersion: z.string(),
-  xnuVersion: z.string().nullable().optional(),
+  xnuVersion: z.string(),
   arch: z.string(),
   chip: z.string(),
   devices: z.array(z.string()),
@@ -49,7 +49,8 @@ const releaseDetailBaseSchema = z.object({
   buildNumber: z.string(),
   osVersion: z.string(),
   releaseName: z.string(),
-  releaseDate: z.string().optional(),
+  releaseDate: z.string(),
+  productType: z.enum(['macOS', 'Xcode']),
   isBeta: z.boolean(),
   isRC: z.boolean(),
   betaNumber: z.number().optional(),
@@ -59,73 +60,49 @@ const releaseDetailBaseSchema = z.object({
 });
 
 const macosReleaseDetailSchema = releaseDetailBaseSchema.extend({
-  isDeviceSpecific: z.boolean().optional(),
-  ipswFile: z.string().optional(),
-  ipswURL: z.string().optional(),
+  isDeviceSpecific: z.boolean(),
+  ipswFile: z.string(),
+  ipswURL: z.url(),
   kernels: z.array(kernelSchema),
 });
 
 const sdkSchema = z.object({
   sdkVersion: z.string(),
-  buildVersion: z.string().optional(),
+  buildVersion: z.string(),
 });
 
 const xcodeReleaseDetailSchema = releaseDetailBaseSchema.extend({
-  minimumOSVersion: z.string().optional(),
-  xipFile: z.string().optional(),
-  xipURL: z.string().optional(),
-  sdks: z.array(sdkSchema).optional(),
+  minimumOSVersion: z.string(),
+  xipFile: z.string(),
+  xipURL: z.url(),
+  sdks: z.array(sdkSchema).min(1),
 });
 
 const macosReleases = defineCollection({
-  loader: file('../data/macos/releases.json', {
-    parser: (text) =>
-      JSON.parse(text).map((r: Record<string, unknown>) => ({
-        ...r,
-        id: `${r.osVersion}-${r.buildNumber}`,
-      })),
-  }),
+  loader: async () =>
+    loadReleaseIndex(path.resolve('..', 'data'), 'macos', 'macOS').map((release) => ({
+      ...release,
+      id: `${release.osVersion}-${release.buildNumber}`,
+    })),
   schema: macosReleaseIndexEntrySchema,
 });
 
 const macosReleaseDetails = defineCollection({
-  loader: async () => {
-    const dataDir = path.resolve('..', 'data');
-    const index = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', 'releases.json'), 'utf-8'));
-    return index.map((entry: Record<string, unknown>) => {
-      const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'macos', entry.dataFile as string), 'utf-8'));
-      return {
-        id: `${entry.osVersion}-${entry.buildNumber}`,
-        ...data,
-      };
-    });
-  },
+  loader: async () => loadReleaseDetails(path.resolve('..', 'data'), 'macos', 'macOS'),
   schema: macosReleaseDetailSchema,
 });
 
 const xcodeReleases = defineCollection({
-  loader: file('../data/xcode/releases.json', {
-    parser: (text) =>
-      JSON.parse(text).map((r: Record<string, unknown>) => ({
-        ...r,
-        id: `${r.osVersion}-${r.buildNumber}`,
-      })),
-  }),
+  loader: async () =>
+    loadReleaseIndex(path.resolve('..', 'data'), 'xcode', 'Xcode').map((release) => ({
+      ...release,
+      id: `${release.osVersion}-${release.buildNumber}`,
+    })),
   schema: releaseIndexBaseSchema,
 });
 
 const xcodeReleaseDetails = defineCollection({
-  loader: async () => {
-    const dataDir = path.resolve('..', 'data');
-    const index = JSON.parse(fs.readFileSync(path.join(dataDir, 'xcode', 'releases.json'), 'utf-8'));
-    return index.map((entry: Record<string, unknown>) => {
-      const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'xcode', entry.dataFile as string), 'utf-8'));
-      return {
-        id: `${entry.osVersion}-${entry.buildNumber}`,
-        ...data,
-      };
-    });
-  },
+  loader: async () => loadReleaseDetails(path.resolve('..', 'data'), 'xcode', 'Xcode'),
   schema: xcodeReleaseDetailSchema,
 });
 

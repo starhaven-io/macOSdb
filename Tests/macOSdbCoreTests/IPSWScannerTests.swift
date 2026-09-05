@@ -165,6 +165,25 @@ struct IPSWScannerTests {
         #expect(findDyldCache(mountPoint: "/definitely/missing") == nil)
     }
 
+    @Test("Does not find a dyld cache through a symlink outside the mount")
+    func rejectsEscapingDyldCache() throws {
+        let root = try makeTempDirectory()
+        let outside = try makeTempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: outside)
+        }
+        let outsideCache = try write("cache", to: outside.appendingPathComponent("dyld_shared_cache_arm64e"))
+        let candidate = root.appendingPathComponent("System/Library/dyld/dyld_shared_cache_arm64e")
+        try FileManager.default.createDirectory(
+            at: candidate.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.createSymbolicLink(at: candidate, withDestinationURL: outsideCache)
+
+        #expect(findDyldCache(mountPoint: root.path) == nil)
+    }
+
     @Test("Resolves exact and versioned dylib paths")
     func resolvesDylibPaths() {
         let exact = "/usr/lib/libcurl.4.dylib"

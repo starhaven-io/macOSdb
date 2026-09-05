@@ -6,8 +6,14 @@ enum SDKMetadataParser {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "SDKMetadataParser")
 
     /// Parse a single SDKSettings.json file into an SDKInfo.
-    static func parseSDKSettingsJSON(at path: URL) -> SDKInfo? {
-        guard let data = try? Data(contentsOf: path),
+    static func parseSDKSettingsJSON(at path: URL, confinedTo root: URL? = nil) -> SDKInfo? {
+        let sdkRoot = path.deletingLastPathComponent()
+        let confinementRoot = root ?? sdkRoot
+        guard let data = try? ScannerFileReader.data(
+            at: path,
+            confinedTo: confinementRoot,
+            maxBytes: ScannerFileReader.maxMetadataBytes
+        ),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
         }
@@ -16,19 +22,23 @@ enum SDKMetadataParser {
             return nil
         }
 
-        let sdkRoot = path.deletingLastPathComponent()
-        let buildVersion = parseSDKBuildVersion(sdkRoot: sdkRoot)
+        let buildVersion = parseSDKBuildVersion(sdkRoot: sdkRoot, confinedTo: confinementRoot)
 
         logger.debug("macOS SDK \(version) (build \(buildVersion ?? "unknown"))")
 
         return SDKInfo(sdkVersion: version, buildVersion: buildVersion)
     }
 
-    static func parseSDKBuildVersion(sdkRoot: URL) -> String? {
+    static func parseSDKBuildVersion(sdkRoot: URL, confinedTo root: URL? = nil) -> String? {
+        let confinementRoot = root ?? sdkRoot
         let plistPath = sdkRoot.appendingPathComponent(
             "System/Library/CoreServices/SystemVersion.plist"
         )
-        guard let data = try? Data(contentsOf: plistPath),
+        guard let data = try? ScannerFileReader.data(
+            at: plistPath,
+            confinedTo: confinementRoot,
+            maxBytes: ScannerFileReader.maxMetadataBytes
+        ),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil)
                   as? [String: Any],
               let build = plist["ProductBuildVersion"] as? String else {
@@ -41,13 +51,14 @@ enum SDKMetadataParser {
 
     /// Extract component versions from SDK headers and .tbd files.
     /// `sdkUsrDir` is the `usr/` directory inside the SDK root.
-    static func extractSDKComponents(from sdkUsrDir: URL) -> [Component] {
+    static func extractSDKComponents(from sdkUsrDir: URL, confinedTo root: URL? = nil) -> [Component] {
+        let confinementRoot = root ?? sdkUsrDir
         var components: [Component] = []
 
         for definition in sdkComponents {
             guard !Task.isCancelled else { break }
             let filePath = sdkUsrDir.appendingPathComponent(definition.path)
-            guard let content = try? String(contentsOf: filePath, encoding: .utf8) else {
+            guard let content = try? ScannerFileReader.string(at: filePath, confinedTo: confinementRoot) else {
                 logger.debug("SDK \(definition.name): file not found at \(filePath.path)")
                 continue
             }
@@ -115,7 +126,8 @@ enum SDKMetadataParser {
 
     /// Find and parse all macOS SDKSettings.json files under a directory.
     /// Returns deduplicated SDKInfo sorted by version descending.
-    static func findMacOSSDKs(in directory: URL) -> [SDKInfo] {
+    static func findMacOSSDKs(in directory: URL, confinedTo root: URL? = nil) -> [SDKInfo] {
+        let confinementRoot = root ?? directory
         let fileManager = FileManager.default
         var sdks: [SDKInfo] = []
 
@@ -130,7 +142,7 @@ enum SDKMetadataParser {
                 let sdkDir = fileURL.deletingLastPathComponent().lastPathComponent
                 if fileURL.lastPathComponent == "SDKSettings.json",
                    sdkDir.hasPrefix("MacOSX"),
-                   let sdk = parseSDKSettingsJSON(at: fileURL) {
+                   let sdk = parseSDKSettingsJSON(at: fileURL, confinedTo: confinementRoot) {
                     sdks.append(sdk)
                 }
             }

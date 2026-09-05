@@ -126,6 +126,9 @@ Release data is stored as JSON files in `data/`, organized by product type:
 
 Data is also served as a REST API at [macosdb.com/api/v1/](https://macosdb.com/api/v1/macos/releases.json).
 
+The public field contract is documented in [Data schema](docs/data-schema.md). The
+[OpenAPI description](site/public/openapi.json) is published at `/openapi.json`.
+
 ## Project structure
 
 ```
@@ -171,16 +174,17 @@ just site-build         # Production build
 just site-preview       # Preview the built site
 just site-format        # Format site files with Prettier
 just site-format-check  # Check site formatting
+just npm-policy         # Verify dependency install-script policy
 just site-test          # Run site unit tests
 ```
 
-The site's current dependency install scripts are explicitly denied. `just
-npm-policy` verifies the lockfile policy, and clean installs fail if a new
-script-bearing dependency has not been reviewed.
+The site's current dependency install scripts are explicitly denied. `just npm-policy` verifies the lockfile policy, and clean installs fail if a new script-bearing dependency has not been reviewed. Site checks also type-check Astro and TypeScript and reject moderate-or-higher npm advisories.
 
 ## Contributing
 
-Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format and include a DCO sign-off (`git commit -s`). Run `just install-hooks` once per clone to enable the git hooks (a pre-push `just check` and DCO sign-off enforcement).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, generated-data rules, security constraints, and pull-request requirements. Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) and include a DCO sign-off (`git commit -s`).
+
+Design and operational details are in [Architecture](docs/architecture.md) and [Operations](docs/operations.md).
 
 ## Acknowledgements
 

@@ -309,4 +309,52 @@ struct SDKMetadataParserTests {
         let components = SDKMetadataParser.extractSDKComponents(from: tempDir)
         #expect(components.isEmpty)
     }
+
+    @Test("SDK component reads cannot escape the archive root")
+    func sdkComponentsRejectEscapingRootSymlink() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-sdk-confinement-\(UUID().uuidString)")
+        let archive = root.appendingPathComponent("archive")
+        let outside = root.appendingPathComponent("outside")
+        try FileManager.default.createDirectory(
+            at: outside.appendingPathComponent("include"),
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.createDirectory(at: archive, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try "#define ZLIB_VERSION \"1.2.12\"".write(
+            to: outside.appendingPathComponent("include/zlib.h"),
+            atomically: true,
+            encoding: .utf8
+        )
+        let escaped = archive.appendingPathComponent("usr")
+        try FileManager.default.createSymbolicLink(at: escaped, withDestinationURL: outside)
+
+        let components = SDKMetadataParser.extractSDKComponents(from: escaped, confinedTo: archive)
+        #expect(components.isEmpty)
+    }
+
+    @Test("SDK discovery cannot escape the archive root")
+    func sdkDiscoveryRejectsEscapingRootSymlink() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-sdk-discovery-\(UUID().uuidString)")
+        let archive = root.appendingPathComponent("archive")
+        let outside = root.appendingPathComponent("outside/MacOSX15.2.sdk")
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: archive, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try "{\"Version\":\"15.2\"}".write(
+            to: outside.appendingPathComponent("SDKSettings.json"),
+            atomically: true,
+            encoding: .utf8
+        )
+        let escaped = archive.appendingPathComponent("SDKs")
+        try FileManager.default.createSymbolicLink(
+            at: escaped,
+            withDestinationURL: outside.deletingLastPathComponent()
+        )
+
+        let sdks = SDKMetadataParser.findMacOSSDKs(in: escaped, confinedTo: archive)
+        #expect(sdks.isEmpty)
+    }
 }

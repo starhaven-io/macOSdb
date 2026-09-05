@@ -27,7 +27,7 @@ audit:
 
 # Run SwiftLint
 lint:
-    swiftlint --strict
+    swiftlint --strict --no-cache
 
 # Validate JSON data files
 lint-json:
@@ -84,7 +84,7 @@ site-preview:
 
 # Check for broken links in the built site and README
 lychee: site-build
-    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html' ../README.md
+    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html' ../README.md ../SECURITY.md ../CONTRIBUTING.md '../docs/**/*.md'
 
 # Check
 
@@ -105,8 +105,9 @@ check:
         skipped+=("$2 (brew install $3)")
     }
     run node scripts/check-npm-install-policy.mjs site
+    run npm --prefix site ci --strict-allow-scripts
     if command -v swiftlint &>/dev/null; then
-        run swiftlint --strict
+        run swiftlint --strict --no-cache
     else
         skip lint swiftlint swiftlint
     fi
@@ -122,6 +123,11 @@ check:
     else
         skip audit zizmor zizmor
     fi
+    if command -v actionlint &>/dev/null; then
+        run actionlint -no-color
+    else
+        skip actionlint actionlint actionlint
+    fi
     if command -v periphery &>/dev/null; then
         # native build system (deprecated): swiftbuild emits no index store Periphery can find
         run swift build --build-tests --build-system native
@@ -132,12 +138,21 @@ check:
     run swift test
     echo "--- site-format-check ---"
     (cd site && npm run format:check) || failed=1
+    echo "--- site-type-check ---"
+    (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" npm run check) || failed=1
     echo "--- site-test ---"
     (cd site && npm test) || failed=1
+    echo "--- site-audit ---"
+    (cd site && npm run audit) || failed=1
     echo "--- site-build ---"
-    (cd site && npm run build) || failed=1
+    (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" npm run build) || failed=1
     echo "--- site-deploy-dry ---"
-    (cd site && WRANGLER_SEND_METRICS=false npm run deploy:dry) || failed=1
+    (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" WRANGLER_SEND_METRICS=false npm run deploy:dry) || failed=1
+    if command -v lychee &>/dev/null; then
+        run lychee --config lychee.toml --root-dir "$(pwd)/site/dist/client" 'site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md 'docs/**/*.md'
+    else
+        skip links lychee lychee
+    fi
     if [ ${#skipped[@]} -gt 0 ]; then
         echo ""
         echo "Checks skipped due to missing tools:"

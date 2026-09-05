@@ -29,7 +29,7 @@ SKIP_TYPES = {"build", "ci", "chore"}
 #   * feat(scope): description by @user in https://...
 PR_RE = re.compile(
     r"^\*\s+"
-    r"(?:(?P<type>[a-z]+)(?:\([^)]*\))?:\s*)?"
+    r"(?:(?P<type>[a-z]+)(?:\([^)]*\))?!?:\s*)?"
     r"(?P<desc>.+?)"
     r"(?:\s+by\s+@[\w-]+)?"
     r"(?:\s+in\s+https?://\S+)?"

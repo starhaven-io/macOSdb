@@ -266,8 +266,11 @@ package actor IPSWScanner {
             let binaryPath = URL(fileURLWithPath: mountPoint.path)
                 .appendingPathComponent(definition.path)
 
-            guard let data = try? Data(contentsOf: binaryPath) else {
-                sendVerbose("\(definition.name): binary not found at \(binaryPath.path)")
+            guard let data = try? ScannerFileReader.data(
+                at: binaryPath,
+                confinedTo: URL(fileURLWithPath: mountPoint.path)
+            ) else {
+                sendVerbose("\(definition.name): binary missing, unsafe, or oversized")
                 continue
             }
 
@@ -287,6 +290,7 @@ package actor IPSWScanner {
     func extractDyldCacheComponents(
         mountPoint: DMGMounter.MountPoint
     ) async -> [Component] {
+        let root = URL(fileURLWithPath: mountPoint.path)
         let cachePath = findDyldCache(mountPoint: mountPoint.path)
 
         guard let cachePath else {
@@ -294,7 +298,7 @@ package actor IPSWScanner {
             return []
         }
 
-        let (allDylibs, dylibSet) = logDyldCacheDiagnostics(cachePath: cachePath)
+        let (allDylibs, dylibSet) = logDyldCacheDiagnostics(cachePath: cachePath, confinedTo: root)
         guard !Task.isCancelled else { return [] }
 
         var components: [Component] = []
@@ -332,7 +336,8 @@ package actor IPSWScanner {
 
             guard let dylibData = await DyldCacheExtractor.extractDylibData(
                 cachePath: cachePath,
-                dylibPath: resolvedPath
+                dylibPath: resolvedPath,
+                confinedTo: root
             ) else {
                 sendVerbose("\(definition.name): extraction returned nil")
                 continue
@@ -418,77 +423,4 @@ extension IPSWScanner {
             throw error
         }
     }
-}
-
-// MARK: - dyld cache helpers
-
-func findDyldCache(mountPoint: String) -> URL? {
-    let fileManager = FileManager.default
-
-    let candidates = [
-        "System/Library/dyld/dyld_shared_cache_arm64e",
-        "System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e",
-        "System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e"
-    ]
-
-    for candidate in candidates {
-        let path = URL(fileURLWithPath: mountPoint).appendingPathComponent(candidate)
-        if fileManager.fileExists(atPath: path.path) {
-            return path
-        }
-    }
-
-    let searchPaths = [
-        URL(fileURLWithPath: mountPoint).appendingPathComponent("System/Library/dyld"),
-        URL(fileURLWithPath: mountPoint).appendingPathComponent(
-            "System/Cryptexes/OS/System/Library/dyld"
-        )
-    ]
-
-    for searchPath in searchPaths {
-        if let contents = try? fileManager.contentsOfDirectory(
-            at: searchPath, includingPropertiesForKeys: nil
-        ) {
-            if let cache = contents.first(where: {
-                $0.lastPathComponent.hasPrefix("dyld_shared_cache")
-                && !$0.lastPathComponent.hasSuffix(".map")
-                && !$0.lastPathComponent.hasSuffix(".symbols")
-            }) {
-                return cache
-            }
-        }
-    }
-
-    return nil
-}
-
-/// Falls back to prefix matching when the soversion differs.
-func resolveDylibPath(
-    _ expectedPath: String,
-    in dylibSet: Set<String>,
-    allPaths: [String]
-) -> String? {
-    if dylibSet.contains(expectedPath) {
-        return expectedPath
-    }
-
-    let url = URL(fileURLWithPath: expectedPath)
-    let filename = url.lastPathComponent
-    let dir = url.deletingLastPathComponent().path
-
-    guard let dotIndex = filename.firstIndex(of: ".") else {
-        return nil
-    }
-
-    let baseName = String(filename[..<dotIndex])
-    let prefix = dir + "/" + baseName + "."
-
-    return allPaths.first { $0.hasPrefix(prefix) && $0.hasSuffix(".dylib") }
-}
-
-/// Merges cryptex components over system ones, with cryptex winning on name collisions.
-func merging(_ system: [Component], overriddenBy cryptex: [Component]) -> [Component] {
-    guard !cryptex.isEmpty else { return system }
-    let cryptexNames = Set(cryptex.map(\.name))
-    return system.filter { !cryptexNames.contains($0.name) } + cryptex
 }

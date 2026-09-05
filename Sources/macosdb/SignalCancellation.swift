@@ -10,20 +10,45 @@ enum SignalCancellation {
         operation: @escaping @Sendable () async throws -> Void
     ) async throws {
         try Task.checkCancellation()
+        let taskState = SignalOperationState()
+        let monitor = SignalCancellationMonitor(signals: signals) { signalNumber in
+            onFirstSignal?(signalNumber)
+            taskState.cancel()
+        }
+        defer { monitor.cancel() }
+
         let task = Task {
             try await operation()
         }
-        let monitor = SignalCancellationMonitor(signals: signals) { signalNumber in
-            onFirstSignal?(signalNumber)
-            task.cancel()
-        }
-        defer { monitor.cancel() }
+        taskState.install(task)
 
         try await withTaskCancellationHandler {
             try await task.value
         } onCancel: {
             task.cancel()
         }
+    }
+}
+
+private final class SignalOperationState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var task: Task<Void, Error>?
+    private var cancellationRequested = false
+
+    func install(_ task: Task<Void, Error>) {
+        lock.lock()
+        self.task = task
+        let shouldCancel = cancellationRequested
+        lock.unlock()
+        if shouldCancel { task.cancel() }
+    }
+
+    func cancel() {
+        lock.lock()
+        cancellationRequested = true
+        let task = task
+        lock.unlock()
+        task?.cancel()
     }
 }
 

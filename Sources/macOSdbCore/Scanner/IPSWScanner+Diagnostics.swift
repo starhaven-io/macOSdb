@@ -2,7 +2,8 @@ import Foundation
 
 extension IPSWScanner {
     func logDyldCacheDiagnostics(
-        cachePath: URL
+        cachePath: URL,
+        confinedTo root: URL
     ) -> (allDylibs: [String], dylibSet: Set<String>) {
         sendVerbose("Found dyld cache: \(cachePath.lastPathComponent)")
 
@@ -21,7 +22,7 @@ extension IPSWScanner {
         }
         sendVerbose("Subcache files: \(subcacheCount)")
 
-        let allDylibs = DyldCacheExtractor.listDylibs(cachePath: cachePath)
+        let allDylibs = DyldCacheExtractor.listDylibs(cachePath: cachePath, confinedTo: root)
         let dylibSet = Set(allDylibs)
         sendVerbose("Image table contains \(allDylibs.count) dylibs")
         if !allDylibs.isEmpty {

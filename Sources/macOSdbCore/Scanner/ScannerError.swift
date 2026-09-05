@@ -15,6 +15,7 @@ enum ScannerError: LocalizedError {
     case xcodeAppNotFound(reason: String)
     case versionPlistNotFound(reason: String)
     case processTimedOut(tool: String, seconds: Int)
+    case processOutputTooLarge(tool: String, limit: Int)
 
     var errorDescription: String? {
         switch self {
@@ -46,6 +47,8 @@ enum ScannerError: LocalizedError {
             "Version plist not found: \(reason)"
         case .processTimedOut(let tool, let seconds):
             "\(tool) timed out after \(seconds)s"
+        case .processOutputTooLarge(let tool, let limit):
+            "\(tool) produced more than \(limit) bytes of captured output"
         }
     }
 }

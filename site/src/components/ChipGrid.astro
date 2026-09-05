@@ -41,6 +41,8 @@ const hasChips = Object.keys(chipFamilies).length > 0;
                     class="device-toggle"
                     data-model={d.device}
                     data-name={deviceDisplayName(d.device)}
+                    aria-pressed="false"
+                    aria-label={`Show model identifier for ${deviceDisplayName(d.device)}`}
                   >
                     {deviceDisplayName(d.device)}
                   </button>
@@ -129,5 +131,10 @@ const hasChips = Object.keys(chipFamilies).length > 0;
     if (!btn) return;
     const isModel = btn.classList.toggle('showing-model');
     btn.textContent = isModel ? btn.dataset.model! : btn.dataset.name!;
+    btn.setAttribute('aria-pressed', String(isModel));
+    btn.setAttribute(
+      'aria-label',
+      isModel ? `Show marketing name for ${btn.dataset.model}` : `Show model identifier for ${btn.dataset.name}`,
+    );
   });
 </script>

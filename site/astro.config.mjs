@@ -7,6 +7,9 @@ import pagefind from 'astro-pagefind';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://macosdb.com',
+  build: {
+    inlineStylesheets: 'never',
+  },
   adapter: cloudflare({
     prerenderEnvironment: 'node',
     imageService: 'passthrough',
@@ -35,6 +38,9 @@ export default defineConfig({
     defaultStrategy: 'hover',
   },
   vite: {
+    build: {
+      assetsInlineLimit: 0,
+    },
     environments: {
       client: {
         optimizeDeps: {
@@ -45,6 +51,5 @@ export default defineConfig({
   },
   experimental: {
     svgOptimizer: svgoOptimizer(),
-    clientPrerender: true,
   },
 });

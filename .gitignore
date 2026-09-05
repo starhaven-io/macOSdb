@@ -21,3 +21,15 @@ __pycache__/
 
 # Wrangler
 .wrangler/
+
+# Scanner inputs, checksums, and local credentials
+*.ipsw
+*.xip
+*.ipsw.sha256
+*.xip.sha256
+*.aea.pem
+*.p12
+*.keychain-db
+.env
+.env.*
+!.env.example

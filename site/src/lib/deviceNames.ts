@@ -2,7 +2,7 @@
  * Device model identifier to marketing name mapping.
  * Mirrors Sources/macOSdbCore/Models/DeviceRegistry.swift — keep in sync.
  */
-const deviceNames: Record<string, string> = {
+export const deviceNames: Readonly<Record<string, string>> = {
   // M1
   'MacBookAir10,1': 'MacBook Air (M1, Late 2020)',
   'MacBookPro17,1': 'MacBook Pro (13-inch, M1, Late 2020)',

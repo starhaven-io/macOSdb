@@ -14,7 +14,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Cross-Origin-Embedder-Policy': 'credentialless',
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Content-Security-Policy':
-    "default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "default-src 'none'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; worker-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests",
 };
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -22,14 +22,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isAPI = context.url.pathname.startsWith('/api/');
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
-    if (!response.headers.has(name)) {
-      response.headers.set(name, value);
-    }
+    response.headers.set(name, value);
   }
   response.headers.set('Cross-Origin-Resource-Policy', isAPI ? 'cross-origin' : 'same-origin');
-  if (isAPI && !response.headers.has('Access-Control-Allow-Origin')) {
-    response.headers.set('Access-Control-Allow-Origin', '*');
-  }
+  if (isAPI) response.headers.set('Access-Control-Allow-Origin', '*');
 
   return response;
 });

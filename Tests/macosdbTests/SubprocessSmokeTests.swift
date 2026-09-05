@@ -103,6 +103,28 @@ struct SubprocessSmokeTests {
         #expect(rehashed.stderr.contains("sha256:"))
     }
 
+    @Test("validate preserves malformed sidecars unless rehash is explicit")
+    func validateRejectsMalformedSidecar() throws {
+        let tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("macosdb-sidecar-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let archive = tempDir.appendingPathComponent("fake.xip")
+        let sidecar = archive.appendingPathExtension("sha256")
+        try Data("contents".utf8).write(to: archive)
+        try "not-a-checksum\n".write(to: sidecar, atomically: true, encoding: .utf8)
+
+        let rejected = try runMacosdb(["validate", archive.path])
+        #expect(rejected.exitCode != 0)
+        #expect(rejected.stderr.contains("Invalid sidecar"))
+        #expect(try String(contentsOf: sidecar, encoding: .utf8) == "not-a-checksum\n")
+
+        let rehashed = try runMacosdb(["validate", archive.path, "--rehash"])
+        #expect(rehashed.exitCode == 0)
+        #expect(try String(contentsOf: sidecar, encoding: .utf8) != "not-a-checksum\n")
+    }
+
     @Test("list --json sorts same-version builds numerically")
     func listSortsBuildNumbersNumerically() throws {
         let dataRoot = try LocalDataStore.make()
@@ -127,8 +149,13 @@ extension SubprocessSmokeTests {
     @Test("cleanup dry-run reports scanner temp directories without deleting them")
     func cleanupDryRunReportsStaleDirectory() throws {
         let staleDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macosdb-cleanup-test-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("macosdb-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: staleDirectory, withIntermediateDirectories: true)
+        try "macosdb-scan-v1:999999999\n".write(
+            to: staleDirectory.appendingPathComponent("scan.pid"),
+            atomically: true,
+            encoding: .utf8
+        )
         defer { try? FileManager.default.removeItem(at: staleDirectory) }
 
         let result = try runMacosdb(["cleanup"])

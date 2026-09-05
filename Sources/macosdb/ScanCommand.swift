@@ -1,4 +1,5 @@
 import ArgumentParser
+import Darwin
 import Foundation
 import macOSdbCore
 
@@ -56,21 +57,6 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
     @Flag(name: .long, help: "Print verbose diagnostic output to stderr.")
     var verbose = false
 
-    func validate() throws {
-        if updateIndex && releaseDate == nil {
-            throw ValidationError("--release-date is required when using --update-index")
-        }
-        if let releaseDate, releaseDate.wholeMatch(of: /\d{4}-\d{2}-\d{2}/) == nil {
-            throw ValidationError("--release-date must be ISO 8601 (YYYY-MM-DD), got '\(releaseDate)'")
-        }
-        if betaRevision != nil, betaNumber == nil {
-            throw ValidationError("--beta-revision requires --beta-number")
-        }
-        if let betaRevision, betaRevision < 2 {
-            throw ValidationError("--beta-revision must be 2 or greater")
-        }
-    }
-
     func run() async throws {
         do {
             try await SignalCancellation.run(onFirstSignal: { _ in
@@ -116,7 +102,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         switch archiveURL.pathExtension.lowercased() {
         case "xip":
             release = try await scanXcode(archiveURL: archiveURL)
-        default:
+        case "ipsw":
             let (scannedRelease, recoveredPEM) = try await scanIPSW(
                 archiveURL: archiveURL,
                 aeaKeyPEM: aeaKeyPEM
@@ -125,6 +111,8 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
             if saveAeaKey, let pem = recoveredPEM {
                 writeAEAKey(pem, for: archiveURL)
             }
+        default:
+            preconditionFailure("Archive extension was validated before scanning")
         }
 
         try writeOutput(release: release)
@@ -271,6 +259,12 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
 
     func writeOutput(release: Release) throws {
         let productType = release.resolvedProductType
+        guard let dataFile = productType.canonicalDataFile(
+            osVersion: release.osVersion,
+            buildNumber: release.buildNumber
+        ) else {
+            throw ValidationError("Scanner returned an invalid version or build identifier")
+        }
 
         printStatus("")
         printStatus("=== Results ===")
@@ -290,33 +284,122 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
 
         let outputDir = output.map { URL(fileURLWithPath: $0) }
             ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let filename = "\(productType.filePrefix)-\(release.osVersion)-\(release.buildNumber).json"
-        let majorVersion = release.osVersion.split(separator: ".").first.map(String.init) ?? release.osVersion
+        let filename = URL(fileURLWithPath: dataFile).lastPathComponent
+        let majorVersion = URL(fileURLWithPath: dataFile).deletingLastPathComponent().lastPathComponent
         let versionDir = outputDir.appendingPathComponent(majorVersion)
+        let preparedIndex = updateIndex ? try prepareReleasesIndex(release: release, outputDir: outputDir) : nil
+        if updateIndex {
+            try ReleasePublicationValidator.validate(release)
+        }
         try FileManager.default.createDirectory(at: versionDir, withIntermediateDirectories: true)
         let outputPath = versionDir.appendingPathComponent(filename)
 
+        let detailExisted = FileManager.default.fileExists(atPath: outputPath.path)
+        let previousDetail = detailExisted ? try Data(contentsOf: outputPath) : nil
         try jsonData.write(to: outputPath, options: .atomic)
+
+        do {
+            if let preparedIndex {
+                try preparedIndex.data.write(to: preparedIndex.path, options: .atomic)
+            }
+        } catch {
+            if let previousDetail {
+                try? previousDetail.write(to: outputPath, options: .atomic)
+            } else {
+                try? FileManager.default.removeItem(at: outputPath)
+            }
+            throw error
+        }
+
         printStatus("")
         printStatus("Written to: \(outputPath.path)")
 
-        if updateIndex {
-            try updateReleasesIndex(release: release, outputDir: outputDir)
+        if let preparedIndex {
+            printStatus("Updated index: \(preparedIndex.path.path) (\(preparedIndex.entryCount) releases)")
         }
     }
 
 }
 
+// MARK: - Argument validation
+
+extension ScanCommand {
+    func validate() throws {
+        let archiveExtension = URL(fileURLWithPath: archivePath).pathExtension.lowercased()
+        guard archiveExtension == "ipsw" || archiveExtension == "xip" else {
+            throw ValidationError("Archive must have an .ipsw or .xip extension")
+        }
+        if updateIndex && releaseDate == nil {
+            throw ValidationError("--release-date is required when using --update-index")
+        }
+        if let releaseDate, !Self.isValidDate(releaseDate) {
+            throw ValidationError("--release-date must be a valid ISO 8601 date (YYYY-MM-DD), got '\(releaseDate)'")
+        }
+        if beta || betaNumber != nil || betaRevision != nil, rc || rcNumber != nil {
+            throw ValidationError("Beta and release-candidate options are mutually exclusive")
+        }
+        if let betaNumber, betaNumber < 1 {
+            throw ValidationError("--beta-number must be greater than zero")
+        }
+        if let rcNumber, rcNumber < 1 {
+            throw ValidationError("--rc-number must be greater than zero")
+        }
+        if betaRevision != nil, betaNumber == nil {
+            throw ValidationError("--beta-revision requires --beta-number")
+        }
+        if let betaRevision, betaRevision < 2 {
+            throw ValidationError("--beta-revision must be 2 or greater")
+        }
+        if keyOnly && updateIndex {
+            throw ValidationError("--key-only cannot be combined with --update-index")
+        }
+        if archiveExtension == "xip", deviceSpecific || saveAeaKey || aeaKeyPath != nil || keyOnly {
+            throw ValidationError("AEA key and device-specific options are available only for IPSW archives")
+        }
+    }
+
+    private static func isValidDate(_ value: String) -> Bool {
+        guard value.wholeMatch(of: /[0-9]{4}-[0-9]{2}-[0-9]{2}/) != nil else { return false }
+        let parts = value.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return false }
+        var components = DateComponents()
+        components.calendar = Calendar(identifier: .gregorian)
+        components.timeZone = TimeZone(secondsFromGMT: 0)
+        components.year = parts[0]
+        components.month = parts[1]
+        components.day = parts[2]
+        guard let date = components.date else { return false }
+        let resolved = components.calendar?.dateComponents([.year, .month, .day], from: date)
+        return resolved?.year == parts[0] && resolved?.month == parts[1] && resolved?.day == parts[2]
+    }
+}
+
 // MARK: - Index management and key sidecars
 
 extension ScanCommand {
+    struct PreparedIndex {
+        let path: URL
+        let data: Data
+        let entryCount: Int
+    }
+
     func updateReleasesIndex(release: Release, outputDir: URL) throws {
+        let prepared = try prepareReleasesIndex(release: release, outputDir: outputDir)
+        try prepared.data.write(to: prepared.path, options: .atomic)
+        printStatus("Updated index: \(prepared.path.path) (\(prepared.entryCount) releases)")
+    }
+
+    func prepareReleasesIndex(release: Release, outputDir: URL) throws -> PreparedIndex {
         let productType = release.resolvedProductType
         // Index lives alongside the output directory (e.g. data/releases.json for data/releases/)
         // because dataFile paths include the output directory name (e.g. "releases/15/...")
         let indexPath = outputDir.deletingLastPathComponent().appendingPathComponent("releases.json")
-        let filename = "\(productType.filePrefix)-\(release.osVersion)-\(release.buildNumber).json"
-        let majorVersion = release.osVersion.split(separator: ".").first.map(String.init) ?? release.osVersion
+        guard let dataFile = productType.canonicalDataFile(
+            osVersion: release.osVersion,
+            buildNumber: release.buildNumber
+        ) else {
+            throw ValidationError("Scanner returned an invalid version or build identifier")
+        }
 
         var entries: [ReleaseIndexEntry] = []
 
@@ -346,7 +429,7 @@ extension ScanCommand {
             isRC: release.isRC,
             rcNumber: release.rcNumber,
             isDeviceSpecific: release.isDeviceSpecific,
-            dataFile: "releases/\(majorVersion)/\(filename)"
+            dataFile: dataFile
         )
         entries.append(entry)
 
@@ -356,23 +439,35 @@ extension ScanCommand {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         var indexData = try encoder.encode(entries)
         indexData.append(contentsOf: [0x0A]) // trailing newline
-        try indexData.write(to: indexPath, options: .atomic)
-
-        printStatus("Updated index: \(indexPath.path) (\(entries.count) releases)")
+        return PreparedIndex(path: indexPath, data: indexData, entryCount: entries.count)
     }
 
     func writeAEAKey(_ pem: String, for ipswURL: URL) {
         let sidecarPath = ipswURL.appendingPathExtension("pem")
-        guard !FileManager.default.fileExists(atPath: sidecarPath.path) else {
+        let descriptor = open(
+            sidecarPath.path,
+            O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+            0o600
+        )
+        if descriptor < 0, errno == EEXIST {
             return
         }
+        guard descriptor >= 0 else {
+            printError("Failed to save AEA key: \(String(cString: strerror(errno)))")
+            return
+        }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
         do {
-            try pem.write(to: sidecarPath, atomically: true, encoding: .utf8)
+            try handle.write(contentsOf: Data(pem.utf8))
+            try handle.synchronize()
+            try handle.close()
             if let mtime = (try? FileManager.default.attributesOfItem(atPath: ipswURL.path))?[.modificationDate] as? Date {
                 try? FileManager.default.setAttributes([.modificationDate: mtime], ofItemAtPath: sidecarPath.path)
             }
             printStatus("Saved AEA key: \(sidecarPath.lastPathComponent)")
         } catch {
+            try? handle.close()
+            try? FileManager.default.removeItem(at: sidecarPath)
             printError("Failed to save AEA key: \(error.localizedDescription)")
         }
     }

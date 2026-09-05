@@ -11,7 +11,7 @@ nonisolated func makeDataProvider(dataURL: String?) throws -> DataProvider {
     if FileManager.default.fileExists(atPath: dataURL) {
         return DataProvider(baseURL: URL(fileURLWithPath: dataURL))
     }
-    guard let url = URL(string: dataURL), url.scheme != nil else {
+    guard let url = URL(string: dataURL), url.scheme?.lowercased() == "https" else {
         throw ValidationError(
             "Invalid --data-url '\(dataURL)'. Use an https URL or the path to a local data directory."
         )

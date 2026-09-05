@@ -1,26 +1,25 @@
 import type { APIRoute } from 'astro';
-import fs from 'node:fs';
 import path from 'node:path';
+import { loadReleaseIndex, readReleaseDetail, type ReleasePointer } from '../../../../../lib/releaseFiles';
 
-const dataDir = path.resolve('..', 'data', 'macos');
-const releases = JSON.parse(fs.readFileSync(path.join(dataDir, 'releases.json'), 'utf-8'));
+const dataRoot = path.resolve('..', 'data');
+const releases = loadReleaseIndex(dataRoot, 'macos', 'macOS');
 
 export function getStaticPaths() {
-  return releases.map((release: any) => {
-    // dataFile is e.g. "releases/26/macOS-26.4-25E246.json"
-    // Strip leading "releases/" (already in the URL path) and trailing ".json" (added by Astro)
+  return releases.map((release) => {
     const filePath = release.dataFile.replace(/^releases\//, '').replace(/\.json$/, '');
     return {
       params: { path: filePath },
-      props: { dataFile: release.dataFile },
+      props: { release },
     };
   });
 }
 
 export const GET: APIRoute = ({ props }) => {
-  const data = fs.readFileSync(path.join(dataDir, props.dataFile), 'utf-8');
+  const release = props.release as ReleasePointer;
+  const { source } = readReleaseDetail(dataRoot, 'macos', 'macOS', release);
 
-  return new Response(data, {
+  return new Response(source, {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

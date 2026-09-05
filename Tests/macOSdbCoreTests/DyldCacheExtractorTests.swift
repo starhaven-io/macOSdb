@@ -15,16 +15,24 @@ struct DyldCacheExtractorTests {
     func emptyFile() async throws {
         let url = try writeCache(Data())
         defer { try? FileManager.default.removeItem(at: url) }
-        #expect(DyldCacheExtractor.listDylibs(cachePath: url).isEmpty)
-        #expect(await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: "/usr/lib/x.dylib") == nil)
+        #expect(DyldCacheExtractor.listDylibs(cachePath: url, confinedTo: url.deletingLastPathComponent()).isEmpty)
+        #expect(await DyldCacheExtractor.extractDylibData(
+            cachePath: url,
+            dylibPath: "/usr/lib/x.dylib",
+            confinedTo: url.deletingLastPathComponent()
+        ) == nil)
     }
 
     @Test("Non-dyld magic returns nil/empty")
     func wrongMagic() async throws {
         let url = try writeCache(Data("this is definitely not a dyld shared cache".utf8))
         defer { try? FileManager.default.removeItem(at: url) }
-        #expect(DyldCacheExtractor.listDylibs(cachePath: url).isEmpty)
-        #expect(await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: "/usr/lib/x.dylib") == nil)
+        #expect(DyldCacheExtractor.listDylibs(cachePath: url, confinedTo: url.deletingLastPathComponent()).isEmpty)
+        #expect(await DyldCacheExtractor.extractDylibData(
+            cachePath: url,
+            dylibPath: "/usr/lib/x.dylib",
+            confinedTo: url.deletingLastPathComponent()
+        ) == nil)
     }
 
     @Test("16-byte file with valid magic but no header does not crash")
@@ -35,8 +43,12 @@ struct DyldCacheExtractorTests {
         putMagic(&blob)
         let url = try writeCache(blob)
         defer { try? FileManager.default.removeItem(at: url) }
-        #expect(DyldCacheExtractor.listDylibs(cachePath: url).isEmpty)
-        #expect(await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: "/usr/lib/x.dylib") == nil)
+        #expect(DyldCacheExtractor.listDylibs(cachePath: url, confinedTo: url.deletingLastPathComponent()).isEmpty)
+        #expect(await DyldCacheExtractor.extractDylibData(
+            cachePath: url,
+            dylibPath: "/usr/lib/x.dylib",
+            confinedTo: url.deletingLastPathComponent()
+        ) == nil)
     }
 
     @Test("Plausible image count with offset past EOF returns nil (truncated table)")
@@ -47,8 +59,12 @@ struct DyldCacheExtractorTests {
         putU32(0x8000, at: 24, in: &blob)  // imagesOffset way past the 64-byte file
         let url = try writeCache(blob)
         defer { try? FileManager.default.removeItem(at: url) }
-        #expect(DyldCacheExtractor.listDylibs(cachePath: url).isEmpty)
-        #expect(await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: "/usr/lib/x.dylib") == nil)
+        #expect(DyldCacheExtractor.listDylibs(cachePath: url, confinedTo: url.deletingLastPathComponent()).isEmpty)
+        #expect(await DyldCacheExtractor.extractDylibData(
+            cachePath: url,
+            dylibPath: "/usr/lib/x.dylib",
+            confinedTo: url.deletingLastPathComponent()
+        ) == nil)
     }
 
     @Test("Oversized image count is rejected, not honored")
@@ -59,7 +75,7 @@ struct DyldCacheExtractorTests {
         putU32(0x80, at: 24, in: &blob)
         let url = try writeCache(blob)
         defer { try? FileManager.default.removeItem(at: url) }
-        #expect(DyldCacheExtractor.listDylibs(cachePath: url).isEmpty)
+        #expect(DyldCacheExtractor.listDylibs(cachePath: url, confinedTo: url.deletingLastPathComponent()).isEmpty)
     }
 
     // MARK: - Happy path: a minimal valid legacy cache still parses
@@ -90,9 +106,16 @@ struct DyldCacheExtractorTests {
         let url = try writeCache(blob)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        #expect(DyldCacheExtractor.listDylibs(cachePath: url) == [dylibPath])
+        #expect(DyldCacheExtractor.listDylibs(
+            cachePath: url,
+            confinedTo: url.deletingLastPathComponent()
+        ) == [dylibPath])
 
-        let data = await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: dylibPath)
+        let data = await DyldCacheExtractor.extractDylibData(
+            cachePath: url,
+            dylibPath: dylibPath,
+            confinedTo: url.deletingLastPathComponent()
+        )
         let extracted = try #require(data)
         #expect(extracted.prefix(payload.count) == Data(payload))
     }
@@ -121,9 +144,59 @@ struct DyldCacheExtractorTests {
         let url = try writeCache(blob)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        let data = await DyldCacheExtractor.extractDylibData(cachePath: url, dylibPath: dylibPath)
+        let data = await DyldCacheExtractor.extractDylibData(
+            cachePath: url,
+            dylibPath: dylibPath,
+            confinedTo: url.deletingLastPathComponent()
+        )
         let extracted = try #require(data)
         #expect(extracted.prefix(payload.count) == Data(payload))
+    }
+
+    @Test("Does not follow a subcache symlink outside the mounted volume")
+    func rejectsEscapingSubcache() async throws {
+        let dylibPath = "/usr/lib/test.dylib"
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dyld-root-\(UUID().uuidString)")
+        let outside = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dyld-outside-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: outside)
+        }
+
+        var main = Data(count: 0x200)
+        putMagic(&main)
+        putU32(0x100, at: 16, in: &main)
+        putU32(0, at: 20, in: &main)
+        putU32(0x80, at: 24, in: &main)
+        putU32(1, at: 28, in: &main)
+        putU64(0x1000, at: 0x80, in: &main)
+        putU32(0xC0, at: 0x80 + 24, in: &main)
+        putString(dylibPath, at: 0xC0, in: &main)
+        let cache = root.appendingPathComponent("dyld_shared_cache_arm64e")
+        try main.write(to: cache)
+
+        var subcache = Data(count: 0x400)
+        putMagic(&subcache)
+        putU32(0x100, at: 16, in: &subcache)
+        putU32(1, at: 20, in: &subcache)
+        putU64(0x1000, at: 0x100, in: &subcache)
+        putU64(0x2000, at: 0x108, in: &subcache)
+        putU64(0x200, at: 0x110, in: &subcache)
+        putString("HOST-DATA", at: 0x200, in: &subcache)
+        try subcache.write(to: outside)
+        try FileManager.default.createSymbolicLink(
+            at: URL(fileURLWithPath: cache.path + ".1"),
+            withDestinationURL: outside
+        )
+
+        #expect(await DyldCacheExtractor.extractDylibData(
+            cachePath: cache,
+            dylibPath: dylibPath,
+            confinedTo: root
+        ) == nil)
     }
 
     // MARK: - Helpers

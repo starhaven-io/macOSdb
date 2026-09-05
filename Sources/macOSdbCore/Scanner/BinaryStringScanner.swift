@@ -76,12 +76,15 @@ enum BinaryStringScanner {
     static func extractStrings(
         from data: Data,
         minLength: Int = defaultMinLength,
-        maxStringLength: Int = defaultMaxStringLength
+        maxStringLength: Int = defaultMaxStringLength,
+        maxResults: Int = 100_000
     ) -> [String] {
+        precondition(maxResults >= 0, "string result limit must not be negative")
         var results: [String] = []
         enumerateStrings(from: data, minLength: minLength, maxStringLength: maxStringLength) { string in
+            guard results.count < maxResults else { return false }
             results.append(string)
-            return true
+            return results.count < maxResults
         }
         return results
     }
@@ -121,15 +124,54 @@ enum BinaryStringScanner {
     static func findAll(
         in data: Data,
         matching pattern: String,
-        minLength: Int = defaultMinLength
+        minLength: Int = defaultMinLength,
+        maxResults: Int = 100_000
     ) -> [String] {
-        // Bounded by the number of pattern matches (sparse for version regexes),
-        // not by the total number of printable runs in the input.
+        precondition(maxResults >= 0, "match result limit must not be negative")
         var results: [String] = []
         if let regex = try? Regex(pattern) {
             enumerateStrings(from: data, minLength: minLength) { string in
                 for match in string.matches(of: regex) {
+                    guard results.count < maxResults else { return false }
                     results.append(String(string[match.range]))
+                }
+                return results.count < maxResults
+            }
+        } else if let nsRegex = try? NSRegularExpression(pattern: pattern) {
+            enumerateStrings(from: data, minLength: minLength) { string in
+                let range = NSRange(string.startIndex..., in: string)
+                nsRegex.enumerateMatches(in: string, range: range) { match, _, stop in
+                    guard results.count < maxResults else {
+                        stop.pointee = true
+                        return
+                    }
+                    if let match, let matchRange = Range(match.range, in: string) {
+                        results.append(String(string[matchRange]))
+                    }
+                }
+                return results.count < maxResults
+            }
+        } else {
+            logger.warning("Failed to compile regex pattern: \(pattern)")
+        }
+        return results
+    }
+
+    static func findMaximumInteger(
+        in data: Data,
+        matching pattern: String,
+        minLength: Int = defaultMinLength
+    ) -> Int? {
+        var result: Int?
+        let record: (String) -> Void = { match in
+            guard let value = Int(match), value > (result ?? Int.min) else { return }
+            result = value
+        }
+
+        if let regex = try? Regex(pattern) {
+            enumerateStrings(from: data, minLength: minLength) { string in
+                for match in string.matches(of: regex) {
+                    record(String(string[match.range]))
                 }
                 return true
             }
@@ -138,7 +180,7 @@ enum BinaryStringScanner {
                 let range = NSRange(string.startIndex..., in: string)
                 nsRegex.enumerateMatches(in: string, range: range) { match, _, _ in
                     if let match, let matchRange = Range(match.range, in: string) {
-                        results.append(String(string[matchRange]))
+                        record(String(string[matchRange]))
                     }
                 }
                 return true
@@ -146,6 +188,6 @@ enum BinaryStringScanner {
         } else {
             logger.warning("Failed to compile regex pattern: \(pattern)")
         }
-        return results
+        return result
     }
 }

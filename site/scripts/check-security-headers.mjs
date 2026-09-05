@@ -80,6 +80,27 @@ for (const name of ssrNames) {
   }
 }
 
+for (const name of Object.keys(staticHeaders)) {
+  if (name !== 'Cross-Origin-Resource-Policy' && !(name in ssrHeaders)) {
+    problems.push(`${name}: present in the _headers /* block but missing from middleware.ts`);
+  }
+}
+
+const csp = ssrHeaders['Content-Security-Policy'];
+for (const required of [
+  "default-src 'none'",
+  "script-src-attr 'none'",
+  "style-src-attr 'none'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+]) {
+  if (!csp.includes(required)) problems.push(`Content-Security-Policy: missing ${required}`);
+}
+if (csp.includes("'unsafe-inline'") || csp.includes("'unsafe-eval'")) {
+  problems.push('Content-Security-Policy: unsafe-inline and unsafe-eval are forbidden');
+}
+
 if (problems.length > 0) {
   console.error('check-security-headers: _headers and middleware.ts have drifted:\n');
   for (const problem of problems) console.error(`  - ${problem}`);

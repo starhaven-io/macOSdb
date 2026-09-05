@@ -70,4 +70,11 @@ struct ProductTypeTests {
         #expect(ProductType.allCases.contains(.macOS))
         #expect(ProductType.allCases.contains(.xcode))
     }
+
+    @Test("Canonical release identities use ASCII digits only")
+    func canonicalIdentitySyntax() {
+        #expect(ProductType.macOS.canonicalDataFile(osVersion: "15.1", buildNumber: "24B83") != nil)
+        #expect(ProductType.macOS.canonicalDataFile(osVersion: "١٥.1", buildNumber: "24B83") == nil)
+        #expect(ProductType.macOS.canonicalDataFile(osVersion: "15.1", buildNumber: "٢٤B83") == nil)
+    }
 }

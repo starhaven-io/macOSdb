@@ -45,8 +45,9 @@ import Base from '../layouts/Base.astro';
 
     <h2>Data freshness</h2>
     <p>
-      New releases are typically scanned and published the same day Apple makes them available. When the scanner is
-      improved to extract additional components, all existing releases are rescanned so the catalog stays consistent.
+      New releases are added through a scanner-generated pull request and must pass the same schema and completeness
+      checks as the existing corpus. Scanner changes that alter the tracked component set require a coordinated update
+      of historical releases so the catalog remains comparable.
     </p>
 
     <h2>Source and license</h2>
