@@ -187,7 +187,7 @@ jobs:
       deployment: false
     permissions:
       attestations: read # required to verify build provenance on resumptions
-      contents: write # required to create tags and GitHub releases
+      contents: read # required to check out and verify the release source
     outputs:
       version: ${{ needs.build.outputs.version }}
     env:
@@ -220,9 +220,19 @@ jobs:
             --source-ref refs/heads/main \
             --deny-self-hosted-runners
 
+      - name: Mint release token
+        id: release-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
       - name: Create or verify tag
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
@@ -241,7 +251,8 @@ jobs:
       - name: Create or resume release
         id: create-release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ATTESTATION_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           ARTIFACT: ${{ needs.build.outputs.artifact }}
         run: |
@@ -284,7 +295,7 @@ jobs:
               echo "${ASSET_DIGEST#sha256:}  ${REMOTE_ASSETS}/${name}" | sha256sum --check
             done
             (cd "${REMOTE_ASSETS}" && shasum -a 256 -c "${ARTIFACT}.tar.gz.sha256")
-            gh attestation verify "${REMOTE_ASSETS}/${ARTIFACT}.tar.gz" \
+            GH_TOKEN="${ATTESTATION_TOKEN}" gh attestation verify "${REMOTE_ASSETS}/${ARTIFACT}.tar.gz" \
               --repo "${REPOSITORY}" \
               --signer-workflow "${REPOSITORY}/.github/workflows/release.yml" \
               --source-digest "${GITHUB_SHA}" \
@@ -322,7 +333,7 @@ jobs:
       - name: Format release notes
         if: steps.create-release.outputs.needs_format == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
         run: |
           python3 scripts/format-release-notes.py \
