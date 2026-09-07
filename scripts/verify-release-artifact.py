@@ -258,7 +258,8 @@ def verify_and_overlay(args: argparse.Namespace) -> tuple[str, str, str]:
         if release.get("releaseName") != expected_name:
             raise VerificationError("macOS release name does not match the dispatched version")
     for field, expected in expected_fields.items():
-        if release.get(field) != expected:
+        actual = release.get(field)
+        if type(actual) is not type(expected) or actual != expected:
             raise VerificationError(f"release field {field} is not bound to the dispatch input")
 
     current_index_path = Path(index_name)

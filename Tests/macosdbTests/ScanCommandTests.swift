@@ -349,3 +349,17 @@ struct ScanCommandTests {
         #expect(!FileManager.default.fileExists(atPath: root.path))
     }
 }
+
+extension ScanCommandTests {
+    @Test("Index updates reject output directories that would invalidate canonical pointers")
+    func updateIndexRequiresCanonicalOutputDirectory() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-index-location-\(UUID().uuidString)")
+        let cmd = try ScanCommand.parse(["archive.ipsw"])
+        let release = Release(osVersion: "15.0", buildNumber: "24A335", releaseName: "Sequoia")
+        #expect(throws: (any Error).self) {
+            _ = try cmd.prepareReleasesIndex(release: release, outputDir: root.appendingPathComponent("other"))
+        }
+        #expect(!FileManager.default.fileExists(atPath: root.path))
+    }
+}

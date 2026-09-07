@@ -89,7 +89,7 @@ package enum ChipFamily: String, CaseIterable, Sendable, Codable {
         case "T6030": .m3Pro
         case "T6031", "T6034": .m3Max
         case "T6032": .m3Ultra
-        // M4 family — T6042 (M4 Ultra) was never released; kept for completeness
+        // M4 family
         case "T8132": .m4
         case "T6040": .m4Pro
         case "T6041": .m4Max

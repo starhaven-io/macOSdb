@@ -1,4 +1,6 @@
 import json
+import os
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -12,12 +14,11 @@ RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 XIP_WORKFLOW = ROOT / ".github" / "workflows" / "scan-xip.yml"
 
 
-def workflow_run_block(workflow, step_name):
+def workflow_run_block(workflow, step_name, *, strip_comments=True):
     step_marker = f"      - name: {step_name}\n"
     step_start = workflow.index(step_marker) + len(step_marker)
-    step_end = workflow.find("\n      - name:", step_start)
-    if step_end == -1:
-        step_end = len(workflow)
+    next_step = re.search(r"^      - ", workflow[step_start:], re.MULTILINE)
+    step_end = step_start + next_step.start() if next_step else len(workflow)
     step = workflow[step_start:step_end]
     run_marker = "        run: |\n"
     run_start = step.index(run_marker) + len(run_marker)
@@ -25,7 +26,7 @@ def workflow_run_block(workflow, step_name):
     return "\n".join(
         line[10:] if line.startswith("          ") else line
         for line in run_lines
-        if not line.lstrip().startswith("#")
+        if not strip_comments or not line.lstrip().startswith("#")
     )
 
 
@@ -65,6 +66,20 @@ class XcodeBuildInputTests(unittest.TestCase):
 
 
 class WorkflowSafetyContractTests(unittest.TestCase):
+    def test_scanner_dispatch_requires_main_before_checkout(self):
+        for path in [IPSW_WORKFLOW, XIP_WORKFLOW]:
+            workflow = path.read_text()
+            self.assertLess(workflow.index("- name: Require main branch"), workflow.index("- uses: actions/checkout@"))
+            script = workflow_run_block(workflow, "Require main branch")
+            for ref, accepted in [("refs/heads/main", True), ("refs/heads/topic", False), ("refs/tags/main", False)]:
+                with self.subTest(workflow=path.name, ref=ref):
+                    result = subprocess.run(
+                        ["/bin/bash", "-euo", "pipefail", "-c", script],
+                        env={**os.environ, "GITHUB_REF": ref},
+                        capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(result.returncode == 0, accepted)
+
     def test_release_verifies_cli_notarization_without_spctl(self):
         workflow = RELEASE_WORKFLOW.read_text()
         notarize_script = workflow_run_block(workflow, "Notarize binary")

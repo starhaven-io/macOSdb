@@ -49,7 +49,7 @@ function readBoundedFile(parent: string, candidate: string, maxBytes: number, la
   }
 
   const noFollow = fs.constants.O_NOFOLLOW ?? 0;
-  const descriptor = fs.openSync(resolved, fs.constants.O_RDONLY | noFollow);
+  const descriptor = fs.openSync(resolved, fs.constants.O_RDONLY | noFollow | (fs.constants.O_NONBLOCK ?? 0));
   try {
     const metadata = fs.fstatSync(descriptor);
     if (!metadata.isFile()) {

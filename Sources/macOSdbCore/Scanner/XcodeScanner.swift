@@ -32,10 +32,10 @@ package actor XcodeScanner {
         sendProgress(.extractingXIP)
         Self.logger.info("Extracting Xcode XIP: \(xipPath.lastPathComponent)")
         let expandedDir = try await extractXIP(xipPath)
-        try Task.checkCancellation()
 
         let release: Release
         do {
+            try Task.checkCancellation()
             release = try await scanExpandedDirectory(
                 expandedDir,
                 sourceFilename: xipPath.lastPathComponent,

@@ -79,6 +79,13 @@ struct DeviceRegistryTests {
         #expect(info?.marketingName == "MacBook Pro (14-inch, M4, Late 2024)")
     }
 
+    @Test("M1 iMac model identifiers distinguish their physical port counts")
+    func iMacPortCounts() {
+        // Apple's model inventory: https://support.apple.com/108054
+        #expect(DeviceRegistry.info(for: "iMac21,1")?.marketingName == "iMac (24-inch, M1, 2021) 4-port")
+        #expect(DeviceRegistry.info(for: "iMac21,2")?.marketingName == "iMac (24-inch, M1, 2021) 2-port")
+    }
+
     // MARK: - Coverage
 
     @Test("All devices have valid chip families")

@@ -151,7 +151,7 @@ enum SDKMetadataParser {
         // Deduplicate by SDK version
         let uniqueSDKs = Dictionary(grouping: sdks, by: \.sdkVersion)
             .values.compactMap(\.first)
-            .sorted { $0.sdkVersion > $1.sdkVersion }
+            .sorted { $0.sdkVersion.compare($1.sdkVersion, options: .numeric) == .orderedDescending }
 
         logger.info("Found \(uniqueSDKs.count) macOS SDKs")
         return uniqueSDKs

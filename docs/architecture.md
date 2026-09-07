@@ -30,7 +30,7 @@ The `/api/v1/` interface is public and unauthenticated. Release detail routes re
 - Workflow-dispatch strings are untrusted. Values are validated before they become paths, environment-file records, or command arguments.
 - AEA keys, download cookies, signing certificates, notarization passwords, and GitHub App keys are secrets. They are scoped to the smallest job, excluded from command tracing and logs, and removed after use unless an operator explicitly requests an AEA key sidecar.
 - Generated artifacts are untrusted when crossing jobs. A hosted prepare job records the main-branch base and canonical release date; the hosted publisher accepts an exact regular-file layout, independently binds its identity and source metadata to the dispatch, reruns the data linter, and mints a write token only after verification.
-- Hosted repository rules, environment approvals, runner isolation, DNS/TLS, Cloudflare configuration, Apple services, and GitHub permissions are external controls. Repository tests can verify their expected inputs and live deployment headers, but cannot prove the control-plane configuration.
+- Hosted repository rules, environment branch restrictions, runner isolation, DNS/TLS, Cloudflare configuration, Apple services, and GitHub permissions are external controls. Repository tests can verify their expected inputs and live deployment headers, but cannot prove the control-plane configuration.
 
 ## Failure and recovery
 

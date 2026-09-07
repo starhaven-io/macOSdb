@@ -132,6 +132,14 @@ class VerifyReleaseArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.VerificationError, "isBeta"):
             MODULE.verify_and_overlay(self.arguments())
 
+    def test_dispatch_binding_preserves_json_scalar_types(self):
+        for field, value in [("isBeta", 0), ("isRC", 0)]:
+            with self.subTest(field=field):
+                self.write_artifact(release_overrides={field: value})
+                with self.assertRaisesRegex(MODULE.VerificationError, field):
+                    MODULE.verify_and_overlay(self.arguments())
+                self.assertFalse((self.root / "data/xcode/releases/26/Xcode-26.1-17B54.json").exists())
+
     def test_artifact_rejects_entries_beyond_the_exact_pair(self):
         self.write_artifact()
         artifact = self.root / "release-json.tgz"

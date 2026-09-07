@@ -346,15 +346,24 @@ const structuredData = {
       });
     }
 
-    const stored = localStorage.getItem(key);
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(key);
+    } catch {
+      // Filtering remains available when browser storage is disabled.
+    }
     const saved = ['all', 'release', 'beta', 'rc'].includes(stored ?? '') ? stored! : 'all';
     apply(saved);
 
     buttons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const filter = btn.dataset.filter!;
-        localStorage.setItem(key, filter);
         apply(filter);
+        try {
+          localStorage.setItem(key, filter);
+        } catch {
+          // Persisting the preference is optional.
+        }
       });
     });
   }

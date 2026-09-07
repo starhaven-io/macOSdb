@@ -27,8 +27,8 @@ export function displayName(release: ReleaseEntry, includeReleaseName = false, p
       name += ` ${release.releaseName}`;
     }
   }
-  if (release.isBeta && release.betaNumber) {
-    name += ` beta ${release.betaNumber}`;
+  if (release.isBeta) {
+    name += release.betaNumber ? ` beta ${release.betaNumber}` : ' beta';
     if (release.betaRevision) {
       name += ` v.${release.betaRevision}`;
     }
@@ -252,11 +252,11 @@ export function compareReleasesByRecency(a: DatedRelease, b: DatedRelease): numb
 export function pickLatestReleases<T extends DatedRelease>(releases: T[]): { ga: T | null; prerelease: T | null } {
   const sorted = [...releases].sort(compareReleasesByRecency);
   const ga = sorted.find((release) => !release.isBeta && !release.isRC) ?? null;
-  const newestPrerelease = sorted.find((release) => release.isBeta || release.isRC) ?? null;
   const prerelease =
-    newestPrerelease && (!ga || compareVersions(ga.osVersion, newestPrerelease.osVersion) === 'upgraded')
-      ? newestPrerelease
-      : null;
+    sorted.find(
+      (release) =>
+        (release.isBeta || release.isRC) && (!ga || compareVersions(ga.osVersion, release.osVersion) === 'upgraded'),
+    ) ?? null;
   return { ga, prerelease };
 }
 

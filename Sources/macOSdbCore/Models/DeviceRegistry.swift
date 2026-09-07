@@ -31,9 +31,9 @@ enum DeviceRegistry {
             DeviceInfo(model: "Macmini9,1", chip: .m1,
                        marketingName: "Mac mini (M1, Late 2020)"),
             DeviceInfo(model: "iMac21,1", chip: .m1,
-                       marketingName: "iMac (24-inch, M1, 2021) 2-port"),
-            DeviceInfo(model: "iMac21,2", chip: .m1,
                        marketingName: "iMac (24-inch, M1, 2021) 4-port"),
+            DeviceInfo(model: "iMac21,2", chip: .m1,
+                       marketingName: "iMac (24-inch, M1, 2021) 2-port"),
 
             // MARK: M1 Pro (Late 2021)
             DeviceInfo(model: "MacBookPro18,1", chip: .m1Pro,

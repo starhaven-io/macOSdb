@@ -262,16 +262,17 @@ enum ProcessRunner {
         _ strings: [String],
         body: (UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>) throws -> Result
     ) throws -> Result {
-        var pointers = try strings.map { string -> UnsafeMutablePointer<CChar>? in
-            guard let pointer = strdup(string) else { throw POSIXError(.ENOMEM) }
-            return pointer
-        }
-        pointers.append(nil)
+        var pointers: [UnsafeMutablePointer<CChar>?] = []
         defer {
             for pointer in pointers {
                 free(pointer)
             }
         }
+        for string in strings {
+            guard let pointer = strdup(string) else { throw POSIXError(.ENOMEM) }
+            pointers.append(pointer)
+        }
+        pointers.append(nil)
         return try pointers.withUnsafeMutableBufferPointer { buffer in
             guard let baseAddress = buffer.baseAddress else { throw POSIXError(.EINVAL) }
             return try body(baseAddress)

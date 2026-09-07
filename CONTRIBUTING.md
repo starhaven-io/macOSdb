@@ -4,7 +4,7 @@ Thank you for improving macOSdb. Changes may affect a native scanner, a public d
 
 ## Development setup
 
-Development requires Apple silicon, macOS 15 or newer, Swift 6.2, Node.js 26, Python 3, and [just](https://github.com/casey/just). Install the optional lint tools used by `just check` with Homebrew:
+Development requires Apple silicon, macOS 15 or newer, Swift 6.2, Node.js 26, Python 3, and [just](https://github.com/casey/just). Install the lint and analysis tools required by `just check` with Homebrew:
 
 ```bash
 brew install actionlint just lychee periphery swiftlint typos-cli zizmor

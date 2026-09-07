@@ -111,15 +111,14 @@ struct CleanupCommandTests {
                 "images": [
                     image(path: staleDir.appendingPathComponent("System.dmg").path, device: "/dev/disk4s1"),
                     image(path: activeDir.appendingPathComponent("System.dmg").path, device: "/dev/disk5s1"),
-                    image(path: siblingDir.appendingPathComponent("System.dmg").path, device: "/dev/disk6s1"),
-                    ["image-path": staleDir.appendingPathComponent("NoEntities.dmg").path]
+                    image(path: siblingDir.appendingPathComponent("System.dmg").path, device: "/dev/disk6s1")
                 ]
             ],
             format: .xml,
             options: 0
         )
 
-        let mounts = CleanupCommand.staleMounts(from: data, tempBase: tempBase.path)
+        let mounts = try CleanupCommand.staleMounts(from: data, tempBase: tempBase.path)
 
         #expect(mounts.count == 1)
         #expect(mounts.first?.deviceNode == "/dev/disk4s1")
@@ -143,9 +142,43 @@ struct CleanupCommandTests {
         #expect(workDir?.path == "/var/folders/macosdb-\(uuid)")
     }
 
-    @Test("Malformed hdiutil info output produces no stale mounts")
-    func malformedMountOutputIsEmpty() {
-        #expect(CleanupCommand.staleMounts(from: Data("invalid".utf8), tempBase: "/tmp").isEmpty)
+    @Test("Mount inspection distinguishes a valid empty list from failed discovery")
+    func mountInspectionFailure() throws {
+        let empty = try PropertyListSerialization.data(fromPropertyList: ["images": []], format: .xml, options: 0)
+        #expect(try CleanupCommand.staleMounts(from: empty, tempBase: "/tmp").isEmpty)
+        #expect(throws: (any Error).self) {
+            try CleanupCommand.staleMounts(from: empty, tempBase: "/tmp", terminationStatus: 1)
+        }
+        #expect(throws: (any Error).self) {
+            try CleanupCommand.staleMounts(from: Data("invalid".utf8), tempBase: "/tmp")
+        }
+        for plist in [["images": "invalid"], ["unexpected": []], ["images": [[:]]]] as [[String: Any]] {
+            let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
+            #expect(throws: (any Error).self) {
+                try CleanupCommand.staleMounts(from: data, tempBase: "/tmp")
+            }
+        }
+    }
+
+    @Test("Missing scanner mount details must stop cleanup")
+    func incompleteScannerMountDetails() throws {
+        let workspace = try makeScannerTempDir()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        try Data("999999999".utf8).write(to: workspace.appendingPathComponent("scan.pid"))
+        let imagePath = workspace.appendingPathComponent("System.dmg").path
+        let incompleteImages: [[String: Any]] = [
+            ["image-path": imagePath],
+            ["image-path": imagePath, "system-entities": [["mount-point": "/Volumes/Fixture"]]],
+            ["image-path": imagePath, "system-entities": [["mount-point": "", "dev-entry": "/dev/disk4"]]]
+        ]
+        for image in incompleteImages {
+            let data = try PropertyListSerialization.data(
+                fromPropertyList: ["images": [image]], format: .xml, options: 0
+            )
+            #expect(throws: (any Error).self) {
+                try CleanupCommand.staleMounts(from: data, tempBase: workspace.deletingLastPathComponent().path)
+            }
+        }
     }
 
     private func makeTempDir(prefix: String) throws -> URL {

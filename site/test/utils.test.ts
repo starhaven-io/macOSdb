@@ -81,3 +81,7 @@ test('httpsDownloadURL only passes HTTPS links', () => {
   assert.equal(httpsDownloadURL('javascript:alert(1)'), undefined);
   assert.equal(httpsDownloadURL(undefined), undefined);
 });
+
+test('displayName retains a beta label without a published beta number', () => {
+  assert.equal(displayName({ osVersion: '27.0', buildNumber: '26A1a', isBeta: true, isRC: false }), 'macOS 27.0 beta');
+});
