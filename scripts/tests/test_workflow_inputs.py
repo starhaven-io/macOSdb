@@ -66,6 +66,26 @@ class XcodeBuildInputTests(unittest.TestCase):
 
 
 class WorkflowSafetyContractTests(unittest.TestCase):
+    def test_site_dispatch_cannot_cancel_main_deployment(self):
+        workflow = (ROOT / ".github/workflows/deploy-site.yml").read_text()
+        self.assertIn(
+            "group: ${{ github.ref == 'refs/heads/main' && 'deploy-site' "
+            "|| format('rejected-deploy-{0}', github.run_id) }}",
+            workflow,
+        )
+        push = workflow.split("  workflow_dispatch:", 1)[0]
+        for path in [".github/workflows/deploy-site.yml", "scripts/check-npm-install-policy.mjs", "scripts/lint-json.py"]:
+            self.assertIn(f"      - '{path}'", push)
+        script = workflow_run_block(workflow.split("\n  deploy:", 1)[0], "Validate deployment ref")
+        for ref, accepted in [("refs/heads/main", True), ("refs/heads/topic", False), ("refs/tags/main", False)]:
+            with self.subTest(ref=ref):
+                result = subprocess.run(
+                    ["/bin/bash", "-euo", "pipefail", "-c", script],
+                    env={**os.environ, "GITHUB_REF": ref, "REF_NAME": ref.rsplit("/", 1)[-1]},
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(result.returncode == 0, accepted)
+
     def test_scanner_dispatch_requires_main_before_checkout(self):
         for path in [IPSW_WORKFLOW, XIP_WORKFLOW]:
             workflow = path.read_text()
@@ -103,13 +123,15 @@ class WorkflowSafetyContractTests(unittest.TestCase):
         matrix_script = workflow_run_block(workflow, "Generate CI matrix")
         self.assertIn("matches_changed_path '^\\.github/workflows/|^scripts/", matrix_script)
 
-    def test_dependabot_coverage_upload_failure_is_nonfatal(self):
+    def test_coverage_upload_is_isolated_and_uses_oidc_for_dependabot(self):
         workflow = CI_WORKFLOW.read_text()
-        self.assertIn(
-            "fail_ci_if_error: ${{ github.event_name != 'pull_request' "
-            "|| github.event.pull_request.user.login != 'dependabot[bot]' }}",
-            workflow,
-        )
+        upload = workflow.split("  codecov:\n", 1)[1].split("\n  zizmor:\n", 1)[0]
+        self.assertIn("id-token: write", upload)
+        self.assertIn("python3 -I codecov-uploader/scripts/upload-codecov.py", upload)
+        self.assertIn("github.event.pull_request.base.sha || github.sha", upload)
+        self.assertNotIn("dependabot[bot]", upload)
+        self.assertNotIn("CODECOV_TOKEN", workflow)
+        self.assertNotIn("continue-on-error", upload)
 
     def test_xip_integrity_is_established_before_scanning(self):
         workflow = XIP_WORKFLOW.read_text()

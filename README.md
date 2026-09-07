@@ -44,7 +44,7 @@ swift build -c release
 
 ## CLI usage
 
-All commands default to macOS. Use `--product xcode` for Xcode releases. Use `--json` for machine-readable output.
+The read commands (`list`, `show`, and `compare`) default to macOS. Use `--product xcode` for Xcode releases. Use `--json` for machine-readable output.
 
 ```bash
 # List releases

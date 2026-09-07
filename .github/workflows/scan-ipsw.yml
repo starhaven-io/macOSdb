@@ -54,6 +54,7 @@ defaults:
 concurrency:
   group: scan
   cancel-in-progress: false
+  queue: max
 
 permissions: {}
 
@@ -190,12 +191,21 @@ jobs:
           } >> "${GITHUB_ENV}"
           echo "source_url=${IPSW_URL}" >> "${GITHUB_OUTPUT}"
 
+      - name: Identify Swift build environment
+        id: swift-build-environment
+        run: |
+          SWIFT_VERSION=$(swift --version)
+          SDK_BUILD=$(xcrun --sdk macosx --show-sdk-build-version)
+          SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
+          BUILD_IDENTITY=$(printf '%s\n' "${SWIFT_VERSION}" "${SDK_BUILD}" "${SDK_PATH}" | shasum -a 256)
+          echo "digest=${BUILD_IDENTITY%% *}" >> "${GITHUB_OUTPUT}"
+
       - name: Restore CLI build cache
         id: cache-cli
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .build/release/macosdb
-          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
+          key: macosdb-cli-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-build-environment.outputs.digest }}-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
 
       - name: Build CLI
         if: steps.cache-cli.outputs.cache-hit != 'true'
@@ -206,7 +216,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .build/release/macosdb
-          key: macosdb-cli-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
+          key: macosdb-cli-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-build-environment.outputs.digest }}-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
 
       - name: Download IPSW
         env:
