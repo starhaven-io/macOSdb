@@ -1,5 +1,6 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { getCollection } from 'astro:content';
+import { displayName, formatDate } from '../../../lib/utils';
 import satori from 'satori';
 import { html } from 'satori-html';
 import sharp from 'sharp';
@@ -28,23 +29,11 @@ export const GET: APIRoute = async ({ props }) => {
     isRC: boolean;
     betaNumber?: number;
     betaRevision?: number;
+    rcNumber?: number;
   };
 
-  let title = release.releaseName;
-  if (release.isBeta && release.betaNumber) {
-    title += ` beta ${release.betaNumber}`;
-    if (release.betaRevision) {
-      title += ` v.${release.betaRevision}`;
-    }
-  } else if (release.isRC) {
-    title += ' RC';
-  }
-
-  const date = new Date(release.releaseDate + 'T00:00:00').toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const title = displayName(release, true, 'Xcode');
+  const date = formatDate(release.releaseDate, 'long');
 
   const badge = release.isBeta ? 'Beta' : release.isRC ? 'RC' : 'Release';
   const badgeColor = release.isBeta ? '#bf5700' : release.isRC ? '#248a3d' : '#6e6e73';

@@ -391,8 +391,10 @@ extension ScanCommand {
 
     func prepareReleasesIndex(release: Release, outputDir: URL) throws -> PreparedIndex {
         let productType = release.resolvedProductType
-        // Index lives alongside the output directory (e.g. data/releases.json for data/releases/)
-        // because dataFile paths include the output directory name (e.g. "releases/15/...")
+        guard outputDir.standardizedFileURL.lastPathComponent == "releases" else {
+            throw ValidationError("--update-index requires an output directory named releases")
+        }
+        // Canonical dataFile paths are relative to the index's parent directory.
         let indexPath = outputDir.deletingLastPathComponent().appendingPathComponent("releases.json")
         guard let dataFile = productType.canonicalDataFile(
             osVersion: release.osVersion,

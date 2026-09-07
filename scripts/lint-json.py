@@ -13,7 +13,9 @@ Usage:
 
 import functools
 import json
+import os
 import re
+import stat
 import sys
 from collections import defaultdict
 from datetime import date, datetime
@@ -148,13 +150,38 @@ def warn(msg):
     print(f"  WARNING: {msg}", file=sys.stderr)
 
 
-def read_json(path, max_bytes):
-    """Read bounded, strict JSON so every consumer sees the same document."""
-    if path.stat().st_size > max_bytes:
-        raise ValueError(f"file exceeds the {max_bytes}-byte size limit")
-    data = path.read_bytes()
+def read_json(path, max_bytes, root=None):
+    """Read strict JSON from an unchanged regular file confined to its catalog."""
+    root = Path(root) if root is not None else path.parent
+    relative = path.absolute().relative_to(root.absolute())
+    if ".." in relative.parts or not relative.parts:
+        raise ValueError("file must be inside the catalog directory")
+    flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
+    directory = os.open(root, flags | os.O_DIRECTORY)
+    try:
+        for part in relative.parts[:-1]:
+            child = os.open(part, flags | os.O_DIRECTORY, dir_fd=directory)
+            os.close(directory)
+            directory = child
+        descriptor = os.open(relative.name, flags, dir_fd=directory)
+    finally:
+        os.close(directory)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError("file must be a regular file")
+        if before.st_size > max_bytes:
+            raise ValueError(f"file exceeds the {max_bytes}-byte size limit")
+        with os.fdopen(descriptor, "rb", closefd=False) as source:
+            data = source.read(max_bytes + 1)
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
     if len(data) > max_bytes:
         raise ValueError(f"file exceeds the {max_bytes}-byte size limit")
+    if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (
+            after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+        raise ValueError("file changed while being read")
 
     def unique_object(pairs):
         result = {}
@@ -324,9 +351,13 @@ def validate_releases(product, catalog):
         filename_version = "-".join(parts[1:-1])
 
         try:
-            d = read_json(f, MAX_RELEASE_BYTES)
+            d = read_json(f, MAX_RELEASE_BYTES, data_dir.parent)
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as e:
             error(f"{f.name}: invalid JSON — {e}")
+            continue
+
+        if not isinstance(d, dict):
+            error(f"{f.name}: top-level value should be object, got {type(d).__name__}")
             continue
 
         if build in catalog:
@@ -389,7 +420,7 @@ def validate_releases(product, catalog):
                 bn = d.get("betaNumber")
                 if bn is None:
                     warn(f"{f.name}: isBeta is true but betaNumber is missing")
-                elif not isinstance(bn, int) or bn < 1:
+                elif type(bn) is not int or bn < 1:
                     error(f"{f.name}: betaNumber should be a positive integer, got {bn!r}")
 
                 revision = d.get("betaRevision")
@@ -405,7 +436,7 @@ def validate_releases(product, catalog):
 
             if is_rc:
                 rn = d.get("rcNumber")
-                if rn is not None and (not isinstance(rn, int) or rn < 1):
+                if rn is not None and (type(rn) is not int or rn < 1):
                     error(f"{f.name}: rcNumber should be a positive integer, got {rn!r}")
             elif d.get("rcNumber") is not None:
                 error(f"{f.name}: rcNumber set but isRC is false")
@@ -572,7 +603,7 @@ def validate_index(product, catalog):
         return
 
     try:
-        index_entries = read_json(index_path, MAX_INDEX_BYTES)
+        index_entries = read_json(index_path, MAX_INDEX_BYTES, product["data"].parent)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as e:
         error(f"{index_path.name}: invalid JSON — {e}")
         return
@@ -675,8 +706,7 @@ def main():
 
     for product in PRODUCTS:
         if not product["data"].exists():
-            print(f"WARNING: {product['data']} not found, skipping {product['name']}.",
-                  file=sys.stderr)
+            error(f"required {product['name']} catalog {product['data']} not found")
             continue
 
         catalog = {}

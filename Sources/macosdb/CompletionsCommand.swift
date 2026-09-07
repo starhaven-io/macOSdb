@@ -14,10 +14,6 @@ struct CompletionsCommand: ParsableCommand {
         guard let completionShell = CompletionShell(rawValue: shell.lowercased()) else {
             throw ValidationError("Unsupported shell '\(shell)'. Must be one of: bash, zsh, fish.")
         }
-        #if SWIFT_PACKAGE
         print(MacOSdb.completionScript(for: completionShell))
-        #else
-        print(MacOSdbCLI.completionScript(for: completionShell))
-        #endif
     }
 }

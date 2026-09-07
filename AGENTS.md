@@ -1,187 +1,92 @@
 # Agent Instructions for macOSdb
 
-These instructions apply to the whole repository.
+These instructions apply to the whole repository. macOSdb scans Apple IPSW and
+XIP archives into a generated component catalog, exposes it through a Swift CLI,
+and publishes an Astro/Cloudflare site and API.
 
-macOSdb is a CLI and website that catalog which versions of open-source components (curl, OpenSSH, SQLite, etc.) ship with each macOS and Xcode release. It scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from binaries, the dyld shared cache, and SDK headers, and stores the results as JSON. The website lets you browse releases, compare component versions across releases, and see which chip families and devices each release supports.
+## Start here
 
-## Project overview
+- Inspect the branch, status, and existing diff before editing. Preserve unrelated work.
+- Read [Architecture](docs/architecture.md) for the data flow and trust boundaries,
+  [Data schema](docs/data-schema.md) for publication invariants, and
+  [Operations](docs/operations.md) for scanner, release, and recovery procedures.
+- `Sources/macOSdbCore/` owns models, data loading, comparison, and scanning;
+  `Sources/macosdb/` owns CLI presentation and output transactions. `site/` owns
+  Astro components, API routes, schemas, deployment configuration, and site tests.
+- The estate fleet owns rendered whole files and `fleet:block` fragments.
+  Change their canonical source in `dot_github/fleet`, then use its release/sync
+  process. Preserve consumer content byte-for-byte until that process updates it.
+  `CLAUDE.md` remains exactly `@AGENTS.md`.
 
-- **Platform:** macOS 15.0+ (Apple Silicon only)
-- **Language:** Swift 6.2
-- **Architecture:** `macOSdbCore` internal target (models, scanner, data provider) consumed by the `macosdb` CLI
-- **Structure:** Swift Package (core target, CLI, tests) + Astro site
-- **Logging subsystem:** `io.linnane.macosdb`
-- **License:** AGPL-3.0-only (code), CC-BY-4.0 (data)
-- **Dependencies:** swift-argument-parser (CLI), ZIPFoundation (IPSW extraction)
-- **Website:** https://macosdb.com (Astro site on Cloudflare Workers — static pages + SSR API)
+## Development and checks
 
-## Repository structure
+Native scanner development requires Apple silicon, macOS 15 or newer, and the
+Swift 6.2 toolchain. The site uses Node.js 26. Python 3 and the lint/analysis tools
+listed in [Contributing](CONTRIBUTING.md) are required by the complete gate.
 
-```
-macOSdb/
-├── Package.swift                          # SPM: macosdb executable + macOSdbCore target
-├── Sources/
-│   ├── macOSdbCore/                       # Internal core target (consumed by the CLI)
-│   │   ├── Models/                        # ChipFamily, Component, DeviceRegistry, KernelInfo, ProductType, Release, SDKInfo, VersionComparison
-│   │   ├── Scanner/                       # IPSW/Xcode scanning pipeline (see Architecture)
-│   │   ├── DataProvider.swift             # Actor: fetch release JSON from HTTPS or local files
-│   │   └── VersionComparer.swift          # Diff components across releases
-│   └── macosdb/                           # CLI (swift-argument-parser): Cleanup, Compare, Completions,
-│                                          #   List, Scan, Show, Validate, Version + Utilities, MacOSdb (@main)
-├── site/                                  # Astro site (macosdb.com)
-│   ├── src/
-│   │   ├── pages/                         # index, {macos,xcode}/release/[slug], compare, components,
-│   │   │   │                              #   component/[name], sdk/[version], og/[slug].png, robots, security.txt
-│   │   │   └── api/v1/{macos,xcode}/      # JSON API endpoints (releases, components, compare)
-│   │   ├── components/                    # Badge, ChipGrid, ComparePage, ComponentTable, KernelInfo,
-│   │   │   │                              #   ProductCompare, ProductComponentDetail, ProductComponents,
-│   │   │   │                              #   ProductIndex, ProductReleases, ReleaseHeader, StructuredData
-│   │   ├── layouts/Base.astro
-│   │   ├── lib/                           # api.ts, deviceNames.ts, products.ts, utils.ts
-│   │   ├── middleware.ts                  # Re-applies _headers security headers to SSR responses
-│   │   ├── content.config.ts             # Zod-validated content collections
-│   │   └── styles/global.css
-│   ├── public/_headers                    # Cloudflare static-asset headers (CSP etc.)
-│   ├── astro.config.mjs · wrangler.jsonc · package.json
-├── Tests/
-│   ├── macOSdbCoreTests/                  # Swift Testing — core target (+ Fixtures/ sample JSON)
-│   └── macosdbTests/                      # Swift Testing — CLI (parsing + subprocess smoke tests)
-├── data/                                  # Pre-built JSON (committed, CC-BY-4.0) — see "do not touch"
-│   ├── LICENSE                            # CC-BY-4.0
-│   ├── macos/  └ releases.json + releases/{major}/macOS-{version}-{build}.json
-│   └── xcode/  └ releases.json + releases/{major}/Xcode-{version}-{build}.json
-├── scripts/                              # format-release-notes.py, lint-json.py
-├── justfile                             # Task runner (see "Common commands")
-├── .github/
-│   ├── workflows/                        # ci, codeql, zizmor, pinprick-audit, scan-ipsw, scan-xip,
-│   │                                     #   link-check, deploy-site, release
-│   ├── dependabot.yml                    # github-actions + npm (site) + swift, grouped, 7-day cooldown
-│   └── FUNDING.yml
-├── LICENSE                              # AGPL-3.0-only
-├── .swiftlint.yml · _typos.toml · lychee.toml · .mcp.json · .gitignore
-```
+Use focused recipes in `justfile` while iterating, then run `just check` on the
+stable patch. It includes Swift tests and analysis, generated-data and Python
+script tests, site dependency policy/audit, formatting, type checking, unit
+tests, build, deployment dry-run, and link checks. Missing tools fail the gate;
+report them as unverified. Run `git diff --check` and inspect the final status.
+Do not repeat expensive checks when the relevant source and evidence are unchanged.
 
-## Project-specific notes
+- Swift uses Swift Testing, strict SwiftLint, structured concurrency, and OSLog.
+  Preserve actor isolation and propagate cancellation through cleanup scopes.
+- Keep the numeric/alphabetic comparison and release ordering contracts aligned
+  across Swift, TypeScript, and Python using the shared ordering fixtures.
+- Keep device identities in the Swift registry and site map aligned. Retain
+  explicit chip-family grouping decisions and cover changed mappings with tests.
+- Site install-script decisions belong in `site/package.json`; the fleet owns
+  the checker and fenced recipe. Keep the lock and policy aligned, use
+  `npm ci --strict-allow-scripts`, and avoid unrelated dependency churn.
+- `just check` is local evidence. Real Apple archive scans, hosted sanitizer and
+  CodeQL jobs, signing/notarization, and live deployment checks need separate
+  evidence when relevant; do not imply they ran from local unit tests.
 
-### Architecture details
+## Data and scanner boundaries
 
-#### macOSdbCore (internal core target)
+- `data/` release JSON and indexes are generated. Fix the scanner or validation
+  source, then use the scanner workflow to regenerate data. Do not hand-edit the
+  corpus. Code is AGPL-3.0-only; release data is CC-BY-4.0.
+- `ScannerConfig.swift` and Xcode extraction code define tracked components.
+  Changes to the required set require a coordinated corpus migration and updates
+  to the Python linter, Swift validator, Astro schema, tests, and documentation.
+- Preserve historical test fixtures that exercise compatibility with older data;
+  removing an obsolete emitted field does not require deleting that evidence.
+- Treat archives, binaries, plists, JSON, and workflow inputs as untrusted.
+  Preserve bounded reads, offset checks, path confinement, descriptor identity,
+  trusted system-tool paths, subprocess timeouts, and output limits. Never execute
+  a binary extracted from an archive to discover its version.
+- Cleanup may affect only recognized stale workspaces and mounts. Preserve the
+  live-process marker and repeated ownership checks; never broaden it to arbitrary
+  temporary directories.
+- `scan --update-index` requires the canonical product `releases` output directory
+  and complete source metadata. Local experiments should use a temporary output
+  directory and omit `--update-index` unless testing a complete product catalog.
+- Keep archives, AEA keys, download cookies, signing material, and local environment
+  files out of Git and logs. AEA WKMS 404s intentionally require a fresh dispatch.
 
-**Models:** `ChipFamily`, `Component`, `ComponentChange`, `DeviceRegistry`, `KernelInfo`, `ProductType`, `Release`, `SDKInfo`, `VersionComparison`
+## Automation and publication
 
-**DataProvider:** Actor that fetches release data from HTTPS (`macosdb.com/api/v1/`) or a local `data/` directory. Configurable base URL for dev/testing; per-release fetch failures are isolated so one bad file doesn't sink the whole load.
+Scanner, release, and production deployment dispatches run from `main`.
+Self-hosted scanner jobs must remain isolated from pull-request execution;
+verify the runner group's allowed workflow/ref restriction in GitHub. A shell
+branch guard is an early error check, not protection against modified workflow
+code. Hosted environment branch restrictions and least-privilege credentials
+provide the privilege boundary without requiring another human approver.
 
-**VersionComparer:** Static methods to diff components between two releases (parses versions into `[Int]`, so `15.10 > 15.2`).
+Keep top-level workflow permissions empty, actions SHA-pinned, and checkout
+credentials nonpersistent. Scanner publication must keep its separate hosted
+prepare and publisher jobs, exact artifact layout, dispatch/source identity
+checks, recorded base commit, and token minting after validation. Preserve the
+always-reporting `conclusion` job required for pull requests.
 
-**Scanner pipeline** (IPSW, 6 phases):
-1. Extract IPSW (ZIP) → temp directory with kernelcaches and DMG files
-2. Parse kernelcaches → `[KernelInfo]` with BuildManifest device mapping and per-device chip resolution
-3. Decrypt AEA images if needed (macOS 15+, fetches keys from Apple WKMS)
-4. Mount system DMG → extract filesystem components (version strings from binaries)
-5. Mount cryptex DMG (macOS 13+) or use system DMG → extract dyld cache components
-6. Assemble and return `Release` with resolved name and auto-detected beta status
-
-**Scanner components:**
-- `IPSWScanner` — IPSW pipeline orchestrator
-- `XcodeScanner` — `.xip` pipeline; expands via `/usr/bin/xip`, scans toolchain/framework/SDK
-- `IPSWExtractor` — ZIP extraction, BuildManifest/Restore.plist parsing
-- `KernelParser` — kernelcache parsing → KernelInfo
-- `AEADecryptor` — AEA decryption (fetches HPKE key from Apple WKMS, shells out to `/usr/bin/aea`)
-- `IM4PDecoder` — IM4P container decoding (LZFSE/LZMA decompression, 128 MB cap)
-- `DMGMounter` — DMG mount/unmount via `hdiutil`
-- `DyldCacheExtractor` — extract dylibs from dyld_shared_cache (handles split subcaches)
-- `ComponentExtractor` — version extraction (regex or integer-decode strategy)
-- `BinaryStringScanner` — raw printable-string scan (Swift `Regex`, falls back to `NSRegularExpression` for lookbehind)
-- `SDKMetadataParser` — parse SDK headers, `.tbd` files, and metadata
-- `ScannerConfig` — component definitions (filesystem, dyld cache, toolchain, framework, SDK)
-- `ScannerError` — scanner error types
-
-#### Tracked components (ground truth: `ScannerConfig.swift` / `XcodeScanner.swift`)
-
-- **macOS filesystem:** curl, httpd, LibreSSL, OpenSSH, Ruby, sudo, SQLite, vim, zsh
-- **macOS dyld cache:** libbz2, libcurl, libexpat, libncurses, libpcap, libsqlite3, libssl, libxml2
-- **Xcode toolchain/frameworks:** Apple Clang, cctools, Git, ld, lldb, Python, Swift
-- **Xcode SDK:** bzip2, expat, libcurl, libexslt, libffi, libxml2, libxslt, ncurses, sqlite3, zlib
-
-#### CLI (macosdb)
-
-Built with swift-argument-parser. Subcommands:
-- `list [--major N] [--product macos|xcode] [--json]` — list known releases
-- `show <version|version-build> [--build build] [--component name] [--detailed] [--product] [--json]` — show a release's components
-- `compare <version|version-build> <version|version-build> [--changed] [--product] [--json]` — diff components between releases
-- `scan <archive> [--output dir] [--release-name] [--release-date] [--beta|--beta-number N] [--rc|--rc-number N] [--device-specific] [--ipsw-url|--xip-url URL] [--save-aea-key] [--aea-key path] [--key-only] [--update-index] [--verbose]` — scan an IPSW or `.xip` → release JSON
-- `validate <paths...> [--dir path] [--rehash]` — create SHA-256 sidecars, or verify against existing ones
-- `cleanup [--force]` — unmount stale scan DMGs and delete leftover temp dirs (dry-run by default)
-- `completions <zsh|bash|fish>` — emit shell completions
-
-`swift build` produces the `macosdb` executable; `Sources/macosdb/MacOSdb.swift` carries `@main`. The release artifact is a Developer ID-signed, notarized binary distributed via Homebrew (see `release.yml`).
-
-#### Site (site/)
-
-Astro site at [macosdb.com](https://macosdb.com), deployed to Cloudflare Workers via `deploy-site.yml` (`@astrojs/cloudflare` + `wrangler deploy`). Most pages are prerendered from `data/` via Zod-validated content collections; the compare pages and compare API are SSR (`prerender = false`). `src/middleware.ts` re-applies the `public/_headers` security headers to SSR responses (static assets get them from `_headers` directly). The `/api/v1/` endpoints mirror the `data/` layout for both products.
-
-#### Data format
-
-- `data/{product}/releases.json` — index of all releases, sorted newest first.
-- `data/{product}/releases/{major}/{Prefix}-{version}-{build}.json` — per-release data.
-- Product dirs: `macos`, `xcode`. File prefixes: `macOS`, `Xcode`.
-- macOS release names: 11=Big Sur, 12=Monterey, 13=Ventura, 14=Sonoma, 15=Sequoia, 26=Tahoe, 27=Golden Gate.
-
-### Code style and conventions
-
-- SwiftLint with ~55 opt-in rules (`.swiftlint.yml`); line length warn 150 / error 200; function body warn 60 / error 100; type body 300.
-- Swift 6 language mode (via tools version); the scanner pipeline is built on actors (`IPSWScanner`, `DataProvider`).
-- Logging via `OSLog` (`Logger(subsystem: "io.linnane.macosdb", category: ...)`).
-- Errors are `LocalizedError` with descriptive messages.
-- Tests use Swift Testing (`@Suite`, `@Test`, `#expect`/`#require`). CI runs them under Thread + Address sanitizers.
-
-### CI workflows (`.github/workflows/`)
-
-- **ci.yml** — unified PR checks via a dynamic matrix keyed on changed paths: Conventional Commits, SwiftLint + typos, TSan + ASan tests (+ Codecov), CodeQL, lint-json, site format-check + build, zizmor.
-- **codeql.yml** — CodeQL analysis (Swift) on pushes to `main` that touch Swift/package files.
-- **zizmor.yml** — GitHub Actions security audit on pushes to `main` that touch workflows.
-- **pinprick-audit.yml** — dependency/supply-chain audit on workflow pull requests and pushes to `main`.
-- **scan-ipsw.yml / scan-xip.yml** — self-hosted, dispatch-only scanners; download an archive, scan it, open + auto-merge a `data/` PR with a signed commit.
-- **link-check.yml** — scheduled lychee broken-link check.
-- **deploy-site.yml** — build + deploy the Astro site to Cloudflare Workers.
-- **release.yml** — manual dispatch with a `validate-dispatch` prerequisite: require `main`, build the CLI, sign (Developer ID) + notarize the binary, create a GitHub release with formatted notes, bump the Homebrew cask.
-
-Baseline security posture is intentional: top-level `permissions: {}`, SHA-pinned actions, `persist-credentials: false`, scoped GitHub App tokens, signed GraphQL commits. Keep it that way.
-
-### Release flow
-
-- Version bumps: bump `MacosdbVersion.current` in
-  `Sources/macosdb/Version.swift`, commit as `chore: bump version to X.Y.Z`,
-  open a PR.
-- Releases: trigger the Release workflow dispatch after the bump PR merges;
-  `validate-dispatch` requires `main`, then the workflow reads
-  `Sources/macosdb/Version.swift` and creates the tag automatically.
-
-## Required checks
-
-```
-just build / just test          # swift build / swift test (core + CLI)
-just lint                       # swiftlint --strict
-just lint-json                  # python3 scripts/lint-json.py (data schema validation)
-just test-scripts               # python3 -m unittest discover -s scripts/tests
-just typos                      # typos
-just audit                      # zizmor --persona auditor .github/workflows/
-just periphery                  # unused-code scan (local only; not in CI)
-just test-cov                   # swift test --enable-code-coverage
-just check                      # lint, script tests, Swift tests, site tests + build, and remaining gates
-just site-dev / site-build      # Astro dev server / production build (in site/)
-just site-test                  # site unit tests (node:test)
-just npm-policy                 # Verify dependency install-script policy
-just lychee                     # broken-link check on the built site
-```
-
-Run `just check` (or at minimum `just lint && just test`) before pushing — CI is not a substitute.
-
-## Safety / do-not-touch rules
-
-- **`data/` is generated** by the scan workflows, not hand-edited. Don't manually add/edit release JSON; `data/LICENSE` is CC-BY-4.0 (different from the AGPL code). `just lint-json` validates the schema.
-- **Scanner inputs are untrusted binaries.** Parsers in `Scanner/` (esp. `DyldCacheExtractor`) bounds-check every offset/length read from the archive; preserve those guards when editing.
-- **AEA WKMS 404s have no retry by design** — manual re-dispatch is the chosen fallback.
+Release version ownership and retry rules are in [Operations](docs/operations.md).
+Preserve signing, online notarization verification, immutable tags, checksum and
+provenance checks, and the separate Homebrew cask-bump delivery step. Never
+publish, dispatch, deploy, commit, push, or change hosted controls unless the
+user has authorized that action.
 
 <!-- fleet:block commit-and-pr-conventions -->
 

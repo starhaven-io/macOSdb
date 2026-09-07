@@ -45,3 +45,12 @@ test('beta-only history yields no GA', () => {
 test('empty input yields nothing', () => {
   assert.deepEqual(pickLatestReleases([]), { ga: null, prerelease: null });
 });
+
+test('a newer lower-version prerelease does not hide a pending higher-version beta', () => {
+  const releases = [
+    release('27.0', '26A5388g', '2026-07-20', { isBeta: true }),
+    release('26.6', '25G100', '2026-07-21'),
+    release('15.7', '24H500a', '2026-07-22', { isBeta: true }),
+  ];
+  assert.equal(pickLatestReleases(releases).prerelease?.buildNumber, '26A5388g');
+});

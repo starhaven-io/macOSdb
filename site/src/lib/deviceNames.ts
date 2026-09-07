@@ -7,8 +7,8 @@ export const deviceNames: Readonly<Record<string, string>> = {
   'MacBookAir10,1': 'MacBook Air (M1, Late 2020)',
   'MacBookPro17,1': 'MacBook Pro (13-inch, M1, Late 2020)',
   'Macmini9,1': 'Mac mini (M1, Late 2020)',
-  'iMac21,1': 'iMac (24-inch, M1, 2021) 2-port',
-  'iMac21,2': 'iMac (24-inch, M1, 2021) 4-port',
+  'iMac21,1': 'iMac (24-inch, M1, 2021) 4-port',
+  'iMac21,2': 'iMac (24-inch, M1, 2021) 2-port',
 
   // M1 Pro
   'MacBookPro18,1': 'MacBook Pro (16-inch, M1 Pro, Late 2021)',

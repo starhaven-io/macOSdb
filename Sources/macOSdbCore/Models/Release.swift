@@ -120,6 +120,10 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         if let betaLabel {
             return "\(prefix) \(betaLabel)"
         }
+        if isRC {
+            let label = rcNumber.map { "RC \($0)" } ?? "RC"
+            return "\(prefix) \(label)"
+        }
         return prefix
     }
 

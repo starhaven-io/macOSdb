@@ -22,7 +22,11 @@ for (const line of readFileSync(new URL('../public/_headers', import.meta.url), 
 }
 
 async function inspect(url, api) {
-  const response = await fetch(url, { headers: { 'cache-control': 'no-cache' }, redirect: 'error' });
+  const response = await fetch(url, {
+    headers: { 'cache-control': 'no-cache' },
+    redirect: 'error',
+    signal: AbortSignal.timeout(30_000),
+  });
   if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
   for (const [name, value] of Object.entries(expected)) {
     const routeValue = api && name === 'cross-origin-resource-policy' ? 'cross-origin' : value;

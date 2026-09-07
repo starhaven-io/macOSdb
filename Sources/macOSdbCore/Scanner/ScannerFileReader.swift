@@ -126,7 +126,8 @@ enum ScannerFileReader {
 
         for (index, component) in components.enumerated() {
             let isFinal = index == components.index(before: components.endIndex)
-            let flags = O_CLOEXEC | O_NOFOLLOW | (isFinal ? finalFlags : O_RDONLY | O_DIRECTORY)
+            // Nonblocking open lets fstat reject special files before any read can wait.
+            let flags = O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK | (isFinal ? finalFlags : O_RDONLY | O_DIRECTORY)
             let descriptor = component.withCString { pointer in
                 openat(descriptors[descriptors.index(before: descriptors.endIndex)], pointer, flags)
             }

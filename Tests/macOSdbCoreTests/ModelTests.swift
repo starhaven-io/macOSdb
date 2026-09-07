@@ -86,6 +86,15 @@ struct ModelTests { // swiftlint:disable:this type_body_length
         #expect(release.displayName == "macOS 15.6.1 Sequoia")
     }
 
+    @Test("Release candidate displayName retains its maturity", arguments: [nil, 2] as [Int?])
+    func releaseCandidateDisplayName(number: Int?) {
+        let release = Release(
+            osVersion: "15.0", buildNumber: "24A335", releaseName: "Sequoia",
+            isRC: true, rcNumber: number
+        )
+        #expect(release.displayName == "macOS 15.0 Sequoia RC" + (number.map { " \($0)" } ?? ""))
+    }
+
     @Test("Replacement beta displayName includes its revision")
     func replacementBetaDisplayName() {
         let release = Release(

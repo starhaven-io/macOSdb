@@ -59,6 +59,13 @@ jobs:
       base_sha: ${{ steps.inputs.outputs.base_sha }}
       release_date: ${{ steps.inputs.outputs.release_date }}
     steps:
+      - name: Require main branch
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::Scanner workflows must be dispatched from main."
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main

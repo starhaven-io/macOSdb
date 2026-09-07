@@ -68,11 +68,13 @@ macosdb compare 16.1 16.2 --product xcode
 
 # Scan an IPSW to produce release JSON
 macosdb scan ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \
-  --output data/macos/releases --release-date 2024-12-11 --update-index --verbose
+  --output data/macos/releases --release-date 2024-12-11 \
+  --ipsw-url "$IPSW_URL" --update-index --verbose
 
 # Scan an Xcode .xip to produce release JSON
 macosdb scan ~/Downloads/Xcode_26.4_Apple_silicon.xip \
-  --output data/xcode/releases --release-date 2026-03-24 --update-index --verbose
+  --output data/xcode/releases --release-date 2026-03-24 \
+  --xip-url "$XIP_URL" --update-index --verbose
 
 # Validate archives: create SHA-256 sidecars, or verify against existing ones
 macosdb validate ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw
@@ -82,6 +84,10 @@ macosdb validate --dir /path/to/archive
 macosdb cleanup            # dry run — list what would be removed
 macosdb cleanup --force    # actually unmount and delete
 ```
+
+For the scan examples, set `IPSW_URL` or `XIP_URL` to the verified Apple download
+URL matching the local archive. Index publication requires complete source
+metadata; exploratory scans can omit `--update-index`.
 
 ### Offline and local data
 

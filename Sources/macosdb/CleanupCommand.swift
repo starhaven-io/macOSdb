@@ -16,7 +16,7 @@ struct CleanupCommand: AsyncParsableCommand {
     var force = false
 
     func run() async throws {
-        let mounts = findStaleMounts()
+        let mounts = try findStaleMounts()
         let tempDirs = findStaleTempDirs()
 
         if mounts.isEmpty && tempDirs.isEmpty {
@@ -46,16 +46,19 @@ struct CleanupCommand: AsyncParsableCommand {
             return
         }
 
+        var unmountFailed = false
         for mount in mounts {
-            switch recheckStaleMount(mount) {
+            switch try recheckStaleMount(mount) {
             case .stale:
-                unmount(mount)
+                if !unmount(mount) { unmountFailed = true }
             case .ownedByRunningScan:
                 printStatus("Skipped no-longer-stale mount \(mount.mountPoint)")
             case .unrecognizedWorkDir:
                 printStatus("Skipped mount with unrecognized scan source \(mount.mountPoint)")
             }
         }
+
+        guard !unmountFailed else { throw ExitCode.failure }
 
         var dirsToRemove: [URL] = []
         for dir in tempDirs {
@@ -65,7 +68,7 @@ struct CleanupCommand: AsyncParsableCommand {
                 printStatus("Skipped no-longer-stale directory \(dir.lastPathComponent)")
             }
         }
-        removeDirectories(dirsToRemove)
+        guard removeDirectories(dirsToRemove) else { throw ExitCode.failure }
     }
 
     // MARK: - Stale mount detection
@@ -82,7 +85,7 @@ struct CleanupCommand: AsyncParsableCommand {
         case unrecognizedWorkDir
     }
 
-    private func findStaleMounts() -> [StaleMount] {
+    private func findStaleMounts() throws -> [StaleMount] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
         process.arguments = ["info", "-plist"]
@@ -91,43 +94,42 @@ struct CleanupCommand: AsyncParsableCommand {
         process.standardOutput = stdout
         process.standardError = FileHandle.nullDevice
 
-        do {
-            try process.run()
-        } catch {
-            return []
-        }
+        try process.run()
 
         // Drain the pipe before waiting: a large `hdiutil info` plist can exceed the
         // pipe buffer and deadlock if we wait for exit while hdiutil blocks on write.
         let data = stdout.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
-        guard process.terminationStatus == 0 else { return [] }
-
         let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
-        return Self.staleMounts(from: data, tempBase: tempBase)
+        return try Self.staleMounts(from: data, tempBase: tempBase, terminationStatus: process.terminationStatus)
     }
 
-    static func staleMounts(from data: Data, tempBase: String) -> [StaleMount] {
-        guard let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+    static func staleMounts(from data: Data, tempBase: String, terminationStatus: Int32 = 0) throws -> [StaleMount] {
+        guard terminationStatus == 0 else {
+            throw ValidationError("Could not inspect mounted disk images (hdiutil exited \(terminationStatus)).")
+        }
+        guard let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
               let images = plist["images"] as? [[String: Any]] else {
-            return []
+            throw ValidationError("Could not inspect mounted disk images: unrecognized hdiutil output.")
         }
 
         var results: [StaleMount] = []
         for image in images {
-            guard let imagePath = image["image-path"] as? String,
-                  let workDir = scannerWorkDir(forImage: imagePath, tempBase: tempBase),
-                  let entities = image["system-entities"] as? [[String: Any]] else {
-                continue
+            guard let imagePath = image["image-path"] as? String, !imagePath.isEmpty else {
+                throw ValidationError("Could not inspect mounted disk images: missing image path.")
+            }
+            guard let workDir = scannerWorkDir(forImage: imagePath, tempBase: tempBase),
+                  ScanWorkspace.ownershipState(workDir) == .stale else { continue }
+            guard let entities = image["system-entities"] as? [[String: Any]] else {
+                throw ValidationError("Could not inspect mounted disk images: missing scanner mount details.")
             }
 
-            guard ScanWorkspace.ownershipState(workDir) == .stale else { continue }
-
             for entity in entities {
-                guard let mountPoint = entity["mount-point"] as? String,
-                      let deviceNode = entity["dev-entry"] as? String else {
-                    continue
+                guard entity["mount-point"] != nil else { continue }
+                guard let mountPoint = entity["mount-point"] as? String, !mountPoint.isEmpty,
+                      let deviceNode = entity["dev-entry"] as? String, !deviceNode.isEmpty else {
+                    throw ValidationError("Could not inspect mounted disk images: incomplete scanner mount identity.")
                 }
                 results.append(StaleMount(
                     imagePath: imagePath,
@@ -168,7 +170,7 @@ struct CleanupCommand: AsyncParsableCommand {
         return resolved
     }
 
-    private func unmount(_ mount: StaleMount) {
+    private func unmount(_ mount: StaleMount) -> Bool {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
         process.arguments = ["detach", mount.deviceNode, "-force"]
@@ -180,15 +182,16 @@ struct CleanupCommand: AsyncParsableCommand {
             process.waitUntilExit()
             if process.terminationStatus == 0 {
                 printStatus("Unmounted \(mount.mountPoint)")
-            } else {
-                printStatus("Failed to unmount \(mount.mountPoint)")
+                return true
             }
+            printStatus("Failed to unmount \(mount.mountPoint)")
         } catch {
             printStatus("Failed to unmount \(mount.mountPoint): \(error.localizedDescription)")
         }
+        return false
     }
 
-    private func recheckStaleMount(_ mount: StaleMount) -> StaleMountRecheck {
+    private func recheckStaleMount(_ mount: StaleMount) throws -> StaleMountRecheck {
         let tempBase = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path
         guard let workDir = Self.scannerWorkDir(forImage: mount.imagePath, tempBase: tempBase) else {
             return .unrecognizedWorkDir
@@ -197,7 +200,7 @@ struct CleanupCommand: AsyncParsableCommand {
         case .running:
             return .ownedByRunningScan
         case .stale:
-            let stillMounted = findStaleMounts().contains {
+            let stillMounted = try findStaleMounts().contains {
                 $0.imagePath == mount.imagePath
                     && $0.mountPoint == mount.mountPoint
                     && $0.deviceNode == mount.deviceNode
@@ -245,7 +248,8 @@ struct CleanupCommand: AsyncParsableCommand {
 
     // MARK: - Temp directory removal
 
-    private func removeDirectories(_ urls: [URL]) {
+    private func removeDirectories(_ urls: [URL]) -> Bool {
+        var succeeded = true
         for url in urls {
             let quarantine = url.deletingLastPathComponent()
                 .appendingPathComponent(".macosdb-cleanup-\(UUID().uuidString)")
@@ -262,9 +266,11 @@ struct CleanupCommand: AsyncParsableCommand {
                 try FileManager.default.removeItem(at: quarantine)
                 printStatus("Removed \(url.lastPathComponent)")
             } catch {
+                succeeded = false
                 printStatus("Failed to remove \(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
+        return succeeded
     }
 
     private static func isStaleOwnedDirectory(_ url: URL) -> Bool {

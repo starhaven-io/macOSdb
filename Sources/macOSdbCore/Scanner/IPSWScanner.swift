@@ -52,10 +52,10 @@ package actor IPSWScanner {
         sendProgress(.extractingIPSW)
         Self.logger.info("Starting scan of \(ipswPath.lastPathComponent)")
         let extraction = try await ipswExtractor.extract(ipswPath: ipswPath)
-        try Task.checkCancellation()
 
         let release: Release
         do {
+            try Task.checkCancellation()
             // Phase 2: Parse kernelcaches
             sendProgress(.parsingKernels(count: extraction.kernelcaches.count))
             Self.logger.info("Parsing \(extraction.kernelcaches.count) kernelcache files")

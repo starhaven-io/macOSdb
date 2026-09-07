@@ -7,6 +7,7 @@ import io
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -79,6 +80,65 @@ class StrictJSONTests(unittest.TestCase):
             path.write_text('{"field": "too large"}')
             with self.assertRaisesRegex(ValueError, "size limit"):
                 lint.read_json(path, 4)
+
+    def test_regular_file_and_catalog_confinement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "release.json"
+            source.write_text('{"valid": true}')
+            self.assertEqual(lint.read_json(source, 1_024, root), {"valid": True})
+            link = root / "linked.json"
+            link.symlink_to(source)
+            with self.assertRaises(OSError):
+                lint.read_json(link, 1_024, root)
+            directory = root / "directory.json"
+            directory.mkdir()
+            with self.assertRaisesRegex(ValueError, "regular file"):
+                lint.read_json(directory, 1_024, root)
+            nested = root / "nested"
+            nested.symlink_to(root, target_is_directory=True)
+            with self.assertRaises(OSError):
+                lint.read_json(nested / "release.json", 1_024, root)
+            with self.assertRaises(ValueError):
+                lint.read_json(root / ".." / "release.json", 1_024, root)
+
+
+class CatalogShapeTests(unittest.TestCase):
+    def setUp(self):
+        lint.errors = 0
+
+    def tearDown(self):
+        lint.errors = 0
+
+    def validate(self, data):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            product = {**lint.PRODUCTS[0], "data": root}
+            (root / "macOS-15.0-24A335.json").write_text(json.dumps(data))
+            with contextlib.redirect_stderr(io.StringIO()) as output:
+                lint.validate_releases(product, {})
+            return output.getvalue()
+
+    def test_non_object_release_is_reported_without_a_traceback(self):
+        for value in [None, [], True, "text"]:
+            with self.subTest(value=value):
+                self.assertIn("top-level value should be object", self.validate(value))
+
+    def test_prerelease_numbers_reject_booleans(self):
+        source = next((REPO_ROOT / "data/macos/releases").rglob("*.json"))
+        release = json.loads(source.read_text())
+        for flag, number in [("isBeta", "betaNumber"), ("isRC", "rcNumber")]:
+            with self.subTest(number=number):
+                candidate = {**release, "isBeta": False, "isRC": False, flag: True, number: True}
+                self.assertIn(f"{number} should be a positive integer", self.validate(candidate))
+
+    def test_missing_required_catalog_fails_the_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            product = {**lint.PRODUCTS[0], "data": Path(tmp) / "missing"}
+            with mock.patch.object(lint, "PRODUCTS", [product]), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as result:
+                    lint.main()
+            self.assertEqual(result.exception.code, 1)
 
 
 class IndexOrderTests(unittest.TestCase):

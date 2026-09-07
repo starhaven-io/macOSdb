@@ -358,3 +358,19 @@ struct SDKMetadataParserTests {
         #expect(sdks.isEmpty)
     }
 }
+
+extension SDKMetadataParserTests {
+    @Test("SDK discovery orders multi-digit version components numerically")
+    func sdkNumericOrdering() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-sdk-order-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        for version in ["9.9", "10.9", "10.10"] {
+            let directory = root.appendingPathComponent("MacOSX\(version).sdk")
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let data = try JSONSerialization.data(withJSONObject: ["Version": version])
+            try data.write(to: directory.appendingPathComponent("SDKSettings.json"))
+        }
+        #expect(SDKMetadataParser.findMacOSSDKs(in: root).map(\.sdkVersion) == ["10.10", "10.9", "9.9"])
+    }
+}

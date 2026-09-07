@@ -12,9 +12,9 @@ const releaseIndexBaseSchema = z.object({
   releaseDate: z.string(),
   isBeta: z.boolean(),
   isRC: z.boolean(),
-  betaNumber: z.number().optional(),
-  betaRevision: z.number().optional(),
-  rcNumber: z.number().optional(),
+  betaNumber: z.number().int().positive().optional(),
+  betaRevision: z.number().int().min(2).optional(),
+  rcNumber: z.number().int().positive().optional(),
   dataFile: z.string(),
 });
 
@@ -53,9 +53,9 @@ const releaseDetailBaseSchema = z.object({
   productType: z.enum(['macOS', 'Xcode']),
   isBeta: z.boolean(),
   isRC: z.boolean(),
-  betaNumber: z.number().optional(),
-  betaRevision: z.number().optional(),
-  rcNumber: z.number().optional(),
+  betaNumber: z.number().int().positive().optional(),
+  betaRevision: z.number().int().min(2).optional(),
+  rcNumber: z.number().int().positive().optional(),
   components: z.array(componentSchema),
 });
 
