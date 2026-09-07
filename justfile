@@ -119,14 +119,9 @@ check:
         skip typos typos typos-cli
     fi
     if command -v zizmor &>/dev/null; then
-        run zizmor --persona auditor .github/workflows/
+        run zizmor --strict-collection --persona auditor .github/workflows/
     else
         skip audit zizmor zizmor
-    fi
-    if command -v actionlint &>/dev/null; then
-        run actionlint -no-color
-    else
-        skip actionlint actionlint actionlint
     fi
     if command -v periphery &>/dev/null; then
         # native build system (deprecated): swiftbuild emits no index store Periphery can find

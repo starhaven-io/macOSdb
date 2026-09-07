@@ -12,6 +12,7 @@ defaults:
 concurrency:
   group: release
   cancel-in-progress: false
+  queue: max
 
 permissions: {}
 
@@ -176,6 +177,7 @@ jobs:
             ${{ steps.package.outputs.artifact }}.tar.gz
             ${{ steps.package.outputs.artifact }}.tar.gz.sha256
           if-no-files-found: error
+          retention-days: 7
 
   release:
     name: Release

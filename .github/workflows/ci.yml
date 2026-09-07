@@ -28,6 +28,7 @@ jobs:
       contents: read
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
+      run_codecov: ${{ steps.matrix.outputs.run_codecov }}
       run_codeql: ${{ steps.matrix.outputs.run_codeql }}
       run_codeql_interpreted: ${{ steps.matrix.outputs.run_codeql_interpreted }}
       run_zizmor: ${{ steps.matrix.outputs.run_zizmor }}
@@ -48,11 +49,12 @@ jobs:
           # coverage comparisons.
           if [[ "${EVENT_NAME}" == "push" ]]; then
             {
-              echo 'matrix=[{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true","environment":"codecov"}]'
+              echo 'matrix=[{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true"}]'
               echo "run_codeql=false"
               echo "run_codeql_interpreted=false"
               echo "run_zizmor=false"
               echo "run_links=false"
+              echo "run_codecov=true"
             } >> "${GITHUB_OUTPUT}"
             exit 0
           fi
@@ -95,7 +97,7 @@ jobs:
           # PR touching only those can't merge having run nothing but the commits leg.
           if matches_changed_path '\.swift$|^Package\.(swift|resolved)$|^\.swiftlint\.yml$|^\.github/|^scripts/|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$|^justfile$|^\.githooks/|^_typos\.toml$|^lychee\.toml$|^README\.md$|^SECURITY\.md$|^CONTRIBUTING\.md$|^docs/|^LICENSE$'; then
             add_check '{"name":"Lint","check":"lint","runner":"macos-26"}'
-            add_check '{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true","environment":"codecov"}'
+            add_check '{"name":"Test (Thread Sanitizer)","check":"test-tsan","runner":"macos-26","sanitize":"thread","coverage":"true"}'
             add_check '{"name":"Test (Address Sanitizer)","check":"test-asan","runner":"macos-26","sanitize":"address"}'
           fi
 
@@ -141,6 +143,7 @@ jobs:
             echo "run_codeql_interpreted=${RUN_CODEQL_INTERPRETED}"
             echo "run_zizmor=${RUN_ZIZMOR}"
             echo "run_links=${RUN_LINKS}"
+            echo "run_codecov=$(jq -r 'any(.[]; .check == "test-tsan")' <<<"${MATRIX}")"
           } >> "${GITHUB_OUTPUT}"
 
   commits:
@@ -157,9 +160,6 @@ jobs:
     if: ${{ needs.generate-matrix.outputs.matrix != '[]' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
-    environment:
-      name: ${{ matrix.environment }}
-      deployment: false
     permissions:
       contents: read
     strategy:
@@ -178,11 +178,7 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_ENV_HINTS: 1
-        run: brew install actionlint swiftlint typos-cli
-
-      - name: Actionlint
-        if: matrix.check == 'lint'
-        run: actionlint -no-color
+        run: brew install swiftlint typos-cli
 
       - name: SwiftLint
         if: matrix.check == 'lint'
@@ -287,14 +283,20 @@ jobs:
             > coverage.lcov
           echo "lcov: $(wc -l < coverage.lcov) lines"
 
-      - name: Upload coverage to Codecov
-        if: success() && matrix.check == 'test-tsan'
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.lcov
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]' }}
 
+      - name: Normalize report paths
+        if: success() && matrix.check == 'test-tsan'
+        run: python3 -I scripts/upload-codecov.py --prepare --coverage coverage.lcov
+
+      - name: Save coverage reports
+        if: success() && matrix.check == 'test-tsan'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-reports
+          path: |
+            coverage.lcov
+          if-no-files-found: error
+          retention-days: 1
 
   codeql:
     name: CodeQL
@@ -323,6 +325,37 @@ jobs:
       languages: '["javascript-typescript","python"]'
       runner: "ubuntu-slim"
 
+  codecov:
+    name: Codecov
+    needs: [generate-matrix, check]
+    # Forks still run coverage tests; Codecov OIDC accepts same-repository runs.
+    if: needs.generate-matrix.outputs.run_codecov == 'true' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # Authenticate report uploads to Codecov with GitHub OIDC.
+    steps:
+      - name: Check out the trusted uploader
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+          sparse-checkout: /scripts/upload-codecov.py
+          sparse-checkout-cone-mode: false
+          path: codecov-uploader
+
+      - name: Download coverage-reports
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: coverage-reports
+          path: reports
+
+      - name: Upload reports with verified Codecov CLI
+        run: >-
+          python3 -I codecov-uploader/scripts/upload-codecov.py
+          --coverage reports/coverage.lcov
+
   zizmor:
     name: zizmor
     needs: generate-matrix
@@ -347,7 +380,7 @@ jobs:
 
   conclusion:
     name: conclusion
-    needs: [generate-matrix, commits, check, codeql, codeql-interpreted, zizmor, links]
+    needs: [generate-matrix, commits, check, codeql, codeql-interpreted, zizmor, links, codecov]
     runs-on: ubuntu-slim
     timeout-minutes: 15
     if: always()
@@ -361,11 +394,42 @@ jobs:
           CODEQL_INTERPRETED_RESULT: ${{ needs.codeql-interpreted.result }}
           ZIZMOR_RESULT: ${{ needs.zizmor.result }}
           LINKS_RESULT: ${{ needs.links.result }}
+          CODECOV_RESULT: ${{ needs.codecov.result }}
+          MATRIX: ${{ needs.generate-matrix.outputs.matrix }}
+          RUN_CODEQL: ${{ needs.generate-matrix.outputs.run_codeql }}
+          RUN_CODEQL_INTERPRETED: ${{ needs.generate-matrix.outputs.run_codeql_interpreted }}
+          RUN_ZIZMOR: ${{ needs.generate-matrix.outputs.run_zizmor }}
+          RUN_LINKS: ${{ needs.generate-matrix.outputs.run_links }}
+          RUN_CODECOV: ${{ needs.generate-matrix.outputs.run_codecov }}
+          UPLOAD_ALLOWED: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: |
-          test "${GENERATE_MATRIX_RESULT}" = "success"
-          test "${COMMITS_RESULT}" = "success" || test "${COMMITS_RESULT}" = "skipped"
-          test "${CHECK_RESULT}" = "success" || test "${CHECK_RESULT}" = "skipped"
-          test "${CODEQL_RESULT}" = "success" || test "${CODEQL_RESULT}" = "skipped"
-          test "${CODEQL_INTERPRETED_RESULT}" = "success" || test "${CODEQL_INTERPRETED_RESULT}" = "skipped"
-          test "${ZIZMOR_RESULT}" = "success" || test "${ZIZMOR_RESULT}" = "skipped"
-          test "${LINKS_RESULT}" = "success" || test "${LINKS_RESULT}" = "skipped"
+          require_result() {
+            local name="$1" result="$2" required="$3"
+            case "${required}" in
+              true) test "${result}" = success ;;
+              false) test "${result}" = skipped ;;
+              *) echo "::error::Invalid routing decision for ${name}."; return 1 ;;
+            esac || { echo "::error::${name} ended with ${result:-no result}."; return 1; }
+          }
+
+          require_result matrix "${GENERATE_MATRIX_RESULT}" true
+          case "${GITHUB_EVENT_NAME}" in
+            pull_request) require_result commits "${COMMITS_RESULT}" true ;;
+            push) require_result commits "${COMMITS_RESULT}" false ;;
+            *) echo "::error::Unexpected CI event."; exit 1 ;;
+          esac
+          test -n "${MATRIX}"
+          REQUIRE_CHECK=true
+          [[ "${MATRIX}" != '[]' ]] || REQUIRE_CHECK=false
+          require_result check "${CHECK_RESULT}" "${REQUIRE_CHECK}"
+          require_result codeql "${CODEQL_RESULT}" "${RUN_CODEQL}"
+          require_result codeql-interpreted "${CODEQL_INTERPRETED_RESULT}" "${RUN_CODEQL_INTERPRETED}"
+          require_result zizmor "${ZIZMOR_RESULT}" "${RUN_ZIZMOR}"
+          require_result links "${LINKS_RESULT}" "${RUN_LINKS}"
+          [[ "${RUN_CODECOV}" == true || "${RUN_CODECOV}" == false ]]
+          [[ "${UPLOAD_ALLOWED}" == true || "${UPLOAD_ALLOWED}" == false ]]
+          REQUIRE_CODECOV=false
+          if [[ "${RUN_CODECOV}" == true && "${UPLOAD_ALLOWED}" == true ]]; then
+            REQUIRE_CODECOV=true
+          fi
+          require_result codecov "${CODECOV_RESULT}" "${REQUIRE_CODECOV}"

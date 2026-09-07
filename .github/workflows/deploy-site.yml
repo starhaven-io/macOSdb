@@ -7,12 +7,15 @@ on:
     paths:
       - 'site/**'
       - 'data/**'
+      - '.github/workflows/deploy-site.yml'
+      - 'scripts/check-npm-install-policy.mjs'
+      - 'scripts/lint-json.py'
   workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: deploy-site
+  group: ${{ github.ref == 'refs/heads/main' && 'deploy-site' || format('rejected-deploy-{0}', github.run_id) }}
   cancel-in-progress: true
 
 defaults:
