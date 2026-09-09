@@ -67,7 +67,7 @@ class ParserTests(unittest.TestCase):
 class StrictJSONTests(unittest.TestCase):
     def test_duplicate_keys_and_nonfinite_numbers_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "fixture.json"
+            path = Path(tmp).resolve() / "fixture.json"
             for source in ['{"field": 1, "field": 2}', '{"field": NaN}']:
                 with self.subTest(source=source):
                     path.write_text(source)
@@ -76,14 +76,14 @@ class StrictJSONTests(unittest.TestCase):
 
     def test_size_limit_is_enforced_before_parsing(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "fixture.json"
+            path = Path(tmp).resolve() / "fixture.json"
             path.write_text('{"field": "too large"}')
             with self.assertRaisesRegex(ValueError, "size limit"):
                 lint.read_json(path, 4)
 
     def test_regular_file_and_catalog_confinement(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             source = root / "release.json"
             source.write_text('{"valid": true}')
             self.assertEqual(lint.read_json(source, 1_024, root), {"valid": True})
@@ -112,7 +112,7 @@ class CatalogShapeTests(unittest.TestCase):
 
     def validate(self, data):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             product = {**lint.PRODUCTS[0], "data": root}
             (root / "macOS-15.0-24A335.json").write_text(json.dumps(data))
             with contextlib.redirect_stderr(io.StringIO()) as output:
@@ -134,7 +134,7 @@ class CatalogShapeTests(unittest.TestCase):
 
     def test_missing_required_catalog_fails_the_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
-            product = {**lint.PRODUCTS[0], "data": Path(tmp) / "missing"}
+            product = {**lint.PRODUCTS[0], "data": Path(tmp).resolve() / "missing"}
             with mock.patch.object(lint, "PRODUCTS", [product]), contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit) as result:
                     lint.main()
@@ -243,7 +243,7 @@ class IndexPointerTests(unittest.TestCase):
 
     def test_index_rejects_swapped_or_traversing_data_file(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             expected = root / "releases/15/macOS-15.0-24A335.json"
             expected.parent.mkdir(parents=True)
             expected.write_text("{}")
@@ -258,7 +258,7 @@ class IndexPointerTests(unittest.TestCase):
 
     def test_index_accepts_canonical_data_file(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             expected = root / "releases/15/macOS-15.0-24A335.json"
             expected.parent.mkdir(parents=True)
             release = self._entry("unused")
