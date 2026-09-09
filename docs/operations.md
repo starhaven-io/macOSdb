@@ -22,7 +22,9 @@ A retry is safe only when the existing tag points to the dispatched commit. Exis
 
 ## Website deployment
 
-Changes under `site/` or `data/`, or to the deployment workflow and its validation scripts, deploy from `main` to Cloudflare Workers. Manual production dispatches fail outside `main`. Rejected dispatches use separate concurrency groups so they cannot cancel production work. CI checks the install-script policy before a clean dependency install, then runs the vulnerability audit, formatting and type checks, unit tests, production build, and deployment dry-run. The production workflow revalidates the release corpus, repeats the clean install and build, and verifies the live security headers after publishing.
+Changes under `site/` or `data/`, or to the deployment workflow and its validation scripts, deploy from `main` to Cloudflare Workers. Manual production dispatches fail outside `main`. Rejected dispatches use separate concurrency groups so they cannot cancel production work. CI checks the install-script policy before a clean dependency install, then runs formatting and type checks, unit tests, production build, and deployment dry-run. The production workflow revalidates the release corpus, repeats the clean install and build, and verifies the live security headers after publishing.
+
+Dependency vulnerability monitoring runs through Dependabot alerts and security updates. Full-tree vulnerability audits are kept out of CI and deployment gates so new advisories cannot block publishing an unchanged lockfile. Run `npm --prefix site run audit` when investigating dependency findings.
 
 Repository automation assumes that GitHub environments restrict scanner, release, and Cloudflare secrets to the `main` branch; self-hosted scanner runners are isolated, patched, and restricted to the scanner workflows at `refs/heads/main`; `main` requires the aggregate CI conclusion; and tag/release mutation is limited to the release workflow. These are control-plane settings and should be audited in GitHub and Cloudflare after changing administrators, apps, runner groups, or environments.
 

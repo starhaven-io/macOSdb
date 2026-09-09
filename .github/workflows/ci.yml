@@ -228,11 +228,6 @@ jobs:
         working-directory: site
         run: npm run check
 
-      - name: Audit site dependencies
-        if: matrix.check == 'site'
-        working-directory: site
-        run: npm run audit
-
       - name: Build site
         if: matrix.check == 'site'
         working-directory: site
