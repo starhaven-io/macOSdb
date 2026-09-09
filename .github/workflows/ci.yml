@@ -195,7 +195,7 @@ jobs:
 
       - name: Script tests
         if: matrix.check == 'script-tests'
-        run: python3 -m unittest discover -s scripts/tests -v
+        run: python3 -B -m unittest discover -s scripts/tests -v
 
       - name: Setup Node
         if: matrix.check == 'site'
