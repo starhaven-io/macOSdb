@@ -75,10 +75,6 @@ jobs:
         working-directory: site
         run: npm test
 
-      - name: Audit site dependencies
-        working-directory: site
-        run: npm run audit
-
       - name: Build site
         working-directory: site
         run: npm run build

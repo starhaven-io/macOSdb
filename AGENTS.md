@@ -26,7 +26,7 @@ listed in [Contributing](CONTRIBUTING.md) are required by the complete gate.
 
 Use focused recipes in `justfile` while iterating, then run `just check` on the
 stable patch. It includes Swift tests and analysis, generated-data and Python
-script tests, site dependency policy/audit, formatting, type checking, unit
+script tests, site dependency policy, formatting, type checking, unit
 tests, build, deployment dry-run, and link checks. Missing tools fail the gate;
 report them as unverified. Run `git diff --check` and inspect the final status.
 Do not repeat expensive checks when the relevant source and evidence are unchanged.

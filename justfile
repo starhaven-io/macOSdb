@@ -137,8 +137,6 @@ check:
     (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" npm run check) || failed=1
     echo "--- site-test ---"
     (cd site && npm test) || failed=1
-    echo "--- site-audit ---"
-    (cd site && npm run audit) || failed=1
     echo "--- site-build ---"
     (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" npm run build) || failed=1
     echo "--- site-deploy-dry ---"

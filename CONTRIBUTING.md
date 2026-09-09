@@ -13,7 +13,9 @@ just site-install
 just check
 ```
 
-`just check` performs a clean npm install, dependency-policy and vulnerability checks, Swift and script tests, static analysis, site formatting and type checks, a production build, a Cloudflare deployment dry-run, and link checking. Individual recipes are documented in the [README](README.md#building).
+`just check` performs a clean npm install, dependency-policy checks, Swift and script tests, static analysis, site formatting and type checks, a production build, a Cloudflare deployment dry-run, and link checking. Individual recipes are documented in the [README](README.md#building).
+
+Dependabot alerts and security updates handle newly disclosed dependency vulnerabilities independently of CI and deployment. Run `npm --prefix site run audit` for a manual audit; findings do not gate unrelated changes or deployments.
 
 ## Source changes
 
