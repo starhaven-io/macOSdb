@@ -1,4 +1,4 @@
 /// Source of truth for the release version, read by the Release workflow.
 enum MacosdbVersion {
-    static let current = "2.4.0"
+    static let current = "2.4.1"
 }
