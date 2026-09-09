@@ -35,7 +35,7 @@ lint-json:
 
 # Test repository scripts
 test-scripts:
-    python3 -m unittest discover -s scripts/tests
+    python3 -B -m unittest discover -s scripts/tests
 
 # Scan for unused code. native build system (deprecated): swiftbuild emits no index store Periphery can find.
 periphery:
@@ -112,7 +112,7 @@ check:
         skip lint swiftlint swiftlint
     fi
     run python3 scripts/lint-json.py
-    run python3 -m unittest discover -s scripts/tests
+    run python3 -B -m unittest discover -s scripts/tests
     if command -v typos &>/dev/null; then
         run typos
     else
