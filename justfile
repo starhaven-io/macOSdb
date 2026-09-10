@@ -37,11 +37,6 @@ lint-json:
 test-scripts:
     python3 -B -m unittest discover -s scripts/tests
 
-# Scan for unused code. native build system (deprecated): swiftbuild emits no index store Periphery can find.
-periphery:
-    swift build --build-tests --build-system native
-    periphery scan --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
-
 # Check for typos
 typos:
     typos
@@ -122,13 +117,6 @@ check:
         run zizmor --strict-collection --persona auditor .github/workflows/
     else
         skip audit zizmor zizmor
-    fi
-    if command -v periphery &>/dev/null; then
-        # native build system (deprecated): swiftbuild emits no index store Periphery can find
-        run swift build --build-tests --build-system native
-        run periphery scan --strict --disable-update-check --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
-    else
-        skip periphery periphery periphery
     fi
     run swift test
     echo "--- site-format-check ---"

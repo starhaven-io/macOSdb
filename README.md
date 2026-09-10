@@ -162,7 +162,6 @@ just lint-json      # Validate JSON data files
 just test-scripts   # Run Python script tests
 just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows (zizmor)
-just periphery      # Scan for unused code
 just test-cov       # Run tests with code coverage
 just lychee         # Check the built site and README for broken links
 just check          # Run all checks, including Swift, script, and site tests
