@@ -25,7 +25,11 @@ params:
   npm-policy:
     projects: ["site"]
   link-check:
-    targets: "--config lychee.toml --root-dir site/dist/client './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'"
+    targets: >-
+      --config lychee.toml --root-dir site/dist/client
+      --remap "^https://macosdb[.]com/404/$ file://${GITHUB_WORKSPACE}/site/dist/client/404.html"
+      --remap "^https://macosdb[.]com/ file://${GITHUB_WORKSPACE}/site/dist/client/"
+      './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'
     build-site: true
     site-directory: "site"
     authenticated-github: false
@@ -42,6 +46,21 @@ params:
     advanced-security: "${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}"
     fail-on-findings: true
     pull-request: true
+    accept-workflow-findings:
+      - workflow: ".github/workflows/scan-ipsw.yml"
+        workflow-sha256: "9c35780c9030c52df69883066cacaaf8a721a2c17d1c1a324199bd9450e104bf"
+        category: "shell_fetch"
+        severity: "low"
+        description: "curl/wget downloads executable from non-literal source — cannot verify URL version"
+        command: "curl -fsSL --proto '=https' --proto-redir '=https'  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o \"${IPSW_FILE}.part\" \"${IPSW_URL}\" &"
+        reason: "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-09-10; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
+      - workflow: ".github/workflows/scan-xip.yml"
+        workflow-sha256: "f5526b82bcdfed0d4f8e7af0e215e425e6db4e50546454042febf4951ecbfc7c"
+        category: "shell_fetch"
+        severity: "low"
+        description: "curl/wget downloads executable from non-literal source — cannot verify URL version"
+        command: "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H \"Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}\" -o \"${XIP_FILE}.part\" \"${CDN_URL}\" &"
+        reason: "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-09-10; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
   readme:
     badges:
       workflow: "ci.yml"
