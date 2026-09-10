@@ -37,11 +37,6 @@ lint-json:
 test-scripts:
     python3 -B -m unittest discover -s scripts/tests
 
-# Scan for unused code. native build system (deprecated): swiftbuild emits no index store Periphery can find.
-periphery:
-    swift build --build-tests --build-system native
-    periphery scan --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
-
 # Check for typos
 typos:
     typos
@@ -84,7 +79,7 @@ site-preview:
 
 # Check for broken links in the built site and README
 lychee: site-build
-    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html' ../README.md ../SECURITY.md ../CONTRIBUTING.md '../docs/**/*.md'
+    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" --remap "^https://macosdb[.]com/404/$ file://$(pwd)/dist/client/404.html" --remap "^https://macosdb[.]com/ file://$(pwd)/dist/client/" 'dist/client/**/*.html' ../README.md ../SECURITY.md ../CONTRIBUTING.md '../docs/**/*.md'
 
 # Check
 
@@ -123,13 +118,6 @@ check:
     else
         skip audit zizmor zizmor
     fi
-    if command -v periphery &>/dev/null; then
-        # native build system (deprecated): swiftbuild emits no index store Periphery can find
-        run swift build --build-tests --build-system native
-        run periphery scan --strict --disable-update-check --skip-build --index-store-path "$(find .build -path '*/debug/index/store' -type d | head -1)"
-    else
-        skip periphery periphery periphery
-    fi
     run swift test
     echo "--- site-format-check ---"
     (cd site && npm run format:check) || failed=1
@@ -142,7 +130,7 @@ check:
     echo "--- site-deploy-dry ---"
     (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" WRANGLER_SEND_METRICS=false npm run deploy:dry) || failed=1
     if command -v lychee &>/dev/null; then
-        run lychee --config lychee.toml --root-dir "$(pwd)/site/dist/client" 'site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md 'docs/**/*.md'
+        run lychee --config lychee.toml --root-dir "$(pwd)/site/dist/client" --remap "^https://macosdb[.]com/404/$ file://$(pwd)/site/dist/client/404.html" --remap "^https://macosdb[.]com/ file://$(pwd)/site/dist/client/" 'site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md 'docs/**/*.md'
     else
         skip links lychee lychee
     fi

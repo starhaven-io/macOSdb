@@ -152,7 +152,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read # required to read PR titles
-    uses: starhaven-io/.github/.github/workflows/reusable-conventional-commits.yml@79c2a753cc5d72487a1ae6900cf89a3308ab5330 # v2026.09.09.2
+    uses: starhaven-io/.github/.github/workflows/reusable-conventional-commits.yml@a56f4d4b8cb75b5f16d1f62115d7e6ca17ef9e23 # v2026.09.10.1
 
   check:
     name: ${{ matrix.name }}
@@ -300,7 +300,7 @@ jobs:
     permissions:
       contents: read
       security-events: write # required to upload SARIF results
-    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@79c2a753cc5d72487a1ae6900cf89a3308ab5330 # v2026.09.09.2
+    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@a56f4d4b8cb75b5f16d1f62115d7e6ca17ef9e23 # v2026.09.10.1
     with:
       languages: '["swift"]'
       runner: "macos-26"
@@ -315,7 +315,7 @@ jobs:
     permissions:
       contents: read
       security-events: write # required to upload SARIF results
-    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@79c2a753cc5d72487a1ae6900cf89a3308ab5330 # v2026.09.09.2
+    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@a56f4d4b8cb75b5f16d1f62115d7e6ca17ef9e23 # v2026.09.10.1
     with:
       languages: '["javascript-typescript","python"]'
       runner: "ubuntu-slim"
@@ -358,7 +358,19 @@ jobs:
     permissions:
       contents: read
       security-events: write # required for zizmor SARIF upload
-    uses: starhaven-io/.github/.github/workflows/reusable-zizmor.yml@79c2a753cc5d72487a1ae6900cf89a3308ab5330 # v2026.09.09.2
+    uses: starhaven-io/.github/.github/workflows/reusable-zizmor.yml@a56f4d4b8cb75b5f16d1f62115d7e6ca17ef9e23 # v2026.09.10.1
+
+  pinprick:
+    name: pinprick
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.run_zizmor == 'true'
+    permissions:
+      contents: read
+      security-events: write # required for pinprick SARIF upload
+    uses: starhaven-io/.github/.github/workflows/reusable-pinprick-audit.yml@a56f4d4b8cb75b5f16d1f62115d7e6ca17ef9e23 # v2026.09.10.1
+    with:
+      advanced-security: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      fail-on-findings: true
 
   links:
     name: Check links
@@ -366,16 +378,18 @@ jobs:
     if: needs.generate-matrix.outputs.run_links == 'true'
     permissions:
       contents: read
-    uses: starhaven-io/.github/.github/workflows/reusable-link-check.yml@79c2a753cc5d72487a1ae6900cf89a3308ab5330 # v2026.09.09.2
+    uses: starhaven-io/.github/.github/workflows/reusable-link-check.yml@a56f4d4b8cb75b5f16d1f62115d7e6ca17ef9e23 # v2026.09.10.1
     with:
-      args: "--config lychee.toml --root-dir site/dist/client './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'"
+      # Canonical URLs for PR-only pages are not live yet. Resolve this site's
+      # production origin against the built artifact; keep external links live.
+      args: "--config lychee.toml --root-dir site/dist/client --remap \"^https://macosdb\\.com/404/$ file://${GITHUB_WORKSPACE}/site/dist/client/404.html\" --remap \"^https://macosdb\\.com/ file://${GITHUB_WORKSPACE}/site/dist/client/\" './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'"
       build-site: true
       site-directory: "site"
       authenticated-github: false
 
   conclusion:
     name: conclusion
-    needs: [generate-matrix, commits, check, codeql, codeql-interpreted, zizmor, links, codecov]
+    needs: [generate-matrix, commits, check, codeql, codeql-interpreted, zizmor, pinprick, links, codecov]
     runs-on: ubuntu-slim
     timeout-minutes: 15
     if: always()
@@ -388,6 +402,7 @@ jobs:
           CODEQL_RESULT: ${{ needs.codeql.result }}
           CODEQL_INTERPRETED_RESULT: ${{ needs.codeql-interpreted.result }}
           ZIZMOR_RESULT: ${{ needs.zizmor.result }}
+          PINPRICK_RESULT: ${{ needs.pinprick.result }}
           LINKS_RESULT: ${{ needs.links.result }}
           CODECOV_RESULT: ${{ needs.codecov.result }}
           MATRIX: ${{ needs.generate-matrix.outputs.matrix }}
@@ -420,6 +435,7 @@ jobs:
           require_result codeql "${CODEQL_RESULT}" "${RUN_CODEQL}"
           require_result codeql-interpreted "${CODEQL_INTERPRETED_RESULT}" "${RUN_CODEQL_INTERPRETED}"
           require_result zizmor "${ZIZMOR_RESULT}" "${RUN_ZIZMOR}"
+          require_result pinprick "${PINPRICK_RESULT}" "${RUN_ZIZMOR}"
           require_result links "${LINKS_RESULT}" "${RUN_LINKS}"
           [[ "${RUN_CODECOV}" == true || "${RUN_CODECOV}" == false ]]
           [[ "${UPLOAD_ALLOWED}" == true || "${UPLOAD_ALLOWED}" == false ]]

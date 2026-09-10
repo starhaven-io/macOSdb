@@ -16,6 +16,7 @@ class CIConclusionTests(unittest.TestCase):
             "CODEQL_RESULT": "success",
             "CODEQL_INTERPRETED_RESULT": "success",
             "ZIZMOR_RESULT": "success",
+            "PINPRICK_RESULT": "success",
             "LINKS_RESULT": "success",
             "CODECOV_RESULT": "success",
             "MATRIX": '[{"check":"test-tsan"}]',
@@ -46,16 +47,21 @@ class CIConclusionTests(unittest.TestCase):
                     self.assertNotEqual(self.conclude(**{name: result}).returncode, 0)
 
     def test_only_unselected_routes_may_be_skipped(self):
-        for route, result in (
-            ("RUN_CODEQL", "CODEQL_RESULT"),
-            ("RUN_CODEQL_INTERPRETED", "CODEQL_INTERPRETED_RESULT"),
-            ("RUN_ZIZMOR", "ZIZMOR_RESULT"),
-            ("RUN_LINKS", "LINKS_RESULT"),
-            ("RUN_CODECOV", "CODECOV_RESULT"),
+        for route, results in (
+            ("RUN_CODEQL", ("CODEQL_RESULT",)),
+            ("RUN_CODEQL_INTERPRETED", ("CODEQL_INTERPRETED_RESULT",)),
+            ("RUN_ZIZMOR", ("ZIZMOR_RESULT", "PINPRICK_RESULT")),
+            ("RUN_LINKS", ("LINKS_RESULT",)),
+            ("RUN_CODECOV", ("CODECOV_RESULT",)),
         ):
             with self.subTest(route=route):
-                self.assertEqual(self.conclude(**{route: "false", result: "skipped"}).returncode, 0)
-                self.assertNotEqual(self.conclude(**{route: "false", result: "failure"}).returncode, 0)
+                skipped = {result: "skipped" for result in results}
+                self.assertEqual(self.conclude(**{route: "false", **skipped}).returncode, 0)
+                for result in results:
+                    self.assertNotEqual(
+                        self.conclude(**{route: "false", **skipped, result: "failure"}).returncode,
+                        0,
+                    )
                 self.assertNotEqual(self.conclude(**{route: ""}).returncode, 0)
         self.assertEqual(self.conclude(MATRIX="[]", CHECK_RESULT="skipped").returncode, 0)
         self.assertNotEqual(self.conclude(MATRIX="").returncode, 0)
