@@ -79,7 +79,7 @@ site-preview:
 
 # Check for broken links in the built site and README
 lychee: site-build
-    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" 'dist/client/**/*.html' ../README.md ../SECURITY.md ../CONTRIBUTING.md '../docs/**/*.md'
+    cd site && lychee --config ../lychee.toml --root-dir "$(pwd)/dist/client" --remap "^https://macosdb[.]com/404/$ file://$(pwd)/dist/client/404.html" --remap "^https://macosdb[.]com/ file://$(pwd)/dist/client/" 'dist/client/**/*.html' ../README.md ../SECURITY.md ../CONTRIBUTING.md '../docs/**/*.md'
 
 # Check
 
@@ -130,7 +130,7 @@ check:
     echo "--- site-deploy-dry ---"
     (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" WRANGLER_SEND_METRICS=false npm run deploy:dry) || failed=1
     if command -v lychee &>/dev/null; then
-        run lychee --config lychee.toml --root-dir "$(pwd)/site/dist/client" 'site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md 'docs/**/*.md'
+        run lychee --config lychee.toml --root-dir "$(pwd)/site/dist/client" --remap "^https://macosdb[.]com/404/$ file://$(pwd)/site/dist/client/404.html" --remap "^https://macosdb[.]com/ file://$(pwd)/site/dist/client/" 'site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md 'docs/**/*.md'
     else
         skip links lychee lychee
     fi
