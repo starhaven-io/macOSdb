@@ -1,5 +1,15 @@
 [
   {
+    "buildNumber" : "27A266a",
+    "dataFile" : "releases/27/Xcode-27.0-27A266a.json",
+    "isBeta" : false,
+    "isRC" : true,
+    "osVersion" : "27.0",
+    "productType" : "Xcode",
+    "releaseDate" : "2026-09-09",
+    "releaseName" : "Xcode 27.0"
+  },
+  {
     "betaNumber" : 6,
     "buildNumber" : "27A5252f",
     "dataFile" : "releases/27/Xcode-27.0-27A5252f.json",
