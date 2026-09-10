@@ -8,6 +8,16 @@ The XIP archive cache is persistent and immutable after validation. A cached fil
 
 Dispatch only from `main`, after verifying the Apple source URL, product version, build number, release date, and prerelease flags. Auto-merge relies on the independent hosted artifact validation and required CI checks. Inspect the resulting data diff and completed run when investigating unexpected catalog changes.
 
+### Accepted archive download risk
+
+The repository maintainer accepts the two LOW Pinprick runtime-fetch findings in the `Download IPSW` and `Download XIP` steps, reviewed on 2026-09-10. Fleet canon in [`fleet/repos/macOSdb.yml`](https://github.com/starhaven-io/.github/blob/main/fleet/repos/macOSdb.yml) owns the complete generated `.pinprick.toml`; changes require hub review and release/sync. The required fleet guard rejects consumer edits to this policy. `.pinprick.toml` binds each acceptance to its exact logical curl command, finding identity, and complete workflow SHA-256. This is an explicit risk acceptance, not a claim that IPSW or XIP archives cannot contain executable code. Any workflow change invalidates the acceptance and requires review before updating its digest. Reassess after changes to runner isolation, Apple URL validation, archive paths, download options, archive validation, or scanner execution behavior; remove the acceptance if independently anchored publisher verification becomes available and can be enforced.
+
+The scanner needs runtime-selected Apple releases and persistent per-version `.part` paths for resumable downloads. IPSW input validation restricts the source to HTTPS on `updates.cdn-apple.com` and a version/build filename; redirects remain HTTPS but are not host-restricted. XIP derives its CDN URL from a validated path under `adcdownload.apple.com`, does not follow redirects, and sends its ADC cookie only to that source. Both workflows reject archive-path symlinks, wait for curl to succeed before renaming the partial file, check archive size and format, and pass archives to the scanner as untrusted input. The scanner does not execute extracted binaries to discover their versions; XIP expansion uses Apple's system `xip` tool and propagates failure.
+
+Residual risks include trusting Apple's delivery service and TLS, archive-parser defects, and the integrity of the self-hosted scanner environment. Locally created SHA-256 sidecars detect later cache changes; they do not independently authenticate the original download. Repository code does not prove hosted runner-group or environment protections. No global host, extension, action, severity, or rule exemption is used, and incomplete audit coverage remains fatal.
+
+CI, scheduled, and local link checks resolve this site's production origin against the built site, because new data PRs create pages that do not exist in production yet. The 404 route resolves to its generated HTML file; missing built pages still fail. External online links retain their existing checks.
+
 ## CLI release
 
 1. Change `MacosdbVersion.current` in `Sources/macosdb/Version.swift` on a feature branch.

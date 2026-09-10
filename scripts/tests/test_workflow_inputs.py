@@ -123,6 +123,20 @@ class WorkflowSafetyContractTests(unittest.TestCase):
         matrix_script = workflow_run_block(workflow, "Generate CI matrix")
         self.assertIn("matches_changed_path '^\\.github/workflows/|^scripts/", matrix_script)
 
+    def test_pr_link_check_resolves_production_urls_against_the_built_site(self):
+        workflow = CI_WORKFLOW.read_text()
+        links = workflow.split("  links:\n", 1)[1].split("\n  conclusion:\n", 1)[0]
+        self.assertIn(
+            '--remap \\"^https://macosdb\\\\.com/ file://${GITHUB_WORKSPACE}/site/dist/client/\\"',
+            links,
+        )
+        self.assertIn(
+            '--remap \\"^https://macosdb\\\\.com/404/$ '
+            'file://${GITHUB_WORKSPACE}/site/dist/client/404.html\\"',
+            links,
+        )
+        self.assertNotIn("--exclude ^https://macosdb", links)
+
     def test_coverage_upload_is_isolated_and_uses_oidc_for_dependabot(self):
         workflow = CI_WORKFLOW.read_text()
         upload = workflow.split("  codecov:\n", 1)[1].split("\n  zizmor:\n", 1)[0]
