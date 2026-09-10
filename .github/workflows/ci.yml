@@ -152,7 +152,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read # required to read PR titles
-    uses: starhaven-io/.github/.github/workflows/reusable-conventional-commits.yml@01259585bcefd122469b50cd7cbe6d593635619f # v2026.09.09.3
+    uses: starhaven-io/.github/.github/workflows/reusable-conventional-commits.yml@e748ec16bd1207114a766d1d761a6743a6e3bf3a # v2026.09.09.4
 
   check:
     name: ${{ matrix.name }}
@@ -300,7 +300,7 @@ jobs:
     permissions:
       contents: read
       security-events: write # required to upload SARIF results
-    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@01259585bcefd122469b50cd7cbe6d593635619f # v2026.09.09.3
+    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@e748ec16bd1207114a766d1d761a6743a6e3bf3a # v2026.09.09.4
     with:
       languages: '["swift"]'
       runner: "macos-26"
@@ -315,7 +315,7 @@ jobs:
     permissions:
       contents: read
       security-events: write # required to upload SARIF results
-    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@01259585bcefd122469b50cd7cbe6d593635619f # v2026.09.09.3
+    uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@e748ec16bd1207114a766d1d761a6743a6e3bf3a # v2026.09.09.4
     with:
       languages: '["javascript-typescript","python"]'
       runner: "ubuntu-slim"
@@ -358,7 +358,7 @@ jobs:
     permissions:
       contents: read
       security-events: write # required for zizmor SARIF upload
-    uses: starhaven-io/.github/.github/workflows/reusable-zizmor.yml@01259585bcefd122469b50cd7cbe6d593635619f # v2026.09.09.3
+    uses: starhaven-io/.github/.github/workflows/reusable-zizmor.yml@e748ec16bd1207114a766d1d761a6743a6e3bf3a # v2026.09.09.4
 
   links:
     name: Check links
@@ -366,7 +366,7 @@ jobs:
     if: needs.generate-matrix.outputs.run_links == 'true'
     permissions:
       contents: read
-    uses: starhaven-io/.github/.github/workflows/reusable-link-check.yml@01259585bcefd122469b50cd7cbe6d593635619f # v2026.09.09.3
+    uses: starhaven-io/.github/.github/workflows/reusable-link-check.yml@e748ec16bd1207114a766d1d761a6743a6e3bf3a # v2026.09.09.4
     with:
       args: "--config lychee.toml --root-dir site/dist/client './site/dist/client/**/*.html' README.md SECURITY.md CONTRIBUTING.md './docs/**/*.md'"
       build-site: true
