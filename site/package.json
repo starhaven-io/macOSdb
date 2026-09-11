@@ -21,11 +21,11 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.2.6",
+    "@astrojs/cloudflare": "^14.3.0",
     "@astrojs/compiler-rs": "^0.4.0",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource/inter": "^5.3.0",
-    "astro": "^7.2.10",
+    "astro": "^7.3.1",
     "astro-pagefind": "^2.0.1",
     "satori": "^0.33.4",
     "satori-html": "^0.3.2",
@@ -36,7 +36,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3",
-    "wrangler": "4.128.0"
+    "wrangler": "4.129.0"
   },
   "allowScripts": {
     "esbuild": false,
