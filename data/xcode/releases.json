@@ -3,10 +3,10 @@
     "buildNumber" : "27A266a",
     "dataFile" : "releases/27/Xcode-27.0-27A266a.json",
     "isBeta" : false,
-    "isRC" : true,
+    "isRC" : false,
     "osVersion" : "27.0",
     "productType" : "Xcode",
-    "releaseDate" : "2026-09-09",
+    "releaseDate" : "2026-09-14",
     "releaseName" : "Xcode 27.0"
   },
   {
