@@ -108,7 +108,7 @@
   "ipswURL" : "https://updates.cdn-apple.com/2026FallFCS/afcfc88e-bbe6-44bf-a5da-07c56eebc06c/UniversalMac_27.0_26A428_Restore.ipsw",
   "isBeta" : false,
   "isDeviceSpecific" : false,
-  "isRC" : true,
+  "isRC" : false,
   "kernels" : [
     {
       "arch" : "ARM64_T8103",
@@ -549,6 +549,6 @@
   ],
   "osVersion" : "27.0",
   "productType" : "macOS",
-  "releaseDate" : "2026-09-09",
+  "releaseDate" : "2026-09-14",
   "releaseName" : "Golden Gate"
 }
