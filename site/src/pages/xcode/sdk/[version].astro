@@ -44,13 +44,11 @@ const structuredData = {
   <header class="sdk-header">
     <h1 data-pagefind-weight="2">macOS SDK {version}</h1>
     <div class="meta" data-pagefind-ignore>
-      {
-        latestBuild && (
-          <span>
-            Latest build: <code>{latestBuild}</code>
-          </span>
-        )
-      }
+      {latestBuild && (
+        <span>
+          Latest build: <code>{latestBuild}</code>
+        </span>
+      )}
       <span>
         {entries.length} Xcode release{entries.length === 1 ? '' : 's'}
       </span>
@@ -72,31 +70,29 @@ const structuredData = {
           </tr>
         </thead>
         <tbody>
-          {
-            entries.map((entry) => (
-              <tr>
-                <td>
-                  {entry.sdkBuild ? (
-                    <>
-                      <code>{entry.sdkBuild}</code>
-                      {entry.isFirstShippingBuild && <span class="status-badge status-added">New</span>}
-                    </>
-                  ) : (
-                    <span class="dash">—</span>
-                  )}
-                </td>
-                <td>
-                  <a href={`/xcode/release/${entry.xcodeSlug}/`}>{entry.xcodeName}</a>
-                  {entry.isBeta && <Badge variant="beta" />}
-                  {entry.isRC && <Badge variant="rc" />}
-                </td>
-                <td>
-                  <code>{entry.xcodeBuild}</code>
-                </td>
-                <td>{entry.xcodeReleaseDate ? formatDate(entry.xcodeReleaseDate) : ''}</td>
-              </tr>
-            ))
-          }
+          {entries.map((entry) => (
+            <tr>
+              <td>
+                {entry.sdkBuild ? (
+                  <>
+                    <code>{entry.sdkBuild}</code>
+                    {entry.isFirstShippingBuild && <span class="status-badge status-added">New</span>}
+                  </>
+                ) : (
+                  <span class="dash">—</span>
+                )}
+              </td>
+              <td>
+                <a href={`/xcode/release/${entry.xcodeSlug}/`}>{entry.xcodeName}</a>
+                {entry.isBeta && <Badge variant="beta" />}
+                {entry.isRC && <Badge variant="rc" />}
+              </td>
+              <td>
+                <code>{entry.xcodeBuild}</code>
+              </td>
+              <td>{entry.xcodeReleaseDate ? formatDate(entry.xcodeReleaseDate) : ''}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

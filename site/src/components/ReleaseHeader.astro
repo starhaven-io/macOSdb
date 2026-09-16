@@ -17,7 +17,9 @@ const { title, buildNumber, releaseDate, isBeta, isRC, isDeviceSpecific } = Astr
 <header class="release-header">
   <h1 data-pagefind-weight="2">{title}</h1>
   <div class="meta" data-pagefind-ignore>
-    <span>Build <code>{buildNumber}</code></span>
+    <span>
+      Build <code>{buildNumber}</code>
+    </span>
     {releaseDate && <span>{formatDate(releaseDate, 'long')}</span>}
     {isBeta && <Badge variant="beta" />}
     {isRC && <Badge variant="rc" />}

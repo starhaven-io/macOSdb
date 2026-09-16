@@ -53,40 +53,36 @@ const structuredData = {
 
   <h2 class="section-heading">macOS</h2>
   <div class="component-grid">
-    {
-      macosComponents.map((comp) => (
-        <a href={`/macos/component/${componentSlug(comp.name)}/`} class="component-card">
-          <h3>{comp.name}</h3>
-          <div class="version">
-            <code>{comp.version}</code>
-          </div>
-          <div class="meta">
-            <span class:list={['source', `source-${comp.source}`]}>
-              {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-            </span>
-          </div>
-        </a>
-      ))
-    }
+    {macosComponents.map((comp) => (
+      <a href={`/macos/component/${componentSlug(comp.name)}/`} class="component-card">
+        <h3>{comp.name}</h3>
+        <div class="version">
+          <code>{comp.version}</code>
+        </div>
+        <div class="meta">
+          <span class:list={['source', `source-${comp.source}`]}>
+            {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+          </span>
+        </div>
+      </a>
+    ))}
   </div>
 
   <h2 class="section-heading">Xcode</h2>
   <div class="component-grid">
-    {
-      xcodeComponents.map((comp) => (
-        <a href={`/xcode/component/${componentSlug(comp.name)}/`} class="component-card">
-          <h3>{comp.name}</h3>
-          <div class="version">
-            <code>{comp.version}</code>
-          </div>
-          <div class="meta">
-            <span class:list={['source', `source-${comp.source}`]}>
-              {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-            </span>
-          </div>
-        </a>
-      ))
-    }
+    {xcodeComponents.map((comp) => (
+      <a href={`/xcode/component/${componentSlug(comp.name)}/`} class="component-card">
+        <h3>{comp.name}</h3>
+        <div class="version">
+          <code>{comp.version}</code>
+        </div>
+        <div class="meta">
+          <span class:list={['source', `source-${comp.source}`]}>
+            {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+          </span>
+        </div>
+      </a>
+    ))}
   </div>
 </Base>
 

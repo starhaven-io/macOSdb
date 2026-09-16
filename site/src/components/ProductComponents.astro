@@ -35,21 +35,19 @@ const structuredData = {
   <p class="subtitle">Open-source components tracked across {product.label} releases for Apple silicon.</p>
 
   <div class="component-grid">
-    {
-      sorted.map((comp) => (
-        <a href={`/${product.key}/component/${componentSlug(comp.name)}/`} class="component-card">
-          <h2>{comp.name}</h2>
-          <div class="version">
-            <code>{comp.version}</code>
-          </div>
-          <div class="meta">
-            <span class:list={['source', `source-${comp.source}`]}>
-              {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-            </span>
-          </div>
-        </a>
-      ))
-    }
+    {sorted.map((comp) => (
+      <a href={`/${product.key}/component/${componentSlug(comp.name)}/`} class="component-card">
+        <h2>{comp.name}</h2>
+        <div class="version">
+          <code>{comp.version}</code>
+        </div>
+        <div class="meta">
+          <span class:list={['source', `source-${comp.source}`]}>
+            {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+          </span>
+        </div>
+      </a>
+    ))}
   </div>
 </Base>
 

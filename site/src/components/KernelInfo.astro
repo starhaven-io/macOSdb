@@ -16,52 +16,50 @@ const { kernels } = Astro.props;
 const summary = groupKernels(kernels);
 ---
 
-{
-  summary && (
-    <section class="kernel-info" data-pagefind-ignore>
-      <h2>Kernel</h2>
-      <dl>
-        <div>
-          <dt>Darwin</dt>
-          <dd>{summary.darwinVersion}</dd>
-        </div>
-        {summary.xnuVersion && (
-          <div>
-            <dt>XNU</dt>
-            <dd>{summary.xnuVersion}</dd>
-          </div>
-        )}
-      </dl>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Chip</th>
-              <th>Architecture</th>
-              <th>Kernel File</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.rows.map((row) => (
-              <tr>
-                <td>
-                  {row.chips.join(', ')}
-                  {row.isDev && <span class="dev-badge">Dev</span>}
-                </td>
-                <td>
-                  <code>{row.arch}</code>
-                </td>
-                <td>
-                  <code>{row.file}</code>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+{summary && (
+  <section class="kernel-info" data-pagefind-ignore>
+    <h2>Kernel</h2>
+    <dl>
+      <div>
+        <dt>Darwin</dt>
+        <dd>{summary.darwinVersion}</dd>
       </div>
-    </section>
-  )
-}
+      {summary.xnuVersion && (
+        <div>
+          <dt>XNU</dt>
+          <dd>{summary.xnuVersion}</dd>
+        </div>
+      )}
+    </dl>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Chip</th>
+            <th>Architecture</th>
+            <th>Kernel File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {summary.rows.map((row) => (
+            <tr>
+              <td>
+                {row.chips.join(', ')}
+                {row.isDev && <span class="dev-badge">Dev</span>}
+              </td>
+              <td>
+                <code>{row.arch}</code>
+              </td>
+              <td>
+                <code>{row.file}</code>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
 
 <style>
   .kernel-info {

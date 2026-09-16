@@ -34,28 +34,24 @@ const websiteSchema = {
 
   <div class="product-grid">
     <div class="product-card">
-      <h2><a href="/macos/">macOS</a></h2>
-      <p class="product-desc">
-        {macosReleases.length} releases tracked since macOS 11 Big Sur.
-      </p>
-      {
-        macos.ga && (
-          <div class="latest">
-            <span class="latest-label">{macos.prerelease ? 'Latest stable' : 'Latest'}</span>
-            <a href={`/macos/release/${releaseSlug(macos.ga)}/`}>{displayName(macos.ga, true)}</a>
-            <span class="latest-date">{formatDate(macos.ga.releaseDate)}</span>
-          </div>
-        )
-      }
-      {
-        macos.prerelease && (
-          <div class="latest">
-            <span class="latest-label">{macos.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
-            <a href={`/macos/release/${releaseSlug(macos.prerelease)}/`}>{displayName(macos.prerelease, true)}</a>
-            <span class="latest-date">{formatDate(macos.prerelease.releaseDate)}</span>
-          </div>
-        )
-      }
+      <h2>
+        <a href="/macos/">macOS</a>
+      </h2>
+      <p class="product-desc">{macosReleases.length} releases tracked since macOS 11 Big Sur.</p>
+      {macos.ga && (
+        <div class="latest">
+          <span class="latest-label">{macos.prerelease ? 'Latest stable' : 'Latest'}</span>
+          <a href={`/macos/release/${releaseSlug(macos.ga)}/`}>{displayName(macos.ga, true)}</a>
+          <span class="latest-date">{formatDate(macos.ga.releaseDate)}</span>
+        </div>
+      )}
+      {macos.prerelease && (
+        <div class="latest">
+          <span class="latest-label">{macos.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
+          <a href={`/macos/release/${releaseSlug(macos.prerelease)}/`}>{displayName(macos.prerelease, true)}</a>
+          <span class="latest-date">{formatDate(macos.prerelease.releaseDate)}</span>
+        </div>
+      )}
       <div class="product-links">
         <a href="/macos/releases/">Releases</a>
         <a href="/macos/components/">Components</a>
@@ -64,30 +60,26 @@ const websiteSchema = {
     </div>
 
     <div class="product-card">
-      <h2><a href="/xcode/">Xcode</a></h2>
-      <p class="product-desc">
-        {xcodeReleases.length} releases tracked since Xcode 12.
-      </p>
-      {
-        xcode.ga && (
-          <div class="latest">
-            <span class="latest-label">{xcode.prerelease ? 'Latest stable' : 'Latest'}</span>
-            <a href={`/xcode/release/${releaseSlug(xcode.ga)}/`}>{displayName(xcode.ga, false, 'Xcode')}</a>
-            <span class="latest-date">{formatDate(xcode.ga.releaseDate)}</span>
-          </div>
-        )
-      }
-      {
-        xcode.prerelease && (
-          <div class="latest">
-            <span class="latest-label">{xcode.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
-            <a href={`/xcode/release/${releaseSlug(xcode.prerelease)}/`}>
-              {displayName(xcode.prerelease, false, 'Xcode')}
-            </a>
-            <span class="latest-date">{formatDate(xcode.prerelease.releaseDate)}</span>
-          </div>
-        )
-      }
+      <h2>
+        <a href="/xcode/">Xcode</a>
+      </h2>
+      <p class="product-desc">{xcodeReleases.length} releases tracked since Xcode 12.</p>
+      {xcode.ga && (
+        <div class="latest">
+          <span class="latest-label">{xcode.prerelease ? 'Latest stable' : 'Latest'}</span>
+          <a href={`/xcode/release/${releaseSlug(xcode.ga)}/`}>{displayName(xcode.ga, false, 'Xcode')}</a>
+          <span class="latest-date">{formatDate(xcode.ga.releaseDate)}</span>
+        </div>
+      )}
+      {xcode.prerelease && (
+        <div class="latest">
+          <span class="latest-label">{xcode.prerelease.isBeta ? 'Latest beta' : 'Latest RC'}</span>
+          <a href={`/xcode/release/${releaseSlug(xcode.prerelease)}/`}>
+            {displayName(xcode.prerelease, false, 'Xcode')}
+          </a>
+          <span class="latest-date">{formatDate(xcode.prerelease.releaseDate)}</span>
+        </div>
+      )}
       <div class="product-links">
         <a href="/xcode/releases/">Releases</a>
         <a href="/xcode/components/">Components</a>
