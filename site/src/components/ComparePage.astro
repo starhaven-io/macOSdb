@@ -41,13 +41,11 @@ const hasChanges =
       <label for="from-select">From</label>
       <select id="from-select" name="from">
         <option value="">Select a release...</option>
-        {
-          releaseOptions.map((opt) => (
-            <option value={opt.key} selected={opt.key === fromKey}>
-              {opt.label}
-            </option>
-          ))
-        }
+        {releaseOptions.map((opt) => (
+          <option value={opt.key} selected={opt.key === fromKey}>
+            {opt.label}
+          </option>
+        ))}
       </select>
     </div>
     <span class="arrow">&rarr;</span>
@@ -55,139 +53,131 @@ const hasChanges =
       <label for="to-select">To</label>
       <select id="to-select" name="to">
         <option value="">Select a release...</option>
-        {
-          releaseOptions.map((opt) => (
-            <option value={opt.key} selected={opt.key === toKey}>
-              {opt.label}
-            </option>
-          ))
-        }
+        {releaseOptions.map((opt) => (
+          <option value={opt.key} selected={opt.key === toKey}>
+            {opt.label}
+          </option>
+        ))}
       </select>
     </div>
     <button type="submit">Compare</button>
   </form>
 
-  {
-    fromKey && toKey && !result && (
-      <div class="results">
-        <p class="no-changes">One or both releases not found.</p>
+  {fromKey && toKey && !result && (
+    <div class="results">
+      <p class="no-changes">One or both releases not found.</p>
+    </div>
+  )}
+
+  {result && !hasChanges && (
+    <div class="results">
+      <p class="no-changes">No differences found between these releases.</p>
+    </div>
+  )}
+
+  {result && hasChanges && (
+    <div class="results">
+      <div class="summary">
+        {result.summary.upgraded > 0 && <span class="badge badge-upgraded">{result.summary.upgraded} upgraded</span>}
+        {result.summary.downgraded > 0 && (
+          <span class="badge badge-downgraded">{result.summary.downgraded} downgraded</span>
+        )}
+        {result.summary.added > 0 && <span class="badge badge-added">{result.summary.added} added</span>}
+        {result.summary.removed > 0 && <span class="badge badge-removed">{result.summary.removed} removed</span>}
       </div>
-    )
-  }
 
-  {
-    result && !hasChanges && (
-      <div class="results">
-        <p class="no-changes">No differences found between these releases.</p>
+      <div class="filter-bar">
+        <label>
+          <input type="checkbox" id="changed-only" checked />
+          Show changed only
+        </label>
       </div>
-    )
-  }
 
-  {
-    result && hasChanges && (
-      <div class="results">
-        <div class="summary">
-          {result.summary.upgraded > 0 && <span class="badge badge-upgraded">{result.summary.upgraded} upgraded</span>}
-          {result.summary.downgraded > 0 && (
-            <span class="badge badge-downgraded">{result.summary.downgraded} downgraded</span>
-          )}
-          {result.summary.added > 0 && <span class="badge badge-added">{result.summary.added} added</span>}
-          {result.summary.removed > 0 && <span class="badge badge-removed">{result.summary.removed} removed</span>}
-        </div>
+      <table id="changes-table" class="hide-unchanged">
+        <caption class="visually-hidden">Component versions in the selected releases</caption>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.changes.map((c) => {
+            const statusLabel =
+              c.direction === 'upgraded'
+                ? '\u2191 Upgraded'
+                : c.direction === 'downgraded'
+                  ? '\u2193 Downgraded'
+                  : '\u2014 Unchanged';
+            return (
+              <tr class={`status-${c.direction}`} data-status={c.direction}>
+                <td>{c.name}</td>
+                <td>
+                  <code>{c.from}</code>
+                </td>
+                <td>
+                  <code>{c.to}</code>
+                </td>
+                <td>
+                  <span class={`status-badge status-${c.direction}`}>{statusLabel}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
 
-        <div class="filter-bar">
-          <label>
-            <input type="checkbox" id="changed-only" checked />
-            Show changed only
-          </label>
-        </div>
-
-        <table id="changes-table" class="hide-unchanged">
-          <caption class="visually-hidden">Component versions in the selected releases</caption>
-          <thead>
-            <tr>
-              <th>Component</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.changes.map((c) => {
-              const statusLabel =
-                c.direction === 'upgraded'
-                  ? '\u2191 Upgraded'
-                  : c.direction === 'downgraded'
-                    ? '\u2193 Downgraded'
-                    : '\u2014 Unchanged';
-              return (
-                <tr class={`status-${c.direction}`} data-status={c.direction}>
+      {result.added.length > 0 && (
+        <div class="diff-section">
+          <h3 class="added-heading">Added</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Version</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.added.map((c) => (
+                <tr>
                   <td>{c.name}</td>
                   <td>
-                    <code>{c.from}</code>
-                  </td>
-                  <td>
-                    <code>{c.to}</code>
-                  </td>
-                  <td>
-                    <span class={`status-badge status-${c.direction}`}>{statusLabel}</span>
+                    <code>{c.version}</code>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {result.added.length > 0 && (
-          <div class="diff-section">
-            <h3 class="added-heading">Added</h3>
-            <table>
-              <thead>
+      {result.removed.length > 0 && (
+        <div class="diff-section">
+          <h3 class="removed-heading">Removed</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Version</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.removed.map((c) => (
                 <tr>
-                  <th>Component</th>
-                  <th>Version</th>
+                  <td>{c.name}</td>
+                  <td>
+                    <code>{c.version}</code>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {result.added.map((c) => (
-                  <tr>
-                    <td>{c.name}</td>
-                    <td>
-                      <code>{c.version}</code>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {result.removed.length > 0 && (
-          <div class="diff-section">
-            <h3 class="removed-heading">Removed</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Component</th>
-                  <th>Version</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.removed.map((c) => (
-                  <tr>
-                    <td>{c.name}</td>
-                    <td>
-                      <code>{c.version}</code>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    )
-  }
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )}
 </Base>
 
 <script>

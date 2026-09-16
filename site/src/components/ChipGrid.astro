@@ -24,37 +24,35 @@ for (const kernel of kernels) {
 const hasChips = Object.keys(chipFamilies).length > 0;
 ---
 
-{
-  hasChips && (
-    <section class="hardware" data-pagefind-ignore>
-      <h2>Hardware Support</h2>
-      <p class="hardware-hint">Click a device name to show its model identifier.</p>
-      <div class="chip-grid">
-        {Object.entries(chipFamilies).map(([chip, devices]) => (
-          <div class="chip-card">
-            <h3>{chip}</h3>
-            <ul>
-              {devices.map((d) => (
-                <li>
-                  <button
-                    type="button"
-                    class="device-toggle"
-                    data-model={d.device}
-                    data-name={deviceDisplayName(d.device)}
-                    aria-pressed="false"
-                    aria-label={`Show model identifier for ${deviceDisplayName(d.device)}`}
-                  >
-                    {deviceDisplayName(d.device)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
+{hasChips && (
+  <section class="hardware" data-pagefind-ignore>
+    <h2>Hardware Support</h2>
+    <p class="hardware-hint">Click a device name to show its model identifier.</p>
+    <div class="chip-grid">
+      {Object.entries(chipFamilies).map(([chip, devices]) => (
+        <div class="chip-card">
+          <h3>{chip}</h3>
+          <ul>
+            {devices.map((d) => (
+              <li>
+                <button
+                  type="button"
+                  class="device-toggle"
+                  data-model={d.device}
+                  data-name={deviceDisplayName(d.device)}
+                  aria-pressed="false"
+                  aria-label={`Show model identifier for ${deviceDisplayName(d.device)}`}
+                >
+                  {deviceDisplayName(d.device)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
 
 <style>
   .hardware h2 {

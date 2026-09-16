@@ -16,9 +16,8 @@ import Base from '../../layouts/Base.astro';
   </p>
 
   <p class="subtitle">
-    Data is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>. See the <a
-      href="/openapi.json">OpenAPI 3.1 description</a
-    > for a machine-readable contract.
+    Data is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>. See the{' '}
+    <a href="/openapi.json">OpenAPI 3.1 description</a> for a machine-readable contract.
   </p>
 
   <section class="endpoint-group">
@@ -56,11 +55,15 @@ import Base from '../../layouts/Base.astro';
     <div class="endpoint">
       <div class="endpoint-header">
         <code class="method">GET</code>
-        <code class="path">/api/v1/{'{product}'}/releases/{'{major}'}/{'{file}'}.json</code>
+        <code class="path">
+          /api/v1/{'{product}'}/releases/{'{major}'}/{'{file}'}.json
+        </code>
       </div>
       <p>Full release detail including components, kernels (macOS), and SDKs (Xcode).</p>
       <details>
-        <summary>Example: <code>/api/v1/macos/releases/26/macOS-26.4-25E246.json</code></summary>
+        <summary>
+          Example: <code>/api/v1/macos/releases/26/macOS-26.4-25E246.json</code>
+        </summary>
         <pre><code>{JSON.stringify({
   "buildNumber": "25E246",
   "osVersion": "26.4",
@@ -120,11 +123,15 @@ import Base from '../../layouts/Base.astro';
     <div class="endpoint">
       <div class="endpoint-header">
         <code class="method">GET</code>
-        <code class="path">/api/v1/{'{product}'}/components/{'{name}'}.json</code>
+        <code class="path">
+          /api/v1/{'{product}'}/components/{'{name}'}.json
+        </code>
       </div>
       <p>Version history for a single component across all releases.</p>
       <details>
-        <summary>Example: <code>/api/v1/macos/components/curl.json</code></summary>
+        <summary>
+          Example: <code>/api/v1/macos/components/curl.json</code>
+        </summary>
         <pre><code>{JSON.stringify({
   "name": "curl",
   "source": "filesystem",
@@ -154,15 +161,21 @@ import Base from '../../layouts/Base.astro';
     <div class="endpoint">
       <div class="endpoint-header">
         <code class="method">GET</code>
-        <code class="path">/api/v1/{'{product}'}/compare/{'{from}'}/{'{to}'}.json</code>
+        <code class="path">
+          /api/v1/{'{product}'}/compare/{'{from}'}/{'{to}'}.json
+        </code>
       </div>
       <p>
-        Diff components between two releases. Use <code>{'{version}'}-{'{build}'}</code> identifiers (e.g. <code
-          >15.1-24B83</code
-        >).
+        Diff components between two releases. Use{' '}
+        <code>
+          {'{version}'}-{'{build}'}
+        </code>{' '}
+        identifiers (e.g. <code>15.1-24B83</code>).
       </p>
       <details>
-        <summary>Example: <code>/api/v1/macos/compare/15.1-24B83/15.2-24C101.json</code></summary>
+        <summary>
+          Example: <code>/api/v1/macos/compare/15.1-24B83/15.2-24C101.json</code>
+        </summary>
         <pre><code>{JSON.stringify({
   "from": "macOS 15.1 Sequoia",
   "to": "macOS 15.2 Sequoia",

@@ -86,21 +86,19 @@ const structuredData = [
     {previousSlug && <a href={`/xcode/compare/?from=${previousSlug}&to=${currentSlug}`}>Compare with previous</a>}
   </ReleaseHeader>
 
-  {
-    release.sdks && release.sdks.length > 0 && (
-      <section class="sdks">
-        <h2>Bundled SDKs</h2>
-        <div class="sdk-list">
-          {release.sdks.map((sdk) => (
-            <a class="sdk-badge" href={`/xcode/sdk/${sdk.sdkVersion}/`}>
-              macOS {sdk.sdkVersion}
-              {sdk.buildVersion && <span class="sdk-build">({sdk.buildVersion})</span>}
-            </a>
-          ))}
-        </div>
-      </section>
-    )
-  }
+  {release.sdks && release.sdks.length > 0 && (
+    <section class="sdks">
+      <h2>Bundled SDKs</h2>
+      <div class="sdk-list">
+        {release.sdks.map((sdk) => (
+          <a class="sdk-badge" href={`/xcode/sdk/${sdk.sdkVersion}/`}>
+            macOS {sdk.sdkVersion}
+            {sdk.buildVersion && <span class="sdk-build">({sdk.buildVersion})</span>}
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 
   <ComponentTable components={release.components} basePath="/xcode" />
 </Base>

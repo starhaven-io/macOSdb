@@ -45,28 +45,24 @@ const structuredData = {
     <p>Open-source components tracked across {product.label} releases for Apple silicon.</p>
   </div>
 
-  {
-    latestGA && (
-      <div class="latest-release">
-        <span class="latest-label">{latestPre ? 'Latest stable' : 'Latest release'}</span>
-        <a href={`/${product.key}/release/${releaseSlug(latestGA)}/`} class="latest-name">
-          {displayName(latestGA, product.includeReleaseName, product.label)}
-        </a>
-        <span class="latest-date">{formatDate(latestGA.releaseDate, 'long')}</span>
-      </div>
-    )
-  }
-  {
-    latestPre && (
-      <div class="latest-release">
-        <span class="latest-label">{latestPre.isBeta ? 'Latest beta' : 'Latest RC'}</span>
-        <a href={`/${product.key}/release/${releaseSlug(latestPre)}/`} class="latest-name">
-          {displayName(latestPre, product.includeReleaseName, product.label)}
-        </a>
-        <span class="latest-date">{formatDate(latestPre.releaseDate, 'long')}</span>
-      </div>
-    )
-  }
+  {latestGA && (
+    <div class="latest-release">
+      <span class="latest-label">{latestPre ? 'Latest stable' : 'Latest release'}</span>
+      <a href={`/${product.key}/release/${releaseSlug(latestGA)}/`} class="latest-name">
+        {displayName(latestGA, product.includeReleaseName, product.label)}
+      </a>
+      <span class="latest-date">{formatDate(latestGA.releaseDate, 'long')}</span>
+    </div>
+  )}
+  {latestPre && (
+    <div class="latest-release">
+      <span class="latest-label">{latestPre.isBeta ? 'Latest beta' : 'Latest RC'}</span>
+      <a href={`/${product.key}/release/${releaseSlug(latestPre)}/`} class="latest-name">
+        {displayName(latestPre, product.includeReleaseName, product.label)}
+      </a>
+      <span class="latest-date">{formatDate(latestPre.releaseDate, 'long')}</span>
+    </div>
+  )}
 
   <div class="stats">
     <span>{totalReleases} releases tracked</span>
@@ -76,7 +72,9 @@ const structuredData = {
   <div class="section-grid">
     <a href={`/${product.key}/releases/`} class="section-card">
       <h2>Releases</h2>
-      <p>Browse all {totalReleases} {product.label} releases since {product.firstRelease}.</p>
+      <p>
+        Browse all {totalReleases} {product.label} releases since {product.firstRelease}.
+      </p>
     </a>
 
     <a href={`/${product.key}/components/`} class="section-card">

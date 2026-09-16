@@ -51,17 +51,19 @@ const titleSuffix = product.key === 'xcode' ? ` (${product.label})` : '';
   <header class="comp-header">
     <h1 data-pagefind-weight="2">{componentName}</h1>
     <div class="meta" data-pagefind-ignore>
-      <span>Latest: <code>{latest.version}</code></span>
-      <span class:list={['source', `source-${source}`]}>
-        {source === 'dyldCache' ? 'dyld cache' : source}
+      <span>
+        Latest: <code>{latest.version}</code>
       </span>
+      <span class:list={['source', `source-${source}`]}>{source === 'dyldCache' ? 'dyld cache' : source}</span>
       <code class="path">{compPath}</code>
     </div>
   </header>
 
   <section class="history">
     <h2>Version History</h2>
-    <p class="subtitle">{changes.length} version changes across all {product.label} releases.</p>
+    <p class="subtitle">
+      {changes.length} version changes across all {product.label} releases.
+    </p>
 
     <div class="table-wrapper">
       <table>
@@ -74,26 +76,24 @@ const titleSuffix = product.key === 'xcode' ? ` (${product.label})` : '';
           </tr>
         </thead>
         <tbody>
-          {
-            changes.map((entry) => (
-              <tr>
-                <td>
-                  <code>{entry.version}</code>
-                </td>
-                <td>
-                  <a href={`/${product.key}/release/${entry.firstReleaseSlug}/`}>{entry.firstRelease}</a>
-                  {entry.firstReleaseBeta && <Badge variant="beta" />}
-                  {entry.firstReleaseRC && <Badge variant="rc" />}
-                </td>
-                <td>{formatDate(entry.firstReleaseDate)}</td>
-                <td>
-                  {entry.direction === 'upgraded' && <span class="status-badge status-upgraded">Upgraded</span>}
-                  {entry.direction === 'downgraded' && <span class="status-badge status-downgraded">Downgraded</span>}
-                  {entry.direction === 'added' && <span class="status-badge status-added">First tracked</span>}
-                </td>
-              </tr>
-            ))
-          }
+          {changes.map((entry) => (
+            <tr>
+              <td>
+                <code>{entry.version}</code>
+              </td>
+              <td>
+                <a href={`/${product.key}/release/${entry.firstReleaseSlug}/`}>{entry.firstRelease}</a>
+                {entry.firstReleaseBeta && <Badge variant="beta" />}
+                {entry.firstReleaseRC && <Badge variant="rc" />}
+              </td>
+              <td>{formatDate(entry.firstReleaseDate)}</td>
+              <td>
+                {entry.direction === 'upgraded' && <span class="status-badge status-upgraded">Upgraded</span>}
+                {entry.direction === 'downgraded' && <span class="status-badge status-downgraded">Downgraded</span>}
+                {entry.direction === 'added' && <span class="status-badge status-added">First tracked</span>}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

@@ -29,26 +29,24 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
       </tr>
     </thead>
     <tbody>
-      {
-        sorted.map((comp) => (
-          <tr>
-            <td class="comp-name">
-              <a href={`${basePath}/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
-            </td>
-            <td>
-              <code>{comp.version}</code>
-            </td>
-            <td data-pagefind-ignore>
-              <span class:list={['source', `source-${comp.source}`]}>
-                {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-              </span>
-            </td>
-            <td class="comp-path" data-pagefind-ignore>
-              <code>{comp.path}</code>
-            </td>
-          </tr>
-        ))
-      }
+      {sorted.map((comp) => (
+        <tr>
+          <td class="comp-name">
+            <a href={`${basePath}/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
+          </td>
+          <td>
+            <code>{comp.version}</code>
+          </td>
+          <td data-pagefind-ignore>
+            <span class:list={['source', `source-${comp.source}`]}>
+              {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+            </span>
+          </td>
+          <td class="comp-path" data-pagefind-ignore>
+            <code>{comp.path}</code>
+          </td>
+        </tr>
+      ))}
     </tbody>
   </table>
 </section>
