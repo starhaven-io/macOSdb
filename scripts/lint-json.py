@@ -81,7 +81,12 @@ XCODE_EXPECTED_COMPONENTS = {
 IPSW_FILE_RE = re.compile(
     r"^UniversalMac_([0-9]+(?:\.[0-9]+){1,2})_([0-9]+[A-Z][0-9]+[a-z]?)_Restore\.ipsw$"
 )
-XCODE_FILE_RE = re.compile(r"^Xcode_([0-9]+(?:\.[0-9]+)*)(?:_[A-Za-z0-9._~%+-]+)?\.xip$")
+XCODE_FILE_RE = re.compile(r"^Xcode_([0-9]+(?:\.[0-9]+)*)(?:_([A-Za-z0-9._~%+-]+))?\.xip$")
+# The archive suffix is underscore-delimited (beta_2_Apple_silicon,
+# Release_Candidate_Universal, for_macOS_Universal_Apps_beta), so the prerelease
+# label is matched as whole tokens. Xcode 13 shipped one "beta3" archive.
+XCODE_BETA_LABEL_RE = re.compile(r"(?:^|_)beta[0-9]*(?=_|$)")
+XCODE_RC_LABEL_RE = re.compile(r"(?:^|_)Release_Candidate(?=_|$)")
 VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+(\.[0-9]+)?$")
 BUILD_IDENTIFIER_RE = re.compile(r"^[0-9]+[A-Z][0-9]+[a-z]?$")
 DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
@@ -256,6 +261,18 @@ def xcode_file_version(filename):
         return None
     version = match.group(1)
     return version if "." in version else f"{version}.0"
+
+
+def xcode_file_label(filename):
+    match = XCODE_FILE_RE.fullmatch(filename) if isinstance(filename, str) else None
+    if match is None:
+        return None
+    suffix = match.group(2) or ""
+    if XCODE_BETA_LABEL_RE.search(suffix):
+        return "beta"
+    if XCODE_RC_LABEL_RE.search(suffix):
+        return "Release_Candidate"
+    return None
 
 
 def parse_version(version_str):
@@ -487,8 +504,17 @@ def validate_releases(product, catalog):
             file_version = xcode_file_version(xip_file)
             if file_version is None:
                 error(f"{f.name}: xipFile '{xip_file}' is not canonical")
-            elif os_version is not None and file_version != os_version:
-                error(f"{f.name}: version in xipFile '{file_version}' doesn't match '{os_version}'")
+            else:
+                if os_version is not None and file_version != os_version:
+                    error(f"{f.name}: version in xipFile '{file_version}' doesn't match '{os_version}'")
+                if isinstance(is_beta, bool) and isinstance(is_rc, bool) and not (is_beta and is_rc):
+                    label = xcode_file_label(xip_file)
+                    expected_label = "beta" if is_beta else "Release_Candidate" if is_rc else None
+                    if label != expected_label:
+                        error(
+                            f"{f.name}: xipFile '{xip_file}' is a {label or 'stable'} archive "
+                            f"but isBeta={is_beta}, isRC={is_rc}"
+                        )
 
             min_os = d.get("minimumOSVersion", "")
             if not isinstance(min_os, str) or not min_os:

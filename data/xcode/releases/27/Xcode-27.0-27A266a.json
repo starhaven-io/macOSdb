@@ -117,6 +117,6 @@
       "sdkVersion" : "27.0"
     }
   ],
-  "xipFile" : "Xcode_27_Release_Candidate.xip",
-  "xipURL" : "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_27_Release_Candidate/Xcode_27_Release_Candidate.xip"
+  "xipFile" : "Xcode_27.xip",
+  "xipURL" : "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_27/Xcode_27.xip"
 }

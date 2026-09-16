@@ -117,6 +117,6 @@
       "sdkVersion" : "26.5"
     }
   ],
-  "xipFile" : "Xcode_26.5_Release_Candidate_Apple_silicon.xip",
-  "xipURL" : "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_26.5_Release_Candidate/Xcode_26.5_Release_Candidate_Apple_silicon.xip"
+  "xipFile" : "Xcode_26.5_Apple_silicon.xip",
+  "xipURL" : "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_26.5/Xcode_26.5_Apple_silicon.xip"
 }

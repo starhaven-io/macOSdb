@@ -209,6 +209,90 @@ class DownloadURLTests(unittest.TestCase):
         self.assertEqual(lint.xcode_file_version("Xcode_26.1_beta.xip"), "26.1")
         self.assertIsNone(lint.xcode_file_version("not-xcode.xip"))
 
+    def test_xcode_archive_labels_are_whole_suffix_tokens(self):
+        for name, label in [
+            ("Xcode_27.xip", None),
+            ("Xcode_26_Universal.xip", None),
+            ("Xcode_26.2_Apple_silicon.xip", None),
+            ("Xcode_27_beta.xip", "beta"),
+            ("Xcode_27_beta_2.xip", "beta"),
+            ("Xcode_13_beta3.xip", "beta"),
+            ("Xcode_26.4_beta_Apple_silicon.xip", "beta"),
+            ("Xcode_12_for_macOS_Universal_Apps_beta.xip", "beta"),
+            ("Xcode_27_Release_Candidate.xip", "Release_Candidate"),
+            ("Xcode_26.6_Release_Candidate_2_Apple_silicon.xip", "Release_Candidate"),
+            ("Xcode_27_betamax.xip", None),
+            ("Xcode_27_Release_Candidates.xip", None),
+            ("not-xcode.xip", None),
+            (None, None),
+        ]:
+            with self.subTest(name=name):
+                self.assertEqual(lint.xcode_file_label(name), label)
+
+
+class XcodeArchiveLabelTests(unittest.TestCase):
+    def setUp(self):
+        lint.errors = 0
+        source = sorted((REPO_ROOT / "data/xcode/releases").rglob("*.json"))[0]
+        release = json.loads(source.read_text())
+        for field in ("betaNumber", "betaRevision", "rcNumber"):
+            release.pop(field, None)
+        self.name = source.name
+        self.release = {**release, "isBeta": False, "isRC": False}
+
+    def tearDown(self):
+        lint.errors = 0
+
+    def validate(self, xip_file, **flags):
+        stem = xip_file.removesuffix(".xip")
+        data = {
+            **self.release,
+            **flags,
+            "xipFile": xip_file,
+            "xipURL": "https://developer.apple.com/services-account/download?"
+            f"path=/Developer_Tools/{stem}/{xip_file}",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            product = {**lint.PRODUCTS[1], "data": root}
+            (root / self.name).write_text(json.dumps(data))
+            with contextlib.redirect_stderr(io.StringIO()) as output:
+                lint.validate_releases(product, {})
+            return output.getvalue()
+
+    def test_stable_release_rejects_prerelease_archive(self):
+        version = self.release["osVersion"]
+        for suffix in ("Release_Candidate", "Release_Candidate_2_Apple_silicon", "beta", "beta_3_Universal"):
+            with self.subTest(suffix=suffix):
+                output = self.validate(f"Xcode_{version}_{suffix}.xip")
+                self.assertIn("archive but isBeta=False, isRC=False", output)
+
+    def test_prerelease_flags_require_matching_archive_label(self):
+        version = self.release["osVersion"]
+        cases = [
+            (f"Xcode_{version}.xip", {"isRC": True}),
+            (f"Xcode_{version}_beta.xip", {"isRC": True}),
+            (f"Xcode_{version}.xip", {"isBeta": True, "betaNumber": 1}),
+            (f"Xcode_{version}_Release_Candidate.xip", {"isBeta": True, "betaNumber": 1}),
+        ]
+        for xip_file, flags in cases:
+            with self.subTest(xip_file=xip_file, flags=flags):
+                self.assertIn(f"xipFile '{xip_file}' is a", self.validate(xip_file, **flags))
+
+    def test_matching_labels_pass(self):
+        version = self.release["osVersion"]
+        cases = [
+            (f"Xcode_{version}.xip", {}),
+            (f"Xcode_{version}_Apple_silicon.xip", {}),
+            (f"Xcode_{version}_Release_Candidate.xip", {"isRC": True}),
+            (f"Xcode_{version}_Release_Candidate_2_Universal.xip", {"isRC": True, "rcNumber": 2}),
+            (f"Xcode_{version}_beta.xip", {"isBeta": True, "betaNumber": 1}),
+            (f"Xcode_{version}_beta_2_Apple_silicon.xip", {"isBeta": True, "betaNumber": 2}),
+        ]
+        for xip_file, flags in cases:
+            with self.subTest(xip_file=xip_file, flags=flags):
+                self.assertEqual(self.validate(xip_file, **flags), "")
+
 
 class IndexPointerTests(unittest.TestCase):
     def setUp(self):
