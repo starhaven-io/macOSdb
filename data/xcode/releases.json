@@ -11,6 +11,17 @@
     "releaseName" : "Xcode 27.2"
   },
   {
+    "betaNumber" : 1,
+    "buildNumber" : "27A9269",
+    "dataFile" : "releases/27/Xcode-27.1-27A9269.json",
+    "isBeta" : true,
+    "isRC" : false,
+    "osVersion" : "27.1",
+    "productType" : "Xcode",
+    "releaseDate" : "2026-09-18",
+    "releaseName" : "Xcode 27.1"
+  },
+  {
     "buildNumber" : "27A266a",
     "dataFile" : "releases/27/Xcode-27.0-27A266a.json",
     "isBeta" : false,
