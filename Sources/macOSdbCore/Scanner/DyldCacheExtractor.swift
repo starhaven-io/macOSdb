@@ -45,7 +45,8 @@ enum DyldCacheExtractor {
     static func extractDylibData(
         cachePath: URL,
         dylibPath: String,
-        confinedTo root: URL
+        confinedTo root: URL,
+        onDiagnostic: (@Sendable (String) -> Void)? = nil
     ) async -> Data? {
         guard !Task.isCancelled else { return nil }
         guard let fileHandle = try? ScannerFileReader.fileHandle(at: cachePath, confinedTo: root) else {
@@ -72,7 +73,8 @@ enum DyldCacheExtractor {
         let allMappings = readAllMappings(
             mainCachePath: cachePath,
             mainFileHandle: fileHandle,
-            confinedTo: root
+            confinedTo: root,
+            onDiagnostic: onDiagnostic
         )
         guard !Task.isCancelled else { return nil }
 
