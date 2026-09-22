@@ -1,6 +1,22 @@
 import Foundation
 
 extension IPSWScanner {
+    func logFilesystemComponentFailure(
+        _ name: String,
+        reason: String,
+        overriding systemComponents: [Component]?
+    ) {
+        guard let systemComponents else {
+            sendVerbose("\(name): \(reason)")
+            return
+        }
+        if systemComponents.contains(where: { $0.name == name }) {
+            sendVerbose("\(name): no usable cryptex override (\(reason)); retaining system-image result")
+        } else {
+            sendVerbose("\(name): cryptex lookup failed (\(reason)); no system-image result available")
+        }
+    }
+
     func logDyldCacheDiagnostics(
         cachePath: URL,
         confinedTo root: URL

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 
 @testable import macOSdbCore
@@ -122,11 +123,83 @@ struct IPSWScannerTests {
         _ = try write("not an Apache version", to: root.appendingPathComponent("usr/sbin/httpd"))
 
         let mount = DMGMounter.MountPoint(path: root.path, deviceNode: "/dev/test")
-        let components = await IPSWScanner().extractFilesystemComponents(mountPoint: mount)
+        let messages = Mutex<[String]>([])
+        let scanner = IPSWScanner()
+        await scanner.recordVerbose { message in messages.withLock { $0.append(message) } }
+        let components = await scanner.extractFilesystemComponents(mountPoint: mount)
 
         #expect(components == [
             Component(name: "curl", version: "8.10.1", path: "/usr/bin/curl", source: .filesystem)
         ])
+        let output = messages.withLock { $0 }
+        #expect(output.contains("httpd: no version matched (21 bytes)"))
+        #expect(output.contains("LibreSSL: binary missing, unsafe, or oversized"))
+        #expect(!output.contains { $0.contains("cryptex") || $0.contains("retaining") })
+    }
+
+    @Test("Failed cryptex overrides report retention per component", arguments: [false, true])
+    func reportsRetainedSystemComponent(unmatched: Bool) async throws {
+        let root = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        if unmatched {
+            _ = try write("no version", to: root.appendingPathComponent("usr/bin/curl"))
+        }
+        let system = [Component(name: "curl", version: "8.7.1", path: "/usr/bin/curl", source: .filesystem)]
+        let messages = Mutex<[String]>([])
+        let scanner = IPSWScanner()
+        await scanner.recordVerbose { message in messages.withLock { $0.append(message) } }
+        let mount = DMGMounter.MountPoint(path: root.path, deviceNode: "/dev/test")
+
+        let overrides = await scanner.extractFilesystemComponents(mountPoint: mount, overriding: system)
+
+        #expect(overrides.isEmpty)
+        #expect(merging(system, overriddenBy: overrides) == system)
+        let reason = unmatched ? "no version matched (10 bytes)" : "binary missing, unsafe, or oversized"
+        let output = messages.withLock { $0 }
+        #expect(output.contains(
+            "curl: no usable cryptex override (\(reason)); retaining system-image result"
+        ))
+        #expect(output.contains(
+            "httpd: cryptex lookup failed (binary missing, unsafe, or oversized); no system-image result available"
+        ))
+    }
+
+    @Test("Cryptex failures do not claim to retain a missing system result")
+    func reportsMissingFromBothImages() async throws {
+        let root = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let messages = Mutex<[String]>([])
+        let scanner = IPSWScanner()
+        await scanner.recordVerbose { message in messages.withLock { $0.append(message) } }
+        let mount = DMGMounter.MountPoint(path: root.path, deviceNode: "/dev/test")
+
+        let overrides = await scanner.extractFilesystemComponents(mountPoint: mount, overriding: [])
+
+        #expect(overrides.isEmpty)
+        let output = messages.withLock { $0 }
+        #expect(output.contains(
+            "curl: cryptex lookup failed (binary missing, unsafe, or oversized); no system-image result available"
+        ))
+        #expect(!output.contains { $0.contains("retaining") })
+    }
+
+    @Test("A usable cryptex override still replaces the system component")
+    func extractsCryptexOverride() async throws {
+        let root = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        _ = try write("curl 8.10.1", to: root.appendingPathComponent("usr/bin/curl"))
+        let system = [Component(name: "curl", version: "8.7.1", path: "/usr/bin/curl", source: .filesystem)]
+        let messages = Mutex<[String]>([])
+        let scanner = IPSWScanner()
+        await scanner.recordVerbose { message in messages.withLock { $0.append(message) } }
+        let mount = DMGMounter.MountPoint(path: root.path, deviceNode: "/dev/test")
+
+        let overrides = await scanner.extractFilesystemComponents(mountPoint: mount, overriding: system)
+
+        #expect(merging(system, overriddenBy: overrides) == [
+            Component(name: "curl", version: "8.10.1", path: "/usr/bin/curl", source: .filesystem)
+        ])
+        #expect(!messages.withLock { $0.contains { $0.hasPrefix("curl:") } })
     }
 
     @Test("Returns no dyld components when a mounted fixture has no cache")
@@ -220,5 +293,11 @@ struct IPSWScannerTests {
         )
         try Data(string.utf8).write(to: path)
         return path
+    }
+}
+
+private extension IPSWScanner {
+    func recordVerbose(_ callback: @escaping @Sendable (String) -> Void) {
+        onVerbose = callback
     }
 }
