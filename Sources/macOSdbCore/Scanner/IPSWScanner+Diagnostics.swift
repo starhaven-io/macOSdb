@@ -7,20 +7,13 @@ extension IPSWScanner {
     ) -> (allDylibs: [String], dylibSet: Set<String>) {
         sendVerbose("Found dyld cache: \(cachePath.lastPathComponent)")
 
-        let basePath = cachePath.path
-        var subcacheCount = 0
-        for idx in 1...99 {
-            guard !Task.isCancelled else { break }
-            let unpadded = basePath + ".\(idx)"
-            let padded = basePath + String(format: ".%02d", idx)
-            if FileManager.default.fileExists(atPath: unpadded)
-                || FileManager.default.fileExists(atPath: padded) {
-                subcacheCount += 1
-            } else {
-                break
-            }
+        let subcacheCount = DyldCacheExtractor.subcacheCount(cachePath: cachePath, confinedTo: root)
+        guard !Task.isCancelled else { return ([], []) }
+        if let subcacheCount {
+            sendVerbose("Subcache entries: \(subcacheCount)")
+        } else {
+            sendVerbose("Subcache entries: unavailable (invalid or unreadable metadata)")
         }
-        sendVerbose("Subcache files: \(subcacheCount)")
 
         let allDylibs = DyldCacheExtractor.listDylibs(cachePath: cachePath, confinedTo: root)
         let dylibSet = Set(allDylibs)

@@ -337,8 +337,10 @@ package actor IPSWScanner {
             guard let dylibData = await DyldCacheExtractor.extractDylibData(
                 cachePath: cachePath,
                 dylibPath: resolvedPath,
-                confinedTo: root
+                confinedTo: root,
+                onDiagnostic: onVerbose
             ) else {
+                guard !Task.isCancelled else { break }
                 sendVerbose("\(definition.name): extraction returned nil")
                 continue
             }

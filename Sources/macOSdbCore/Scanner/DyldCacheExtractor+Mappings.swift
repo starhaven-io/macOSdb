@@ -19,48 +19,62 @@ extension DyldCacheExtractor {
     static func readAllMappings(
         mainCachePath: URL,
         mainFileHandle: FileHandle,
-        confinedTo root: URL
+        confinedTo root: URL,
+        onDiagnostic: (@Sendable (String) -> Void)? = nil
     ) -> [CacheMapping] {
         var allMappings = readMappingsFromFile(
             fileHandle: mainFileHandle,
             sourceFile: mainCachePath
         )
 
-        let subcacheFiles = findSubcacheFiles(mainCachePath: mainCachePath, confinedTo: root)
+        guard let subcacheFiles = readSubcaches(
+            mainCachePath: mainCachePath,
+            mainFileHandle: mainFileHandle,
+            confinedTo: root
+        ) else {
+            return rejectMappings("Invalid dyld subcache table", onDiagnostic: onDiagnostic)
+        }
         if !subcacheFiles.isEmpty {
             logger.info("Found \(subcacheFiles.count) subcache files")
         }
 
-        for subcachePath in subcacheFiles {
-            guard !Task.isCancelled else { break }
+        for subcache in subcacheFiles {
+            guard !Task.isCancelled else { return [] }
             guard let subcacheHandle = try? ScannerFileReader.fileHandle(
-                at: subcachePath,
+                at: subcache.path,
                 confinedTo: root
             ) else {
-                logger.debug("Could not open subcache: \(subcachePath.lastPathComponent)")
-                continue
+                return rejectMappings(
+                    "Could not open subcache: \(subcache.path.lastPathComponent)", onDiagnostic: onDiagnostic
+                )
             }
             defer { try? subcacheHandle.close() }
 
-            let magicData: Data
+            let header: Data
             do {
-                magicData = try readData(fileHandle: subcacheHandle, length: 16)
+                header = try readData(fileHandle: subcacheHandle, length: 104)
             } catch {
-                logger.warning(
-                    "Could not read subcache \(subcachePath.lastPathComponent) header: \(error.localizedDescription)"
+                return rejectMappings(
+                    "Could not read subcache \(subcache.path.lastPathComponent) header: \(error.localizedDescription)",
+                    onDiagnostic: onDiagnostic
                 )
-                continue
             }
 
-            guard let magic = String(data: magicData, encoding: .utf8),
+            guard let magic = String(data: header.prefix(16), encoding: .utf8),
                   magic.hasPrefix(cacheMagicPrefix) else {
-                logger.debug("Subcache \(subcachePath.lastPathComponent) has non-standard header")
-                continue
+                return rejectMappings(
+                    "Subcache \(subcache.path.lastPathComponent) has non-standard header", onDiagnostic: onDiagnostic
+                )
+            }
+            if let uuid = subcache.uuid, header.count < 104 || header.subdata(in: 88..<104) != uuid {
+                return rejectMappings(
+                    "Subcache \(subcache.path.lastPathComponent) UUID mismatch", onDiagnostic: onDiagnostic
+                )
             }
 
             allMappings.append(contentsOf: readMappingsFromFile(
                 fileHandle: subcacheHandle,
-                sourceFile: subcachePath
+                sourceFile: subcache.path
             ))
         }
 
@@ -68,32 +82,14 @@ extension DyldCacheExtractor {
         return allMappings
     }
 
-    private static func findSubcacheFiles(mainCachePath: URL, confinedTo root: URL) -> [URL] {
-        let basePath = mainCachePath.path
-        var subcaches: [URL] = []
-
-        for index in 1...99 {
-            let unpadded = URL(fileURLWithPath: basePath + ".\(index)")
-            let padded = URL(fileURLWithPath: basePath + String(format: ".%02d", index))
-
-            if canOpenCacheFile(unpadded, confinedTo: root) {
-                subcaches.append(unpadded)
-            } else if canOpenCacheFile(padded, confinedTo: root) {
-                subcaches.append(padded)
-            } else {
-                break
-            }
-        }
-
-        return subcaches
-    }
-
-    private static func canOpenCacheFile(_ url: URL, confinedTo root: URL) -> Bool {
-        guard let fileHandle = try? ScannerFileReader.fileHandle(at: url, confinedTo: root) else {
-            return false
-        }
-        try? fileHandle.close()
-        return true
+    private static func rejectMappings(
+        _ reason: String,
+        onDiagnostic: (@Sendable (String) -> Void)?
+    ) -> [CacheMapping] {
+        guard !Task.isCancelled else { return [] }
+        logger.warning("\(reason)")
+        onDiagnostic?(reason)
+        return []
     }
 
     private static func readMappingsFromFile(
