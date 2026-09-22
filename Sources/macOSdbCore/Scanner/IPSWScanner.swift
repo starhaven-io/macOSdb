@@ -250,7 +250,8 @@ package actor IPSWScanner {
     // MARK: - Filesystem component extraction
 
     func extractFilesystemComponents(
-        mountPoint: DMGMounter.MountPoint
+        mountPoint: DMGMounter.MountPoint,
+        overriding systemComponents: [Component]? = nil
     ) async -> [Component] {
         var components: [Component] = []
         let total = filesystemComponents.count
@@ -270,18 +271,30 @@ package actor IPSWScanner {
                 at: binaryPath,
                 confinedTo: URL(fileURLWithPath: mountPoint.path)
             ) else {
-                sendVerbose("\(definition.name): binary missing, unsafe, or oversized")
+                logFilesystemComponentFailure(
+                    definition.name,
+                    reason: "binary missing, unsafe, or oversized",
+                    overriding: systemComponents
+                )
                 continue
             }
 
             if let component = await ComponentExtractor.extract(from: data, using: definition) {
                 components.append(component)
             } else {
-                sendVerbose("\(definition.name): no version matched (\(data.count) bytes)")
+                logFilesystemComponentFailure(
+                    definition.name,
+                    reason: "no version matched (\(data.count) bytes)",
+                    overriding: systemComponents
+                )
             }
         }
 
-        Self.logger.info("Extracted \(components.count)/\(total) filesystem components")
+        if systemComponents != nil {
+            Self.logger.info("Extracted \(components.count) cryptex filesystem overrides (\(total) paths checked)")
+        } else {
+            Self.logger.info("Extracted \(components.count)/\(total) system-image filesystem components")
+        }
         return components
     }
 
@@ -411,7 +424,11 @@ extension IPSWScanner {
 
         do {
             try Task.checkCancellation()
-            let cryptexFsComponents = await extractFilesystemComponents(mountPoint: cryptexMount)
+            sendVerbose("Checking cryptex filesystem overrides")
+            let cryptexFsComponents = await extractFilesystemComponents(
+                mountPoint: cryptexMount,
+                overriding: fsComponents
+            )
             let mergedFsComponents = merging(fsComponents, overriddenBy: cryptexFsComponents)
             try Task.checkCancellation()
 
