@@ -58,6 +58,7 @@ class VerifyReleaseArtifactTests(unittest.TestCase):
             "rc_number": "",
             "device_specific": "false",
             "github_output": None,
+            "replace": False,
         }
         values.update(overrides)
         return argparse.Namespace(**values)
@@ -226,6 +227,7 @@ class VerifyMacOSReleaseArtifactTests(unittest.TestCase):
             "rc_number": "",
             "device_specific": "false",
             "github_output": None,
+            "replace": False,
         }
         values.update(overrides)
         return argparse.Namespace(**values)
@@ -287,6 +289,34 @@ class VerifyMacOSReleaseArtifactTests(unittest.TestCase):
         self.write_artifact(isDeviceSpecific=True)
         with self.assertRaisesRegex(MODULE.VerificationError, "isDeviceSpecific"):
             MODULE.verify_and_overlay(self.arguments())
+
+    def test_published_release_is_replaced_only_in_replace_mode(self):
+        self.write_artifact()
+        MODULE.verify_and_overlay(self.arguments())
+        rescanned = [{"name": "curl", "version": "8.7.1", "path": "/usr/bin/curl", "source": "filesystem"}]
+        self.write_artifact(components=rescanned)
+
+        with self.assertRaisesRegex(MODULE.VerificationError, "already exists"):
+            MODULE.verify_and_overlay(self.arguments())
+        MODULE.verify_and_overlay(self.arguments(replace=True))
+
+        detail = json.loads((self.root / "data/macos/releases/26/macOS-26.1-25B78.json").read_text())
+        self.assertEqual(detail["components"], rescanned)
+
+    def test_replace_requires_a_published_release(self):
+        self.write_artifact()
+
+        with self.assertRaisesRegex(MODULE.VerificationError, "missing from the trusted base"):
+            MODULE.verify_and_overlay(self.arguments(replace=True))
+
+    def test_replace_cannot_change_other_releases(self):
+        self.write_artifact()
+        MODULE.verify_and_overlay(self.arguments())
+        self.base_entry = {**self.base_entry, "releaseDate": "2025-09-16"}
+        self.write_artifact()
+
+        with self.assertRaisesRegex(MODULE.VerificationError, "one-release replacement"):
+            MODULE.verify_and_overlay(self.arguments(replace=True))
 
     def test_macos_release_name_is_derived_from_the_dispatched_version(self):
         self.write_artifact(releaseName="Not Tahoe")

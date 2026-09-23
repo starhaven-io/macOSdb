@@ -12,6 +12,7 @@ CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 IPSW_WORKFLOW = ROOT / ".github" / "workflows" / "scan-ipsw.yml"
 RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 XIP_WORKFLOW = ROOT / ".github" / "workflows" / "scan-xip.yml"
+RESCAN_WORKFLOW = ROOT / ".github" / "workflows" / "rescan.yml"
 
 
 def workflow_run_block(workflow, step_name, *, strip_comments=True):
@@ -100,8 +101,21 @@ class WorkflowSafetyContractTests(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertNotIn(command, deploy)
 
+    def test_rescan_reads_only_verified_cache_and_publishes_as_replacement(self):
+        workflow = RESCAN_WORKFLOW.read_text()
+        scan = workflow.split("\n  scan:\n", 1)[1].split("\n  publish:\n", 1)[0]
+        publish = workflow.split("\n  publish:\n", 1)[1]
+        for fetch in ("curl", "wget", "--save-aea-key", "ADC_DOWNLOAD_AUTH"):
+            self.assertNotIn(fetch, workflow)
+        self.assertNotIn("environment:", scan)
+        self.assertNotIn("secrets.", scan)
+        self.assertLess(scan.index("- name: Verify cached archive checksum"), scan.index("- name: Rescan archive"))
+        self.assertIn('if [[ -L "${path}" || ! -f "${path}" ]]; then', scan)
+        self.assertIn("python3 scripts/verify-release-artifact.py \\\n            --replace \\\n", publish)
+        self.assertLess(publish.index("--replace"), publish.index("- name: Mint bot token"))
+
     def test_scanner_dispatch_requires_main_before_checkout(self):
-        for path in [IPSW_WORKFLOW, XIP_WORKFLOW]:
+        for path in [IPSW_WORKFLOW, XIP_WORKFLOW, RESCAN_WORKFLOW]:
             workflow = path.read_text()
             self.assertLess(workflow.index("- name: Require main branch"), workflow.index("- uses: actions/checkout@"))
             script = workflow_run_block(workflow, "Require main branch")

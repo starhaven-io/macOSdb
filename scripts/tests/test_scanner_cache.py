@@ -4,12 +4,14 @@ import subprocess
 import tempfile
 import unittest
 
-from test_workflow_inputs import IPSW_WORKFLOW, RELEASE_WORKFLOW, XIP_WORKFLOW, workflow_run_block
+from test_workflow_inputs import IPSW_WORKFLOW, RELEASE_WORKFLOW, RESCAN_WORKFLOW, XIP_WORKFLOW, workflow_run_block
 
 
 class ScannerCacheTests(unittest.TestCase):
     def test_distinct_scans_and_releases_are_retained(self):
-        for path, group in ((IPSW_WORKFLOW, "scan"), (XIP_WORKFLOW, "scan"), (RELEASE_WORKFLOW, "release")):
+        for path, group in (
+            (IPSW_WORKFLOW, "scan"), (XIP_WORKFLOW, "scan"), (RESCAN_WORKFLOW, "scan"), (RELEASE_WORKFLOW, "release")
+        ):
             concurrency = path.read_text().split("concurrency:\n", 1)[1].split("\n\n", 1)[0]
             self.assertEqual(dict(line.strip().split(": ", 1) for line in concurrency.splitlines()), {
                 "group": group, "cancel-in-progress": "false", "queue": "max",
@@ -50,14 +52,14 @@ xcrun() {
     def test_scanner_keys_share_compiler_sdk_platform_and_source_identity(self):
         scripts = []
         keys = []
-        for path in (IPSW_WORKFLOW, XIP_WORKFLOW):
+        for path in (IPSW_WORKFLOW, XIP_WORKFLOW, RESCAN_WORKFLOW):
             workflow = path.read_text()
             scripts.append(workflow_run_block(workflow, "Identify Swift build environment"))
             workflow_keys = [line.strip() for line in workflow.splitlines() if "key: macosdb-cli-" in line]
             self.assertEqual(len(workflow_keys), 2)
             self.assertEqual(workflow_keys[0], workflow_keys[1])
             keys.extend(workflow_keys)
-        self.assertEqual(scripts[0], scripts[1])
+        self.assertEqual(len(set(scripts)), 1)
         self.assertEqual(len(set(keys)), 1)
         for component in (
             "runner.os", "runner.arch", "steps.swift-build-environment.outputs.digest",
