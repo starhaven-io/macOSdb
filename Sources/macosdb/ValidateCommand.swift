@@ -2,6 +2,7 @@ import ArgumentParser
 import CryptoKit
 import Darwin
 import Foundation
+import macOSdbCore
 import ZIPFoundation
 
 struct ValidateCommand: AsyncParsableCommand {
@@ -229,7 +230,9 @@ struct ValidateCommand: AsyncParsableCommand {
 
     private func validateZIP(_ openedArchive: OpenedArchive) throws -> Int {
         let archive = try Archive(url: openedArchive.descriptorURL, accessMode: .read)
-        return archive.reduce(0) { count, _ in count + 1 }
+        let entryCount = archive.reduce(0) { count, _ in count + 1 }
+        try ZIPCentralDirectory.requireAllEntriesRead(entryCount, in: openedArchive.handle)
+        return entryCount
     }
 
     private func hashFile(_ archive: OpenedArchive) throws -> String {

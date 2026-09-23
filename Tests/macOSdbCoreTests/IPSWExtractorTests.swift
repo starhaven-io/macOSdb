@@ -119,6 +119,62 @@ struct IPSWExtractorTests {
         }
     }
 
+    @Test("An entry whose bytes fail their CRC-32 is rejected")
+    func rejectsCorruptedEntry() async throws {
+        let fixture = try IPSWFixture(
+            filename: "UniversalMac_15.7.1_24G231_Restore.ipsw",
+            entries: ["System.dmg": Data(repeating: 2, count: 16)]
+        )
+        defer { fixture.cleanup() }
+        try fixture.replaceFirst(Data(repeating: 2, count: 16), with: Data(repeating: 2, count: 15) + Data([3]))
+
+        await #expect {
+            _ = try await IPSWExtractor().extract(ipswPath: fixture.archiveURL)
+        } throws: { error in
+            guard case ScannerError.ipswExtractionFailed(let reason) = error else { return false }
+            return reason == "Extracted data failed its CRC-32 check: System.dmg"
+        }
+    }
+
+    @Test("Extraction stops once an entry exceeds its declared size")
+    func stopsAtDeclaredSize() async throws {
+        let fixture = try IPSWFixture(
+            filename: "UniversalMac_15.7.1_24G231_Restore.ipsw",
+            entries: ["System.dmg": Data(repeating: 0, count: 256 * 1_024)],
+            compressionMethod: .deflate
+        )
+        defer { fixture.cleanup() }
+        try fixture.declareUncompressedSize(1_000)
+
+        await #expect {
+            _ = try await IPSWExtractor().extract(ipswPath: fixture.archiveURL)
+        } throws: { error in
+            guard case ScannerError.ipswExtractionFailed(let reason) = error else { return false }
+            return reason == "Extracted data exceeded its declared size"
+        }
+    }
+
+    @Test("An archive whose entries cannot all be read is rejected")
+    func rejectsUnreadableEntries() async throws {
+        let fixture = try IPSWFixture(
+            filename: "UniversalMac_15.7.1_24G231_Restore.ipsw",
+            entries: [
+                "a.dmg": Data(repeating: 1, count: 4),
+                "b.dmg": Data(repeating: 2, count: 4),
+                "kernelcache.release.test": Data("kernel".utf8)
+            ]
+        )
+        defer { fixture.cleanup() }
+        try fixture.corruptLocalHeader(ordinal: 1)
+
+        await #expect {
+            _ = try await IPSWExtractor().extract(ipswPath: fixture.archiveURL)
+        } throws: { error in
+            guard case ScannerError.ipswExtractionFailed(let reason) = error else { return false }
+            return reason == "ZIP central directory declares 3 entries but only 1 could be read"
+        }
+    }
+
     @Test("An archive without a DMG is rejected")
     func rejectsMissingDMG() async throws {
         let fixture = try IPSWFixture(
@@ -241,7 +297,7 @@ private struct IPSWFixture {
     let directory: URL
     let archiveURL: URL
 
-    init(filename: String, entries: [String: Data]) throws {
+    init(filename: String, entries: [String: Data], compressionMethod: CompressionMethod = .none) throws {
         directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("macosdb-ipsw-test-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -253,6 +309,7 @@ private struct IPSWFixture {
                 with: path,
                 type: .file,
                 uncompressedSize: Int64(data.count),
+                compressionMethod: compressionMethod,
                 provider: { position, size in
                     let start = Int(position)
                     return data.subdata(in: start..<(start + size))
@@ -263,5 +320,36 @@ private struct IPSWFixture {
 
     func cleanup() {
         try? FileManager.default.removeItem(at: directory)
+    }
+
+    func replaceFirst(_ bytes: Data, with replacement: Data) throws {
+        var contents = try Data(contentsOf: archiveURL)
+        let range = try #require(contents.firstRange(of: bytes))
+        contents.replaceSubrange(range, with: replacement)
+        try contents.write(to: archiveURL)
+    }
+
+    /// Patches only the first entry's headers.
+    func declareUncompressedSize(_ size: UInt32) throws {
+        var contents = try Data(contentsOf: archiveURL)
+        let sizeBytes = withUnsafeBytes(of: size.littleEndian) { Data($0) }
+        for (signature, fieldOffset) in [([UInt8]([0x50, 0x4B, 0x03, 0x04]), 22), ([0x50, 0x4B, 0x01, 0x02], 24)] {
+            let header = try #require(contents.firstRange(of: Data(signature)))
+            contents.replaceSubrange((header.lowerBound + fieldOffset)..<(header.lowerBound + fieldOffset + 4), with: sizeBytes)
+        }
+        try contents.write(to: archiveURL)
+    }
+
+    func corruptLocalHeader(ordinal: Int) throws {
+        var contents = try Data(contentsOf: archiveURL)
+        let signature = Data([0x50, 0x4B, 0x03, 0x04])
+        var searchStart = contents.startIndex
+        for _ in 0..<ordinal {
+            let found = try #require(contents[searchStart...].firstRange(of: signature))
+            searchStart = found.upperBound
+        }
+        let header = try #require(contents[searchStart...].firstRange(of: signature))
+        contents[header.lowerBound + 3] = 0x05
+        try contents.write(to: archiveURL)
     }
 }

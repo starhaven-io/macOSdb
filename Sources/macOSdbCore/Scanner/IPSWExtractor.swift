@@ -130,6 +130,13 @@ extension IPSWExtractor {
                 dmgs: result.dmgs.count
             )
         }
+        do {
+            let handle = try FileHandle(forReadingFrom: archive.url)
+            defer { try? handle.close() }
+            try ZIPCentralDirectory.requireAllEntriesRead(entryCount, in: handle)
+        } catch {
+            throw ScannerError.ipswExtractionFailed(reason: error.localizedDescription)
+        }
         return result
     }
 

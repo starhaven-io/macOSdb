@@ -26,7 +26,7 @@ The `/api/v1/` interface is public and unauthenticated. Release detail routes re
 
 ## Trust boundaries
 
-- Apple archives are untrusted parser input even when downloaded from an Apple host. Archive counts, metadata sizes, binary offsets, process duration, and captured output are bounded.
+- Apple archives are untrusted parser input even when downloaded from an Apple host. Archive counts, metadata sizes, binary offsets, process duration, and captured output are bounded. Every entry the ZIP central directory declares must be readable, and each extracted entry must match its declared size and CRC-32.
 - Workflow-dispatch strings are untrusted. Values are validated before they become paths, environment-file records, or command arguments.
 - AEA keys, download cookies, signing certificates, notarization passwords, and GitHub App keys are secrets. They are scoped to the smallest job, excluded from command tracing and logs, and removed after use unless an operator explicitly requests an AEA key sidecar.
 - Generated artifacts are untrusted when crossing jobs. A hosted prepare job records the main-branch base and canonical release date; the hosted publisher accepts an exact regular-file layout, independently binds its identity and source metadata to the dispatch, reruns the data linter, and mints a write token only after verification.

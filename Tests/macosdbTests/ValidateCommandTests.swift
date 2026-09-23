@@ -93,6 +93,31 @@ struct ValidateCommandTests {
         #expect(Array(reopened).count == 1)
     }
 
+    @Test("An IPSW whose entries cannot all be read fails without a sidecar")
+    func rejectsUnreadableZIPEntries() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-validate-truncated-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let archiveURL = directory.appendingPathComponent("archive.ipsw")
+        let zip = try Archive(url: archiveURL, accessMode: .create)
+        for name in ["a", "b", "c"] {
+            let contents = Data(name.utf8)
+            try zip.addEntry(with: name, type: .file, uncompressedSize: Int64(contents.count)) { _, _ in contents }
+        }
+        var bytes = try Data(contentsOf: archiveURL)
+        let signature = Data([0x50, 0x4B, 0x03, 0x04])
+        let first = try #require(bytes.firstRange(of: signature))
+        let second = try #require(bytes[first.upperBound...].firstRange(of: signature))
+        bytes[second.lowerBound + 3] = 0x05
+        try bytes.write(to: archiveURL)
+
+        await #expect(throws: (any Error).self) {
+            try await ValidateCommand.parse([archiveURL.path]).run()
+        }
+        #expect(!FileManager.default.fileExists(atPath: archiveURL.appendingPathExtension("sha256").path))
+    }
+
     @Test("Checksum sidecars must be bounded regular files")
     func checksumSidecarsAreBoundedRegularFiles() async throws {
         let directory = FileManager.default.temporaryDirectory
