@@ -57,37 +57,37 @@ struct ShowCommand: AsyncParsableCommand {
     }
 
     private func printReleaseMetadata(_ release: Release) {
-        print("\(release.displayName) (\(release.buildNumber))")
-        if let date = release.releaseDate { print("Released: \(date)") }
-        if release.isDeviceSpecific { print("Type: Device-specific build") }
-        if let ipswURL = release.ipswURL { print("IPSW: \(ipswURL)") }
-        if let xipURL = release.xipURL { print("XIP: \(xipURL)") }
-        print("")
+        printLine("\(release.displayName) (\(release.buildNumber))")
+        if let date = release.releaseDate { printLine("Released: \(date)") }
+        if release.isDeviceSpecific { printLine("Type: Device-specific build") }
+        if let ipswURL = release.ipswURL { printLine("IPSW: \(ipswURL)") }
+        if let xipURL = release.xipURL { printLine("XIP: \(xipURL)") }
+        printLine("")
 
         if let sdks = release.sdks, !sdks.isEmpty {
-            print("macOS SDKs:")
+            printLine("macOS SDKs:")
             for sdk in sdks {
                 if let build = sdk.buildVersion {
-                    print("  SDK \(sdk.sdkVersion) (\(build))")
+                    printLine("  SDK \(sdk.sdkVersion) (\(build))")
                 } else {
-                    print("  SDK \(sdk.sdkVersion)")
+                    printLine("  SDK \(sdk.sdkVersion)")
                 }
             }
-            print("")
+            printLine("")
         }
     }
 
     private func printKernelInfo(_ release: Release) {
-        print("Kernels:")
+        printLine("Kernels:")
         for kernel in release.kernels {
             let xnu = kernel.xnuVersion.map { " / XNU \($0)" } ?? ""
-            print("  \(kernel.chip) — Darwin \(kernel.darwinVersion)\(xnu)")
-            print("    Devices: \(kernel.devices.joined(separator: ", "))")
+            printLine("  \(kernel.chip) — Darwin \(kernel.darwinVersion)\(xnu)")
+            printLine("    Devices: \(kernel.devices.joined(separator: ", "))")
         }
-        print("")
+        printLine("")
         let chips = release.supportedChips.map(\.displayName).joined(separator: ", ")
-        print("Supported chips: \(chips)")
-        print("")
+        printLine("Supported chips: \(chips)")
+        printLine("")
     }
 
     private func filteredComponents(_ release: Release) -> [Component] {
@@ -102,19 +102,19 @@ struct ShowCommand: AsyncParsableCommand {
         let components = filteredComponents(release)
 
         if components.isEmpty {
-            print("No components found.")
+            printLine("No components found.")
             return
         }
 
-        print(
+        printLine(
             "Component".padding(toLength: 24, withPad: " ", startingAt: 0)
                 + "Version".padding(toLength: 20, withPad: " ", startingAt: 0)
                 + "Path"
         )
-        print(String(repeating: "-", count: 80))
+        printLine(String(repeating: "-", count: 80))
 
         for comp in components.sorted(by: { $0.name.lowercased() < $1.name.lowercased() }) {
-            print(
+            printLine(
                 comp.name.padding(toLength: 24, withPad: " ", startingAt: 0)
                     + comp.displayVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
                     + comp.path

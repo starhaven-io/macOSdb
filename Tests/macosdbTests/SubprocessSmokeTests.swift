@@ -237,6 +237,22 @@ extension SubprocessSmokeTests {
         #expect(curl?["direction"] as? String == "unchanged")
     }
 
+    @Test("show escapes control characters from catalog strings")
+    func showEscapesCatalogControls() throws {
+        let dataRoot = try LocalDataStore.make()
+        defer { try? FileManager.default.removeItem(at: dataRoot) }
+        let detail = dataRoot.appendingPathComponent("macos/releases/15/macOS-15.0-24A335.json")
+        let hostile = try String(contentsOf: detail, encoding: .utf8)
+            .replacingOccurrences(of: "\"8.7.1\"", with: "\"8.7.1\\u001b[2J\"")
+            .replacingOccurrences(of: "\"M4\"", with: "\"M4\\r\"")
+        try hostile.write(to: detail, atomically: true, encoding: .utf8)
+
+        let result = try runMacosdb(["show", "15.0", "--detailed", "--data-url", dataRoot.path])
+        #expect(result.exitCode == 0)
+        #expect(!result.stdout.contains("\u{1B}") && !result.stdout.contains("\r"))
+        #expect(result.stdout.contains("8.7.1\\u{1B}[2J") && result.stdout.contains("M4\\u{D}"))
+    }
+
     @Test("show and compare resolve exact builds")
     func resolvesExactBuilds() throws {
         let dataRoot = try LocalDataStore.make()

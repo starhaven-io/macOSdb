@@ -132,6 +132,33 @@ class CatalogShapeTests(unittest.TestCase):
                 candidate = {**release, "isBeta": False, "isRC": False, flag: True, number: True}
                 self.assertIn(f"{number} should be a positive integer", self.validate(candidate))
 
+    def test_components_kernels_sources_and_strings_are_strict(self):
+        source = REPO_ROOT / "data/macos/releases/15/macOS-15.0-24A335.json"
+        release = json.loads(source.read_text())
+        curl = next(index for index, component in enumerate(release["components"]) if component["name"] == "curl")
+
+        def mutated(change):
+            candidate = json.loads(json.dumps(release))
+            change(candidate)
+            return self.validate(candidate)
+
+        cases = [
+            (lambda r: r["components"][curl].update(source="dyldCache"), "should come from 'filesystem'"),
+            (lambda r: r["components"][curl].update(path="usr/bin/curl"), "is not absolute"),
+            (lambda r: r["kernels"][0].update(darwinVersion=""), "darwinVersion is empty or not a string"),
+            (lambda r: r["components"][curl].update(version="8.7.1\x1b[2J"), "contains a control character"),
+            (
+                lambda r: r.update(
+                    ipswURL="https://updates.cdn-apple.com/2024/Restore.ipsw", ipswFile="Restore.ipsw"
+                ),
+                "ipswURL filename is not UniversalMac_",
+            ),
+        ]
+        self.assertNotIn("error", self.validate(release).lower())
+        for change, message in cases:
+            with self.subTest(message=message):
+                self.assertIn(message, mutated(change))
+
     def test_missing_required_catalog_fails_the_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
             product = {**lint.PRODUCTS[0], "data": Path(tmp).resolve() / "missing"}
@@ -355,6 +382,23 @@ class IndexPointerTests(unittest.TestCase):
                 lint.validate_index(self._product(root), catalog)
             self.assertEqual(lint.errors, 0)
 
+
+    def test_index_prerelease_numbers_match_the_detail_type(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            expected = root / "releases/15/macOS-15.0-24A335.json"
+            expected.parent.mkdir(parents=True)
+            release = {**self._entry("unused"), "isBeta": True, "betaNumber": 1}
+            expected.write_text(json.dumps(release))
+            pointer = "releases/15/macOS-15.0-24A335.json"
+            catalog = {"24A335": {"path": expected, "data": release}}
+            for value in [True, 1.0]:
+                entry = {**self._entry(pointer), "isBeta": True, "betaNumber": value}
+                (root / "releases.json").write_text(json.dumps([entry]))
+                lint.errors = 0
+                with self.subTest(value=value), contextlib.redirect_stderr(io.StringIO()) as output:
+                    lint.validate_index(self._product(root), catalog)
+                self.assertIn("betaNumber mismatch", output.getvalue())
 
 if __name__ == "__main__":
     unittest.main()

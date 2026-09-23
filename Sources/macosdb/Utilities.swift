@@ -19,20 +19,39 @@ nonisolated func makeDataProvider(dataURL: String?) throws -> DataProvider {
     return DataProvider(baseURL: url)
 }
 
+/// Escapes control characters. Catalog and archive strings are untrusted and
+/// must not reach a terminal as escape sequences, carriage returns, or bells.
+nonisolated func terminalSafe(_ text: String) -> String {
+    var result = String.UnicodeScalarView()
+    for scalar in text.unicodeScalars {
+        if scalar.properties.generalCategory == .control {
+            result.append(contentsOf: "\\u{\(String(scalar.value, radix: 16, uppercase: true))}".unicodeScalars)
+        } else {
+            result.append(scalar)
+        }
+    }
+    return String(result)
+}
+
+/// Writes a line of human-readable output to standard output.
+nonisolated func printLine(_ message: String) {
+    print(terminalSafe(message))
+}
+
 /// Writes an "Error: …" line to standard error. CLI errors belong on stderr so
 /// they don't contaminate the stdout stream consumers parse (e.g. --json output).
 nonisolated func printError(_ message: String) {
-    FileHandle.standardError.write(Data(("Error: " + message + "\n").utf8))
+    FileHandle.standardError.write(Data(("Error: " + terminalSafe(message) + "\n").utf8))
 }
 
 /// Writes a status/progress line to standard error.
 nonisolated func printStatus(_ message: String) {
-    FileHandle.standardError.write(Data((message + "\n").utf8))
+    FileHandle.standardError.write(Data((terminalSafe(message) + "\n").utf8))
 }
 
 /// Writes an in-place progress line (carriage return, no newline) to standard error.
 nonisolated func printInline(_ message: String) {
-    let line = message.isEmpty ? "\r\u{1B}[K" : "\r\(message)"
+    let line = message.isEmpty ? "\r\u{1B}[K" : "\r\(terminalSafe(message))"
     FileHandle.standardError.write(Data(line.utf8))
 }
 

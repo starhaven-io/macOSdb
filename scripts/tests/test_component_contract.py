@@ -20,6 +20,13 @@ def names_between(source, start, end):
     return set(re.findall(r'\bname:\s*"([^"]+)"', section))
 
 
+def sources_of(component_sources):
+    grouped = {}
+    for name, source in component_sources.items():
+        grouped.setdefault(source, set()).add(name)
+    return grouped
+
+
 class ComponentContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -38,6 +45,7 @@ class ComponentContractTests(unittest.TestCase):
             "// MARK: - Toolchain component definitions",
         )
         self.assertEqual(filesystem | dyld, self.linter.MACOS_EXPECTED_COMPONENTS)
+        self.assertEqual(sources_of(self.linter.MACOS_COMPONENT_SOURCES), {"filesystem": filesystem, "dyldCache": dyld})
 
     def test_xcode_linter_contract_matches_scanner_configuration(self):
         toolchain = names_between(
@@ -47,6 +55,9 @@ class ComponentContractTests(unittest.TestCase):
         )
         sdk = names_between(self.source, "return [", "\n    ]\n}")
         self.assertEqual(toolchain | sdk | {"Python"}, self.linter.XCODE_EXPECTED_COMPONENTS)
+        self.assertEqual(
+            sources_of(self.linter.XCODE_COMPONENT_SOURCES), {"filesystem": toolchain | {"Python"}, "sdk": sdk}
+        )
 
 
 if __name__ == "__main__":

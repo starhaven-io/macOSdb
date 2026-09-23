@@ -40,20 +40,20 @@ struct ListCommand: AsyncParsableCommand {
         }
 
         if entries.isEmpty {
-            print("No releases found.")
+            printLine("No releases found.")
             return
         }
 
-        print(
+        printLine(
             "Version".padding(toLength: 12, withPad: " ", startingAt: 0)
                 + "Build".padding(toLength: 12, withPad: " ", startingAt: 0)
                 + "Date".padding(toLength: 12, withPad: " ", startingAt: 0)
                 + "Name"
         )
-        print(String(repeating: "-", count: 56))
+        printLine(String(repeating: "-", count: 56))
 
         for entry in entries {
-            print(
+            printLine(
                 entry.osVersion.padding(toLength: 12, withPad: " ", startingAt: 0)
                     + entry.buildNumber.padding(toLength: 12, withPad: " ", startingAt: 0)
                     + (entry.releaseDate ?? "—").padding(toLength: 12, withPad: " ", startingAt: 0)
