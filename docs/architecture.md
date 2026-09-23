@@ -14,7 +14,7 @@ Scanner workspaces have exact UUID-based names and a versioned live-process mark
 
 Each product has a `releases.json` index and one detail file per release. The index pointer is not a generic path: it is derived from product, version, and build, confined to the product directory, and bound to the same identity inside the detail JSON. The Python linter, Swift local data provider, and Astro loaders enforce the same rule.
 
-The configured component set is complete for every published release. Empty or partial component collections, missing SDKs, and missing macOS kernels are publication errors. The limited device-map exceptions for early virtual-machine and Developer Transition Kit kernels are explicit in the linter.
+The configured component set is complete for every published release. Empty or partial component collections, missing SDKs, and missing macOS kernels are publication errors, and a scan fails if any extracted kernelcache yields no kernel versions. The limited device-map exceptions for early virtual-machine and Developer Transition Kit kernels are explicit in the linter.
 
 See [Data schema](data-schema.md) for the public fields and invariants.
 
