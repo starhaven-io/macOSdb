@@ -76,7 +76,7 @@ class WorkflowSafetyContractTests(unittest.TestCase):
         push = workflow.split("  workflow_dispatch:", 1)[0]
         for path in [".github/workflows/deploy-site.yml", "scripts/check-npm-install-policy.mjs", "scripts/lint-json.py"]:
             self.assertIn(f"      - '{path}'", push)
-        script = workflow_run_block(workflow.split("\n  deploy:", 1)[0], "Validate deployment ref")
+        script = workflow_run_block(workflow.split("\n  build:", 1)[0], "Validate deployment ref")
         for ref, accepted in [("refs/heads/main", True), ("refs/heads/topic", False), ("refs/tags/main", False)]:
             with self.subTest(ref=ref):
                 result = subprocess.run(
@@ -85,6 +85,20 @@ class WorkflowSafetyContractTests(unittest.TestCase):
                     capture_output=True, text=True, check=False,
                 )
                 self.assertEqual(result.returncode == 0, accepted)
+
+    def test_site_build_never_runs_with_deploy_credentials(self):
+        workflow = (ROOT / ".github/workflows/deploy-site.yml").read_text()
+        build = workflow.split("\n  build:\n", 1)[1].split("\n  deploy:\n", 1)[0]
+        deploy = workflow.split("\n  deploy:\n", 1)[1]
+        self.assertIn("run: npm run build\n", build)
+        self.assertNotIn("environment:", build)
+        self.assertNotIn("secrets.", build)
+        self.assertIn("    needs: build\n", deploy)
+        self.assertIn("    environment: cloudflare\n", deploy)
+        self.assertIn("run: npm run deploy\n", deploy)
+        for command in ("npm run build", "npm run check", "npm test", "astro", "wrangler.json"):
+            with self.subTest(command=command):
+                self.assertNotIn(command, deploy)
 
     def test_scanner_dispatch_requires_main_before_checkout(self):
         for path in [IPSW_WORKFLOW, XIP_WORKFLOW]:

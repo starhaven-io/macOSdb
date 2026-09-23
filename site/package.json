@@ -15,8 +15,8 @@
     "preview": "astro preview",
     "test": "node --test 'test/*.test.ts'",
     "astro": "astro",
-    "deploy": "wrangler deploy --config dist/server/wrangler.json",
-    "deploy:dry": "npm run deploy -- --dry-run",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:dry": "node scripts/deploy.mjs --dry-run",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
