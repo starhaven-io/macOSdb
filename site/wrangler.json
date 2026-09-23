@@ -6,6 +6,6 @@
   "preview_urls": false,
   "assets": {
     "binding": "ASSETS",
-    "directory": "./dist/client",
-  },
+    "directory": "./dist/client"
+  }
 }
