@@ -28,15 +28,15 @@ extension IPSWExtractor {
         let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
         var extractedBytes: UInt64 = 0
 
+        let checksum: CRC32
         do {
-            _ = try archive.extract(entry) { chunk in
+            // The declared size already fits the budget, so bounding by it bounds both.
+            checksum = try archive.extract(entry) { chunk in
                 try Task.checkCancellation()
                 let chunkSize = UInt64(chunk.count)
-                guard chunkSize <= budget.individualLimit - extractedBytes,
-                      budget.totalSoFar <= budget.totalLimit - extractedBytes,
-                      chunkSize <= budget.totalLimit - budget.totalSoFar - extractedBytes else {
+                guard chunkSize <= entry.uncompressedSize - extractedBytes else {
                     throw ScannerError.ipswExtractionFailed(
-                        reason: "Extracted data exceeded its byte budget"
+                        reason: "Extracted data exceeded its declared size"
                     )
                 }
                 try handle.write(contentsOf: chunk)
@@ -54,6 +54,12 @@ extension IPSWExtractor {
             try? FileManager.default.removeItem(at: destination)
             throw ScannerError.ipswExtractionFailed(
                 reason: "Extracted data did not match its declared size"
+            )
+        }
+        guard checksum == entry.checksum else {
+            try? FileManager.default.removeItem(at: destination)
+            throw ScannerError.ipswExtractionFailed(
+                reason: "Extracted data failed its CRC-32 check: \(entry.path)"
             )
         }
         return extractedBytes
