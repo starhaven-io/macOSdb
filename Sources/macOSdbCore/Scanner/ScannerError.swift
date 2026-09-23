@@ -6,6 +6,7 @@ enum ScannerError: LocalizedError {
     case systemDMGNotFound
     case dmgMountFailed(path: String, reason: String)
     case noKernelcachesFound
+    case kernelcacheParseFailed(files: [String])
     case dyldCacheParseFailed(reason: String)
     case componentExtractionFailed(name: String, reason: String)
     case metadataExtractionFailed(reason: String)
@@ -29,6 +30,8 @@ enum ScannerError: LocalizedError {
             "Failed to mount DMG \(path): \(reason)"
         case .noKernelcachesFound:
             "No kernelcache files found in the IPSW"
+        case .kernelcacheParseFailed(let files):
+            "Could not read kernel versions from \(files.joined(separator: ", "))"
         case .dyldCacheParseFailed(let reason):
             "Failed to parse dyld shared cache: \(reason)"
         case .componentExtractionFailed(let name, let reason):

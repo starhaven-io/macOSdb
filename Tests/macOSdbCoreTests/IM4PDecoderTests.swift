@@ -53,6 +53,24 @@ struct IM4PDecoderTests {
         #expect(IM4PDecoder.extractPayload(from: im4pData) == payload)
     }
 
+    @Test("Grows the output buffer until a highly compressed payload fits")
+    func extractHighRatioLZFSEPayload() throws {
+        let payload = Data(repeating: 0x41, count: 1_024 * 1_024)
+        let compressed = try #require(compressLZFSE(payload))
+        #expect(payload.count / compressed.count > 32)
+        let im4pData = buildIM4P(type: "krnl", description: "compressed", payload: compressed)
+
+        #expect(IM4PDecoder.extractPayload(from: im4pData) == payload)
+    }
+
+    @Test("A compressed payload that fails to decode is not returned as raw data")
+    func rejectsUndecodableCompressedPayload() {
+        let corrupt = Data("bvx2".utf8) + Data(repeating: 0xFF, count: 256)
+        let im4pData = buildIM4P(type: "krnl", description: "corrupt", payload: corrupt)
+
+        #expect(IM4PDecoder.extractPayload(from: im4pData) == nil)
+    }
+
     @Test("Rejects an IM4P marker outside a DER sequence")
     func rejectInvalidSequenceTag() {
         let payload = Data("kernel".utf8)

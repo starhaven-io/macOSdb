@@ -47,13 +47,16 @@ enum IM4PDecoder {
 
         logger.info("Extracted IM4P payload: \(payloadData.count) bytes")
 
-        if let decompressed = decompress(payloadData) {
-            logger.info("Decompressed kernel: \(decompressed.count) bytes")
-            return decompressed
+        guard let algorithm = compressionAlgorithm(of: payloadData) else {
+            logger.info("Payload does not appear to be compressed, using raw data")
+            return payloadData
         }
-
-        logger.info("Payload does not appear to be compressed, using raw data")
-        return payloadData
+        // Compressed bytes contain no kernel banner; returning them hides a decode failure.
+        guard let decompressed = decompressWithAlgorithm(payloadData, algorithm: algorithm) else {
+            return nil
+        }
+        logger.info("Decompressed kernel: \(decompressed.count) bytes")
+        return decompressed
     }
 
     // MARK: - DER parsing
@@ -118,7 +121,7 @@ enum IM4PDecoder {
 
     // MARK: - Decompression
 
-    private static func decompress(_ data: Data) -> Data? {
+    private static func compressionAlgorithm(of data: Data) -> compression_algorithm? {
         guard data.count >= 4 else { return nil }
 
         let magic = data.prefix(4)
@@ -127,12 +130,12 @@ enum IM4PDecoder {
         switch magicString {
         case "bvx2", "bvx-", "bvx1", "bvxn":
             logger.debug("Detected LZFSE compression")
-            return decompressWithAlgorithm(data, algorithm: COMPRESSION_LZFSE)
+            return COMPRESSION_LZFSE
         default:
             // Check for LZMA/XZ magic: 0xFD "7zXZ"
             if data[0] == 0xFD && data.count >= 6 {
                 logger.debug("Detected LZMA/XZ compression")
-                return decompressWithAlgorithm(data, algorithm: COMPRESSION_LZMA)
+                return COMPRESSION_LZMA
             }
             logger.debug("Unknown compression format: magic=\(magicString)")
             return nil
@@ -143,10 +146,9 @@ enum IM4PDecoder {
         _ data: Data,
         algorithm: compression_algorithm
     ) -> Data? {
-        let estimatedSize = min(data.count * 8, maxDecompressedSize)
-        var destinationSize = estimatedSize
+        var destinationSize = min(data.count * 8, maxDecompressedSize)
 
-        for _ in 0..<3 {
+        while true {
             let destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationSize)
             defer { destinationBuffer.deallocate() }
 
@@ -163,10 +165,8 @@ enum IM4PDecoder {
                 return Data(bytes: destinationBuffer, count: decompressedSize)
             }
 
+            guard destinationSize < maxDecompressedSize else { break }
             destinationSize = min(destinationSize * 2, maxDecompressedSize)
-            if destinationSize >= maxDecompressedSize {
-                break
-            }
         }
 
         logger.warning("Decompression failed or output exceeded \(maxDecompressedSize) bytes")

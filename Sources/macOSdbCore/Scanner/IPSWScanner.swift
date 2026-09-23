@@ -136,6 +136,12 @@ package actor IPSWScanner {
             await KernelParser.parse(kernelcachePath: path)
         }
         try Task.checkCancellation()
+        guard parsed.count == kernelcaches.count else {
+            let parsedFiles = Set(parsed.map(\.file))
+            throw ScannerError.kernelcacheParseFailed(
+                files: kernelcaches.map(\.lastPathComponent).filter { !parsedFiles.contains($0) }
+            )
+        }
 
         let kernels = parsed.map { kernel -> KernelInfo in
             guard kernel.devices.isEmpty else { return kernel }

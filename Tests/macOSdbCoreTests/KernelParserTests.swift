@@ -68,6 +68,21 @@ struct KernelParserTests {
         #expect(result.isComplete)
     }
 
+    @Test("Development kernelcaches report their architecture suffix and chip")
+    func parseDevelopmentKernelcache() async throws {
+        let path = try writeKernelcache(
+            name: "kernelcache.development.mac13g",
+            data: Data(
+                "Darwin Kernel Version 21.4.0: root:xnu-8020.101.4~15/DEVELOPMENT_ARM64_T8101".utf8
+            )
+        )
+        defer { try? FileManager.default.removeItem(at: path.deletingLastPathComponent()) }
+
+        let kernel = try #require(await KernelParser.parse(kernelcachePath: path))
+        #expect(kernel.arch == "ARM64_T8101")
+        #expect(kernel.chip == "M1")
+    }
+
     @Test("scanVersions leaves darwin empty when no kernel banner is present")
     func scanVersionsNoBanner() {
         let result = KernelParser.scanVersions(in: Data("nothing useful here".utf8))

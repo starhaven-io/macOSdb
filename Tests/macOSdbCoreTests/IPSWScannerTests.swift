@@ -114,6 +114,25 @@ struct IPSWScannerTests {
         #expect(kernels.map { $0.deviceChips?.first?.chip } == ["M4", "M4"])
     }
 
+    @Test("A kernelcache that yields no versions fails the scan instead of being dropped")
+    func rejectsUnparsedKernelcache() async throws {
+        let root = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let parsed = try write(
+            "Darwin Kernel Version 24.6.0: xnu-12377.140.9/RELEASE_ARM64_T8132",
+            to: root.appendingPathComponent("kernelcache.release.fixture-a")
+        )
+        let unparsed = try write("compressed bytes", to: root.appendingPathComponent("kernelcache.release.fixture-b"))
+
+        await #expect {
+            _ = try await IPSWScanner().parseKernels([parsed, unparsed], deviceMap: [:])
+        } throws: { error in
+            guard case ScannerError.kernelcacheParseFailed(let files) = error else { return false }
+            return files == [unparsed.lastPathComponent]
+        }
+    }
+
     @Test("Extracts available filesystem components and skips missing or unmatched binaries")
     func extractsFilesystemComponents() async throws {
         let root = try makeTempDirectory()

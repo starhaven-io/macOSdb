@@ -13,6 +13,10 @@ struct ScannerErrorTests {
             (.systemDMGNotFound, "Could not find system DMG inside the IPSW"),
             (.dmgMountFailed(path: "/tmp/System.dmg", reason: "busy"), "Failed to mount DMG /tmp/System.dmg: busy"),
             (.noKernelcachesFound, "No kernelcache files found in the IPSW"),
+            (
+                .kernelcacheParseFailed(files: ["kernelcache.release.a", "kernelcache.release.b"]),
+                "Could not read kernel versions from kernelcache.release.a, kernelcache.release.b"
+            ),
             (.dyldCacheParseFailed(reason: "truncated"), "Failed to parse dyld shared cache: truncated"),
             (.componentExtractionFailed(name: "curl", reason: "not found"), "Failed to extract curl: not found"),
             (.metadataExtractionFailed(reason: "missing plist"), "Failed to extract IPSW metadata: missing plist"),

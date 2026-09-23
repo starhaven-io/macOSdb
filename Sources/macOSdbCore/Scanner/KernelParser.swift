@@ -92,7 +92,7 @@ enum KernelParser {
     static func scanVersions(in data: Data) -> KernelVersionStrings {
         let darwinRegex = /Darwin Kernel Version (\d+\.\d+\.\d+)/
         let xnuRegex = /xnu-(\d+\.\d+\.\d+(?:\.\d+)*)/
-        let archRegex = /RELEASE_ARM64_([A-Za-z0-9]+)/
+        let archRegex = /(?:RELEASE|DEVELOPMENT)_ARM64_([A-Za-z0-9]+)/
 
         var found = KernelVersionStrings()
         BinaryStringScanner.enumerateStrings(from: data) { string in
