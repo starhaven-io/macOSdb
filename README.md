@@ -183,7 +183,7 @@ just npm-policy         # Verify dependency install-script policy
 just site-test          # Run site unit tests
 ```
 
-The site's current dependency install scripts are explicitly denied. `just npm-policy` verifies the lockfile policy, and clean installs fail if a new script-bearing dependency has not been reviewed. Site checks also type-check Astro and TypeScript and reject moderate-or-higher npm advisories.
+The site's current dependency install scripts are explicitly denied. `just npm-policy` verifies the lockfile policy, and `site/.npmrc` enables strict install-script checks by default for local npm installs. Site checks also type-check Astro and TypeScript and reject moderate-or-higher npm advisories.
 
 ## Contributing
 
