@@ -323,11 +323,15 @@ def verify_and_overlay(args: argparse.Namespace) -> tuple[str, str, str]:
         change = "replacement of" if args.replace else "addition to"
         raise VerificationError(f"artifact index is not a one-release {change} the trusted main index")
 
+    original_release = release_path.read_bytes() if args.replace else None
     atomic_write(release_path, release_bytes)
     try:
         atomic_write(current_index_path, index_bytes)
     except Exception:
-        release_path.unlink(missing_ok=True)
+        if original_release is None:
+            release_path.unlink(missing_ok=True)
+        else:
+            atomic_write(release_path, original_release)
         raise
 
     basename = f"{prefix}-{source['version']}-{source['build']}"
