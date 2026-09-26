@@ -19,7 +19,7 @@ The pointer must be exactly `releases/{major}/{macOS|Xcode}-{osVersion}-{buildNu
 
 ## Release detail
 
-Every detail object repeats the index identity and flags and contains a non-empty `components` array. Each component has non-empty `name`, `version`, `path`, and `source` fields. macOS sources are `filesystem` or `dyldCache`; Xcode sources are `filesystem` or `sdk`.
+Every detail object repeats the index identity and flags and contains a non-empty `components` array. Each component has non-empty `name`, `version`, `path`, and `source` fields. The path is absolute, and each tracked component always comes from its configured source: macOS sources are `filesystem` or `dyldCache`; Xcode sources are `filesystem` or `sdk`. No string in an index or detail file contains a control character.
 
 macOS details also require:
 

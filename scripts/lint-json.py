@@ -67,16 +67,27 @@ MACOS_BOOL_FIELDS = ["isBeta", "isRC", "isDeviceSpecific"]
 XCODE_BOOL_FIELDS = ["isBeta", "isRC"]
 COMPONENT_REQUIRED = ["name", "version", "path", "source"]
 
-MACOS_EXPECTED_COMPONENTS = {
-    "curl", "httpd", "libbz2 (bzip2)", "libcurl", "libexpat", "libncurses",
-    "libpcap", "LibreSSL", "libsqlite3", "libssl (LibreSSL)", "libxml2",
-    "OpenSSH", "Ruby", "SQLite", "sudo", "vim", "zsh",
+MACOS_COMPONENT_SOURCES = {
+    **dict.fromkeys(
+        ["curl", "httpd", "LibreSSL", "OpenSSH", "Ruby", "SQLite", "sudo", "vim", "zsh"],
+        "filesystem",
+    ),
+    **dict.fromkeys(
+        ["libbz2 (bzip2)", "libcurl", "libexpat", "libncurses", "libpcap", "libsqlite3",
+         "libssl (LibreSSL)", "libxml2"],
+        "dyldCache",
+    ),
 }
-XCODE_EXPECTED_COMPONENTS = {
-    "Apple Clang", "bzip2", "cctools", "expat", "Git", "ld", "libcurl",
-    "libexslt", "libffi", "libxml2", "libxslt", "lldb", "ncurses", "Python",
-    "sqlite3", "Swift", "zlib",
+XCODE_COMPONENT_SOURCES = {
+    **dict.fromkeys(["Apple Clang", "cctools", "Git", "ld", "lldb", "Python", "Swift"], "filesystem"),
+    **dict.fromkeys(
+        ["bzip2", "expat", "libcurl", "libexslt", "libffi", "libxml2", "libxslt", "ncurses",
+         "sqlite3", "zlib"],
+        "sdk",
+    ),
 }
+MACOS_EXPECTED_COMPONENTS = set(MACOS_COMPONENT_SOURCES)
+XCODE_EXPECTED_COMPONENTS = set(XCODE_COMPONENT_SOURCES)
 
 IPSW_FILE_RE = re.compile(
     r"^UniversalMac_([0-9]+(?:\.[0-9]+){1,2})_([0-9]+[A-Z][0-9]+[a-z]?)_Restore\.ipsw$"
@@ -90,6 +101,8 @@ XCODE_RC_LABEL_RE = re.compile(r"(?:^|_)Release_Candidate(?=_|$)")
 VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+(\.[0-9]+)?$")
 BUILD_IDENTIFIER_RE = re.compile(r"^[0-9]+[A-Z][0-9]+[a-z]?$")
 DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+# Archive-derived strings reach terminals through the CLI's human output.
+CONTROL_CHARACTER_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 TODAY = date.today()
 MAX_INDEX_BYTES = 4 * 1024 * 1024
 MAX_RELEASE_BYTES = 16 * 1024 * 1024
@@ -121,6 +134,7 @@ PRODUCTS = [
         "bool_fields": MACOS_BOOL_FIELDS,
         "component_sources": {"filesystem", "dyldCache"},
         "expected_components": MACOS_EXPECTED_COMPONENTS,
+        "expected_component_sources": MACOS_COMPONENT_SOURCES,
         "expect_kernels": True,
     },
     {
@@ -135,6 +149,7 @@ PRODUCTS = [
         "bool_fields": XCODE_BOOL_FIELDS,
         "component_sources": {"filesystem", "sdk"},
         "expected_components": XCODE_EXPECTED_COMPONENTS,
+        "expected_component_sources": XCODE_COMPONENT_SOURCES,
         "expect_kernels": False,
     },
 ]
@@ -338,6 +353,19 @@ def require_string(obj, field, context):
     return value
 
 
+def reject_control_characters(value, context, path="$"):
+    if isinstance(value, str):
+        if CONTROL_CHARACTER_RE.search(value):
+            error(f"{context}: {path} contains a control character")
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            reject_control_characters(key, context, f"{path} key")
+            reject_control_characters(item, context, f"{path}[{json.dumps(key)}]")
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            reject_control_characters(item, context, f"{path}[{index}]")
+
+
 def validate_product_type(value, expected, context):
     if value is not None and value != expected:
         error(f"{context}: productType '{value}' should be '{expected}'")
@@ -355,6 +383,7 @@ def validate_releases(product, catalog):
     allowed = product["allowed"]
     valid_sources = product["component_sources"]
     expected_components = product["expected_components"]
+    expected_component_sources = product["expected_component_sources"]
     expect_kernels = product["expect_kernels"]
 
     all_component_names = defaultdict(int)
@@ -376,6 +405,7 @@ def validate_releases(product, catalog):
         if not isinstance(d, dict):
             error(f"{f.name}: top-level value should be object, got {type(d).__name__}")
             continue
+        reject_control_characters(d, f.name)
 
         if build in catalog:
             error(f"{f.name}: duplicate buildNumber '{build}' "
@@ -480,7 +510,9 @@ def validate_releases(product, catalog):
 
             if isinstance(url, str) and url:
                 m = IPSW_FILE_RE.fullmatch(download_filename(url))
-                if m:
+                if m is None:
+                    error(f"{f.name}: ipswURL filename is not UniversalMac_<version>_<build>_Restore.ipsw")
+                else:
                     url_version, url_build = m.group(1), m.group(2)
                     if url_build != build:
                         error(f"{f.name}: build in ipswURL '{url_build}' doesn't match '{build}'")
@@ -561,11 +593,17 @@ def validate_releases(product, catalog):
                 path = comp.get("path", "")
                 if not path or not isinstance(path, str):
                     error(f"{f.name}: component '{name}' has empty or non-string path")
+                elif not path.startswith("/"):
+                    error(f"{f.name}: component '{name}' path '{path}' is not absolute")
 
                 source = comp.get("source", "")
                 if not isinstance(source, str) or source not in valid_sources:
                     error(f"{f.name}: component '{name}' has invalid source '{source}' "
                           f"(expected: {', '.join(sorted(valid_sources))})")
+                elif isinstance(name, str) and name in expected_component_sources \
+                        and source != expected_component_sources[name]:
+                    error(f"{f.name}: component '{name}' should come from "
+                          f"'{expected_component_sources[name]}', not '{source}'")
 
             missing_components = expected_components - seen_names
             unexpected_components = seen_names - expected_components
@@ -589,7 +627,7 @@ def validate_releases(product, catalog):
                         if field not in kern:
                             error(f"{f.name}: kernels[{ki}] missing field '{field}'")
 
-                    for sfield in ["arch", "chip", "file"]:
+                    for sfield in ["arch", "chip", "file", "darwinVersion", "xnuVersion"]:
                         val = kern.get(sfield, "")
                         if not val or not isinstance(val, str):
                             error(f"{f.name}: kernels[{ki}] {sfield} is empty or not a string")
@@ -636,6 +674,7 @@ def validate_index(product, catalog):
     if not isinstance(index_entries, list):
         error(f"{index_path.name}: top-level value should be array, got {type(index_entries).__name__}")
         return
+    reject_control_characters(index_entries, f"{prefix} {index_path.name}")
 
     index_builds = {}
     valid_entries = []
@@ -706,7 +745,8 @@ def validate_index(product, catalog):
         release = catalog[build]["data"]
         idx = index_builds[build]
         for field in product["parity_fields"]:
-            if idx.get(field) != release.get(field):
+            # Exact types: Python equality would accept true for 1 and 2.0 for 2.
+            if type(idx.get(field)) is not type(release.get(field)) or idx.get(field) != release.get(field):
                 error(f"{prefix} index/{build}: {field} mismatch — "
                       f"index={idx.get(field)!r}, file={release.get(field)!r}")
 

@@ -49,25 +49,25 @@ struct CompareCommand: AsyncParsableCommand {
             return
         }
 
-        print("Comparing \(from.displayName) (\(from.buildNumber)) → \(toRel.displayName) (\(toRel.buildNumber))")
-        print(comparison.summary)
-        print("")
+        printLine("Comparing \(from.displayName) (\(from.buildNumber)) → \(toRel.displayName) (\(toRel.buildNumber))")
+        printLine(comparison.summary)
+        printLine("")
 
         printChanges(changed ? comparison.changedComponents : comparison.changes, from: from, to: toRel)
 
         if !comparison.addedComponents.isEmpty {
-            print("")
-            print("Added:")
+            printLine("")
+            printLine("Added:")
             for comp in comparison.addedComponents {
-                print("  + \(comp.name) \(comp.displayVersion)")
+                printLine("  + \(comp.name) \(comp.displayVersion)")
             }
         }
 
         if !comparison.removedComponents.isEmpty {
-            print("")
-            print("Removed:")
+            printLine("")
+            printLine("Removed:")
             for comp in comparison.removedComponents {
-                print("  - \(comp.name) \(comp.displayVersion)")
+                printLine("  - \(comp.name) \(comp.displayVersion)")
             }
         }
     }
@@ -81,13 +81,13 @@ struct CompareCommand: AsyncParsableCommand {
         let fromLabel = sameVersion ? from.buildNumber : from.osVersion
         let toLabel = sameVersion ? toRel.buildNumber : toRel.osVersion
 
-        print(
+        printLine(
             "Component".padding(toLength: 24, withPad: " ", startingAt: 0)
                 + fromLabel.padding(toLength: 20, withPad: " ", startingAt: 0)
                 + toLabel.padding(toLength: 20, withPad: " ", startingAt: 0)
                 + "Status"
         )
-        print(String(repeating: "-", count: 80))
+        printLine(String(repeating: "-", count: 80))
 
         for change in displayChanges {
             let symbol: String
@@ -97,7 +97,7 @@ struct CompareCommand: AsyncParsableCommand {
             case .unchanged: symbol = "="
             }
 
-            print(
+            printLine(
                 change.name.padding(toLength: 24, withPad: " ", startingAt: 0)
                     + change.fromVersion.padding(toLength: 20, withPad: " ", startingAt: 0)
                     + change.toVersion.padding(toLength: 20, withPad: " ", startingAt: 0)

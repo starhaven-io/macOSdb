@@ -26,6 +26,13 @@ struct UtilitiesTests {
         }
     }
 
+    @Test("Terminal output escapes C0, DEL, and C1 controls but keeps other text")
+    func terminalSafeEscapesControls() {
+        #expect(terminalSafe("8.7.1\r9.9.9") == "8.7.1\\u{D}9.9.9")
+        #expect(terminalSafe("\u{1B}]0;title\u{07}\u{7F}\u{9B}2J") == "\\u{1B}]0;title\\u{7}\\u{7F}\\u{9B}2J")
+        #expect(terminalSafe("M4 Pro — Darwin 24.0.0 ↑") == "M4 Pro — Darwin 24.0.0 ↑")
+    }
+
     @Test("Data providers reject remote schemes other than HTTPS")
     func dataProviderRejectsInsecureRemoteScheme() {
         #expect(throws: (any Error).self) {
