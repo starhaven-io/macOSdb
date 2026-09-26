@@ -264,8 +264,10 @@ def verify_and_overlay(args: argparse.Namespace) -> tuple[str, str, str]:
 
     current_index_path = Path(index_name)
     release_path = Path(release_name)
-    if release_path.exists():
+    if release_path.exists() and not args.replace:
         raise VerificationError(f"release already exists on the trusted base: {release_name}")
+    if args.replace and not release_path.is_file():
+        raise VerificationError(f"release to replace is missing from the trusted base: {release_name}")
     try:
         current_index = load_json_strict(current_index_path.read_bytes(), "trusted index")
     except OSError as error:
@@ -303,15 +305,33 @@ def verify_and_overlay(args: argparse.Namespace) -> tuple[str, str, str]:
     if matches[0] != expected_entry:
         raise VerificationError("artifact index metadata does not exactly match its release detail")
 
+    trusted_others = current_index
+    if args.replace:
+        trusted_others = [
+            entry
+            for entry in current_index
+            if not (
+                isinstance(entry, dict)
+                and entry.get("osVersion") == source["version"]
+                and entry.get("buildNumber") == source["build"]
+            )
+        ]
+        if len(trusted_others) != len(current_index) - 1:
+            raise VerificationError("trusted main index must contain exactly the release being replaced")
     without_release = [entry for entry in artifact_index if entry is not matches[0]]
-    if without_release != current_index:
-        raise VerificationError("artifact index is not a one-release addition to the trusted main index")
+    if without_release != trusted_others:
+        change = "replacement of" if args.replace else "addition to"
+        raise VerificationError(f"artifact index is not a one-release {change} the trusted main index")
 
+    original_release = release_path.read_bytes() if args.replace else None
     atomic_write(release_path, release_bytes)
     try:
         atomic_write(current_index_path, index_bytes)
     except Exception:
-        release_path.unlink(missing_ok=True)
+        if original_release is None:
+            release_path.unlink(missing_ok=True)
+        else:
+            atomic_write(release_path, original_release)
         raise
 
     basename = f"{prefix}-{source['version']}-{source['build']}"
@@ -332,6 +352,7 @@ def main() -> int:
     parser.add_argument("--rc", choices=("true", "false"), required=True)
     parser.add_argument("--rc-number", default="")
     parser.add_argument("--device-specific", choices=("true", "false"), default="false")
+    parser.add_argument("--replace", action="store_true")
     parser.add_argument("--github-output")
     args = parser.parse_args()
 
@@ -346,7 +367,8 @@ def main() -> int:
             output.write(f"basename={basename}\n")
             output.write(f"source_url={source_url}\n")
             output.write(f"release_date={release_date}\n")
-    print(f"Verified {basename} as an exact one-release addition to trusted main.")
+    change = "replacement in" if args.replace else "addition to"
+    print(f"Verified {basename} as an exact one-release {change} trusted main.")
     return 0
 
 

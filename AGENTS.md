@@ -47,8 +47,9 @@ Do not repeat expensive checks when the relevant source and evidence are unchang
 ## Data and scanner boundaries
 
 - `data/` release JSON and indexes are generated. Fix the scanner or validation
-  source, then use the scanner workflow to regenerate data. Do not hand-edit the
-  corpus. Code is AGPL-3.0-only; release data is CC-BY-4.0.
+  source, then use a scanner workflow (`Rescan Release` for published releases)
+  to regenerate data. Do not hand-edit the corpus. Code is AGPL-3.0-only;
+  release data is CC-BY-4.0.
 - `ScannerConfig.swift` and Xcode extraction code define tracked components.
   Changes to the required set require a coordinated corpus migration and updates
   to the Python linter, Swift validator, Astro schema, tests, and documentation.

@@ -1,0 +1,402 @@
+name: Rescan Release
+
+# Regenerates a published release from its cached, checksum-locked archive with
+# the current scanner. It never downloads, so it needs no source credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: "Catalog of the published release"
+        required: true
+        type: choice
+        options:
+          - macos
+          - xcode
+      version:
+        description: "Published version (e.g. 12.3)"
+        required: true
+        type: string
+      build_number:
+        description: "Published build number (e.g. 21E230)"
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+concurrency:
+  group: scan
+  cancel-in-progress: false
+  queue: max
+
+permissions: {}
+
+jobs:
+  prepare:
+    name: Resolve published release
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      base_sha: ${{ steps.release.outputs.base_sha }}
+      data_file: ${{ steps.release.outputs.data_file }}
+      archive_path: ${{ steps.release.outputs.archive_path }}
+      major: ${{ steps.release.outputs.major }}
+      release_date: ${{ steps.release.outputs.release_date }}
+      source_url: ${{ steps.release.outputs.source_url }}
+      is_beta: ${{ steps.release.outputs.is_beta }}
+      beta_number: ${{ steps.release.outputs.beta_number }}
+      beta_revision: ${{ steps.release.outputs.beta_revision }}
+      is_rc: ${{ steps.release.outputs.is_rc }}
+      rc_number: ${{ steps.release.outputs.rc_number }}
+      device_specific: ${{ steps.release.outputs.device_specific }}
+    steps:
+      - name: Require main branch
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::Scanner workflows must be dispatched from main."
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Resolve release metadata
+        id: release
+        env:
+          PRODUCT: ${{ inputs.product }}
+          VERSION: ${{ inputs.version }}
+          BUILD: ${{ inputs.build_number }}
+        run: |
+          echo "base_sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+          python3 scripts/resolve-rescan.py \
+            --product "${PRODUCT}" \
+            --version "${VERSION}" \
+            --build "${BUILD}" \
+            --github-output "${GITHUB_OUTPUT}"
+
+  scan:
+    name: Rescan
+    needs: prepare
+    runs-on: scanner
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    steps:
+      - name: Add Homebrew to PATH
+        run: echo "/opt/homebrew/bin" >> "${GITHUB_PATH}"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
+          persist-credentials: false
+
+      - name: Resolve cached archive
+        env:
+          ARCHIVE_PATH: ${{ needs.prepare.outputs.archive_path }}
+          MAJOR: ${{ needs.prepare.outputs.major }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
+        run: |
+          # Drives mount at /Volumes/macOS-Archive-<range>: "LO-HI" (sealed) or "LO+" (active).
+          ARCHIVE_ROOT=""
+          seen=()
+          for vol in /Volumes/macOS-Archive-*; do
+            [[ -d "${vol}" ]] || continue
+            seen+=("${vol##*/}")
+            suffix=${vol##*/macOS-Archive-}
+            if [[ "${suffix}" =~ ^([0-9]+)\+$ ]]; then
+              lo=${BASH_REMATCH[1]}; hi=999999
+            elif [[ "${suffix}" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+              lo=${BASH_REMATCH[1]}; hi=${BASH_REMATCH[2]}
+            else
+              continue
+            fi
+            if (( MAJOR >= lo && MAJOR <= hi )); then
+              if [[ -n "${ARCHIVE_ROOT}" ]]; then
+                echo "::error::Major ${MAJOR} matches multiple archive drives (${ARCHIVE_ROOT}, ${vol})."
+                exit 1
+              fi
+              ARCHIVE_ROOT="${vol}"
+            fi
+          done
+          if [[ -z "${ARCHIVE_ROOT}" ]]; then
+            echo "::error::No mounted archive drive covers major ${MAJOR}. Mounted: ${seen[*]:-none}."
+            exit 1
+          fi
+          ARCHIVE="${ARCHIVE_ROOT}/${ARCHIVE_PATH}"
+          for path in "${ARCHIVE}" "${ARCHIVE}.sha256"; do
+            if [[ -L "${path}" || ! -f "${path}" ]]; then
+              echo "::error::Rescans need a cached regular archive and checksum sidecar: ${path}"
+              exit 1
+            fi
+          done
+          ARCHIVE_DATE=$(stat -f '%Sm' -t '%Y-%m-%d' "${ARCHIVE}")
+          if [[ "${ARCHIVE_DATE}" != "${RELEASE_DATE}" ]]; then
+            echo "::error::Cached archive date ${ARCHIVE_DATE} does not match the published release date ${RELEASE_DATE}."
+            exit 1
+          fi
+          printf 'ARCHIVE=%s\n' "${ARCHIVE}" >> "${GITHUB_ENV}"
+
+      - name: Identify Swift build environment
+        id: swift-build-environment
+        run: |
+          SWIFT_VERSION=$(swift --version)
+          SDK_BUILD=$(xcrun --sdk macosx --show-sdk-build-version)
+          SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
+          BUILD_IDENTITY=$(printf '%s\n' "${SWIFT_VERSION}" "${SDK_BUILD}" "${SDK_PATH}" | shasum -a 256)
+          echo "digest=${BUILD_IDENTITY%% *}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore CLI build cache
+        id: cache-cli
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/release/macosdb
+          key: macosdb-cli-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-build-environment.outputs.digest }}-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
+
+      - name: Build CLI
+        if: steps.cache-cli.outputs.cache-hit != 'true'
+        run: swift build -c release --product macosdb
+
+      - name: Save CLI build cache
+        if: steps.cache-cli.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/release/macosdb
+          key: macosdb-cli-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-build-environment.outputs.digest }}-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
+
+      - name: Verify cached archive checksum
+        run: .build/release/macosdb validate "${ARCHIVE}"
+
+      - name: Rescan archive
+        env:
+          PRODUCT: ${{ inputs.product }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
+          SOURCE_URL: ${{ needs.prepare.outputs.source_url }}
+          IS_BETA: ${{ needs.prepare.outputs.is_beta }}
+          BETA_NUMBER: ${{ needs.prepare.outputs.beta_number }}
+          BETA_REVISION: ${{ needs.prepare.outputs.beta_revision }}
+          IS_RC: ${{ needs.prepare.outputs.is_rc }}
+          RC_NUMBER: ${{ needs.prepare.outputs.rc_number }}
+          IS_DEVICE_SPECIFIC: ${{ needs.prepare.outputs.device_specific }}
+        run: |
+          SCAN_ARGS=(
+            "${ARCHIVE}"
+            --output "data/${PRODUCT}/releases"
+            --release-date "${RELEASE_DATE}"
+            --update-index
+            --verbose
+          )
+          if [[ "${PRODUCT}" == "macos" ]]; then
+            SCAN_ARGS+=(--ipsw-url "${SOURCE_URL}")
+            # Reuse the saved key: WKMS may no longer serve keys for older releases.
+            if [[ -f "${ARCHIVE}.pem" && ! -L "${ARCHIVE}.pem" ]]; then
+              SCAN_ARGS+=(--aea-key "${ARCHIVE}.pem")
+            fi
+            if [[ "${IS_DEVICE_SPECIFIC}" == "true" ]]; then
+              SCAN_ARGS+=(--device-specific)
+            fi
+          else
+            SCAN_ARGS+=(--xip-url "${SOURCE_URL}")
+          fi
+          if [[ "${IS_BETA}" == "true" ]]; then
+            SCAN_ARGS+=(--beta)
+          fi
+          if [[ -n "${BETA_NUMBER}" ]]; then
+            SCAN_ARGS+=(--beta-number "${BETA_NUMBER}")
+          fi
+          if [[ -n "${BETA_REVISION}" ]]; then
+            SCAN_ARGS+=(--beta-revision "${BETA_REVISION}")
+          fi
+          if [[ "${IS_RC}" == "true" ]]; then
+            SCAN_ARGS+=(--rc)
+          fi
+          if [[ -n "${RC_NUMBER}" ]]; then
+            SCAN_ARGS+=(--rc-number "${RC_NUMBER}")
+          fi
+          .build/release/macosdb scan "${SCAN_ARGS[@]}"
+
+      - name: Lint JSON
+        run: python3 scripts/lint-json.py
+
+      - name: Package release JSON
+        env:
+          PRODUCT: ${{ inputs.product }}
+          DATA_FILE: ${{ needs.prepare.outputs.data_file }}
+        run: |
+          INDEX_FILE="data/${PRODUCT}/releases.json"
+          while IFS= read -r changed; do
+            if [[ "${changed}" != "${INDEX_FILE}" && "${changed}" != "${DATA_FILE}" ]]; then
+              echo "::error::Rescan changed an unexpected path: ${changed}"
+              exit 1
+            fi
+          done < <(git ls-files --modified --others --exclude-standard -- data/)
+          /usr/bin/tar --no-mac-metadata --no-xattrs -czf "${RUNNER_TEMP}/release-json.tgz" "${INDEX_FILE}" "${DATA_FILE}"
+
+      - name: Upload release JSON artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-json
+          path: ${{ runner.temp }}/release-json.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish
+    needs: [prepare, scan]
+    runs-on: ubuntu-slim
+    timeout-minutes: 60
+    environment:
+      name: starhaven
+      deployment: false
+    outputs:
+      pr_number: ${{ steps.open-pr.outputs.pr_number }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
+          persist-credentials: false
+
+      - name: Download release JSON artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-json
+          path: ${{ runner.temp }}/artifact
+
+      - name: Verify and overlay release JSON
+        id: verify-release
+        env:
+          ARTIFACT: ${{ runner.temp }}/artifact/release-json.tgz
+          PRODUCT: ${{ inputs.product }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          SOURCE_URL: ${{ needs.prepare.outputs.source_url }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
+          IS_BETA: ${{ needs.prepare.outputs.is_beta }}
+          BETA_NUMBER: ${{ needs.prepare.outputs.beta_number }}
+          BETA_REVISION: ${{ needs.prepare.outputs.beta_revision }}
+          IS_RC: ${{ needs.prepare.outputs.is_rc }}
+          RC_NUMBER: ${{ needs.prepare.outputs.rc_number }}
+          IS_DEVICE_SPECIFIC: ${{ needs.prepare.outputs.device_specific }}
+        run: |
+          python3 scripts/verify-release-artifact.py \
+            --replace \
+            --artifact "${ARTIFACT}" \
+            --product "${PRODUCT}" \
+            --source-url "${SOURCE_URL}" \
+            --build-number "${BUILD_NUMBER}" \
+            --release-date "${RELEASE_DATE}" \
+            --beta "${IS_BETA}" \
+            --beta-number "${BETA_NUMBER}" \
+            --beta-revision "${BETA_REVISION}" \
+            --rc "${IS_RC}" \
+            --rc-number "${RC_NUMBER}" \
+            --device-specific "${IS_DEVICE_SPECIFIC}" \
+            --github-output "${GITHUB_OUTPUT}"
+          if git diff --quiet HEAD -- data/; then
+            echo "::notice::The rescan matches the published release; nothing to publish."
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Lint JSON
+        run: python3 scripts/lint-json.py
+
+      - name: Mint bot token
+        id: app-token
+        if: steps.verify-release.outputs.changed == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Create signed commit and open PR
+        id: open-pr
+        if: steps.verify-release.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          REPOSITORY: ${{ github.repository }}
+          PRODUCT: ${{ inputs.product }}
+          SOURCE_URL: ${{ steps.verify-release.outputs.source_url }}
+          BASENAME: ${{ steps.verify-release.outputs.basename }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          BASE_SHA=$(git rev-parse HEAD)
+          BOT_USER="${APP_SLUG}[bot]"
+          BOT_ID=$(gh api "/users/${BOT_USER}" --jq .id)
+
+          BRANCH="fix/data-rescan-${BASENAME}-${GITHUB_RUN_ID}"
+          TITLE="fix(data): rescan ${BASENAME}"
+          printf -v PR_BODY "## Summary\n- Rescanned the cached archive for \`%s\` with the current scanner\n\nAuto-generated by the [rescan workflow](%s)." \
+            "${SOURCE_URL}" "${RUN_URL}"
+          COMMIT_BODY="Signed-off-by: ${BOT_USER} <${BOT_ID}+${BOT_USER}@users.noreply.github.com>"
+
+          if [[ -n "${TRIGGERING_ACTOR}" ]]; then
+            if [[ ! "${TRIGGERING_ACTOR}" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]]; then
+              echo "::error::Invalid triggering actor login."
+              exit 1
+            fi
+            ACTOR_ID=$(gh api "/users/${TRIGGERING_ACTOR}" --jq .id)
+            COAUTHOR="Co-authored-by: ${TRIGGERING_ACTOR} <${ACTOR_ID}+${TRIGGERING_ACTOR}@users.noreply.github.com>"
+            COMMIT_BODY="${COMMIT_BODY}"$'\n'"${COAUTHOR}"
+          fi
+
+          ADDITIONS_FILE="${RUNNER_TEMP}/additions.json"
+          # shellcheck disable=SC2094 # Output is under RUNNER_TEMP, outside data/.
+          git diff --name-only HEAD -- "data/${PRODUCT}/" |
+            while IFS= read -r file; do
+              # shellcheck disable=SC2016 # jq needs literal jq variable names.
+              base64 < "$file" | tr -d '\n' |
+                jq -Rs --arg path "$file" '{path: $path, contents: .}'
+            done | jq -s . > "${ADDITIONS_FILE}"
+
+          git add -- "data/${PRODUCT}/"
+          TREE_SHA=$(git write-tree)
+          python3 scripts/publish-rescan.py \
+            --repository "${REPOSITORY}" \
+            --branch "${BRANCH}" \
+            --base "${BASE_SHA}" \
+            --tree "${TREE_SHA}" \
+            --title "${TITLE}" \
+            --commit-body "${COMMIT_BODY}" \
+            --pr-body "${PR_BODY}" \
+            --additions "${ADDITIONS_FILE}" \
+            --github-output "${GITHUB_OUTPUT}"
+
+  wait-for-merge:
+    name: Wait for merge
+    needs: publish
+    if: needs.publish.outputs.pr_number != ''
+    runs-on: ubuntu-slim
+    timeout-minutes: 30
+    permissions:
+      pull-requests: read # required to poll auto-merge status without the app token
+    steps:
+      - name: Wait for PR to merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ needs.publish.outputs.pr_number }}
+        run: |
+          if [[ ! "${PR_NUMBER}" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid pull request number: ${PR_NUMBER}"
+            exit 1
+          fi
+          echo "Waiting for PR #${PR_NUMBER} to merge..."
+          while true; do
+            STATE=$(gh pr view "${PR_NUMBER}" --repo "${REPOSITORY}" --json state -q .state 2>/dev/null || true)
+            case "${STATE}" in
+              MERGED) echo "PR merged successfully"; exit 0 ;;
+              CLOSED) echo "::error::PR was closed without merging"; exit 1 ;;
+            esac
+            sleep 30
+          done
