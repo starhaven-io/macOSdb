@@ -112,7 +112,7 @@
   "isRC" : false,
   "kernels" : [
     {
-      "arch" : "ARM64",
+      "arch" : "ARM64_T8101",
       "chip" : "M1",
       "darwinVersion" : "21.4.0",
       "deviceChips" : [
@@ -148,8 +148,8 @@
       "xnuVersion" : "8020.101.4"
     },
     {
-      "arch" : "ARM64",
-      "chip" : "Multiple",
+      "arch" : "ARM64_T6000",
+      "chip" : "M1 Pro",
       "darwinVersion" : "21.4.0",
       "deviceChips" : [
         {
@@ -189,7 +189,7 @@
       "xnuVersion" : "8020.101.4"
     },
     {
-      "arch" : "ARM64",
+      "arch" : "ARM64_VMAPPLE",
       "chip" : "Virtual Mac",
       "darwinVersion" : "21.4.0",
       "deviceChips" : [
