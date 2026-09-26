@@ -131,6 +131,28 @@ struct CleanupCommandTests {
         )
     }
 
+    @Test("Attached but unmounted images in stale workspaces are detached by whole disk")
+    func staleUnmountedImage() throws {
+        let tempBase = try makeTempDir(prefix: "cleanup-unmounted-")
+        defer { try? FileManager.default.removeItem(at: tempBase) }
+        let staleDir = tempBase.appendingPathComponent("macosdb-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: staleDir, withIntermediateDirectories: true)
+        try Data("999999999".utf8).write(to: staleDir.appendingPathComponent("scan.pid"))
+        let data = try PropertyListSerialization.data(
+            fromPropertyList: ["images": [[
+                "image-path": staleDir.appendingPathComponent("System.dmg").path,
+                "system-entities": [["dev-entry": "/dev/disk7s1"], ["dev-entry": "/dev/disk7"]]
+            ]]],
+            format: .xml,
+            options: 0
+        )
+
+        let mounts = try CleanupCommand.staleMounts(from: data, tempBase: tempBase.path)
+
+        #expect(mounts.map(\.deviceNode) == ["/dev/disk7"])
+        #expect(mounts.first?.mountPoint == nil)
+    }
+
     @Test("Scanner path matching accepts the private temp-directory alias")
     func scannerPathPrivateAlias() {
         let uuid = UUID().uuidString

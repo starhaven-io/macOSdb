@@ -44,4 +44,4 @@ Repository automation assumes that GitHub environments restrict scanner, release
 
 ## Local recovery
 
-`macosdb cleanup` lists recognized stale scanner mounts and workspaces. Inspect the dry-run, then use `macosdb cleanup --force`. Unrecognized directories and live markers are deliberately preserved. Cleanup stops if mount discovery fails or a scanner mount cannot be detached; removal failures return a nonzero exit status. Never substitute a broad manual `rm -rf` over the system temporary directory.
+When a scan cannot detach a disk image, including after an interrupted or timed-out attach, it prints a warning and keeps its workspace and ownership marker so the image stays discoverable. `macosdb cleanup` lists recognized stale scanner mounts, including images attached without a mounted volume, and stale workspaces. Inspect the dry-run, then use `macosdb cleanup --force`. Unrecognized directories and live markers are deliberately preserved. Cleanup stops if mount discovery fails or a scanner mount cannot be detached; removal failures return a nonzero exit status. Never substitute a broad manual `rm -rf` over the system temporary directory.
