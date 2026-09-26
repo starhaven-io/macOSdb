@@ -10,6 +10,7 @@ package enum ScanProgress: Sendable {
     case scanningFilesystem(component: String, current: Int, total: Int)
     case scanningDyldCache(component: String, current: Int, total: Int)
     case unmountingDMG
+    case imagesLeftAttached(images: [String], workspace: String)
     case assemblingResults
     case complete
     // Xcode-specific phases
@@ -23,14 +24,16 @@ package actor IPSWScanner {
 
     private let ipswExtractor = IPSWExtractor()
     private let aeaDecryptor = AEADecryptor()
-    private let dmgMounter = DMGMounter()
+    private let dmgMounter: DMGMounter
 
     package var onProgress: (@Sendable (ScanProgress) -> Void)?
     package var onVerbose: (@Sendable (String) -> Void)?
 
     package private(set) var aeaPrivateKeyPEM: String?
 
-    package init() {}
+    init(dmgMounter: DMGMounter) {
+        self.dmgMounter = dmgMounter
+    }
 
     package func scan(
         ipswPath: URL,
@@ -86,11 +89,11 @@ package actor IPSWScanner {
                 isDeviceSpecific: isDeviceSpecific
             )
         } catch {
-            await ipswExtractor.cleanup(workDirectory: extraction.workDirectory)
+            await releaseWorkspace(extraction.workDirectory)
             throw error
         }
 
-        await ipswExtractor.cleanup(workDirectory: extraction.workDirectory)
+        await releaseWorkspace(extraction.workDirectory)
 
         let elapsed = Date().timeIntervalSince(startTime)
         let elapsedStr = String(format: "%.1f", elapsed)
@@ -447,5 +450,23 @@ extension IPSWScanner {
             await dmgMounter.unmount(cryptexMount)
             throw error
         }
+    }
+}
+
+extension IPSWScanner {
+    package init() {
+        self.init(dmgMounter: DMGMounter())
+    }
+
+    /// Keeps the workspace, and its ownership marker, while an image may still be
+    /// attached from it: `macosdb cleanup` finds leftover images only through them.
+    func releaseWorkspace(_ workDirectory: URL) async {
+        let unreleased = await dmgMounter.unreleasedImages
+        guard unreleased.isEmpty else {
+            Self.logger.error("Keeping \(workDirectory.path) for images still attached: \(unreleased)")
+            sendProgress(.imagesLeftAttached(images: unreleased, workspace: workDirectory.path))
+            return
+        }
+        await ipswExtractor.cleanup(workDirectory: workDirectory)
     }
 }

@@ -133,6 +133,21 @@ struct IPSWScannerTests {
         }
     }
 
+    @Test("The workspace survives while an image may still be attached from it")
+    func keepsWorkspaceForUnreleasedImages() async throws {
+        let workspace = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let failing = DMGMounter { _, _ in ProcessRunResult(terminationStatus: 1, stdout: Data(), stderr: Data()) }
+        await failing.unmount(DMGMounter.MountPoint(path: "/Volumes/System", deviceNode: "/dev/disk4s1"))
+
+        await IPSWScanner(dmgMounter: failing).releaseWorkspace(workspace)
+        #expect(FileManager.default.fileExists(atPath: workspace.path))
+
+        let released = DMGMounter { _, _ in ProcessRunResult(terminationStatus: 0, stdout: Data(), stderr: Data()) }
+        await IPSWScanner(dmgMounter: released).releaseWorkspace(workspace)
+        #expect(!FileManager.default.fileExists(atPath: workspace.path))
+    }
+
     @Test("Extracts available filesystem components and skips missing or unmatched binaries")
     func extractsFilesystemComponents() async throws {
         let root = try makeTempDirectory()

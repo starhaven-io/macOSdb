@@ -244,6 +244,9 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
             printStatus("  [\(current)/\(total)] \(name) (dyld cache)")
         case .unmountingDMG:
             printStatus("Unmounting DMG...")
+        case .imagesLeftAttached(let images, let workspace):
+            printStatus("Warning: could not detach \(images.joined(separator: ", ")); kept \(workspace).")
+            printStatus("  Run `macosdb cleanup --force` once this scan has exited.")
         case .assemblingResults:
             printStatus("Assembling results...")
         case .complete:

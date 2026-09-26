@@ -27,7 +27,7 @@ struct CleanupCommand: AsyncParsableCommand {
         if !mounts.isEmpty {
             printStatus("Mounted DMGs from scans:")
             for mount in mounts {
-                printStatus("  \(mount.mountPoint)  (\(mount.deviceNode))")
+                printStatus("  \(mount.label)  (\(mount.deviceNode))")
                 printStatus("    source: \(mount.imagePath)")
             }
             printStatus("")
@@ -52,9 +52,9 @@ struct CleanupCommand: AsyncParsableCommand {
             case .stale:
                 if !unmount(mount) { unmountFailed = true }
             case .ownedByRunningScan:
-                printStatus("Skipped no-longer-stale mount \(mount.mountPoint)")
+                printStatus("Skipped no-longer-stale mount \(mount.label)")
             case .unrecognizedWorkDir:
-                printStatus("Skipped mount with unrecognized scan source \(mount.mountPoint)")
+                printStatus("Skipped mount with unrecognized scan source \(mount.label)")
             }
         }
 
@@ -75,8 +75,11 @@ struct CleanupCommand: AsyncParsableCommand {
 
     struct StaleMount {
         let imagePath: String
-        let mountPoint: String
+        /// Nil for an image attached without a mounted volume.
+        let mountPoint: String?
         let deviceNode: String
+
+        var label: String { mountPoint ?? "\(deviceNode) (attached, not mounted)" }
     }
 
     private enum StaleMountRecheck {
@@ -125,6 +128,7 @@ struct CleanupCommand: AsyncParsableCommand {
                 throw ValidationError("Could not inspect mounted disk images: missing scanner mount details.")
             }
 
+            var mounted = false
             for entity in entities {
                 guard entity["mount-point"] != nil else { continue }
                 guard let mountPoint = entity["mount-point"] as? String, !mountPoint.isEmpty,
@@ -136,6 +140,14 @@ struct CleanupCommand: AsyncParsableCommand {
                     mountPoint: mountPoint,
                     deviceNode: deviceNode
                 ))
+                mounted = true
+            }
+            if !mounted {
+                guard let wholeDisk = entities.compactMap({ $0["dev-entry"] as? String })
+                    .min(by: { $0.count < $1.count }), !wholeDisk.isEmpty else {
+                    throw ValidationError("Could not inspect mounted disk images: incomplete scanner mount identity.")
+                }
+                results.append(StaleMount(imagePath: imagePath, mountPoint: nil, deviceNode: wholeDisk))
             }
         }
 
@@ -181,12 +193,12 @@ struct CleanupCommand: AsyncParsableCommand {
             try process.run()
             process.waitUntilExit()
             if process.terminationStatus == 0 {
-                printStatus("Unmounted \(mount.mountPoint)")
+                printStatus("Unmounted \(mount.label)")
                 return true
             }
-            printStatus("Failed to unmount \(mount.mountPoint)")
+            printStatus("Failed to unmount \(mount.label)")
         } catch {
-            printStatus("Failed to unmount \(mount.mountPoint): \(error.localizedDescription)")
+            printStatus("Failed to unmount \(mount.label): \(error.localizedDescription)")
         }
         return false
     }
