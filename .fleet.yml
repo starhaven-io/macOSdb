@@ -23,6 +23,7 @@ params:
       group: "swift-dependencies"
       directory: "/"
   npm-policy:
+    strict-allow-scripts: true
     projects: ["site"]
   link-check:
     targets: >-
