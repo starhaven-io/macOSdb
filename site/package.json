@@ -25,7 +25,7 @@
     "@astrojs/compiler-rs": "^0.5.0",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource/inter": "^5.3.0",
-    "astro": "^7.3.4",
+    "astro": "^7.3.5",
     "astro-pagefind": "^2.0.1",
     "satori": "^0.33.5",
     "satori-html": "^0.3.2",
@@ -34,9 +34,9 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "prettier": "^3.9.9",
-    "prettier-plugin-astro": "^1.0.1",
+    "prettier-plugin-astro": "^1.1.0",
     "typescript": "^6.0.3",
-    "wrangler": "4.137.0"
+    "wrangler": "4.139.0"
   },
   "allowScripts": {
     "esbuild": false,
