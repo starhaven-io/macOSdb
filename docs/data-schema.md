@@ -26,6 +26,7 @@ macOS details also require:
 - `isDeviceSpecific`
 - `ipswFile` and an Apple HTTPS `ipswURL`
 - a non-empty `kernels` array with `file`, `arch`, `chip`, `darwinVersion`, `xnuVersion`, and `devices`
+- optional `deviceChips` on a kernel: an array of objects with non-empty `device` and `chip` strings, preserving per-device chip identities
 
 Xcode details also require:
 
