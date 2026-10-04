@@ -18,7 +18,8 @@
     "deploy": "node scripts/deploy.mjs",
     "deploy:dry": "node scripts/deploy.mjs --dry-run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:routes": "node scripts/check-comparison-routes.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.3",

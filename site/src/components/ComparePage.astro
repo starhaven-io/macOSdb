@@ -16,9 +16,20 @@ interface Props {
   fromKey: string | null;
   toKey: string | null;
   result: CompareResult | null;
+  unknownRelease?: boolean;
 }
 
-const { title, description, productLabel, basePath, releaseOptions, fromKey, toKey, result } = Astro.props;
+const {
+  title,
+  description,
+  productLabel,
+  basePath,
+  releaseOptions,
+  fromKey,
+  toKey,
+  result,
+  unknownRelease = false,
+} = Astro.props;
 
 const hasChanges =
   result &&
@@ -35,6 +46,8 @@ const hasChanges =
 
   <h1>Compare {productLabel} Releases</h1>
   <p class="subtitle">Select two {productLabel} releases to compare their open-source components.</p>
+
+  {unknownRelease && <p role="alert">A selected release could not be found. Choose a release from the lists below.</p>}
 
   <form method="GET" action={`/${basePath}/compare/`} class="controls">
     <div class="select-group">
