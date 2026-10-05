@@ -100,6 +100,7 @@ package enum ReleasePublicationValidator {
                   !(kernel.xnuVersion?.isEmpty ?? true),
                   !kernel.arch.isEmpty,
                   !kernel.chip.isEmpty,
+                  kernel.devices.allSatisfy({ !$0.isEmpty }),
                   permitsNoDevices || !kernel.devices.isEmpty else {
                 throw ReleasePublicationError.invalid("kernel metadata is incomplete")
             }

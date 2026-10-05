@@ -159,6 +159,27 @@ class CatalogShapeTests(unittest.TestCase):
             with self.subTest(message=message):
                 self.assertIn(message, mutated(change))
 
+    def test_device_identifiers_must_not_be_empty(self):
+        release = json.loads((REPO_ROOT / "data/macos/releases/15/macOS-15.0-24A335.json").read_text())
+        release["kernels"][0]["devices"] = ["Mac14,2", ""]
+        self.assertIn("devices contains empty or non-string entries", self.validate(release))
+
+    def test_optional_shapes_and_stray_catalog_files(self):
+        source = REPO_ROOT / "data/macos/releases/15/macOS-15.0-24A335.json"
+        release = json.loads(source.read_text())
+        for value in [None, {}, [None], [{"device": "Mac1,1", "chip": ""}]]:
+            candidate = json.loads(json.dumps(release))
+            candidate["kernels"][0]["deviceChips"] = value
+            self.assertIn("deviceChips", self.validate(candidate))
+        for field in ["betaNumber", "betaRevision", "rcNumber"]:
+            self.assertIn("instead of null", self.validate({**release, field: None}))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "stray.json").write_text("{}")
+            with contextlib.redirect_stderr(io.StringIO()) as output:
+                lint.validate_releases({**lint.PRODUCTS[0], "data": root}, {})
+            self.assertIn("unexpected JSON file", output.getvalue())
+
     def test_missing_required_catalog_fails_the_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
             product = {**lint.PRODUCTS[0], "data": Path(tmp).resolve() / "missing"}
@@ -287,6 +308,10 @@ class XcodeArchiveLabelTests(unittest.TestCase):
                 lint.validate_releases(product, {})
             return output.getvalue()
 
+    def test_duplicate_sdk_versions_are_rejected(self):
+        sdk = self.release["sdks"][0]
+        self.assertIn("duplicate SDK version", self.validate("Xcode_13.xip", sdks=[sdk, sdk]))
+
     def test_stable_release_rejects_prerelease_archive(self):
         version = self.release["osVersion"]
         for suffix in ("Release_Candidate", "Release_Candidate_2_Apple_silicon", "beta", "beta_3_Universal"):
@@ -382,6 +407,30 @@ class IndexPointerTests(unittest.TestCase):
                 lint.validate_index(self._product(root), catalog)
             self.assertEqual(lint.errors, 0)
 
+
+    def test_index_rejects_unknown_fields_and_invalid_optional_integers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            expected = root / "releases/15/macOS-15.0-24A335.json"
+            expected.parent.mkdir(parents=True)
+            pointer = "releases/15/macOS-15.0-24A335.json"
+            for field, value, diagnostic in [
+                ("unexpected", "value", "unexpected fields: unexpected"),
+                ("betaNumber", None, "betaNumber must be a valid integer when present"),
+                ("betaNumber", True, "betaNumber must be a valid integer when present"),
+                ("betaRevision", 1, "betaRevision must be a valid integer when present"),
+                ("rcNumber", 0, "rcNumber must be a valid integer when present"),
+            ]:
+                with self.subTest(field=field, value=value):
+                    entry = {**self._entry(pointer), field: value}
+                    expected.write_text(json.dumps(entry))
+                    (root / "releases.json").write_text(json.dumps([entry]))
+                    catalog = {"24A335": {"path": expected, "data": entry}}
+                    lint.errors = 0
+                    output = io.StringIO()
+                    with contextlib.redirect_stderr(output):
+                        lint.validate_index(self._product(root), catalog)
+                    self.assertIn(diagnostic, output.getvalue())
 
     def test_index_prerelease_numbers_match_the_detail_type(self):
         with tempfile.TemporaryDirectory() as tmp:

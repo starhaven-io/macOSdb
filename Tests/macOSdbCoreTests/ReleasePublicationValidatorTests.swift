@@ -20,6 +20,15 @@ struct ReleasePublicationValidatorTests {
         }
     }
 
+    @Test("Device lists cannot contain empty identifiers, including DTK releases")
+    func rejectsEmptyDeviceIdentifiers() {
+        for chip in ["M4", "A12Z (DTK)"] {
+            #expect(throws: ReleasePublicationError.self) {
+                try ReleasePublicationValidator.validate(macOSRelease(chip: chip, devices: ["Mac14,2", ""]))
+            }
+        }
+    }
+
     @Test("The documented DTK empty-device exception remains publishable")
     func acceptsDTKDeviceException() throws {
         try ReleasePublicationValidator.validate(macOSRelease(chip: "A12Z (DTK)", devices: []))

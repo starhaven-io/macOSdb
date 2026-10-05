@@ -391,6 +391,7 @@ def validate_releases(product, catalog):
     for f in sorted(data_dir.rglob("*.json")):
         parts = f.stem.split("-")
         if len(parts) < 3 or parts[0] != prefix:
+            error(f"{f.name}: unexpected JSON file in release catalog")
             continue
 
         build = parts[-1]
@@ -455,6 +456,10 @@ def validate_releases(product, catalog):
         for field in product["bool_fields"]:
             if not isinstance(d[field], bool):
                 error(f"{f.name}: {field} should be bool, got {type(d[field]).__name__}")
+
+        for field in ("betaNumber", "betaRevision", "rcNumber"):
+            if field in d and d[field] is None:
+                error(f"{f.name}: {field} must be omitted instead of null")
 
         # Beta/RC mutual exclusivity and number consistency
         is_beta = d["isBeta"]
@@ -556,11 +561,16 @@ def validate_releases(product, catalog):
             if not isinstance(sdks, list) or len(sdks) == 0:
                 error(f"{f.name}: sdks array is empty")
             else:
+                seen_sdk_versions = set()
                 for si, sdk in enumerate(sdks):
                     if not isinstance(sdk, dict):
                         error(f"{f.name}: sdks[{si}] should be object, got {type(sdk).__name__}")
                         continue
-                    require_string(sdk, "sdkVersion", f"{f.name}: sdks[{si}]")
+                    sdk_version = require_string(sdk, "sdkVersion", f"{f.name}: sdks[{si}]")
+                    if sdk_version is not None:
+                        if sdk_version in seen_sdk_versions:
+                            error(f"{f.name}: duplicate SDK version {sdk_version!r}")
+                        seen_sdk_versions.add(sdk_version)
                     require_string(sdk, "buildVersion", f"{f.name}: sdks[{si}]")
 
         # Components validation
@@ -632,6 +642,19 @@ def validate_releases(product, catalog):
                         if not val or not isinstance(val, str):
                             error(f"{f.name}: kernels[{ki}] {sfield} is empty or not a string")
 
+                    if "deviceChips" in kern:
+                        pairs = kern["deviceChips"]
+                        if not isinstance(pairs, list):
+                            error(f"{f.name}: kernels[{ki}] deviceChips should be an array")
+                        else:
+                            for pi, pair in enumerate(pairs):
+                                context = f"{f.name}: kernels[{ki}] deviceChips[{pi}]"
+                                if not isinstance(pair, dict):
+                                    error(f"{context} should be an object")
+                                    continue
+                                require_string(pair, "device", context)
+                                require_string(pair, "chip", context)
+
                     devices = kern.get("devices", [])
                     chip = kern.get("chip", "")
                     is_dtk = chip == "A12Z (DTK)"
@@ -641,8 +664,8 @@ def validate_releases(product, catalog):
                     if not isinstance(devices, list) or len(devices) == 0:
                         if not is_dtk and not is_early_vm:
                             error(f"{f.name}: kernels[{ki}] devices is empty")
-                    elif not all(isinstance(d_item, str) for d_item in devices):
-                        error(f"{f.name}: kernels[{ki}] devices contains non-string entries")
+                    elif not all(isinstance(d_item, str) and d_item for d_item in devices):
+                        error(f"{f.name}: kernels[{ki}] devices contains empty or non-string entries")
 
     # Rare component name check (possible typos)
     total_releases = len(catalog)
@@ -686,6 +709,14 @@ def validate_index(product, catalog):
         build_number = entry.get("buildNumber", "")
         b = build_number if isinstance(build_number, str) and build_number else f"entry {i}"
         context = f"{prefix} index/{b}"
+
+        allowed = set(product["index_required"]) | {"betaNumber", "betaRevision", "rcNumber"}
+        unexpected = entry.keys() - allowed
+        if unexpected:
+            error(f"{context}: unexpected fields: {', '.join(sorted(unexpected))}")
+        for field in ("betaNumber", "betaRevision", "rcNumber"):
+            if field in entry and (type(entry[field]) is not int or entry[field] < (2 if field == "betaRevision" else 1)):
+                error(f"{context}: {field} must be a valid integer when present")
 
         missing = [field for field in product["index_required"] if field not in entry]
         if missing:
