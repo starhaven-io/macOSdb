@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import shutil
+import tempfile
 import subprocess
 import unittest
 from pathlib import Path
@@ -23,7 +25,11 @@ def workflow_run_block(workflow, step_name, *, strip_comments=True):
     step = workflow[step_start:step_end]
     run_marker = "        run: |\n"
     run_start = step.index(run_marker) + len(run_marker)
-    run_lines = step[run_start:].splitlines()
+    run_lines = []
+    for line in step[run_start:].splitlines():
+        if line.strip() and not line.startswith("          "):
+            break
+        run_lines.append(line)
     return "\n".join(
         line[10:] if line.startswith("          ") else line
         for line in run_lines
@@ -150,6 +156,31 @@ class WorkflowSafetyContractTests(unittest.TestCase):
         workflow = CI_WORKFLOW.read_text()
         matrix_script = workflow_run_block(workflow, "Generate CI matrix")
         self.assertIn("matches_changed_path '^\\.github/workflows/|^scripts/", matrix_script)
+
+    def test_device_registry_and_site_workflow_changes_select_site_checks(self):
+        script = workflow_run_block(CI_WORKFLOW.read_text(), "Generate CI matrix")
+        for path, expect_site in [
+            ("Sources/macOSdbCore/Models/DeviceRegistry.swift", True),
+            ("Sources/macOSdbCore/ReleasePublicationValidator.swift", False),
+            (".github/workflows/ci.yml", True),
+        ]:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                self.assertTrue((ROOT / path).is_file(), f"Routing fixture must name a real file: {path}")
+                root = Path(directory)
+                git = root / "git"
+                git.write_text("#!/bin/sh\nprintf '%s\\0' '" + path + "'\n")
+                git.chmod(0o755)
+                result = subprocess.run(
+                    [shutil.which("bash"), "-euo", "pipefail", "-c", script],
+                    env={**os.environ, "PATH": f"{root}:{os.environ['PATH']}",
+                         "EVENT_NAME": "pull_request", "BASE_SHA": "fixture",
+                         "RUNNER_TEMP": str(root), "GITHUB_OUTPUT": str(root / "output")},
+                    capture_output=True, text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                outputs = dict(line.split("=", 1) for line in (root / "output").read_text().splitlines())
+                checks = {entry["check"] for entry in json.loads(outputs["matrix"])}
+                self.assertEqual("site" in checks, expect_site, checks)
 
     def test_pr_link_check_resolves_production_urls_against_the_built_site(self):
         workflow = CI_WORKFLOW.read_text()
