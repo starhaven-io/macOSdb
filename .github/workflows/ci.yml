@@ -234,6 +234,11 @@ jobs:
         working-directory: site
         run: npm run build
 
+      - name: Verify comparison routes
+        if: matrix.check == 'site'
+        working-directory: site
+        run: npm run check:routes
+
       - name: Deploy dry-run
         if: matrix.check == 'site'
         working-directory: site

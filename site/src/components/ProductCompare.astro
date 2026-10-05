@@ -8,9 +8,10 @@ import type { ProductConfig } from '../lib/products';
 interface Props {
   product: ProductConfig;
   url: URL;
+  unknownRelease?: boolean;
 }
 
-const { product, url } = Astro.props;
+const { product, url, unknownRelease = false } = Astro.props;
 
 const allReleases = await getCollection(product.indexCollection);
 const releases = allReleases.sort(
@@ -52,4 +53,5 @@ if (result) {
   fromKey={fromKey}
   toKey={toKey}
   result={result}
+  unknownRelease={unknownRelease}
 />

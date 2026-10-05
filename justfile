@@ -127,6 +127,8 @@ check:
     (cd site && npm test) || failed=1
     echo "--- site-build ---"
     (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" npm run build) || failed=1
+    echo "--- site-routes ---"
+    (cd site && npm run check:routes) || failed=1
     echo "--- site-deploy-dry ---"
     (cd site && WRANGLER_LOG_PATH="${TMPDIR:-/tmp}/macosdb-wrangler-logs" WRANGLER_SEND_METRICS=false npm run deploy:dry) || failed=1
     if command -v lychee &>/dev/null; then
