@@ -206,15 +206,16 @@ class WorkflowSafetyContractTests(unittest.TestCase):
         self.assertNotIn("CODECOV_TOKEN", workflow)
         self.assertNotIn("continue-on-error", upload)
 
-    def test_xip_integrity_is_established_before_scanning(self):
+    def test_xip_checks_existing_hashes_before_scanning_and_creates_new_ones_after_validation(self):
         workflow = XIP_WORKFLOW.read_text()
+        verify_step = workflow.index("- name: Verify existing SHA-256 sidecar")
         checksum_step = workflow.index("- name: Create or verify SHA-256 sidecar")
         scan_step = workflow.index("- name: Scan XIP")
-        self.assertLess(checksum_step, scan_step)
-        self.assertIn(
-            '.build/release/macosdb validate "${XIP_FILE}"',
-            workflow[checksum_step:scan_step],
-        )
+        self.assertLess(verify_step, scan_step)
+        self.assertLess(scan_step, workflow.index("- name: Lint JSON"))
+        self.assertLess(workflow.index("- name: Lint JSON"), workflow.index("- name: Package release JSON"))
+        self.assertLess(workflow.index("- name: Package release JSON"), checksum_step)
+        self.assertLess(checksum_step, workflow.index("- name: Lock archive files"))
 
         cache_start = workflow.index('if [[ -f "${XIP_FILE}" ]]')
         cache_end = workflow.index('if [[ -z "${ADC_DOWNLOAD_AUTH}" ]]', cache_start)

@@ -335,20 +335,6 @@ jobs:
       - name: Lint JSON
         run: python3 scripts/lint-json.py
 
-      - name: Generate SHA-256 sidecar
-        run: .build/release/macosdb validate "${IPSW_FILE}"
-
-      - name: Lock archive files
-        run: |
-          if [[ "$(stat -f '%Sf' "${IPSW_FILE}.sha256")" == *uchg* ]]; then
-            echo "SHA-256 sidecar already immutable, preserving its mtime"
-          else
-            touch -r "${IPSW_FILE}" "${IPSW_FILE}.sha256"
-          fi
-          for f in "${IPSW_FILE}" "${IPSW_FILE}.pem" "${IPSW_FILE}.sha256"; do
-            [[ -f "$f" ]] && chflags uchg "$f"
-          done
-
       - name: Package release JSON
         id: package-release
         run: |
@@ -378,6 +364,20 @@ jobs:
 
           /usr/bin/tar --no-mac-metadata --no-xattrs -czf "${RUNNER_TEMP}/release-json.tgz" data/macos/releases.json "${NEW_RELEASE_FILE}"
           echo "basename=$(basename "${NEW_RELEASE_FILE}" .json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Generate SHA-256 sidecar
+        run: .build/release/macosdb validate "${IPSW_FILE}"
+
+      - name: Lock archive files
+        run: |
+          if [[ "$(stat -f '%Sf' "${IPSW_FILE}.sha256")" == *uchg* ]]; then
+            echo "SHA-256 sidecar already immutable, preserving its mtime"
+          else
+            touch -r "${IPSW_FILE}" "${IPSW_FILE}.sha256"
+          fi
+          for f in "${IPSW_FILE}" "${IPSW_FILE}.pem" "${IPSW_FILE}.sha256"; do
+            [[ -f "$f" ]] && chflags uchg "$f"
+          done
 
       - name: Upload release JSON artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -447,6 +447,8 @@ jobs:
         with:
           client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.repository }}
           permission-contents: write
           permission-pull-requests: write
 
