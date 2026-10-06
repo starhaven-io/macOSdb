@@ -338,19 +338,11 @@ jobs:
             touch -t "${TOUCH_DATE}" "${XIP_FILE}"
           fi
 
-      - name: Create or verify SHA-256 sidecar
-        run: .build/release/macosdb validate "${XIP_FILE}"
-
-      - name: Lock archive files
+      - name: Verify existing SHA-256 sidecar
         run: |
-          if [[ "$(stat -f '%Sf' "${XIP_FILE}.sha256")" == *uchg* ]]; then
-            echo "SHA-256 sidecar already immutable, preserving its mtime"
-          else
-            touch -r "${XIP_FILE}" "${XIP_FILE}.sha256"
+          if [[ -f "${XIP_FILE}.sha256" ]]; then
+            .build/release/macosdb validate "${XIP_FILE}"
           fi
-          for f in "${XIP_FILE}" "${XIP_FILE}.sha256"; do
-            [[ -f "$f" ]] && chflags uchg "$f"
-          done
 
       - name: Scan XIP
         env:
@@ -417,6 +409,20 @@ jobs:
 
           /usr/bin/tar --no-mac-metadata --no-xattrs -czf "${RUNNER_TEMP}/release-json.tgz" data/xcode/releases.json "${NEW_RELEASE_FILE}"
           echo "basename=$(basename "${NEW_RELEASE_FILE}" .json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Create or verify SHA-256 sidecar
+        run: .build/release/macosdb validate "${XIP_FILE}"
+
+      - name: Lock archive files
+        run: |
+          if [[ "$(stat -f '%Sf' "${XIP_FILE}.sha256")" == *uchg* ]]; then
+            echo "SHA-256 sidecar already immutable, preserving its mtime"
+          else
+            touch -r "${XIP_FILE}" "${XIP_FILE}.sha256"
+          fi
+          for f in "${XIP_FILE}" "${XIP_FILE}.sha256"; do
+            [[ -f "$f" ]] && chflags uchg "$f"
+          done
 
       - name: Upload release JSON artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -486,6 +492,8 @@ jobs:
         with:
           client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.repository }}
           permission-contents: write
           permission-pull-requests: write
 
