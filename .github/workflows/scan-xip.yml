@@ -56,6 +56,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      pull-requests: read # Check for an earlier open catalog publication.
     outputs:
       base_sha: ${{ steps.inputs.outputs.base_sha }}
       release_date: ${{ steps.inputs.outputs.release_date }}
@@ -71,6 +72,15 @@ jobs:
         with:
           ref: main
           persist-credentials: false
+
+      - name: Require previous catalog publication to finish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/check-catalog-publication.py --repository "${GITHUB_REPOSITORY}"
+          # A previous PR may have merged after checkout but before the query.
+          git fetch --no-tags origin main
+          git checkout --detach FETCH_HEAD
 
       - name: Resolve trusted base and release date
         id: inputs
