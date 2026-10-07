@@ -2,6 +2,7 @@ schema: 1
 visibility: "public"
 license: "agpl"
 params:
+  coderabbit: true
   codecov: true
   conclusion:
     workflow: ".github/workflows/ci.yml"
@@ -74,6 +75,20 @@ params:
         description: "curl/wget downloads executable from non-literal source — cannot verify URL version"
         command: "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H \"Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}\" -o \"${XIP_FILE}.part\" \"${CDN_URL}\" &"
         reason: "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-05 after explicit token scoping and deferring new archive checksums and locks until scanning and output validation succeed; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
+      - workflow: ".github/workflows/scan-ipsw.yml"
+        workflow-sha256: "d278845586154400235fe0af0f789905b4d06cbb53e95d6b4c902ef5f5439d52"
+        category: "shell_fetch"
+        severity: "low"
+        description: "curl/wget downloads executable from non-literal source — cannot verify URL version"
+        command: "curl -fsSL --proto '=https' --proto-redir '=https'  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o \"${IPSW_FILE}.part\" \"${IPSW_URL}\" &"
+        reason: "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-06: candidate adds a read-only pending-publication gate and refreshes the trusted base; archive download and execution behavior is unchanged; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
+      - workflow: ".github/workflows/scan-xip.yml"
+        workflow-sha256: "83d194c3ca24b3e518e1e53313d77e08b83c8f0caa028a8cc53d0b8193f35d12"
+        category: "shell_fetch"
+        severity: "low"
+        description: "curl/wget downloads executable from non-literal source — cannot verify URL version"
+        command: "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H \"Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}\" -o \"${XIP_FILE}.part\" \"${CDN_URL}\" &"
+        reason: "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-06: candidate adds a read-only pending-publication gate and refreshes the trusted base; archive download and execution behavior is unchanged; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
   readme:
     badges:
       workflow: "ci.yml"
