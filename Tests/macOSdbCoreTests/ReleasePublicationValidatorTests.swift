@@ -65,6 +65,26 @@ struct ReleasePublicationValidatorTests {
         }
     }
 
+    @Test("IPSW source URLs cannot carry a query or fragment")
+    func rejectsIPSWQueryAndFragment() {
+        let macOS = macOSRelease()
+        for suffix in ["?download=1", "#/\(macOS.ipswFile ?? "")"] {
+            let release = Release(
+                osVersion: macOS.osVersion,
+                buildNumber: macOS.buildNumber,
+                releaseName: macOS.releaseName,
+                releaseDate: macOS.releaseDate,
+                ipswFile: macOS.ipswFile,
+                ipswURL: (macOS.ipswURL ?? "") + suffix,
+                kernels: macOS.kernels,
+                components: macOS.components
+            )
+            #expect(throws: ReleasePublicationError.self) {
+                try ReleasePublicationValidator.validate(release)
+            }
+        }
+    }
+
     @Test("Xcode publication requires the dynamically discovered Python component")
     func requiresPythonComponent() {
         let release = xcodeRelease()

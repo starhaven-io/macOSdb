@@ -240,6 +240,25 @@ class WorkflowSafetyContractTests(unittest.TestCase):
         )
         self.assertLess(stderr_action, stdin_action)
 
+    def test_ipsw_url_gate_rejects_queries_and_fragments(self):
+        resolve = workflow_run_block(IPSW_WORKFLOW.read_text(), "Resolve IPSW path")
+        pattern = re.search(r'\[\[ ! "\$\{IPSW_URL\}" =~ (\S+) \]\]', resolve)[1]
+        filename = "UniversalMac_27.0_26A123_Restore.ipsw"
+        cases = {
+            f"https://updates.cdn-apple.com/2026/macos/abc/{filename}": True,
+            f"https://updates.cdn-apple.com/2026/macos/abc/{filename}?download=1": False,
+            f"https://updates.cdn-apple.com/2026/macos/abc/{filename}#fragment": False,
+            f"https://updates.cdn-apple.com/a/other.ipsw#/{filename}": False,
+            f"https://updates.cdn-apple.com/a?b/{filename}": False,
+        }
+        for url, accepted in cases.items():
+            with self.subTest(url=url):
+                result = subprocess.run(
+                    ["/bin/bash", "-c", f'[[ "$1" =~ {pattern} ]]', "gate", url],
+                    check=False,
+                )
+                self.assertEqual(result.returncode == 0, accepted)
+
     def test_ipsw_cache_filename_requires_a_canonical_build_number(self):
         workflow = IPSW_WORKFLOW.read_text()
         self.assertIn(

@@ -505,6 +505,8 @@ def validate_releases(product, catalog):
             validate_download_url(url, "ipswURL", f.name)
             if isinstance(url, str) and urlparse(url).hostname != "updates.cdn-apple.com":
                 error(f"{f.name}: ipswURL must use updates.cdn-apple.com")
+            if isinstance(url, str) and ("?" in url or "#" in url):
+                error(f"{f.name}: ipswURL must not contain a query or fragment")
             if not isinstance(ipswfile, str) or not ipswfile:
                 error(f"{f.name}: ipswFile is empty or not a string")
 

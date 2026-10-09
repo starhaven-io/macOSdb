@@ -353,3 +353,97 @@ private struct IPSWFixture {
         try contents.write(to: archiveURL)
     }
 }
+
+@Suite("IPSW recorded identity tests")
+struct IPSWRecordedIdentityTests {
+    @Test("Recorded identity reads the nested build manifest, not the filename")
+    func readsNestedManifest() async throws {
+        let manifest = try PropertyListSerialization.data(
+            fromPropertyList: [
+                "BuildIdentities": [[
+                    "Info": ["BuildNumber": "24G90"],
+                    "Manifest": ["OS": ["Info": ["ProductVersion": "15.6.1"]]]
+                ]]
+            ],
+            format: .xml,
+            options: 0
+        )
+        let fixture = try IPSWFixture(
+            filename: "UniversalMac_27.0_26A123_Restore.ipsw",
+            entries: ["BuildManifest.plist": manifest]
+        )
+        defer { fixture.cleanup() }
+
+        let identity = try await IPSWExtractor().readRecordedIdentity(ipswPath: fixture.archiveURL)
+
+        #expect(identity.osVersion == "15.6.1")
+        #expect(identity.buildNumber == "24G90")
+    }
+
+    @Test("Restore plist fills fields the build manifest omits")
+    func fillsFromRestorePlist() async throws {
+        let fixture = try Self.partialManifestFixture(manifestVersion: "14.6.1", restore: ("14.6.1", "23G93"))
+        defer { fixture.cleanup() }
+
+        let identity = try await IPSWExtractor().readRecordedIdentity(ipswPath: fixture.archiveURL)
+
+        #expect(identity.osVersion == "14.6.1")
+        #expect(identity.buildNumber == "23G93")
+    }
+
+    @Test("Restore plist cannot contradict the build manifest")
+    func rejectsConflictingPlists() async throws {
+        let conflicts = [
+            try Self.partialManifestFixture(manifestVersion: "14.6.1", restore: ("99.0", "23G93")),
+            try Self.partialManifestFixture(manifestBuild: "24G90", restore: ("14.6.1", "23G93"))
+        ]
+        defer { conflicts.forEach { $0.cleanup() } }
+
+        for fixture in conflicts {
+            do {
+                _ = try await IPSWExtractor().readRecordedIdentity(ipswPath: fixture.archiveURL)
+                Issue.record("Expected conflicting plists to fail")
+            } catch ScannerError.metadataExtractionFailed(let reason) {
+                #expect(reason.contains("record different releases"))
+            }
+        }
+    }
+
+    @Test("Recorded identity never falls back to the filename")
+    func rejectsFilenameOnlyIdentity() async throws {
+        let fixture = try IPSWFixture(
+            filename: "UniversalMac_15.7.1_24G231_Restore.ipsw",
+            entries: ["System.dmg": Data("system".utf8)]
+        )
+        defer { fixture.cleanup() }
+
+        do {
+            _ = try await IPSWExtractor().readRecordedIdentity(ipswPath: fixture.archiveURL)
+            Issue.record("Expected missing recorded identity to fail")
+        } catch ScannerError.metadataExtractionFailed(let reason) {
+            #expect(reason.contains("does not record both a version and a build"))
+        } catch {
+            Issue.record("Expected a metadata extraction error, got \(error)")
+        }
+    }
+
+    private static func partialManifestFixture(
+        manifestVersion: String? = nil, manifestBuild: String? = nil, restore: (version: String, build: String)
+    ) throws -> IPSWFixture {
+        var identity: [String: Any] = [:]
+        if let manifestVersion { identity["Manifest"] = ["OS": ["Info": ["ProductVersion": manifestVersion]]] }
+        if let manifestBuild { identity["Info"] = ["BuildNumber": manifestBuild] }
+        let manifest = try PropertyListSerialization.data(
+            fromPropertyList: ["BuildIdentities": [identity]], format: .xml, options: 0
+        )
+        let restorePlist = try PropertyListSerialization.data(
+            fromPropertyList: ["ProductVersion": restore.version, "ProductBuildVersion": restore.build],
+            format: .xml,
+            options: 0
+        )
+        return try IPSWFixture(
+            filename: "fixture.ipsw",
+            entries: ["BuildManifest.plist": manifest, "Restore.plist": restorePlist]
+        )
+    }
+}
