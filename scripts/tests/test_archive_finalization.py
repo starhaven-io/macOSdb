@@ -10,7 +10,7 @@ from test_workflow_inputs import IPSW_WORKFLOW, XIP_WORKFLOW, workflow_run_block
 
 
 class ArchiveFinalizationTests(unittest.TestCase):
-    def run_workflow(self, *, product, existing=False, failure=""):
+    def run_workflow(self, *, product, existing=False, failure="", cached=True):
         is_xip = product == "xcode"
         path = XIP_WORKFLOW if is_xip else IPSW_WORKFLOW
         workflow = path.read_text().split("\n  publish:\n", 1)[0]
@@ -34,7 +34,8 @@ class ArchiveFinalizationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             archive = root / f"{product_type}-27.1-27A9275.{extension}"
-            archive.write_text("archive fixture")
+            if cached:
+                archive.write_text("archive fixture")
             sidecar = Path(f"{archive}.sha256")
             if existing:
                 sidecar.write_text("existing checksum")
@@ -56,6 +57,10 @@ case "$1" in
     printf '{"osVersion":"27.1","buildNumber":"%s","productType":"%s"}\\n' "$build" "$PRODUCT_TYPE" > "$DETAIL"
     if [[ "$PRODUCT" == macos ]]; then echo pem > "$IPSW_FILE.pem"; fi
     ;;
+  identity)
+    echo identity >> "$EVENTS"
+    [[ "$FAILURE" != source ]] || exit 1
+    ;;
   validate)
     if [[ -f "$2.sha256" ]]; then
       echo verify >> "$EVENTS"
@@ -76,6 +81,9 @@ esac
                 "stat": "exit 0",
                 "chflags": 'echo "lock${2#${ARCHIVE_FILE}}" >> "$EVENTS"',
                 "tar": '[[ "$FAILURE" != package ]]',
+                "curl": 'out=""; while (($#)); do [[ "$1" != -o ]] || out="$2"; shift; done; '
+                '[[ -z "$out" ]] || echo "archive fixture" > "$out"',
+                "sleep": "exit 0",
             }
             for name, script in stubs.items():
                 stub = bin_dir / name
@@ -129,7 +137,12 @@ esac
                     break
             if not failure:
                 self.assertEqual(executed, steps)
+            self.archive_exists = archive.exists()
+            self.partial_exists = Path(f"{archive}.part").exists()
             return result, events.read_text().splitlines(), sidecar.read_text() if sidecar.exists() else None
+
+    def source_check(self, product):
+        return ["identity"] if product == "macos" else []
 
     def expected_locks(self, product):
         return ["lock", "lock.pem", "lock.sha256"] if product == "macos" else ["lock", "lock.sha256"]
@@ -139,7 +152,9 @@ esac
             with self.subTest(product=product):
                 result, events, checksum = self.run_workflow(product=product)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(events, ["scan", "lint", "hash", *self.expected_locks(product)])
+                self.assertEqual(
+                    events, [*self.source_check(product), "scan", "lint", "hash", *self.expected_locks(product)]
+                )
                 self.assertEqual(checksum, "new checksum\n")
 
     def test_failed_scan_or_output_validation_never_creates_a_checksum_or_locks(self):
@@ -148,7 +163,8 @@ esac
                 with self.subTest(product=product, failure=failure):
                     result, events, checksum = self.run_workflow(product=product, failure=failure)
                     self.assertNotEqual(result.returncode, 0)
-                    self.assertEqual(events, ["scan"] if failure == "scan" else ["scan", "lint"])
+                    expected = ["scan"] if failure == "scan" else ["scan", "lint"]
+                    self.assertEqual(events, [*self.source_check(product), *expected])
                     self.assertIsNone(checksum)
 
     def test_existing_checksum_mismatch_stops_before_scan_and_preserves_sidecar(self):
@@ -172,8 +188,32 @@ esac
             with self.subTest(product=product):
                 result, events, checksum = self.run_workflow(product=product, failure="hash")
                 self.assertNotEqual(result.returncode, 0)
-                self.assertEqual(events, ["scan", "lint", "hash"])
+                self.assertEqual(events, [*self.source_check(product), "scan", "lint", "hash"])
                 self.assertIsNone(checksum)
+
+    def test_unchecksummed_cached_ipsw_with_another_identity_is_preserved_before_scan(self):
+        result, events, checksum = self.run_workflow(product="macos", failure="source")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(events, ["identity"])
+        self.assertIsNone(checksum)
+        self.assertTrue(self.archive_exists)
+        self.assertIn("Preserving it for investigation", result.stdout)
+
+    def test_fresh_ipsw_download_is_promoted_only_after_its_identity_matches(self):
+        result, events, checksum = self.run_workflow(product="macos", cached=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(events, ["identity", "scan", "lint", "hash", *self.expected_locks("macos")])
+        self.assertEqual(checksum, "new checksum\n")
+        self.assertTrue(self.archive_exists)
+        self.assertFalse(self.partial_exists)
+
+    def test_fresh_ipsw_download_with_another_identity_is_removed(self):
+        result, events, checksum = self.run_workflow(product="macos", cached=False, failure="source")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(events, ["identity"])
+        self.assertIsNone(checksum)
+        self.assertFalse(self.archive_exists)
+        self.assertFalse(self.partial_exists)
 
 
 if __name__ == "__main__":

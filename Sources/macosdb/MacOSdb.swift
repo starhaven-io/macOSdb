@@ -10,6 +10,7 @@ struct MacOSdb: AsyncParsableCommand {
             CleanupCommand.self,
             CompareCommand.self,
             CompletionsCommand.self,
+            IdentityCommand.self,
             ListCommand.self,
             ScanCommand.self,
             ShowCommand.self,

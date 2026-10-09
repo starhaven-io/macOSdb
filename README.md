@@ -80,6 +80,10 @@ macosdb scan ~/Downloads/Xcode_26.4_Apple_silicon.xip \
 macosdb validate ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw
 macosdb validate --dir /path/to/archive
 
+# Check that an IPSW's own metadata records the expected release
+macosdb identity ~/Downloads/UniversalMac_15.2_24C101_Restore.ipsw \
+  --expected-version 15.2 --expected-build 24C101
+
 # Clean up leftover mounted DMGs and temp directories from aborted scans
 macosdb cleanup            # dry run — list what would be removed
 macosdb cleanup --force    # actually unmount and delete

@@ -86,6 +86,7 @@ package enum ReleasePublicationValidator {
               ipswFile == expectedFile,
               release.releaseName == expectedName,
               isAllowedAppleURL(ipswURL, exactHost: "updates.cdn-apple.com"),
+              !ipswURL.contains("?"), !ipswURL.contains("#"),
               URL(string: ipswURL)?.lastPathComponent == ipswFile,
               !release.kernels.isEmpty else {
             throw ReleasePublicationError.invalid("IPSW source or kernels are incomplete")

@@ -458,6 +458,10 @@ extension IPSWScanner {
         self.init(dmgMounter: DMGMounter())
     }
 
+    package func recordedIdentity(ipswPath: URL) async throws -> (osVersion: String, buildNumber: String) {
+        try await ipswExtractor.readRecordedIdentity(ipswPath: ipswPath)
+    }
+
     /// Keeps the workspace, and its ownership marker, while an image may still be
     /// attached from it: `macosdb cleanup` finds leftover images only through them.
     func releaseWorkspace(_ workDirectory: URL) async {

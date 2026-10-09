@@ -145,11 +145,11 @@ jobs:
             echo "::error::Refusing an IPSW URL containing control characters."
             exit 1
           fi
-          if [[ ! "${IPSW_URL}" =~ ^https://updates\.cdn-apple\.com/.+\.ipsw([?#].*)?$ ]]; then
-            echo "::error::Refusing IPSW URL '${IPSW_URL}': expected an https://updates.cdn-apple.com/... .ipsw URL."
+          if [[ ! "${IPSW_URL}" =~ ^https://updates\.cdn-apple\.com/[^?#]+\.ipsw$ ]]; then
+            echo "::error::Refusing IPSW URL '${IPSW_URL}': expected an https://updates.cdn-apple.com/... .ipsw URL without a query or fragment."
             exit 1
           fi
-          ORIG_NAME=$(basename "${IPSW_URL%%\?*}")
+          ORIG_NAME=$(basename "${IPSW_URL}")
           if [[ ! "${ORIG_NAME}" =~ ^UniversalMac_[0-9]+(\.[0-9]+){1,2}_[0-9]+[A-Z][0-9]+[a-z]?_Restore\.ipsw$ ]]; then
             echo "::error::Refusing IPSW filename '${ORIG_NAME}': expected UniversalMac_<version>_<build>_Restore.ipsw."
             exit 1
@@ -244,6 +244,10 @@ jobs:
           if [[ -f "${IPSW_FILE}" ]]; then
             if [[ -f "${IPSW_FILE}.sha256" ]]; then
               .build/release/macosdb validate "${IPSW_FILE}"
+            elif ! .build/release/macosdb identity "${IPSW_FILE}" \
+              --expected-version "${EXPECTED_VERSION}" --expected-build "${EXPECTED_BUILD}"; then
+              echo "::error::Cached IPSW without a checksum could not be confirmed as macOS ${EXPECTED_VERSION} (${EXPECTED_BUILD}). Preserving it for investigation; remove ${IPSW_FILE} only after confirming it is not this release, then redispatch."
+              exit 1
             fi
             echo "IPSW already cached at ${IPSW_FILE}, skipping download"
           else
@@ -276,6 +280,12 @@ jobs:
               sleep 30
             done
             wait "${CURL_PID}"
+            if ! .build/release/macosdb identity "${IPSW_FILE}.part" \
+              --expected-version "${EXPECTED_VERSION}" --expected-build "${EXPECTED_BUILD}"; then
+              rm -f "${IPSW_FILE}.part"
+              echo "::error::Downloaded IPSW could not be confirmed as macOS ${EXPECTED_VERSION} (${EXPECTED_BUILD}). Removed the download instead of adding it to the cache."
+              exit 1
+            fi
             mv "${IPSW_FILE}.part" "${IPSW_FILE}"
           fi
 

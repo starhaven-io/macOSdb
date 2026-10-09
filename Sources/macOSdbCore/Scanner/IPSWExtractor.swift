@@ -33,28 +33,12 @@ actor IPSWExtractor {
 
         Self.logger.info("Extracting IPSW: \(ipswPath.lastPathComponent)")
 
-        let workDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macosdb-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
-        do {
-            try ScanWorkspace.markOwned(workDir)
-        } catch {
-            try? FileManager.default.removeItem(at: workDir)
-            throw error
-        }
+        let workDir = try makeWorkDirectory()
 
         // Clean up the work dir if anything after its creation throws; the caller
         // only cleans up once it holds the ExtractionResult.
         do {
-            let archive: Archive
-            do {
-                archive = try Archive(url: ipswPath, accessMode: .read)
-            } catch {
-                throw ScannerError.ipswExtractionFailed(
-                    reason: "Could not open IPSW as ZIP archive: \(error)"
-                )
-            }
-
+            let archive = try openArchive(ipswPath)
             let classified = try classifyEntries(archive)
             try Task.checkCancellation()
             let metadata = try extractMetadata(
@@ -82,6 +66,72 @@ actor IPSWExtractor {
         } catch {
             cleanup(workDirectory: workDir)
             throw error
+        }
+    }
+
+    /// Reads the version and build recorded inside the archive, never its filename, so a caller can
+    /// confirm a download before trusting it.
+    func readRecordedIdentity(ipswPath: URL) throws -> (osVersion: String, buildNumber: String) {
+        try Task.checkCancellation()
+        guard FileManager.default.fileExists(atPath: ipswPath.path) else {
+            throw ScannerError.ipswNotFound(path: ipswPath.path)
+        }
+        let workDir = try makeWorkDirectory()
+        defer { cleanup(workDirectory: workDir) }
+
+        let archive = try openArchive(ipswPath)
+        let entries = try classifyEntries(archive)
+        var osVersion = ""
+        var buildNumber = ""
+        if let manifestEntry = entries.buildManifest {
+            let manifestPath = try extractMetadataEntry(
+                manifestEntry, from: archive, workDir: workDir, named: "BuildManifest.plist"
+            )
+            let parsed = try parseManifest(at: manifestPath)
+            osVersion = parsed.osVersion
+            buildNumber = parsed.buildNumber
+        }
+        if osVersion.isEmpty || buildNumber.isEmpty, let restoreEntry = entries.restorePlist {
+            let restored = try parseRestorePlist(
+                at: extractMetadataEntry(restoreEntry, from: archive, workDir: workDir, named: "Restore.plist")
+            )
+            guard osVersion.isEmpty || restored.osVersion.isEmpty || restored.osVersion == osVersion,
+                  buildNumber.isEmpty || restored.buildNumber.isEmpty || restored.buildNumber == buildNumber else {
+                throw ScannerError.metadataExtractionFailed(
+                    reason: "BuildManifest.plist and Restore.plist record different releases"
+                )
+            }
+            if osVersion.isEmpty { osVersion = restored.osVersion }
+            if buildNumber.isEmpty { buildNumber = restored.buildNumber }
+        }
+        guard !osVersion.isEmpty, !buildNumber.isEmpty else {
+            throw ScannerError.metadataExtractionFailed(
+                reason: "IPSW metadata does not record both a version and a build"
+            )
+        }
+        return (osVersion, buildNumber)
+    }
+
+    private func makeWorkDirectory() throws -> URL {
+        let workDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
+        do {
+            try ScanWorkspace.markOwned(workDir)
+        } catch {
+            try? FileManager.default.removeItem(at: workDir)
+            throw error
+        }
+        return workDir
+    }
+
+    private func openArchive(_ ipswPath: URL) throws -> Archive {
+        do {
+            return try Archive(url: ipswPath, accessMode: .read)
+        } catch {
+            throw ScannerError.ipswExtractionFailed(
+                reason: "Could not open IPSW as ZIP archive: \(error)"
+            )
         }
     }
 }
@@ -172,17 +222,8 @@ extension IPSWExtractor {
         var kernelDeviceMap: [String: [String]] = [:]
 
         if let manifestEntry = entries.buildManifest {
-            try validateMetadataSize(manifestEntry)
-            let manifestPath = workDir.appendingPathComponent("BuildManifest.plist")
-            _ = try extractBoundedEntry(
-                manifestEntry,
-                from: archive,
-                to: manifestPath,
-                budget: ExtractionBudget(
-                    individualLimit: Self.maxMetadataSize,
-                    totalSoFar: 0,
-                    totalLimit: Self.maxMetadataSize
-                )
+            let manifestPath = try extractMetadataEntry(
+                manifestEntry, from: archive, workDir: workDir, named: "BuildManifest.plist"
             )
             let parsed = try parseManifest(at: manifestPath)
             osVersion = parsed.osVersion
@@ -191,19 +232,9 @@ extension IPSWExtractor {
             kernelDeviceMap = parsed.kernelDeviceMap
             Self.logger.info("Detected: macOS \(osVersion) (\(buildNumber))")
         } else if let restoreEntry = entries.restorePlist {
-            try validateMetadataSize(restoreEntry)
-            let restorePath = workDir.appendingPathComponent("Restore.plist")
-            _ = try extractBoundedEntry(
-                restoreEntry,
-                from: archive,
-                to: restorePath,
-                budget: ExtractionBudget(
-                    individualLimit: Self.maxMetadataSize,
-                    totalSoFar: 0,
-                    totalLimit: Self.maxMetadataSize
-                )
+            (osVersion, buildNumber) = try parseRestorePlist(
+                at: extractMetadataEntry(restoreEntry, from: archive, workDir: workDir, named: "Restore.plist")
             )
-            (osVersion, buildNumber) = try parseRestorePlist(at: restorePath)
             Self.logger.info("Detected from Restore.plist: macOS \(osVersion) (\(buildNumber))")
         }
 
@@ -222,6 +253,24 @@ extension IPSWExtractor {
             dmgRoles: dmgRoles,
             kernelDeviceMap: kernelDeviceMap
         )
+    }
+
+    private func extractMetadataEntry(
+        _ entry: Entry, from archive: Archive, workDir: URL, named name: String
+    ) throws -> URL {
+        try validateMetadataSize(entry)
+        let path = workDir.appendingPathComponent(name)
+        _ = try extractBoundedEntry(
+            entry,
+            from: archive,
+            to: path,
+            budget: ExtractionBudget(
+                individualLimit: Self.maxMetadataSize,
+                totalSoFar: 0,
+                totalLimit: Self.maxMetadataSize
+            )
+        )
+        return path
     }
 
     private func validateMetadataSize(_ entry: Entry) throws {

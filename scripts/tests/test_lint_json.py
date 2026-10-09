@@ -153,6 +153,14 @@ class CatalogShapeTests(unittest.TestCase):
                 ),
                 "ipswURL filename is not UniversalMac_",
             ),
+            (
+                lambda r: r.update(ipswURL=f"https://updates.cdn-apple.com/2024/other.ipsw#/{r['ipswFile']}"),
+                "ipswURL must not contain a query or fragment",
+            ),
+            (
+                lambda r: r.update(ipswURL=f"https://updates.cdn-apple.com/2024/{r['ipswFile']}?download=1"),
+                "ipswURL must not contain a query or fragment",
+            ),
         ]
         self.assertNotIn("error", self.validate(release).lower())
         for change, message in cases:
