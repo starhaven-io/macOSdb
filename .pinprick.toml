@@ -3,24 +3,6 @@
 
 [[accept-workflow-findings]]
 workflow = ".github/workflows/scan-xip.yml"
-workflow-sha256 = "83d194c3ca24b3e518e1e53313d77e08b83c8f0caa028a8cc53d0b8193f35d12"
-category = "shell_fetch"
-severity = "low"
-description = "curl/wget downloads executable from non-literal source — cannot verify URL version"
-command = "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H \"Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}\" -o \"${XIP_FILE}.part\" \"${CDN_URL}\" &"
-reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-06: candidate adds a read-only pending-publication gate and refreshes the trusted base; archive download and execution behavior is unchanged; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
-
-[[accept-workflow-findings]]
-workflow = ".github/workflows/scan-ipsw.yml"
-workflow-sha256 = "7b584c820e3bfea1f6e7ad641f41275f061c44c7fd793f859e055b8fdcefbcb9"
-category = "shell_fetch"
-severity = "low"
-description = "curl/wget downloads executable from non-literal source — cannot verify URL version"
-command = "curl -fsSL --proto '=https' --proto-redir '=https'  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o \"${IPSW_FILE}.part\" \"${IPSW_URL}\" &"
-reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-08: candidate rejects source URLs with a query or fragment and confirms an unchecksummed IPSW's recorded version and build before caching or scanning it; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
-
-[[accept-workflow-findings]]
-workflow = ".github/workflows/scan-xip.yml"
 workflow-sha256 = "49651e09ff7d07f4d3f3e85c4cc70476ab52464bf9983e58e57d9a375184b56b"
 category = "shell_fetch"
 severity = "low"
@@ -36,6 +18,24 @@ severity = "low"
 description = "curl/wget downloads executable from non-literal source — cannot verify URL version"
 command = "curl -fsSL --proto '=https' --proto-redir '=https'  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o \"${IPSW_FILE}.part\" \"${IPSW_URL}\" &"
 reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-09: Ruby runtime checks and validated helper invocations preserve the archive download command and trust boundary; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
+
+[[accept-workflow-findings]]
+workflow = ".github/workflows/scan-xip.yml"
+workflow-sha256 = "c07bbc16ae4afe31f5ad5635909d2a2a85b6e306a12e0051d4df51688139372c"
+category = "shell_fetch"
+severity = "low"
+description = "curl/wget downloads executable from non-literal source — cannot verify URL version"
+command = "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H \"Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}\" -o \"${XIP_FILE}.part\" \"${CDN_URL}\" &"
+reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-10: hosted jobs set up Ruby through the repository action at the running commit; the archive download command and trust boundary are unchanged; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
+
+[[accept-workflow-findings]]
+workflow = ".github/workflows/scan-ipsw.yml"
+workflow-sha256 = "9f00832d41e71dadbcd7a1ff4b23dd52ac284414f68234b4a37570872cc73383"
+category = "shell_fetch"
+severity = "low"
+description = "curl/wget downloads executable from non-literal source — cannot verify URL version"
+command = "curl -fsSL --proto '=https' --proto-redir '=https'  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -o \"${IPSW_FILE}.part\" \"${IPSW_URL}\" &"
+reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-10: hosted jobs set up Ruby through the repository action at the running commit; the archive download command and trust boundary are unchanged; renew only after workflow review. See docs/operations.md#accepted-archive-download-risk."
 
 [[accept-action-findings]]
 action = "Homebrew/actions/setup-homebrew"
