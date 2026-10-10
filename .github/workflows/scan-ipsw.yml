@@ -61,7 +61,7 @@ permissions: {}
 jobs:
   prepare:
     name: Establish trusted inputs
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -82,11 +82,16 @@ jobs:
           ref: main
           persist-credentials: false
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler: none
+
       - name: Require previous catalog publication to finish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 scripts/check-catalog-publication.py --repository "${GITHUB_REPOSITORY}"
+          ruby scripts/check-catalog-publication.rb --repository "${GITHUB_REPOSITORY}"
           # A previous PR may have merged after checkout but before the query.
           git fetch --no-tags origin main
           git checkout --detach FETCH_HEAD
@@ -119,13 +124,18 @@ jobs:
       contents: read
     steps:
       - name: Add Homebrew to PATH
-        run: echo "/opt/homebrew/bin" >> "${GITHUB_PATH}"
+        run: |
+          echo "/opt/homebrew/bin" >> "${GITHUB_PATH}"
+          echo "/opt/homebrew/opt/ruby/bin" >> "${GITHUB_PATH}"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Verify scanner Ruby
+        run: ruby scripts/check-ruby.rb
 
       - name: Clean workspace
         run: git clean -fdx data/macos/releases/
@@ -353,7 +363,7 @@ jobs:
           .build/release/macosdb scan "${SCAN_ARGS[@]}"
 
       - name: Lint JSON
-        run: python3 scripts/lint-json.py
+        run: ruby scripts/lint-json.rb
 
       - name: Package release JSON
         id: package-release
@@ -410,7 +420,7 @@ jobs:
   publish:
     name: Publish
     needs: [prepare, scan]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     environment:
       name: starhaven
@@ -425,6 +435,11 @@ jobs:
           ref: ${{ needs.prepare.outputs.base_sha }}
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler: none
 
       - name: Download release JSON artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -445,7 +460,7 @@ jobs:
           RC_NUMBER: ${{ inputs.rc_number }}
           IS_DEVICE_SPECIFIC: ${{ inputs.device_specific }}
         run: |
-          python3 scripts/verify-release-artifact.py \
+          ruby scripts/verify-release-artifact.rb \
             --artifact "${ARTIFACT}" \
             --product macos \
             --source-url "${SOURCE_URL}" \
@@ -459,7 +474,7 @@ jobs:
             --github-output "${GITHUB_OUTPUT}"
 
       - name: Lint JSON
-        run: python3 scripts/lint-json.py
+        run: ruby scripts/lint-json.rb
 
       - name: Mint bot token
         id: app-token

@@ -107,24 +107,24 @@ jobs:
           fi
 
           # Site and repository-script changes: interpreted-language CodeQL.
-          if matches_changed_path '^site/|^scripts/'; then
+          if matches_changed_path '^site/|^scripts/|^Gemfile(\.lock)?$|^\.ruby-version$'; then
             RUN_CODEQL_INTERPRETED=true
           fi
 
           # Data changes — and changes to the linter that gates them — run lint-json
-          # so a modified scripts/lint-json.py is re-validated against existing data.
-          if matches_changed_path '^data/|^scripts/'; then
-            add_check '{"name":"Lint JSON","check":"lint-json","runner":"ubuntu-slim"}'
+          # so a modified scripts/lint-json.rb is re-validated against existing data.
+          if matches_changed_path '^data/|^scripts/|^Gemfile(\.lock)?$|^\.ruby-version$'; then
+            add_check '{"name":"Lint JSON","check":"lint-json","runner":"ubuntu-24.04"}'
           fi
 
           # Workflow changes run the script contracts that enforce release and
           # scanner invariants, not only the Actions syntax/security audits.
-          if matches_changed_path '^\.github/workflows/|^scripts/|^Sources/macOSdbCore/Scanner/(ScannerConfig|XcodeScanner|ProcessRunner)\.swift$|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$|^lychee\.toml$'; then
-            add_check '{"name":"Script Tests","check":"script-tests","runner":"ubuntu-slim"}'
+          if matches_changed_path '^\.github/workflows/|^scripts/|^Gemfile(\.lock)?$|^\.ruby-version$|^Sources/macOSdbCore/Scanner/(ScannerConfig|XcodeScanner|ProcessRunner)\.swift$|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$|^lychee\.toml$'; then
+            add_check '{"name":"Script Tests","check":"script-tests","runner":"ubuntu-24.04"}'
           fi
 
           # Site or data changes: format check + build
-          if matches_changed_path '^site/|^data/|^Sources/macOSdbCore/Models/DeviceRegistry\.swift$|^\.github/workflows/ci\.yml$|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$'; then
+          if matches_changed_path '^site/|^data/|^Gemfile(\.lock)?$|^\.ruby-version$|^Sources/macOSdbCore/Models/DeviceRegistry\.swift$|^\.github/workflows/ci\.yml$|^Tests/macOSdbCoreTests/Fixtures/ordering-vectors\.json$'; then
             add_check '{"name":"Site","check":"site","runner":"ubuntu-slim"}'
           fi
 
@@ -173,6 +173,12 @@ jobs:
           persist-credentials: false
 
 
+      - name: Set up Ruby
+        if: matrix.check == 'lint-json' || matrix.check == 'script-tests'
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler-cache: ${{ matrix.check == 'script-tests' }}
+
       - name: Install lint tools
         if: matrix.check == 'lint'
         env:
@@ -191,11 +197,11 @@ jobs:
 
       - name: Lint JSON
         if: matrix.check == 'lint-json'
-        run: python3 scripts/lint-json.py
+        run: ruby scripts/lint-json.rb
 
       - name: Script tests
         if: matrix.check == 'script-tests'
-        run: python3 -B -m unittest discover -s scripts/tests -v
+        run: bundle exec ruby scripts/test.rb --verbose
 
       - name: Setup Node
         if: matrix.check == 'site'
@@ -323,7 +329,7 @@ jobs:
       security-events: write # required to upload SARIF results
     uses: starhaven-io/.github/.github/workflows/reusable-codeql.yml@be272b580ad3812dcafa195db003b178545c2de9 # v2026.10.10.1
     with:
-      languages: '["javascript-typescript","python"]'
+      languages: '["javascript-typescript","python","ruby"]'
       runner: "ubuntu-slim"
 
   codecov:
