@@ -34,7 +34,7 @@ Xcode details also require:
 - `minimumOSVersion`
 - a non-empty `sdks` array whose entries contain `sdkVersion` and `buildVersion`
 
-The authoritative field and completeness checks are implemented in `scripts/lint-json.py`; Astro applies an additional Zod schema when building the site.
+The authoritative field and completeness checks are implemented in `scripts/lint-json.rb`; Astro applies an additional Zod schema when building the site.
 
 ## Compatibility
 

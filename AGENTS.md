@@ -21,11 +21,11 @@ and publishes an Astro/Cloudflare site and API.
 ## Development and checks
 
 Native scanner development requires Apple silicon, macOS 15 or newer, and the
-Swift 6.2 toolchain. The site uses Node.js 26. Python 3 and the lint/analysis tools
+Swift 6.2 toolchain. The site uses Node.js 26. Ruby 4 and the lint/analysis tools
 listed in [Contributing](CONTRIBUTING.md) are required by the complete gate.
 
 Use focused recipes in `justfile` while iterating, then run `just check` on the
-stable patch. It includes Swift tests and analysis, generated-data and Python
+stable patch. It includes Swift tests and analysis, generated-data and Ruby
 script tests, site dependency policy, formatting, type checking, unit
 tests, build, deployment dry-run, and link checks. Missing tools fail the gate;
 report them as unverified. Run `git diff --check` and inspect the final status.
@@ -34,7 +34,7 @@ Do not repeat expensive checks when the relevant source and evidence are unchang
 - Swift uses Swift Testing, strict SwiftLint, structured concurrency, and OSLog.
   Preserve actor isolation and propagate cancellation through cleanup scopes.
 - Keep the numeric/alphabetic comparison and release ordering contracts aligned
-  across Swift, TypeScript, and Python using the shared ordering fixtures.
+  across Swift, TypeScript, and Ruby using the shared ordering fixtures.
 - Keep device identities in the Swift registry and site map aligned. Retain
   explicit chip-family grouping decisions and cover changed mappings with tests.
 - Site install-script decisions belong in `site/package.json`; the fleet owns
@@ -52,7 +52,7 @@ Do not repeat expensive checks when the relevant source and evidence are unchang
   release data is CC-BY-4.0.
 - `ScannerConfig.swift` and Xcode extraction code define tracked components.
   Changes to the required set require a coordinated corpus migration and updates
-  to the Python linter, Swift validator, Astro schema, tests, and documentation.
+  to the Ruby linter, Swift validator, Astro schema, tests, and documentation.
 - Preserve historical test fixtures that exercise compatibility with older data;
   removing an obsolete emitted field does not require deleting that evidence.
 - Treat archives, binaries, plists, JSON, and workflow inputs as untrusted.

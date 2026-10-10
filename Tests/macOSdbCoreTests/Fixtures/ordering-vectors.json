@@ -1,5 +1,5 @@
 {
-  "comment": "Shared ordering vectors for Swift, TypeScript, and Python implementations.",
+  "comment": "Shared ordering vectors for Swift, TypeScript, and Ruby implementations.",
   "osVersions": [
     { "lhs": "11.0", "rhs": "11.0.1", "expected": "lt" },
     { "lhs": "11.0", "rhs": "11.0.0", "expected": "eq" },

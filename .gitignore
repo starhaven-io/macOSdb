@@ -16,6 +16,8 @@ build/
 .swiftpm/
 
 # Tooling
+.bundle/
+vendor/bundle/
 __pycache__/
 !_typos.toml
 

@@ -182,7 +182,7 @@ jobs:
   release:
     name: Release
     needs: build
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     environment:
       name: release
@@ -198,6 +198,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler: none
 
       - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -334,13 +339,17 @@ jobs:
 
       - name: Format release notes
         if: steps.create-release.outputs.needs_format == 'true'
+        run: |
+          ruby scripts/format-release-notes.rb \
+            "${RUNNER_TEMP}/raw_notes.md" "${TAG}" \
+            > "${RUNNER_TEMP}/formatted_notes.md"
+
+      - name: Publish formatted release notes
+        if: steps.create-release.outputs.needs_format == 'true'
         env:
           GH_TOKEN: ${{ steps.release-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          python3 scripts/format-release-notes.py \
-            "${RUNNER_TEMP}/raw_notes.md" "${TAG}" \
-            > "${RUNNER_TEMP}/formatted_notes.md"
           gh release edit "${TAG}" \
             --repo "${REPOSITORY}" \
             --notes-file "${RUNNER_TEMP}/formatted_notes.md"
@@ -398,7 +407,7 @@ jobs:
           # Homebrew supplies the subject; prepare its DCO trailer before commit-msg validation.
           TAP_ROOT="$(cd "$(brew --repo starhaven-io/tap)" && pwd -P)"
           HOOKS_DIR=$(git -C "${TAP_ROOT}" rev-parse --path-format=absolute --git-path hooks)
-          HOOKS_DIR=$(python3 -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).resolve())' "${HOOKS_DIR}")
+          HOOKS_DIR=$(env -u GH_TOKEN brew ruby -- -rpathname -e 'path = Pathname.new(ARGV.fetch(0)).cleanpath; suffix = []; until path.exist? || path.symlink?; parent = path.parent; abort "Cannot resolve the tap hooks directory." if parent == path; suffix.unshift(path.basename); path = parent; end; puts path.realpath.join(*suffix).cleanpath' "${HOOKS_DIR}")
           case "${HOOKS_DIR}" in
             "${TAP_ROOT}/"*) ;;
             *) echo "::error::Tap hooks directory is outside the fresh checkout."; exit 1 ;;
@@ -423,7 +432,7 @@ jobs:
             --trailer "Signed-off-by: ${author}" "$1"
           HOOK
           chmod +x "${DCO_HOOK}"
-          if ! python3 -c 'import os, sys; os.symlink(sys.argv[1], sys.argv[2])' "${DCO_HOOK}" "${PREPARE_HOOK}"; then
+          if ! env -u GH_TOKEN brew ruby -- -e 'File.symlink(ARGV.fetch(0), ARGV.fetch(1))' "${DCO_HOOK}" "${PREPARE_HOOK}"; then
             echo "::error::Cannot install the DCO hook; an existing prepare-commit-msg hook must be preserved."
             exit 1
           fi

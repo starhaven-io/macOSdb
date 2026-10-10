@@ -9,7 +9,9 @@ on:
       - 'data/**'
       - '.github/workflows/deploy-site.yml'
       - 'scripts/check-npm-install-policy.mjs'
-      - 'scripts/lint-json.py'
+      - 'scripts/lint-json.rb'
+      - 'scripts/strict-json.rb'
+      - '.ruby-version'
   workflow_dispatch:
 
 permissions: {}
@@ -42,7 +44,7 @@ jobs:
   build:
     name: Build
     needs: validate-ref
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: read # required to checkout repository
@@ -57,8 +59,13 @@ jobs:
           node-version: 26
           package-manager-cache: false
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler: none
+
       - name: Validate release data
-        run: python3 scripts/lint-json.py
+        run: ruby scripts/lint-json.rb
 
       - name: Check npm install-script policy
         run: node scripts/check-npm-install-policy.mjs site

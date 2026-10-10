@@ -1,0 +1,30 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    drb (2.2.3)
+    fiddle (1.1.8)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    prism (1.8.1)
+
+PLATFORMS
+  aarch64-linux-gnu
+  arm64-darwin
+  x86_64-linux-gnu
+
+DEPENDENCIES
+  fiddle (~> 1.1)
+  minitest (~> 6.0)
+
+CHECKSUMS
+  drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
+  fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
+  minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
+  prism (1.8.1) sha256=b260c1844ee0c7ead9c938f7fd63b95888c87cc054dfb64043204eccff8116ac
+
+RUBY VERSION
+  ruby 4.0.7
+
+BUNDLED WITH
+  4.0.20

@@ -163,7 +163,7 @@ just clean          # Clean Swift build artifacts
 just test           # Run Swift tests
 just lint           # Run SwiftLint (--strict)
 just lint-json      # Validate JSON data files
-just test-scripts   # Run Python script tests
+just test-scripts   # Run Ruby script tests
 just typos          # Check for typos
 just audit          # Audit GitHub Actions workflows (zizmor)
 just test-cov       # Run tests with code coverage
