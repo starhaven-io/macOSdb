@@ -94,17 +94,25 @@ class RubyRuntimeTests < Minitest::Test
   end
 
   def test_privileged_ruby_setup_does_not_install_bundler_or_receive_tokens
+    action = ROOT.join(".github/actions/setup-ruby/action.yml").read
+    assert_includes action, "bundler: none"
+    %w[inputs: GH_TOKEN secrets. bundler-cache:].each { |text| refute_includes action, text }
+    setup = ["ruby/setup-ruby@", "$/.github/actions/setup-ruby"]
     %w[release rescan scan-ipsw scan-xip deploy-site].each do |name|
       workflow = ROOT.join(".github/workflows/#{name}.yml").read
       document = YAML.safe_load(workflow)
       refute document.fetch("env", {}).key?("GH_TOKEN")
       document.fetch("jobs").each_value do |job|
-        next unless job.fetch("steps", []).any? { |step| step.fetch("uses", "").start_with?("ruby/setup-ruby@") }
+        next unless job.fetch("steps", []).any? { |step| step.fetch("uses", "").start_with?(*setup) }
 
         refute job.fetch("env", {}).key?("GH_TOKEN")
       end
       workflow.split(/^      - /).grep(/\Aname: Set up Ruby/).each do |step|
-        assert_includes step, "bundler: none"
+        if step.include?("uses: $/.github/actions/setup-ruby\n")
+          refute_includes step, "with:"
+        else
+          assert_includes step, "bundler: none"
+        end
         refute_includes step, "GH_TOKEN"
         refute_includes step, "secrets."
         refute_includes step, "bundler-cache:"
@@ -122,5 +130,17 @@ class RubyRuntimeTests < Minitest::Test
     bump = workflow_run_block(workflow, "Bump Homebrew cask")
     assert_includes bump, "env -u GH_TOKEN brew ruby -- -rpathname"
     assert_includes bump, "env -u GH_TOKEN brew ruby -- -e"
+  end
+
+  def test_scanner_workflows_keep_the_setup_ruby_pin_in_the_local_action
+    [IPSW_WORKFLOW, XIP_WORKFLOW].each do |path|
+      workflow = path.read
+      refute_includes workflow, "ruby/setup-ruby@"
+      jobs = YAML.safe_load(workflow).fetch("jobs")
+      %w[prepare publish].each do |name|
+        uses = jobs.fetch(name).fetch("steps").map { |step| step["uses"] }
+        assert_includes uses, "$/.github/actions/setup-ruby", "#{path.basename} #{name}"
+      end
+    end
   end
 end
