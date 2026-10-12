@@ -1,0 +1,93 @@
+name: Xcode 27 Preview
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "47 9 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: xcode-27-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+
+jobs:
+  preview:
+    name: Xcode 27 — ${{ matrix.name }}
+    runs-on: xcode-27
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: build
+            name: Build (Release)
+          - check: thread
+            name: Test (Thread Sanitizer)
+          - check: address
+            name: Test (Address Sanitizer)
+    env:
+      PREVIEW_CHECK: ${{ matrix.check }}
+    steps:
+      - name: Record and verify toolchain
+        run: |
+          {
+            sw_vers
+            uname -m
+            printf 'Runner image: %s / %s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
+            printf 'Developer directory: %s\n' "${DEVELOPER_DIR}"
+            XCODE_VERSION=$(xcodebuild -version)
+            printf '%s\n' "${XCODE_VERSION}"
+            xcrun swift --version
+            xcrun --sdk macosx --show-sdk-version
+            if [[ "$(sw_vers -productVersion)" != 27.* || "$(uname -m)" != arm64 ]]; then
+              echo "::error::Expected macOS 27 on ARM64"
+              exit 1
+            fi
+            case "${XCODE_VERSION%%$'\n'*}" in
+              "Xcode 27.0"|"Xcode 27.0."*) ;;
+              *) echo "::error::Expected Xcode 27.0"; exit 1 ;;
+            esac
+          } 2>&1 | tee "${RUNNER_TEMP}/xcode-27-toolchain.txt"
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build or test
+        run: |
+          FLAGS=(--scratch-path "${RUNNER_TEMP}/Xcode27-${PREVIEW_CHECK}" --force-resolved-versions)
+          case "${PREVIEW_CHECK}" in
+            build) swift build "${FLAGS[@]}" --configuration release ;;
+            thread|address) swift test "${FLAGS[@]}" --sanitize "${PREVIEW_CHECK}" ;;
+            *) echo "::error::Unknown preview check: ${PREVIEW_CHECK}"; exit 1 ;;
+          esac 2>&1 | tee "${RUNNER_TEMP}/xcode-27-build-test.log"
+
+      - name: Verify tests ran
+        if: matrix.check != 'build'
+        run: |
+          if ! grep -Eq 'Test run with [1-9][0-9]* tests? in' "${RUNNER_TEMP}/xcode-27-build-test.log"; then
+            echo "::error::Expected a nonzero Swift Testing test count"
+            exit 1
+          fi
+
+      - name: Upload preview diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Xcode27-${{ matrix.check }}
+          path: |
+            ${{ runner.temp }}/xcode-27-toolchain.txt
+            ${{ runner.temp }}/xcode-27-build-test.log
+          if-no-files-found: error
+          retention-days: 14
