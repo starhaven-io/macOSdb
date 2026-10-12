@@ -66,7 +66,8 @@ jobs:
 
       - name: Build or test
         run: |
-          FLAGS=(--scratch-path "${RUNNER_TEMP}/Xcode27-${PREVIEW_CHECK}" --force-resolved-versions)
+          # The CLI smoke tests find the built macosdb binary under the package's .build.
+          FLAGS=(--force-resolved-versions)
           case "${PREVIEW_CHECK}" in
             build) swift build "${FLAGS[@]}" --configuration release ;;
             thread|address) swift test "${FLAGS[@]}" --sanitize "${PREVIEW_CHECK}" ;;
