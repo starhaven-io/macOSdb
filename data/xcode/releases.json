@@ -36,10 +36,10 @@
     "buildNumber" : "27A9275",
     "dataFile" : "releases/27/Xcode-27.1-27A9275.json",
     "isBeta" : false,
-    "isRC" : true,
+    "isRC" : false,
     "osVersion" : "27.1",
     "productType" : "Xcode",
-    "releaseDate" : "2026-10-05",
+    "releaseDate" : "2026-10-15",
     "releaseName" : "Xcode 27.1"
   },
   {
