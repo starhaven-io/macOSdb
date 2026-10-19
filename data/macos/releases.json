@@ -1,5 +1,16 @@
 [
   {
+    "buildNumber" : "26B118",
+    "dataFile" : "releases/27/macOS-27.2-26B118.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : false,
+    "isRC" : true,
+    "osVersion" : "27.2",
+    "productType" : "macOS",
+    "releaseDate" : "2026-10-19",
+    "releaseName" : "Golden Gate"
+  },
+  {
     "betaNumber" : 4,
     "buildNumber" : "26B5112a",
     "dataFile" : "releases/27/macOS-27.2-26B5112a.json",
