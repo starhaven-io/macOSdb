@@ -24,7 +24,7 @@ CHECKSUMS
   prism (1.8.1) sha256=b260c1844ee0c7ead9c938f7fd63b95888c87cc054dfb64043204eccff8116ac
 
 RUBY VERSION
-  ruby 4.0.7
+  ruby 4.0.9
 
 BUNDLED WITH
   4.0.20
