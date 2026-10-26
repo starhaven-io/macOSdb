@@ -28,7 +28,7 @@
     "@fontsource/inter": "^5.3.0",
     "astro": "^7.3.8",
     "astro-pagefind": "^2.0.1",
-    "satori": "^0.60.0",
+    "satori": "^0.62.0",
     "satori-html": "^0.3.2",
     "sharp": "^0.35.5"
   },
@@ -37,7 +37,7 @@
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.1",
     "typescript": "^6.0.3",
-    "wrangler": "4.151.0"
+    "wrangler": "4.151.1"
   },
   "allowScripts": {
     "esbuild": false,
