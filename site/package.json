@@ -22,22 +22,22 @@
     "check:routes": "node scripts/check-comparison-routes.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.4.0",
+    "@astrojs/cloudflare": "^14.4.1",
     "@astrojs/compiler-rs": "^0.5.2",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource/inter": "^5.3.0",
-    "astro": "^7.3.8",
+    "astro": "^7.4.1",
     "astro-pagefind": "^2.0.1",
-    "satori": "^0.62.0",
+    "satori": "^0.63.0",
     "satori-html": "^0.3.2",
     "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.11",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.1",
     "typescript": "^6.0.3",
-    "wrangler": "4.151.1"
+    "wrangler": "4.151.2"
   },
   "allowScripts": {
     "esbuild": false,
