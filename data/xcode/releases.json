@@ -1,5 +1,15 @@
 [
   {
+    "buildNumber" : "27B52",
+    "dataFile" : "releases/27/Xcode-27.2-27B52.json",
+    "isBeta" : false,
+    "isRC" : false,
+    "osVersion" : "27.2",
+    "productType" : "Xcode",
+    "releaseDate" : "2026-10-29",
+    "releaseName" : "Xcode 27.2"
+  },
+  {
     "buildNumber" : "27B48",
     "dataFile" : "releases/27/Xcode-27.2-27B48.json",
     "isBeta" : false,
