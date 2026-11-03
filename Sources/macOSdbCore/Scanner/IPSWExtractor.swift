@@ -5,7 +5,7 @@ import ZIPFoundation
 actor IPSWExtractor {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "IPSWExtractor")
     static let maxArchiveEntries = 100_000
-    static let maxMetadataSize: UInt64 = 32 * 1_024 * 1_024
+    static let maxMetadataSize: UInt64 = 128 * 1_024 * 1_024
     static let maxKernelEntries = 2_048
     static let maxDMGEntries = 512
     static let maxKernelSize: UInt64 = 1 * 1_024 * 1_024 * 1_024
