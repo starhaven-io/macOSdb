@@ -1,5 +1,17 @@
 [
   {
+    "betaNumber" : 1,
+    "buildNumber" : "26C5035r",
+    "dataFile" : "releases/27/macOS-27.3-26C5035r.json",
+    "isBeta" : true,
+    "isDeviceSpecific" : false,
+    "isRC" : false,
+    "osVersion" : "27.3",
+    "productType" : "macOS",
+    "releaseDate" : "2026-11-03",
+    "releaseName" : "Golden Gate"
+  },
+  {
     "buildNumber" : "26B123",
     "dataFile" : "releases/27/macOS-27.2-26B123.json",
     "isBeta" : false,
