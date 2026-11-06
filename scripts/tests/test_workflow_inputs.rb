@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 require_relative "test_helper"
 
 class XcodeBuildInputTests < Minitest::Test
@@ -176,5 +178,35 @@ class WorkflowSafetyContractTests < Minitest::Test
 
   def test_ipsw_cache_filename_requires_a_canonical_build_number
     assert_includes IPSW_WORKFLOW.read, '^UniversalMac_[0-9]+(\.[0-9]+){1,2}_[0-9]+[A-Z][0-9]+[a-z]?_Restore\.ipsw$'
+  end
+
+  SCANNER_WORKFLOW_JOBS = %w[prepare scan publish wait-for-merge].freeze
+
+  def environment_name(job)
+    environment = job["environment"]
+    environment.is_a?(Hash) ? environment["name"] : environment
+  end
+
+  # A job's whole secret context reaches its runner, so the self-hosted scan
+  # job may bind only the environment and secret of the Apple download cookie.
+  def test_scanner_jobs_never_declare_a_publishing_environment
+    [IPSW_WORKFLOW, XIP_WORKFLOW, RESCAN_WORKFLOW].each do |path|
+      jobs = YAML.safe_load(path.read).fetch("jobs")
+      assert_equal SCANNER_WORKFLOW_JOBS, jobs.keys, path.basename.to_s
+      jobs.each do |name, job|
+        secrets = JSON.generate(job).scan(/secrets\.(\w+)/).flatten.uniq
+        if name == "scan"
+          assert_equal "scanner", job["runs-on"], "#{path.basename}: the scan job runs on the self-hosted scanner"
+          assert_includes [nil, "apple-developer"], environment_name(job), "#{path.basename}: the scan job binds a publishing environment"
+          assert_empty secrets - ["ADC_DOWNLOAD_AUTH"], "#{path.basename}: the scan job references publishing secrets"
+        else
+          refute_equal "scanner", job["runs-on"], "#{path.basename}: hosted job #{name} runs on the scanner"
+          refute_equal "apple-developer", environment_name(job), "#{path.basename}: hosted job #{name} does not need the download cookie"
+        end
+      end
+    end
+    xip_scan = YAML.safe_load(XIP_WORKFLOW.read).dig("jobs", "scan")
+    assert_equal({ "name" => "apple-developer", "deployment" => false }, xip_scan["environment"])
+    assert_includes JSON.generate(xip_scan), "gh secret set ADC_DOWNLOAD_AUTH --env apple-developer"
   end
 end

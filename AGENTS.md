@@ -76,6 +76,10 @@ verify the runner group's allowed workflow/ref restriction in GitHub. A shell
 branch guard is an early error check, not protection against modified workflow
 code. Hosted environment branch restrictions and least-privilege credentials
 provide the privilege boundary without requiring another human approver.
+A job's entire secret context reaches the runner that executes it, so
+self-hosted scanner jobs bind only the `apple-developer` environment, which
+holds the Apple download cookie. Publishing credentials stay in `starhaven`
+and `release`, bound only by hosted jobs.
 
 Keep top-level workflow permissions empty, actions SHA-pinned, and checkout
 credentials nonpersistent. Scanner publication must keep its separate hosted
