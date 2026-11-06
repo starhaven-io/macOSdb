@@ -45,8 +45,6 @@
     "workerd": false
   },
   "overrides": {
-    "fflate": "0.7.5",
-    "nanoid": "3.3.18",
-    "sharp": "$sharp"
+    "fflate": "0.7.5"
   }
 }
