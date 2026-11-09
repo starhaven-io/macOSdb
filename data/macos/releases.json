@@ -12,6 +12,17 @@
     "releaseName" : "Golden Gate"
   },
   {
+    "buildNumber" : "26B8132",
+    "dataFile" : "releases/27/macOS-27.2.1-26B8132.json",
+    "isBeta" : false,
+    "isDeviceSpecific" : true,
+    "isRC" : false,
+    "osVersion" : "27.2.1",
+    "productType" : "macOS",
+    "releaseDate" : "2026-11-09",
+    "releaseName" : "Golden Gate"
+  },
+  {
     "buildNumber" : "26B7131",
     "dataFile" : "releases/27/macOS-27.2.1-26B7131.json",
     "isBeta" : false,
