@@ -12,6 +12,16 @@ command = "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-d
 reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-10-14: the context fingerprint permits only full SHA pin and full version-comment updates for the listed actions, which remain independently audited. Other workflow changes require renewed review. See docs/operations.md#accepted-archive-download-risk."
 
 [[accept-workflow-findings]]
+workflow = ".github/workflows/scan-xip.yml"
+workflow-context-sha256 = "1cfddb5438b96bd0792de19f8c453fca051aff64ad44ce145b9b434bb613ff26"
+ignore-action-revisions = ["actions/cache/restore","actions/cache/save","actions/checkout","actions/create-github-app-token","actions/download-artifact","actions/upload-artifact"]
+category = "shell_fetch"
+severity = "low"
+description = "curl/wget downloads executable from non-literal source — cannot verify URL version"
+command = "curl -sS --fail --proto '=https' --max-redirs 0  --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors -C - -H \"Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}\" -o \"${XIP_FILE}.part\" \"${CDN_URL}\" &"
+reason = "Repository maintainer accepts this runtime-selected Apple archive download for static scanning. Preserve validated Apple URLs, per-release resumable paths, TLS restrictions, archive validation, and no execution of extracted binaries. Cache checksums are not independent publisher authentication. Reviewed 2026-11-05: the scan job binds the apple-developer environment so the publishing credentials in starhaven leave the self-hosted runner's secret scope; download and execution behavior is unchanged. The context fingerprint permits only full SHA pin and full version-comment updates for the listed actions, which remain independently audited. Other workflow changes require renewed review. See docs/operations.md#accepted-archive-download-risk."
+
+[[accept-workflow-findings]]
 workflow = ".github/workflows/scan-ipsw.yml"
 workflow-context-sha256 = "f5bc81e5a8bbe66c99b1697a5c76ea16c6af8b1e376f4519479add20dbc21f58"
 ignore-action-revisions = ["actions/cache/restore","actions/cache/save","actions/checkout","actions/create-github-app-token","actions/download-artifact","actions/upload-artifact"]
