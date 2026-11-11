@@ -109,8 +109,11 @@ jobs:
     needs: prepare
     runs-on: scanner
     timeout-minutes: 180
+    # A job's whole secret context reaches its runner, so this self-hosted job
+    # binds only the environment holding the download cookie, never the
+    # publishing credentials in starhaven.
     environment:
-      name: starhaven
+      name: apple-developer
       deployment: false
     permissions:
       contents: read
@@ -282,7 +285,7 @@ jobs:
           fi
 
           if [[ -z "${ADC_DOWNLOAD_AUTH}" ]]; then
-            echo "::error::ADC_DOWNLOAD_AUTH secret is not set. Set it with: gh secret set ADC_DOWNLOAD_AUTH --env starhaven"
+            echo "::error::ADC_DOWNLOAD_AUTH secret is not set. Set it with: gh secret set ADC_DOWNLOAD_AUTH --env apple-developer"
             exit 1
           fi
 
