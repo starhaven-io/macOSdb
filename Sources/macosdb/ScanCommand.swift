@@ -6,10 +6,10 @@ import macOSdbCore
 struct ScanCommand: AsyncParsableCommand, Sendable {
     static let configuration = CommandConfiguration(
         commandName: "scan",
-        abstract: "Scan an IPSW or Xcode .xip and extract component versions."
+        abstract: "Scan an IPSW or Xcode archive and extract component versions."
     )
 
-    @Argument(help: "Path to the archive file (.ipsw or .xip) to scan.")
+    @Argument(help: "Path to the archive file (.ipsw, .xip, or .aea) to scan.")
     var archivePath: String
 
     @Option(name: .shortAndLong, help: "Output directory for the JSON file (default: current directory).")
@@ -100,7 +100,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         let release: Release
 
         switch archiveURL.pathExtension.lowercased() {
-        case "xip":
+        case "xip", "aea":
             release = try await scanXcode(archiveURL: archiveURL)
         case "ipsw":
             let (scannedRelease, recoveredPEM) = try await scanIPSW(
@@ -194,7 +194,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
 
         do {
             return try await scanner.scan(
-                xipPath: archiveURL,
+                archivePath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
                 xipURL: downloadURL,
@@ -251,8 +251,8 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
             printStatus("Assembling results...")
         case .complete:
             break
-        case .extractingXIP:
-            printStatus("Extracting XIP archive...")
+        case .extractingXcodeArchive:
+            printStatus("Extracting Xcode archive...")
         case .scanningToolchain(let name, let current, let total):
             printStatus("  [\(current)/\(total)] \(name) (toolchain)")
         case .parsingSDKMetadata:
@@ -329,8 +329,8 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
 extension ScanCommand {
     func validate() throws {
         let archiveExtension = URL(fileURLWithPath: archivePath).pathExtension.lowercased()
-        guard archiveExtension == "ipsw" || archiveExtension == "xip" else {
-            throw ValidationError("Archive must have an .ipsw or .xip extension")
+        guard ["ipsw", "xip", "aea"].contains(archiveExtension) else {
+            throw ValidationError("Archive must have an .ipsw, .xip, or .aea extension")
         }
         if updateIndex && releaseDate == nil {
             throw ValidationError("--release-date is required when using --update-index")
@@ -353,10 +353,10 @@ extension ScanCommand {
         if let betaRevision, betaRevision < 2 {
             throw ValidationError("--beta-revision must be 2 or greater")
         }
-        if keyOnly && updateIndex {
-            throw ValidationError("--key-only cannot be combined with --update-index")
+        if updateIndex, keyOnly || archiveExtension == "aea" {
+            throw ValidationError("\(keyOnly ? "--key-only" : "An Xcode .aea archive") cannot be combined with --update-index")
         }
-        if archiveExtension == "xip", deviceSpecific || saveAeaKey || aeaKeyPath != nil || keyOnly {
+        if archiveExtension != "ipsw", deviceSpecific || saveAeaKey || aeaKeyPath != nil || keyOnly {
             throw ValidationError("AEA key and device-specific options are available only for IPSW archives")
         }
     }

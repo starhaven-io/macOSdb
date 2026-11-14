@@ -91,7 +91,9 @@ macosdb cleanup --force    # actually unmount and delete
 
 For the scan examples, set `IPSW_URL` or `XIP_URL` to the verified Apple download
 URL matching the local archive. Index publication requires complete source
-metadata; exploratory scans can omit `--update-index`.
+metadata; exploratory scans can omit `--update-index`. `scan` also accepts an
+Xcode `.aea` archive for exploratory scans; index publication records only
+`.xip` sources.
 
 ### Offline and local data
 

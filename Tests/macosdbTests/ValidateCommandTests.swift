@@ -44,6 +44,25 @@ struct ValidateCommandTests {
         }
     }
 
+    @Test("--dir finds IPSW, XIP, and AEA archives and ignores other files")
+    func dirFindsSupportedArchives() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-validate-dir-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        for name in ["Xcode-27.3-27C5020n.xip", "Xcode-27.3-27C5020n.aea", "notes.txt"] {
+            try Data(name.utf8).write(to: directory.appendingPathComponent(name))
+        }
+
+        try await ValidateCommand.parse(["--dir", directory.path]).run()
+
+        let sidecars = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+            .filter { $0.hasSuffix(".sha256") }
+            .sorted()
+        #expect(sidecars == ["Xcode-27.3-27C5020n.aea.sha256", "Xcode-27.3-27C5020n.xip.sha256"])
+    }
+
     @Test("Archive handles reject links and detect pathname replacement")
     func archiveIdentityIsStable() throws {
         let directory = FileManager.default.temporaryDirectory

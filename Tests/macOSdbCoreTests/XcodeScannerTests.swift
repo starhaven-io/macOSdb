@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 
 @testable import macOSdbCore
@@ -109,6 +110,49 @@ struct XcodeScannerTests {
         }
     }
 
+    @Test("A missing archive is rejected before expansion")
+    func missingArchiveIsRejected() async {
+        let missing = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-xcode-missing-\(UUID().uuidString).xip")
+
+        do {
+            _ = try await XcodeScanner().scan(archivePath: missing)
+            Issue.record("Expected a missing archive to fail")
+        } catch ScannerError.archiveNotFound(let path) {
+            #expect(path == missing.path)
+        } catch {
+            Issue.record("Expected a missing archive error, got \(error)")
+        }
+    }
+
+    @Test("A failed expansion reports the tool's error and removes its workspace")
+    func failedExpansionRemovesWorkspace() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macosdb-xcode-damaged-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let archive = directory.appendingPathComponent("fixture.xip")
+        try Data("not a xip".utf8).write(to: archive)
+
+        let messages = Mutex<[String]>([])
+        let scanner = XcodeScanner()
+        await scanner.recordVerbose { message in messages.withLock { $0.append(message) } }
+
+        do {
+            _ = try await scanner.scan(archivePath: archive)
+            Issue.record("Expected a damaged archive to fail expansion")
+        } catch ScannerError.xipExtractionFailed(let reason) {
+            #expect(!reason.isEmpty)
+            #expect(reason == reason.trimmingCharacters(in: .whitespacesAndNewlines))
+        } catch {
+            Issue.record("Expected an expansion failure, got \(error)")
+        }
+
+        let prefix = "Extracting fixture.xip to "
+        let workspace = try #require(messages.withLock { $0 }.first { $0.hasPrefix(prefix) }?.dropFirst(prefix.count))
+        #expect(!FileManager.default.fileExists(atPath: String(workspace)))
+    }
+
     @Test("xipFilename prefers `path` query parameter (services-account portal URL)")
     func xipFilenameFromServicesAccountURL() {
         let url = "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_26.5_beta_3/Xcode_26.5_beta_3_Apple_silicon.xip"
@@ -128,7 +172,13 @@ struct XcodeScannerTests {
     }
 }
 
-private struct ExpandedXcodeFixture {
+extension XcodeScanner {
+    func recordVerbose(_ callback: @escaping @Sendable (String) -> Void) {
+        onVerbose = callback
+    }
+}
+
+struct ExpandedXcodeFixture {
     let root: URL
 
     private var xcodeApp: URL {

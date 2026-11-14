@@ -65,6 +65,13 @@ struct ReleasePublicationValidatorTests {
         }
     }
 
+    @Test("An Xcode AEA source cannot be published in the XIP source fields")
+    func rejectsXcodeAEASource() {
+        #expect(throws: ReleasePublicationError.self) {
+            try ReleasePublicationValidator.validate(xcodeRelease(xipFile: "Xcode_26.1.aea"))
+        }
+    }
+
     @Test("IPSW source URLs cannot carry a query or fragment")
     func rejectsIPSWQueryAndFragment() {
         let macOS = macOSRelease()

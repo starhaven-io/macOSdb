@@ -13,6 +13,7 @@ enum ScannerError: LocalizedError {
     case aeaDecryptionFailed(reason: String)
     case archiveNotFound(path: String)
     case xipExtractionFailed(reason: String)
+    case xcodeAEAExtractionFailed(reason: String)
     case xcodeAppNotFound(reason: String)
     case versionPlistNotFound(reason: String)
     case processTimedOut(tool: String, seconds: Int)
@@ -44,6 +45,8 @@ enum ScannerError: LocalizedError {
             "Archive not found: \(path)"
         case .xipExtractionFailed(let reason):
             "Failed to extract XIP archive: \(reason)"
+        case .xcodeAEAExtractionFailed(let reason):
+            "Failed to extract Xcode AEA archive: \(reason)"
         case .xcodeAppNotFound(let reason):
             "Xcode.app not found in extracted archive: \(reason)"
         case .versionPlistNotFound(let reason):
