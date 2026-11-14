@@ -23,6 +23,7 @@ struct ScannerErrorTests {
             (.aeaDecryptionFailed(reason: "no key"), "AEA decryption failed: no key"),
             (.archiveNotFound(path: "/tmp/Xcode.xip"), "Archive not found: /tmp/Xcode.xip"),
             (.xipExtractionFailed(reason: "signature"), "Failed to extract XIP archive: signature"),
+            (.xcodeAEAExtractionFailed(reason: "signature"), "Failed to extract Xcode AEA archive: signature"),
             (.xcodeAppNotFound(reason: "empty archive"), "Xcode.app not found in extracted archive: empty archive"),
             (.versionPlistNotFound(reason: "missing ProductBuildVersion"), "Version plist not found: missing ProductBuildVersion"),
             (.processTimedOut(tool: "hdiutil", seconds: 120), "hdiutil timed out after 120s")

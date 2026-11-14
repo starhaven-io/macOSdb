@@ -160,15 +160,10 @@ struct ScanCommandTests {
         }
     }
 
-    @Test("Parse rejects IPSW-only options for XIP archives")
-    func validateRejectsIPSWOptionsForXIP() {
-        for option in ["--device-specific", "--save-aea-key", "--key-only"] {
-            #expect(throws: (any Error).self) {
-                _ = try ScanCommand.parse(["archive.xip", option])
-            }
-        }
+    @Test("Parse rejects --key-only with --update-index")
+    func validateRejectsKeyOnlyWithUpdateIndex() {
         #expect(throws: (any Error).self) {
-            _ = try ScanCommand.parse(["archive.xip", "--aea-key", "key.pem"])
+            _ = try ScanCommand.parse(["archive.ipsw", "--key-only", "--update-index", "--release-date", "2025-07-07"])
         }
     }
 
