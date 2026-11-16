@@ -22,19 +22,40 @@ struct ScanCommandXcodeArchiveTests {
         }
     }
 
-    @Test("Parse rejects --update-index for an Xcode AEA archive, even with a XIP source URL")
-    func rejectsUpdateIndexForXcodeAEA() throws {
-        let publication = [
-            "--update-index",
-            "--release-date", "2026-11-03",
-            "--xip-url",
-            "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_27.3_beta/Xcode_27.3_beta.xip"
-        ]
-        _ = try ScanCommand.parse(["archive.xip"] + publication)
-        for archive in ["archive.aea", "archive.AEA"] {
-            #expect(throws: (any Error).self) {
-                _ = try ScanCommand.parse([archive] + publication)
-            }
+    private static let download = "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_27.3_beta/"
+
+    @Test("--aea-url is an alias for the download URL option")
+    func aeaURLAlias() throws {
+        let url = Self.download + "Xcode_27.3_beta.aea"
+        let cmd = try ScanCommand.parse(["archive.aea", "--aea-url", url])
+        #expect(cmd.downloadURL == url)
+    }
+
+    @Test("Parse accepts publication when the URL names the scanned format", arguments: [
+        ("archive.xip", "Xcode_27.3_beta.xip"),
+        ("archive.aea", "Xcode_27.3_beta.aea"),
+        ("archive.AEA", "Xcode_27.3_beta.aea")
+    ])
+    func acceptsMatchingSourceURL(archive: String, file: String) throws {
+        _ = try ScanCommand.parse([
+            archive, "--update-index", "--release-date", "2026-11-03", "--xip-url", Self.download + file
+        ])
+    }
+
+    @Test("Parse rejects a download URL that names the other Xcode format", arguments: [
+        ("archive.aea", "Xcode_27.3_beta.xip"),
+        ("archive.AEA", "Xcode_27.3_beta.xip"),
+        ("archive.xip", "Xcode_27.3_beta.aea"),
+        ("archive.aea", "download")
+    ])
+    func rejectsMismatchedSourceURL(archive: String, file: String) {
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse([archive, "--aea-url", Self.download + file])
+        }
+        #expect(throws: (any Error).self) {
+            _ = try ScanCommand.parse([
+                archive, "--update-index", "--release-date", "2026-11-03", "--xip-url", Self.download + file
+            ])
         }
     }
 }

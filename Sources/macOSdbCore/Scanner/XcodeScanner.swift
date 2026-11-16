@@ -14,7 +14,7 @@ package actor XcodeScanner {
         archivePath: URL,
         releaseName: String? = nil,
         releaseDate: String? = nil,
-        xipURL: String? = nil,
+        sourceURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         betaRevision: Int? = nil,
@@ -41,7 +41,7 @@ package actor XcodeScanner {
                 sourceFilename: archivePath.lastPathComponent,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
-                xipURL: xipURL,
+                sourceURL: sourceURL,
                 isBeta: isBeta,
                 betaNumber: betaNumber,
                 betaRevision: betaRevision,
@@ -304,7 +304,7 @@ extension XcodeScanner {
         sourceFilename: String,
         releaseName: String? = nil,
         releaseDate: String? = nil,
-        xipURL: String? = nil,
+        sourceURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         betaRevision: Int? = nil,
@@ -325,14 +325,20 @@ extension XcodeScanner {
 
         sendProgress(.assemblingResults)
         let resolvedBeta = isRC ? false : isBeta
+        // The scanned archive decides which source pair is recorded, so a URL for
+        // the other format can never relabel it.
+        let format = XcodeArchiveFormat(archive: URL(fileURLWithPath: sourceFilename))
+        let sourceFile = Self.archiveFilename(fromURLString: sourceURL) ?? sourceFilename
         return Release(
             productType: .xcode,
             osVersion: osVersion,
             buildNumber: buildNumber,
             releaseName: resolvedName,
             releaseDate: releaseDate,
-            xipFile: Self.xipFilename(fromURLString: xipURL) ?? sourceFilename,
-            xipURL: xipURL,
+            xipFile: format == .xip ? sourceFile : nil,
+            xipURL: format == .xip ? sourceURL : nil,
+            aeaFile: format == .aea ? sourceFile : nil,
+            aeaURL: format == .aea ? sourceURL : nil,
             isBeta: resolvedBeta,
             betaNumber: resolvedBeta ? betaNumber : nil,
             betaRevision: resolvedBeta ? betaRevision : nil,
@@ -379,7 +385,7 @@ extension XcodeScanner {
     /// Apple's services-account portal wraps the real download in a `path=` query parameter
     /// (`/services-account/download?path=/.../Xcode.xip`); prefer that value over `lastPathComponent`,
     /// which would otherwise be `download`.
-    static func xipFilename(fromURLString urlString: String?) -> String? {
+    package static func archiveFilename(fromURLString urlString: String?) -> String? {
         guard let urlString,
               let url = URL(string: urlString) else { return nil }
 

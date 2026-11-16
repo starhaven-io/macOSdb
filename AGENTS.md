@@ -1,7 +1,7 @@
 # Agent Instructions for macOSdb
 
 These instructions apply to the whole repository. macOSdb scans Apple IPSW and
-XIP archives into a generated component catalog, exposes it through a Swift CLI,
+Xcode archives into a generated component catalog, exposes it through a Swift CLI,
 and publishes an Astro/Cloudflare site and API.
 
 ## Start here

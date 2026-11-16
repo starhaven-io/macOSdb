@@ -65,10 +65,43 @@ struct ReleasePublicationValidatorTests {
         }
     }
 
-    @Test("An Xcode AEA source cannot be published in the XIP source fields")
-    func rejectsXcodeAEASource() {
+    @Test("An Xcode release sourced from an AEA archive is publishable")
+    func acceptsXcodeAEASource() throws {
+        try ReleasePublicationValidator.validate(xcodeRelease(xipFile: nil, aeaFile: "Xcode_26.1.aea"))
+        try ReleasePublicationValidator.validate(
+            xcodeRelease(osVersion: "26.0", xipFile: nil, aeaFile: "Xcode_26_beta_2.aea")
+        )
+    }
+
+    @Test("Xcode publication requires exactly one source pair in its own format", arguments: [
+        ("Xcode_26.1.aea", nil),
+        (nil, "Xcode_26.1.xip"),
+        ("Xcode_26.1.xip", "Xcode_26.1.aea"),
+        (nil, nil),
+        (nil, "Xcode_26.2.aea")
+    ] as [(String?, String?)])
+    func rejectsInvalidXcodeSources(xipFile: String?, aeaFile: String?) {
         #expect(throws: ReleasePublicationError.self) {
-            try ReleasePublicationValidator.validate(xcodeRelease(xipFile: "Xcode_26.1.aea"))
+            try ReleasePublicationValidator.validate(xcodeRelease(xipFile: xipFile, aeaFile: aeaFile))
+        }
+    }
+
+    @Test("An Xcode source file needs its URL")
+    func rejectsXcodeSourceWithoutURL() {
+        let complete = xcodeRelease(xipFile: nil, aeaFile: "Xcode_26.1.aea")
+        let missingURL = Release(
+            productType: .xcode,
+            osVersion: complete.osVersion,
+            buildNumber: complete.buildNumber,
+            releaseName: complete.releaseName,
+            releaseDate: complete.releaseDate,
+            aeaFile: complete.aeaFile,
+            components: complete.components,
+            sdks: complete.sdks,
+            minimumOSVersion: complete.minimumOSVersion
+        )
+        #expect(throws: ReleasePublicationError.self) {
+            try ReleasePublicationValidator.validate(missingURL)
         }
     }
 
@@ -152,7 +185,8 @@ struct ReleasePublicationValidatorTests {
 
     private func xcodeRelease(
         osVersion: String = "26.1",
-        xipFile: String = "Xcode_26.1.xip",
+        xipFile: String? = "Xcode_26.1.xip",
+        aeaFile: String? = nil,
         sdks: [SDKInfo]? = nil
     ) -> Release {
         let definitions = toolchainComponents + developerComponents + frameworkComponents
@@ -176,10 +210,16 @@ struct ReleasePublicationValidatorTests {
             releaseName: "Xcode \(osVersion)",
             releaseDate: "2025-11-03",
             xipFile: xipFile,
-            xipURL: "https://developer.apple.com/services-account/download?path=/Developer_Tools/\(xipFile)",
+            xipURL: xipFile.map(Self.downloadURL),
+            aeaFile: aeaFile,
+            aeaURL: aeaFile.map(Self.downloadURL),
             components: components,
             sdks: sdks ?? [SDKInfo(sdkVersion: "26.1", buildVersion: "25B78")],
             minimumOSVersion: "15.6"
         )
+    }
+
+    private static func downloadURL(_ file: String) -> String {
+        "https://developer.apple.com/services-account/download?path=/Developer_Tools/\(file)"
     }
 }

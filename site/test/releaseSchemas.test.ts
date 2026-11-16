@@ -33,6 +33,23 @@ test('macOS kernels and Xcode SDK versions must be complete and unique', () => {
   );
 });
 
+test('Xcode releases record exactly one source pair', () => {
+  const { xipFile, xipURL, ...base } = { ...xcode, id: 'fixture' };
+  const aea = {
+    aeaFile: 'Xcode_16.aea',
+    aeaURL: 'https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_16/Xcode_16.aea',
+  };
+  assert.equal(xcodeReleaseDetailSchema.safeParse({ ...base, ...aea }).success, true);
+  for (const invalid of [
+    base,
+    { ...base, xipFile, xipURL, ...aea },
+    { ...base, xipFile },
+    { ...base, ...aea, xipURL },
+  ]) {
+    assert.equal(xcodeReleaseDetailSchema.safeParse(invalid).success, false);
+  }
+});
+
 test('macOS device identifiers cannot be empty', () => {
   assert.equal(
     macosReleaseDetailSchema.safeParse({

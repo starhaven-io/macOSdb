@@ -69,15 +69,35 @@ const sdkSchema = z.object({
   buildVersion: z.string().min(1),
 });
 
-const xcodeReleaseDetailSchema = releaseDetailBaseSchema.extend({
-  components: z.array(componentSchema.extend({ source: z.enum(['filesystem', 'sdk']) })).min(1),
-  minimumOSVersion: z.string().min(1),
-  xipFile: z.string().min(1),
-  xipURL: z.url(),
-  sdks: z
-    .array(sdkSchema)
-    .min(1)
-    .refine((sdks) => new Set(sdks.map((sdk) => sdk.sdkVersion)).size === sdks.length, 'Duplicate SDK version'),
-});
+// A release records the pair for the archive format that was scanned.
+function recordsOneXcodeSource(release: {
+  xipFile?: string;
+  xipURL?: string;
+  aeaFile?: string;
+  aeaURL?: string;
+}): boolean {
+  const pairs = [
+    [release.xipFile, release.xipURL],
+    [release.aeaFile, release.aeaURL],
+  ];
+  const complete = pairs.filter(([file, url]) => file !== undefined && url !== undefined).length;
+  const partial = pairs.some(([file, url]) => (file === undefined) !== (url === undefined));
+  return complete === 1 && !partial;
+}
+
+const xcodeReleaseDetailSchema = releaseDetailBaseSchema
+  .extend({
+    components: z.array(componentSchema.extend({ source: z.enum(['filesystem', 'sdk']) })).min(1),
+    minimumOSVersion: z.string().min(1),
+    xipFile: z.string().min(1).optional(),
+    xipURL: z.url().optional(),
+    aeaFile: z.string().min(1).optional(),
+    aeaURL: z.url().optional(),
+    sdks: z
+      .array(sdkSchema)
+      .min(1)
+      .refine((sdks) => new Set(sdks.map((sdk) => sdk.sdkVersion)).size === sdks.length, 'Duplicate SDK version'),
+  })
+  .refine(recordsOneXcodeSource, 'Exactly one source pair is required');
 
 export { releaseIndexBaseSchema, macosReleaseIndexEntrySchema, macosReleaseDetailSchema, xcodeReleaseDetailSchema };

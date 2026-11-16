@@ -36,7 +36,10 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
     @Option(name: .long, help: "RC number (e.g. 2 for \"RC 2\"). Omit for just \"RC\".")
     var rcNumber: Int?
 
-    @Option(name: [.customLong("ipsw-url"), .customLong("xip-url")], help: "URL where this archive can be downloaded (e.g. Apple CDN URL).")
+    @Option(
+        name: [.customLong("ipsw-url"), .customLong("xip-url"), .customLong("aea-url")],
+        help: "URL where this archive can be downloaded (e.g. Apple CDN URL)."
+    )
     var downloadURL: String?
 
     @Flag(name: .long, help: "Mark as a device-specific build, e.g. M3 launch build (IPSW only).")
@@ -197,7 +200,7 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
                 archivePath: archiveURL,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
-                xipURL: downloadURL,
+                sourceURL: downloadURL,
                 isBeta: beta || betaNumber != nil,
                 betaNumber: betaNumber,
                 betaRevision: betaRevision,
@@ -322,59 +325,6 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         }
     }
 
-}
-
-// MARK: - Argument validation
-
-extension ScanCommand {
-    func validate() throws {
-        let archiveExtension = URL(fileURLWithPath: archivePath).pathExtension.lowercased()
-        guard ["ipsw", "xip", "aea"].contains(archiveExtension) else {
-            throw ValidationError("Archive must have an .ipsw, .xip, or .aea extension")
-        }
-        if updateIndex && releaseDate == nil {
-            throw ValidationError("--release-date is required when using --update-index")
-        }
-        if let releaseDate, !Self.isValidDate(releaseDate) {
-            throw ValidationError("--release-date must be a valid ISO 8601 date (YYYY-MM-DD), got '\(releaseDate)'")
-        }
-        if beta || betaNumber != nil || betaRevision != nil, rc || rcNumber != nil {
-            throw ValidationError("Beta and release-candidate options are mutually exclusive")
-        }
-        if let betaNumber, betaNumber < 1 {
-            throw ValidationError("--beta-number must be greater than zero")
-        }
-        if let rcNumber, rcNumber < 1 {
-            throw ValidationError("--rc-number must be greater than zero")
-        }
-        if betaRevision != nil, betaNumber == nil {
-            throw ValidationError("--beta-revision requires --beta-number")
-        }
-        if let betaRevision, betaRevision < 2 {
-            throw ValidationError("--beta-revision must be 2 or greater")
-        }
-        if updateIndex, keyOnly || archiveExtension == "aea" {
-            throw ValidationError("\(keyOnly ? "--key-only" : "An Xcode .aea archive") cannot be combined with --update-index")
-        }
-        if archiveExtension != "ipsw", deviceSpecific || saveAeaKey || aeaKeyPath != nil || keyOnly {
-            throw ValidationError("AEA key and device-specific options are available only for IPSW archives")
-        }
-    }
-
-    private static func isValidDate(_ value: String) -> Bool {
-        guard value.wholeMatch(of: /[0-9]{4}-[0-9]{2}-[0-9]{2}/) != nil else { return false }
-        let parts = value.split(separator: "-").compactMap { Int($0) }
-        guard parts.count == 3 else { return false }
-        var components = DateComponents()
-        components.calendar = Calendar(identifier: .gregorian)
-        components.timeZone = TimeZone(secondsFromGMT: 0)
-        components.year = parts[0]
-        components.month = parts[1]
-        components.day = parts[2]
-        guard let date = components.date else { return false }
-        let resolved = components.calendar?.dateComponents([.year, .month, .day], from: date)
-        return resolved?.year == parts[0] && resolved?.month == parts[1] && resolved?.day == parts[2]
-    }
 }
 
 // MARK: - Index management and key sidecars

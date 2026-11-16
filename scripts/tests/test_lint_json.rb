@@ -524,6 +524,10 @@ module LintJsonTests
       assert_equal "26.0", LintJson.xcode_file_version("Xcode_26_Universal.xip")
       assert_equal "26.1", LintJson.xcode_file_version("Xcode_26.1_beta.xip")
       assert_nil LintJson.xcode_file_version("not-xcode.xip")
+      assert_equal "28.0", LintJson.xcode_file_version("Xcode_28_beta.aea")
+      assert_equal "aea", LintJson.xcode_file_extension("Xcode_28_beta.aea")
+      assert_equal "xip", LintJson.xcode_file_extension("Xcode_26.1_beta.xip")
+      assert_nil LintJson.xcode_file_extension("Xcode_28_beta.zip")
     end
 
     def test_xcode_archive_labels_are_whole_suffix_tokens
@@ -550,12 +554,19 @@ module LintJsonTests
       @release.merge!("isBeta" => false, "isRC" => false)
     end
 
-    def validate(xip_file, flags = {})
-      stem = xip_file.delete_suffix(".xip")
-      data = @release.merge(flags).merge(
-        "xipFile" => xip_file,
-        "xipURL" => "https://developer.apple.com/services-account/download?path=/Developer_Tools/#{stem}/#{xip_file}"
-      )
+    SOURCE_FIELDS = LintJson::XCODE_SOURCE_FIELDS.values.flatten.freeze
+
+    def download_url(file)
+      "https://developer.apple.com/services-account/download?path=/Developer_Tools/#{File.basename(file, '.*')}/#{file}"
+    end
+
+    def validate(archive_file, flags = {})
+      file_field, url_field = LintJson::XCODE_SOURCE_FIELDS.fetch(File.extname(archive_file).delete_prefix("."))
+      source = { file_field => archive_file, url_field => download_url(archive_file) }
+      validate_data(@release.except(*SOURCE_FIELDS).merge(flags).merge(source))
+    end
+
+    def validate_data(data)
       with_directory do |root|
         root.join(@name).write(JSON.generate(data))
         capture_io { LintJson.validate_releases(LintJson::PRODUCTS[1].merge("data" => root), {}) }.last
@@ -583,6 +594,28 @@ module LintJsonTests
       ].each do |file, flags|
         assert_includes validate(file, flags), "xipFile '#{file}' is a"
       end
+    end
+
+    def test_aea_source_follows_the_same_label_rules
+      version = @release["osVersion"]
+      assert_equal "", validate("Xcode_#{version}.aea")
+      assert_equal "", validate("Xcode_#{version}_beta_2.aea", "isBeta" => true, "betaNumber" => 2)
+      assert_includes validate("Xcode_#{version}_beta.aea"), "aeaFile 'Xcode_#{version}_beta.aea' is a beta archive"
+    end
+
+    def test_release_records_exactly_one_source_in_its_own_format
+      base = @release.except(*SOURCE_FIELDS)
+      xip_file = "Xcode_#{@release['osVersion']}.xip"
+      aea_file = "Xcode_#{@release['osVersion']}.aea"
+      xip = { "xipFile" => xip_file, "xipURL" => download_url(xip_file) }
+      aea = { "aeaFile" => aea_file, "aeaURL" => download_url(aea_file) }
+      [base, base.merge(xip, aea), base.merge("aeaFile" => aea_file), base.merge(xip, "aeaURL" => aea["aeaURL"])].each do |data|
+        assert_includes validate_data(data), "must record exactly one source"
+      end
+      assert_includes validate_data(base.merge("xipFile" => aea_file, "xipURL" => aea["aeaURL"])),
+                      "xipFile '#{aea_file}' is not canonical"
+      assert_includes validate_data(base.merge("aeaFile" => xip_file, "aeaURL" => xip["xipURL"])),
+                      "aeaFile '#{xip_file}' is not canonical"
     end
 
     def test_matching_labels_pass

@@ -35,6 +35,7 @@ interface Props {
     rcNumber?: number;
     minimumOSVersion?: string;
     xipURL?: string;
+    aeaURL?: string;
     sdks?: { sdkVersion: string; buildVersion?: string }[];
     components: { name: string; version?: string | null; path: string; source: string }[];
   };
@@ -45,6 +46,7 @@ const { release, previousSlug } = Astro.props;
 const currentSlug = releaseSlug(release);
 const title = displayName(release, false, 'Xcode');
 const xipLink = httpsDownloadURL(release.xipURL);
+const aeaLink = httpsDownloadURL(release.aeaURL);
 
 const structuredData = [
   {
@@ -83,6 +85,7 @@ const structuredData = [
   >
     {release.minimumOSVersion && <span>Requires macOS {release.minimumOSVersion}+</span>}
     {xipLink && <a href={xipLink}>Download XIP</a>}
+    {aeaLink && <a href={aeaLink}>Download AEA</a>}
     {previousSlug && <a href={`/xcode/compare/?from=${previousSlug}&to=${currentSlug}`}>Compare with previous</a>}
   </ReleaseHeader>
 

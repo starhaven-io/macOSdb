@@ -30,7 +30,7 @@ macOS details also require:
 
 Xcode details also require:
 
-- `xipFile` and an Apple HTTPS `xipURL`
+- exactly one source, for the archive format that was scanned: `xipFile` and an Apple HTTPS `xipURL`, or `aeaFile` and an Apple HTTPS `aeaURL`
 - `minimumOSVersion`
 - a non-empty `sdks` array whose entries contain `sdkVersion` and `buildVersion`
 

@@ -62,6 +62,7 @@ struct ShowCommand: AsyncParsableCommand {
         if release.isDeviceSpecific { printLine("Type: Device-specific build") }
         if let ipswURL = release.ipswURL { printLine("IPSW: \(ipswURL)") }
         if let xipURL = release.xipURL { printLine("XIP: \(xipURL)") }
+        if let aeaURL = release.aeaURL { printLine("AEA: \(aeaURL)") }
         printLine("")
 
         if let sdks = release.sdks, !sdks.isEmpty {
