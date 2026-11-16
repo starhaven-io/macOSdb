@@ -2,5 +2,5 @@
 
 source "https://rubygems.org"
 ruby ">= 4.0.0"
-gem "minitest", "~> 6.0"
+gem "minitest", "~> 6.1"
 gem "fiddle", "~> 1.1"
