@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "bundler"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     cooldown:
       default-days: 7
     groups:
@@ -15,7 +15,7 @@ updates:
       - "/"
       - "/.github/actions/*"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     cooldown:
       default-days: 7
       exclude:
@@ -37,7 +37,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/site"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     cooldown:
       default-days: 7
     ignore:
@@ -52,7 +52,7 @@ updates:
   - package-ecosystem: "swift"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     cooldown:
       default-days: 7
     groups:
