@@ -14,7 +14,7 @@ package enum ScanProgress: Sendable {
     case assemblingResults
     case complete
     // Xcode-specific phases
-    case extractingXIP
+    case extractingXcodeArchive
     case scanningToolchain(component: String, current: Int, total: Int)
     case parsingSDKMetadata
 }

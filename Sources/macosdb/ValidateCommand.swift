@@ -11,10 +11,10 @@ struct ValidateCommand: AsyncParsableCommand {
         abstract: "Validate archive files and verify or create SHA-256 sidecar hashes."
     )
 
-    @Argument(help: "Archive file(s) to validate (.ipsw or .xip).")
+    @Argument(help: "Archive file(s) to validate (.ipsw, .xip, or .aea).")
     var archivePaths: [String] = []
 
-    @Option(name: .shortAndLong, help: "Directory to search recursively for .ipsw and .xip files.")
+    @Option(name: .shortAndLong, help: "Directory to search recursively for .ipsw, .xip, and .aea files.")
     var dir: String?
 
     @Flag(name: .long, help: "Rewrite sidecar even if one already exists.")
@@ -273,7 +273,7 @@ struct ValidateCommand: AsyncParsableCommand {
         return digest.compactMap { String(format: "%02x", $0) }.joined()
     }
 
-    private static let supportedExtensions: Set<String> = ["ipsw", "xip"]
+    private static let supportedExtensions: Set<String> = ["ipsw", "xip", "aea"]
 
     private func collectTargets() -> [URL] {
         var urls: [URL] = archivePaths.map { URL(fileURLWithPath: $0) }

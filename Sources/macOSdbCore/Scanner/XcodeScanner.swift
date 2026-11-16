@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-/// Scans an Xcode `.xip` archive to extract toolchain component versions and SDK metadata.
+/// Scans an Xcode `.xip` or `.aea` archive to extract toolchain component versions and SDK metadata.
 package actor XcodeScanner {
     private static let logger = Logger(subsystem: "io.linnane.macosdb", category: "XcodeScanner")
 
@@ -11,7 +11,7 @@ package actor XcodeScanner {
     package init() {}
 
     package func scan(
-        xipPath: URL,
+        archivePath: URL,
         releaseName: String? = nil,
         releaseDate: String? = nil,
         xipURL: String? = nil,
@@ -24,21 +24,21 @@ package actor XcodeScanner {
         let startTime = Date()
         try Task.checkCancellation()
 
-        guard FileManager.default.fileExists(atPath: xipPath.path) else {
-            throw ScannerError.archiveNotFound(path: xipPath.path)
+        guard FileManager.default.fileExists(atPath: archivePath.path) else {
+            throw ScannerError.archiveNotFound(path: archivePath.path)
         }
 
-        // Phase 1: Extract XIP archive
-        sendProgress(.extractingXIP)
-        Self.logger.info("Extracting Xcode XIP: \(xipPath.lastPathComponent)")
-        let expandedDir = try await extractXIP(xipPath)
+        // Phase 1: Expand the archive
+        sendProgress(.extractingXcodeArchive)
+        Self.logger.info("Extracting Xcode archive: \(archivePath.lastPathComponent)")
+        let expandedDir = try await expandArchive(archivePath)
 
         let release: Release
         do {
             try Task.checkCancellation()
             release = try await scanExpandedDirectory(
                 expandedDir,
-                sourceFilename: xipPath.lastPathComponent,
+                sourceFilename: archivePath.lastPathComponent,
                 releaseName: releaseName,
                 releaseDate: releaseDate,
                 xipURL: xipURL,
@@ -65,13 +65,14 @@ package actor XcodeScanner {
         return release
     }
 
-    // MARK: - XIP extraction
+    // MARK: - Archive expansion
 
-    /// Expanding a full Xcode `.xip` is slow (tens of GB); 90 minutes is far past
-    /// a normal expansion but stops a stuck `xip` from wedging the scanner runner.
-    private static let xipExpandTimeout: TimeInterval = 5_400
+    /// Expanding a full Xcode archive is slow (tens of GB); 90 minutes is far past
+    /// a normal expansion but stops a stuck tool from wedging the scanner runner.
+    private static let expansionTimeout: TimeInterval = 5_400
 
-    private func extractXIP(_ xipPath: URL) async throws -> URL {
+    private func expandArchive(_ archivePath: URL) async throws -> URL {
+        let format = XcodeArchiveFormat(archive: archivePath)
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("macosdb-xcode-\(UUID().uuidString)")
 
@@ -87,20 +88,25 @@ package actor XcodeScanner {
         // (including a process.run() failure).
         do {
             try Task.checkCancellation()
-            sendVerbose("Extracting XIP to \(tempDir.path)")
+            sendVerbose("Extracting \(archivePath.lastPathComponent) to \(tempDir.path)")
 
+            let command = try format.expansionCommand(for: archivePath, into: tempDir)
             let result = try await ProcessRunner.run(
-                executableURL: URL(fileURLWithPath: "/usr/bin/xip"),
-                arguments: ["--expand", xipPath.path],
+                executableURL: command.executableURL,
+                arguments: command.arguments,
                 currentDirectoryURL: tempDir,
                 capturesStandardOutput: false,
                 capturesStandardError: true,
-                timeout: Self.xipExpandTimeout
+                timeout: Self.expansionTimeout
             )
 
             guard result.terminationStatus == 0 else {
-                let errorMessage = String(data: result.stderr, encoding: .utf8) ?? "unknown error"
-                throw ScannerError.xipExtractionFailed(reason: errorMessage)
+                let reason = (String(data: result.stderr, encoding: .utf8) ?? "")
+                    .split(whereSeparator: \.isNewline)
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
+                    .joined(separator: "; ")
+                throw format.expansionFailure(reason: reason.isEmpty ? "unknown error" : reason)
             }
 
             return tempDir

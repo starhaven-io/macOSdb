@@ -27,8 +27,10 @@ __pycache__/
 # Scanner inputs, checksums, and local credentials
 *.ipsw
 *.xip
+*.aea
 *.ipsw.sha256
 *.xip.sha256
+*.aea.sha256
 *.aea.pem
 *.p12
 *.keychain-db

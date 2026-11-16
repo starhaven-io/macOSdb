@@ -6,7 +6,7 @@ macOSdb has four publication layers: the Swift scanner, the committed JSON corpu
 
 `macOSdbCore` contains models, comparison logic, data loading, and scanners. The `macosdb` executable target contains argument parsing, terminal presentation, output transactions, archive validation, and cleanup commands.
 
-An IPSW scan proceeds through archive classification, bounded metadata and kernel extraction, AEA decryption when required, read-only DMG mounts, filesystem extraction, dyld-cache extraction, and release assembly. An XIP scan expands the signed archive with `/usr/bin/xip`, reads Xcode metadata, scans toolchain and framework binaries, parses SDK metadata and headers, and assembles an Xcode release.
+An IPSW scan proceeds through archive classification, bounded metadata and kernel extraction, AEA decryption when required, read-only DMG mounts, filesystem extraction, dyld-cache extraction, and release assembly. An Xcode scan expands a signed `.xip` with `/usr/bin/xip`, or extracts an `.aea` with `/usr/bin/aa` using the signing key the archive itself names, which opens the archive without authenticating it. It then reads Xcode metadata, scans toolchain and framework binaries, parses SDK metadata and headers, and assembles an Xcode release.
 
 Scanner workspaces have exact UUID-based names and a versioned live-process marker. Cleanup only acts on a recognized, stale workspace and rechecks it before an operation. Missing or malformed ownership evidence fails closed.
 
