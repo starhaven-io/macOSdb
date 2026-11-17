@@ -6,7 +6,7 @@ class CatalogPublicationTests < Minitest::Test
   include WorkflowHelpers
   REPOSITORY = "starhaven-io/macOSdb"
   SCRIPT = ROOT.join("scripts/check-catalog-publication.rb")
-  WORKFLOWS = %w[scan-ipsw.yml scan-xip.yml rescan.yml].freeze
+  WORKFLOWS = %w[scan-ipsw.yml scan-xcode.yml rescan.yml].freeze
 
   def publication(branch = "feat/data-macOS-27.0", number = 123)
     { "number" => number, "state" => "open", "base" => { "ref" => "main" },

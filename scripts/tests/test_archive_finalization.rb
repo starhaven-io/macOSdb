@@ -4,9 +4,9 @@ require_relative "test_helper"
 class ArchiveFinalizationTests < Minitest::Test
   include WorkflowHelpers
 
-  def run_workflow(product:, existing: false, failure: "", cached: true)
+  def run_workflow(product:, existing: false, failure: "", cached: true, xcode_format: "xip")
     xip = product == "xcode"
-    workflow = (xip ? XIP_WORKFLOW : IPSW_WORKFLOW).read.split("\n  publish:\n", 2).first
+    workflow = (xip ? XCODE_WORKFLOW : IPSW_WORKFLOW).read.split("\n  publish:\n", 2).first
     shell_match = workflow.match(/^defaults:\n  run:\n    shell: (.+)$/)
     refute_nil shell_match, "The workflow must declare its default shell"
     shell = Shellwords.split(shell_match[1])
@@ -15,8 +15,8 @@ class ArchiveFinalizationTests < Minitest::Test
     scan_job = workflow.split("\n  scan:\n", 2).last.split("\n    steps:\n", 2).first
     refute_match(/^    defaults:/, scan_job)
     product_type = xip ? "Xcode" : "macOS"
-    extension = xip ? "xip" : "ipsw"
-    steps = [xip ? "Verify existing SHA-256 sidecar" : "Download IPSW", xip ? "Scan XIP" : "Scan IPSW",
+    extension = xip ? xcode_format : "ipsw"
+    steps = [xip ? "Verify existing SHA-256 sidecar" : "Download IPSW", xip ? "Scan Xcode archive" : "Scan IPSW",
              "Lint JSON", "Package release JSON", xip ? "Create or verify SHA-256 sidecar" : "Generate SHA-256 sidecar",
              "Lock archive files"]
     Dir.mktmpdir do |directory|
@@ -37,6 +37,7 @@ class ArchiveFinalizationTests < Minitest::Test
         case "$1" in
           scan)
             echo scan >> "$EVENTS"
+            printf '%s\n' "${@:2}" > "$SCAN_ARGUMENTS"
             [[ "$FAILURE" != scan ]] || exit 1
             mkdir -p "data/$PRODUCT/releases/27"
             build=27A9275
@@ -71,10 +72,11 @@ class ArchiveFinalizationTests < Minitest::Test
       }
       stubs.each { |name, script| executable(bin.join(name), "#!/bin/bash\nset -euo pipefail\n#{script}\n") }
       env = {
-        "PATH" => "#{bin}:#{ENV.fetch('PATH')}", "XIP_FILE" => archive.to_s, "IPSW_FILE" => archive.to_s,
+        "PATH" => "#{bin}:#{ENV.fetch('PATH')}", "ARCHIVE_FORMAT" => extension, "IPSW_FILE" => archive.to_s,
         "ARCHIVE_FILE" => archive.to_s, "IPSW_URL" => "https://updates.cdn-apple.com/fixture.ipsw",
         "PRODUCT" => product, "PRODUCT_TYPE" => product_type, "IS_DEVICE_SPECIFIC" => "false",
-        "RELEASE_DATE" => "2026-10-05", "PUBLIC_URL" => "https://developer.apple.com/services-account/download?path=/Xcode_27.1.xip",
+        "SCAN_ARGUMENTS" => root.join("scan-arguments").to_s,
+        "RELEASE_DATE" => "2026-10-05", "PUBLIC_URL" => "https://developer.apple.com/services-account/download?path=/Xcode_27.1.#{extension}",
         "EXPECTED_VERSION" => "27.1", "EXPECTED_BUILD" => "27A9275", "IS_BETA" => "false", "BETA_NUMBER" => "",
         "BETA_REVISION" => "", "IS_RC" => "false", "RC_NUMBER" => "", "GITHUB_OUTPUT" => root.join("output").to_s,
         "RUNNER_TEMP" => directory, "EVENTS" => events.to_s, "FAILURE" => failure,
@@ -98,6 +100,7 @@ class ArchiveFinalizationTests < Minitest::Test
       assert_equal steps.sort, executed.sort if failure.empty?
       @archive_exists = archive.exist?
       @partial_exists = Pathname.new("#{archive}.part").exist?
+      @scan_arguments = root.join("scan-arguments").exist? ? root.join("scan-arguments").read.lines(chomp: true) : []
       [result, events.read.lines(chomp: true), sidecar.exist? ? sidecar.read : nil]
     end
   end
@@ -111,6 +114,19 @@ class ArchiveFinalizationTests < Minitest::Test
       assert result.success?, result.stderr
       assert_equal [*source_check(product), "scan", "lint", "hash", *expected_locks(product)], events
       assert_equal "new checksum\n", checksum
+    end
+  end
+
+  def test_xcode_scan_names_the_source_url_after_the_archive_format
+    %w[xip aea].each do |format|
+      result, events, checksum = run_workflow(product: "xcode", xcode_format: format)
+      assert result.success?, result.stderr
+      assert_equal ["scan", "lint", "hash", *expected_locks("xcode")], events
+      assert_equal "new checksum\n", checksum
+      assert_match(/\.#{format}\z/, @scan_arguments.first)
+      assert_equal ["--#{format}-url"], @scan_arguments.grep(/-url\z/)
+      url = "https://developer.apple.com/services-account/download?path=/Xcode_27.1.#{format}"
+      assert_equal url, @scan_arguments[@scan_arguments.index("--#{format}-url") + 1]
     end
   end
 

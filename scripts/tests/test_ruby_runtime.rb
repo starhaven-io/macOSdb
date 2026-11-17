@@ -86,7 +86,7 @@ class RubyRuntimeTests < Minitest::Test
   end
 
   def test_scanner_checks_ruby_before_archive_work
-    [IPSW_WORKFLOW, XIP_WORKFLOW, RESCAN_WORKFLOW].each do |path|
+    [IPSW_WORKFLOW, XCODE_WORKFLOW, RESCAN_WORKFLOW].each do |path|
       scan = path.read.split("\n  scan:\n", 2).last.split("\n  publish:\n", 2).first
       assert_includes scan, "run: ruby scripts/check-ruby.rb"
       assert_operator scan.index("Verify scanner Ruby"), :<, scan.index("Identify Swift build environment")
@@ -98,7 +98,7 @@ class RubyRuntimeTests < Minitest::Test
     assert_includes action, "bundler: none"
     %w[inputs: GH_TOKEN secrets. bundler-cache:].each { |text| refute_includes action, text }
     setup = ["ruby/setup-ruby@", "$/.github/actions/setup-ruby"]
-    %w[release rescan scan-ipsw scan-xip deploy-site].each do |name|
+    %w[release rescan scan-ipsw scan-xcode deploy-site].each do |name|
       workflow = ROOT.join(".github/workflows/#{name}.yml").read
       document = YAML.safe_load(workflow)
       refute document.fetch("env", {}).key?("GH_TOKEN")
@@ -133,7 +133,7 @@ class RubyRuntimeTests < Minitest::Test
   end
 
   def test_scanner_workflows_keep_the_setup_ruby_pin_in_the_local_action
-    [IPSW_WORKFLOW, XIP_WORKFLOW].each do |path|
+    [IPSW_WORKFLOW, XCODE_WORKFLOW].each do |path|
       workflow = path.read
       refute_includes workflow, "ruby/setup-ruby@"
       jobs = YAML.safe_load(workflow).fetch("jobs")
