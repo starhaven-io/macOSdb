@@ -109,12 +109,11 @@ package enum ReleasePublicationValidator {
     }
 
     private static func validateXcode(_ release: Release) throws {
-        guard let xipFile = release.xipFile,
-              let xipURL = release.xipURL,
-              xcodeVersion(from: xipFile) == release.osVersion,
+        guard let source = xcodeSource(of: release),
+              xcodeVersion(from: source.file, pathExtension: source.pathExtension) == release.osVersion,
               release.releaseName == "Xcode \(release.osVersion)",
-              isAllowedAppleURL(xipURL, exactHost: "developer.apple.com"),
-              XcodeScanner.xipFilename(fromURLString: xipURL) == xipFile,
+              isAllowedAppleURL(source.url, exactHost: "developer.apple.com"),
+              XcodeScanner.archiveFilename(fromURLString: source.url) == source.file,
               let minimumOSVersion = release.minimumOSVersion,
               !minimumOSVersion.isEmpty,
               let sdks = release.sdks,
@@ -133,9 +132,21 @@ package enum ReleasePublicationValidator {
         }
     }
 
-    private static func xcodeVersion(from filename: String) -> String? {
-        let pattern = /^Xcode_([0-9]+(?:\.[0-9]+)*)(?:_[A-Za-z0-9._~%+-]+)?\.xip$/
-        guard let match = filename.wholeMatch(of: pattern) else { return nil }
+    /// A release records exactly one source: the `.xip` pair or the `.aea` pair.
+    private static func xcodeSource(of release: Release) -> (file: String, url: String, pathExtension: String)? {
+        switch (release.xipFile, release.xipURL, release.aeaFile, release.aeaURL) {
+        case let (file?, url?, nil, nil):
+            (file, url, "xip")
+        case let (nil, nil, file?, url?):
+            (file, url, "aea")
+        default:
+            nil
+        }
+    }
+
+    private static func xcodeVersion(from filename: String, pathExtension: String) -> String? {
+        let pattern = /^Xcode_([0-9]+(?:\.[0-9]+)*)(?:_[A-Za-z0-9._~%+-]+)?\.(xip|aea)$/
+        guard let match = filename.wholeMatch(of: pattern), match.2 == pathExtension else { return nil }
         let version = String(match.1)
         return version.contains(".") ? version : "\(version).0"
     }

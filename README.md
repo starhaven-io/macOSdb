@@ -10,7 +10,7 @@
 
 A CLI and website that catalog which versions of open-source components ship with each macOS and Xcode release.
 
-macOSdb scans Apple's IPSW firmware files and Xcode `.xip` archives, extracts version strings from system binaries, the dyld shared cache, and SDK headers, and records what ships where. Browse releases, compare component versions across updates, and see which chip families and devices each release supports.
+macOSdb scans Apple's IPSW firmware files and Xcode `.xip` and `.aea` archives, extracts version strings from system binaries, the dyld shared cache, and SDK headers, and records what ships where. Browse releases, compare component versions across updates, and see which chip families and devices each release supports.
 
 **Website:** [macosdb.com](https://macosdb.com)
 
@@ -92,8 +92,9 @@ macosdb cleanup --force    # actually unmount and delete
 For the scan examples, set `IPSW_URL` or `XIP_URL` to the verified Apple download
 URL matching the local archive. Index publication requires complete source
 metadata; exploratory scans can omit `--update-index`. `scan` also accepts an
-Xcode `.aea` archive for exploratory scans; index publication records only
-`.xip` sources.
+Xcode `.aea` archive, with its download URL passed as `--aea-url`. The archive's
+format decides whether the release records `xip` or `aea` source fields, so the
+URL has to name that same format.
 
 ### Offline and local data
 

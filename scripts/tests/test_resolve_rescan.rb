@@ -42,6 +42,36 @@ class ResolveRescanTests < Minitest::Test
     assert_equal(['false', ''], outputs.values_at('is_beta', 'beta_number'))
   end
 
+  def publish_xcode(source)
+    detail = {
+      'productType' => 'Xcode', 'osVersion' => '28.0', 'buildNumber' => '28A123',
+      'releaseDate' => '2027-09-14', 'isBeta' => false, 'isRC' => false
+    }.merge(source)
+    release = File.join(@root, 'data/xcode/releases/28/Xcode-28.0-28A123.json')
+    FileUtils.mkdir_p(File.dirname(release))
+    File.write(release, JSON.generate(detail))
+    entry = { 'osVersion' => '28.0', 'buildNumber' => '28A123', 'dataFile' => 'releases/28/Xcode-28.0-28A123.json' }
+    File.write(File.join(@root, 'data/xcode/releases.json'), JSON.generate([entry]))
+  end
+
+  def test_xcode_archive_path_follows_the_recorded_source_format
+    url = 'https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_28/Xcode_28'
+    { 'xip' => 'xipURL', 'aea' => 'aeaURL' }.each do |format, field|
+      publish_xcode(field => "#{url}.#{format}")
+      outputs = ResolveRescan.resolve(@root, 'xcode', '28.0', '28A123')
+      assert_equal("Xcode/28/Xcode-28.0-28A123.#{format}", outputs.fetch('archive_path'))
+      assert_equal("#{url}.#{format}", outputs.fetch('source_url'))
+    end
+  end
+
+  def test_xcode_release_must_record_exactly_one_source
+    url = 'https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_28/Xcode_28'
+    [{}, { 'xipURL' => "#{url}.xip", 'aeaURL' => "#{url}.aea" }].each do |source|
+      publish_xcode(source)
+      assert_raises(ResolveRescan::ResolutionError) { ResolveRescan.resolve(@root, 'xcode', '28.0', '28A123') }
+    end
+  end
+
   def test_rejects_inputs_that_are_not_one_canonical_published_release
     publish
     [['12.3', '21E231'], ['12.3/..', '21E230'], ['12.3', "21E230\n"]].each do |version, build|

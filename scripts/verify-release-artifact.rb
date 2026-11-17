@@ -19,8 +19,9 @@ module VerifyReleaseArtifact
   MAX_HEADERS = 16
   MAX_TAR_PADDING = 64 * 1024
   MAX_DIAGNOSTIC_BYTES = 120
-  XCODE_PATH_RE = %r{\A/[A-Za-z0-9._~%/+-]+\.xip\z}
-  XCODE_FILE_RE = /\AXcode_([0-9]+(?:\.[0-9]+)*)(?:_[A-Za-z0-9._~%+-]+)?\.xip\z/
+  XCODE_PATH_RE = %r{\A/[A-Za-z0-9._~%/+-]+\.(?:xip|aea)\z}
+  XCODE_FILE_RE = /\AXcode_([0-9]+(?:\.[0-9]+)*)(?:_[A-Za-z0-9._~%+-]+)?\.(xip|aea)\z/
+  XCODE_SOURCE_FORMATS = %w[xip aea].freeze
   IPSW_FILE_RE = /\AUniversalMac_([0-9]+(?:\.[0-9]+){1,2})_([0-9]+[A-Z][0-9]+[a-z]?)_Restore\.ipsw\z/
   MACOS_RELEASE_NAMES = {
     '11' => 'Big Sur', '12' => 'Monterey', '13' => 'Ventura', '14' => 'Sonoma',
@@ -102,7 +103,7 @@ module VerifyReleaseArtifact
       matches = supplied_url.scan(/[?&]path=([^&]*)/)
       xip_path = matches.empty? ? supplied_url : matches.last.first
       unless XCODE_PATH_RE.match?(xip_path)
-        raise VerificationError, 'Xcode source does not contain a clean absolute .xip path'
+        raise VerificationError, 'Xcode source does not contain a clean absolute .xip or .aea path'
       end
       if xip_path.include?('//') || xip_path.split('/').any? { |part| %w[. ..].include?(part) }
         raise VerificationError, 'Xcode source path contains an ambiguous path segment'
@@ -119,7 +120,7 @@ module VerifyReleaseArtifact
       version = match[1]
       version += '.0' unless version.include?('.')
       return {
-        'version' => version, 'build' => build_number,
+        'version' => version, 'build' => build_number, 'format' => match[2],
         'file' => URI::DEFAULT_PARSER.unescape(encoded_name),
         'url' => "https://developer.apple.com/services-account/download?path=#{xip_path}"
       }
@@ -328,7 +329,12 @@ module VerifyReleaseArtifact
       'releaseDate' => release_date
     }.merge(prerelease)
     if args.fetch(:product) == 'xcode'
-      expected_fields.merge!('xipFile' => source.fetch('file'), 'xipURL' => source.fetch('url'))
+      format = source.fetch('format')
+      expected_fields.merge!("#{format}File" => source.fetch('file'), "#{format}URL" => source.fetch('url'))
+      other = (XCODE_SOURCE_FORMATS - [format]).flat_map { |name| ["#{name}File", "#{name}URL"] }
+      unless (release.keys & other).empty?
+        raise VerificationError, 'Xcode release records a source other than the dispatched archive'
+      end
       unless release['releaseName'] == "Xcode #{source.fetch('version')}"
         raise VerificationError, 'Xcode release name does not match the dispatched version'
       end

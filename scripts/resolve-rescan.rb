@@ -8,7 +8,9 @@ require 'optparse'
 module ResolveRescan
   VERSION_RE = /\A[0-9]+\.[0-9]+(?:\.[0-9]+)?\z/
   BUILD_RE = /\A[0-9]+[A-Z][0-9]+[a-z]?\z/
-  PREFIXES = { 'macos' => %w[macOS ipsw ipswURL], 'xcode' => %w[Xcode xip xipURL] }.freeze
+  PREFIXES = { 'macos' => 'macOS', 'xcode' => 'Xcode' }.freeze
+  # An Xcode release names the archive format it was scanned from.
+  XCODE_SOURCE_URLS = { 'xip' => 'xipURL', 'aea' => 'aeaURL' }.freeze
 
   class ResolutionError < StandardError; end
 
@@ -33,12 +35,21 @@ module ResolveRescan
     value.to_s
   end
 
+  def source_fields(product, release)
+    return %w[ipsw ipswURL] if product == 'macos'
+
+    recorded = XCODE_SOURCE_URLS.select { |_, field| release.key?(field) }
+    raise ResolutionError, 'published Xcode release does not record exactly one source' unless recorded.length == 1
+
+    recorded.first
+  end
+
   def resolve(root, product, version, build)
     raise ResolutionError, 'product must be macos or xcode' unless PREFIXES.key?(product)
     unless VERSION_RE.match?(version) && BUILD_RE.match?(build)
       raise ResolutionError, 'version or build number is not canonical'
     end
-    prefix, extension, url_field = PREFIXES.fetch(product)
+    prefix = PREFIXES.fetch(product)
     major = version.split('.').first
     data_file = "releases/#{major}/#{prefix}-#{version}-#{build}.json"
     index = read_json(File.join(root, 'data', product, 'releases.json'))
@@ -55,6 +66,7 @@ module ResolveRescan
       raise ResolutionError, 'published detail identity does not match its index entry'
     end
 
+    extension, url_field = source_fields(product, release)
     release_date = release['releaseDate']
     source_url = release[url_field]
     begin

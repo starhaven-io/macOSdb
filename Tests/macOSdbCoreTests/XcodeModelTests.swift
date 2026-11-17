@@ -99,6 +99,32 @@ struct XcodeModelTests {
         #expect(release.xipURL == "https://example.com/Xcode_26.3.xip")
     }
 
+    @Test("Release round-trips aeaFile and aeaURL without XIP fields")
+    func roundTripsAEASource() throws {
+        let json = Data("""
+        {
+            "productType": "Xcode",
+            "osVersion": "28.0",
+            "buildNumber": "28A123",
+            "releaseName": "Xcode 28.0",
+            "aeaFile": "Xcode_28.aea",
+            "aeaURL": "https://example.com/Xcode_28.aea",
+            "components": []
+        }
+        """.utf8)
+
+        let release = try JSONDecoder().decode(Release.self, from: json)
+        #expect(release.aeaFile == "Xcode_28.aea")
+        #expect(release.aeaURL == "https://example.com/Xcode_28.aea")
+        #expect(release.xipFile == nil)
+
+        let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(release)) as? [String: Any]
+        #expect(encoded?["aeaFile"] as? String == "Xcode_28.aea")
+        #expect(encoded?["aeaURL"] as? String == "https://example.com/Xcode_28.aea")
+        #expect(encoded?.keys.contains("xipFile") == false)
+        #expect(encoded?.keys.contains("xipURL") == false)
+    }
+
     @Test("ReleaseIndexEntry decodes productType")
     func indexEntryDecodesProductType() throws {
         let json = Data("""

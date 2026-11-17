@@ -261,7 +261,7 @@ export function pickLatestReleases<T extends DatedRelease>(releases: T[]): { ga:
 }
 
 /**
- * Returns a download URL only if it is a plain https link. IPSW/XIP URLs come from
+ * Returns a download URL only if it is a plain https link. Archive URLs come from
  * the data files and are rendered as <a href>, so a non-https scheme (javascript:,
  * data:, http:) must never become a clickable link.
  */

@@ -50,7 +50,7 @@ module ReleaseArtifactFixture
     }.merge(overrides)
   end
 
-  def write_artifact(release_overrides: {}, base_index: [@base_entry])
+  def write_artifact(release_overrides: {}, base_index: [@base_entry], without: [])
     detail = {
       'productType' => prefix, 'osVersion' => '26.1', 'buildNumber' => build,
       'releaseName' => product == 'macos' ? 'Tahoe' : 'Xcode 26.1', 'releaseDate' => '2025-11-03',
@@ -63,6 +63,7 @@ module ReleaseArtifactFixture
       detail.merge!('xipFile' => 'Xcode_26.1.xip', 'xipURL' => source_url, 'sdks' => [], 'minimumOSVersion' => '15.6')
     end
     detail.merge!(release_overrides)
+    without.each { |field| detail.delete(field) }
     fields = %w[productType osVersion buildNumber releaseName releaseDate isBeta betaNumber betaRevision isRC rcNumber isDeviceSpecific]
     entry = detail.select { |key, _| fields.include?(key) }
     entry['dataFile'] = "releases/26/#{prefix}-26.1-#{build}.json"
@@ -113,6 +114,26 @@ class VerifyReleaseArtifactTests < Minitest::Test
     assert_path_exists(detail_path)
   end
 
+  def test_aea_release_addition_binds_the_aea_source
+    aea_url = source_url.sub(/\.xip\z/, '.aea')
+    write_artifact(release_overrides: { 'aeaFile' => 'Xcode_26.1.aea', 'aeaURL' => aea_url }, without: %w[xipFile xipURL])
+    _, source, = VerifyReleaseArtifact.verify_and_overlay(arguments(source_url: aea_url))
+    assert_includes(source, 'Xcode_26.1.aea')
+    assert_path_exists(detail_path)
+  end
+
+  def test_release_cannot_record_a_source_other_than_the_dispatched_archive
+    aea_url = source_url.sub(/\.xip\z/, '.aea')
+    write_artifact
+    assert_verification_error(/source other than the dispatched archive/) do
+      VerifyReleaseArtifact.verify_and_overlay(arguments(source_url: aea_url))
+    end
+    write_artifact(release_overrides: { 'aeaFile' => 'Xcode_26.1.aea', 'aeaURL' => aea_url })
+    assert_verification_error(/source other than the dispatched archive/) { VerifyReleaseArtifact.verify_and_overlay(arguments) }
+    write_artifact(without: %w[xipFile xipURL])
+    assert_verification_error(/xipFile/) { VerifyReleaseArtifact.verify_and_overlay(arguments) }
+  end
+
   def test_artifact_cannot_replace_the_trusted_base_index
     write_artifact(base_index: [])
     assert_verification_error(/one-release addition/) { VerifyReleaseArtifact.verify_and_overlay(arguments) }
@@ -156,6 +177,13 @@ class VerifyReleaseArtifactTests < Minitest::Test
     %w[1500-02-29 0000-01-01 10000-01-01].each do |date|
       assert_verification_error(/release_date/) { VerifyReleaseArtifact.resolve_release_date(date, '') }
     end
+  end
+
+  def test_xcode_source_format_follows_the_dispatched_archive
+    path = 'https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_28_beta/Xcode_28_beta'
+    assert_equal(%w[xip Xcode_28_beta.xip], VerifyReleaseArtifact.expected_source('xcode', "#{path}.xip", '28A5123a').values_at('format', 'file'))
+    assert_equal(%w[aea Xcode_28_beta.aea], VerifyReleaseArtifact.expected_source('xcode', "#{path}.aea", '28A5123a').values_at('format', 'file'))
+    assert_verification_error(/\.xip or \.aea path/) { VerifyReleaseArtifact.expected_source('xcode', "#{path}.zip", '28A5123a') }
   end
 
   def test_major_only_xcode_filenames_normalize_to_dot_zero

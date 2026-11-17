@@ -213,7 +213,9 @@
               "minimumOSVersion": { "type": "string" },
               "sdks": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/SDK" } },
               "xipFile": { "type": "string" },
-              "xipURL": { "type": "string", "format": "uri" }
+              "xipURL": { "type": "string", "format": "uri" },
+              "aeaFile": { "type": "string" },
+              "aeaURL": { "type": "string", "format": "uri" }
             }
           }
         ]

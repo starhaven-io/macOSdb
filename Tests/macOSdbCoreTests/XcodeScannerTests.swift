@@ -17,7 +17,7 @@ struct XcodeScannerTests {
             fixture.root,
             sourceFilename: "Xcode_26.1_beta.xip",
             releaseDate: "2026-08-13",
-            xipURL: "https://example.com/Xcode_26.1_beta.xip",
+            sourceURL: "https://example.com/Xcode_26.1_beta.xip",
             isBeta: true,
             betaNumber: 2,
             betaRevision: 3
@@ -30,6 +30,8 @@ struct XcodeScannerTests {
         #expect(release.releaseDate == "2026-08-13")
         #expect(release.xipFile == "Xcode_26.1_beta.xip")
         #expect(release.xipURL == "https://example.com/Xcode_26.1_beta.xip")
+        #expect(release.aeaFile == nil)
+        #expect(release.aeaURL == nil)
         #expect(release.isBeta)
         #expect(release.betaNumber == 2)
         #expect(release.betaRevision == 3)
@@ -48,6 +50,24 @@ struct XcodeScannerTests {
         #expect(names == names.sorted {
             $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
         })
+    }
+
+    @Test("The scanned archive format decides which source pair is recorded")
+    func recordsSourcePairForArchiveFormat() async throws {
+        let fixture = try ExpandedXcodeFixture()
+        defer { fixture.cleanup() }
+        let url = "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_26.1_beta/Xcode_26.1_beta.aea"
+
+        let release = try await XcodeScanner().scanExpandedDirectory(
+            fixture.root,
+            sourceFilename: "Xcode-26.1-17B123.aea",
+            sourceURL: url
+        )
+
+        #expect(release.aeaFile == "Xcode_26.1_beta.aea")
+        #expect(release.aeaURL == url)
+        #expect(release.xipFile == nil)
+        #expect(release.xipURL == nil)
     }
 
     @Test("An expanded Xcode app requires version metadata")
@@ -153,22 +173,22 @@ struct XcodeScannerTests {
         #expect(!FileManager.default.fileExists(atPath: String(workspace)))
     }
 
-    @Test("xipFilename prefers `path` query parameter (services-account portal URL)")
-    func xipFilenameFromServicesAccountURL() {
+    @Test("archiveFilename prefers `path` query parameter (services-account portal URL)")
+    func archiveFilenameFromServicesAccountURL() {
         let url = "https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_26.5_beta_3/Xcode_26.5_beta_3_Apple_silicon.xip"
-        #expect(XcodeScanner.xipFilename(fromURLString: url) == "Xcode_26.5_beta_3_Apple_silicon.xip")
+        #expect(XcodeScanner.archiveFilename(fromURLString: url) == "Xcode_26.5_beta_3_Apple_silicon.xip")
     }
 
-    @Test("xipFilename falls back to lastPathComponent for direct CDN URL")
-    func xipFilenameFromCDNURL() {
+    @Test("archiveFilename falls back to lastPathComponent for direct CDN URL")
+    func archiveFilenameFromCDNURL() {
         let url = "https://adcdownload.apple.com/Developer_Tools/Xcode_26/Xcode_26_Universal.xip"
-        #expect(XcodeScanner.xipFilename(fromURLString: url) == "Xcode_26_Universal.xip")
+        #expect(XcodeScanner.archiveFilename(fromURLString: url) == "Xcode_26_Universal.xip")
     }
 
-    @Test("xipFilename returns nil for nil or invalid input")
-    func xipFilenameNilInput() {
-        #expect(XcodeScanner.xipFilename(fromURLString: nil) == nil)
-        #expect(XcodeScanner.xipFilename(fromURLString: "") == nil)
+    @Test("archiveFilename returns nil for nil or invalid input")
+    func archiveFilenameNilInput() {
+        #expect(XcodeScanner.archiveFilename(fromURLString: nil) == nil)
+        #expect(XcodeScanner.archiveFilename(fromURLString: "") == nil)
     }
 }
 

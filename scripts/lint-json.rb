@@ -15,9 +15,11 @@ Encoding.default_external = Encoding::UTF_8
 module LintJson
   SHARED_REQUIRED = %w[buildNumber osVersion releaseDate releaseName isBeta isRC productType components].freeze
   MACOS_REQUIRED = (SHARED_REQUIRED + %w[isDeviceSpecific ipswFile ipswURL kernels]).freeze
-  XCODE_REQUIRED = (SHARED_REQUIRED + %w[xipFile xipURL minimumOSVersion sdks]).freeze
+  XCODE_REQUIRED = (SHARED_REQUIRED + %w[minimumOSVersion sdks]).freeze
+  # A release records the pair for the archive format that was scanned.
+  XCODE_SOURCE_FIELDS = { "xip" => %w[xipFile xipURL], "aea" => %w[aeaFile aeaURL] }.freeze
   MACOS_ALLOWED = (MACOS_REQUIRED + %w[betaNumber betaRevision rcNumber]).to_set.freeze
-  XCODE_ALLOWED = (XCODE_REQUIRED + %w[betaNumber betaRevision rcNumber]).to_set.freeze
+  XCODE_ALLOWED = (XCODE_REQUIRED + XCODE_SOURCE_FIELDS.values.flatten + %w[betaNumber betaRevision rcNumber]).to_set.freeze
   INDEX_SHARED_REQUIRED = %w[buildNumber osVersion releaseDate releaseName isBeta isRC productType dataFile].freeze
   MACOS_INDEX_REQUIRED = (INDEX_SHARED_REQUIRED + %w[isDeviceSpecific]).freeze
   XCODE_INDEX_REQUIRED = INDEX_SHARED_REQUIRED
@@ -38,7 +40,7 @@ module LintJson
   MACOS_EXPECTED_COMPONENTS = MACOS_COMPONENT_SOURCES.keys.to_set.freeze
   XCODE_EXPECTED_COMPONENTS = XCODE_COMPONENT_SOURCES.keys.to_set.freeze
   IPSW_FILE_RE = /\AUniversalMac_([0-9]+(?:\.[0-9]+){1,2})_([0-9]+[A-Z][0-9]+[a-z]?)_Restore\.ipsw\z/
-  XCODE_FILE_RE = /\AXcode_([0-9]+(?:\.[0-9]+)*)(?:_([A-Za-z0-9._~%+\-]+))?\.xip\z/
+  XCODE_FILE_RE = /\AXcode_([0-9]+(?:\.[0-9]+)*)(?:_([A-Za-z0-9._~%+\-]+))?\.(xip|aea)\z/
   # Archive suffixes use whole underscore-delimited tokens; Xcode 13 used beta3.
   XCODE_BETA_LABEL_RE = /(?:\A|_)beta[0-9]*(?=_|\z)/
   XCODE_RC_LABEL_RE = /(?:\A|_)Release_Candidate(?=_|\z)/
@@ -320,6 +322,11 @@ module LintJson
     match[1].include?(".") ? match[1] : "#{match[1]}.0"
   end
 
+  def xcode_file_extension(filename)
+    match = XCODE_FILE_RE.match(filename) if filename.is_a?(String)
+    match && match[3]
+  end
+
   def xcode_file_label(filename)
     match = XCODE_FILE_RE.match(filename) if filename.is_a?(String)
     return nil unless match
@@ -509,7 +516,7 @@ module LintJson
       end
       validate_date(release_date, "releaseDate", build) if release_date
       validate_ipsw(data, name, build, os_version) if prefix == "macOS"
-      validate_xip(data, name, os_version, is_beta, is_rc) if prefix == "Xcode"
+      validate_xcode(data, name, os_version, is_beta, is_rc) if prefix == "Xcode"
       validate_components(data, name, product, all_component_names)
       validate_kernels(data, name, build) if product["expect_kernels"]
     end
@@ -548,34 +555,48 @@ module LintJson
     end
   end
 
-  def validate_xip(data, name, os_version, is_beta, is_rc)
-    xip_file = data.fetch("xipFile", "")
-    error("#{name}: xipFile is empty or not a string") unless string?(xip_file)
-    xip_url = data.fetch("xipURL", "")
-    validate_download_url(xip_url, "xipURL", name)
-    if xip_url.is_a?(String) && parsed_url(xip_url)&.hostname&.downcase != "developer.apple.com"
-      error("#{name}: xipURL must use developer.apple.com")
+  def validate_xcode(data, name, os_version, is_beta, is_rc)
+    validate_xcode_source(data, name, os_version, is_beta, is_rc)
+    validate_xcode_sdks(data, name)
+  end
+
+  def validate_xcode_source(data, name, os_version, is_beta, is_rc)
+    recorded = XCODE_SOURCE_FIELDS.select { |_, fields| fields.any? { |field| data.key?(field) } }
+    unless recorded.length == 1 && recorded.values.first.all? { |field| data.key?(field) }
+      error("#{name}: must record exactly one source: xipFile and xipURL, or aeaFile and aeaURL")
+      return
     end
-    if string?(xip_url) && string?(xip_file)
-      url_file = download_filename(xip_url, query_parameter: "path")
-      error("#{name}: xipFile '#{xip_file}' doesn't match URL filename '#{url_file}'") if xip_file != url_file
+    extension, (file_field, url_field) = recorded.first
+    file = data[file_field]
+    error("#{name}: #{file_field} is empty or not a string") unless string?(file)
+    url = data[url_field]
+    validate_download_url(url, url_field, name)
+    if url.is_a?(String) && parsed_url(url)&.hostname&.downcase != "developer.apple.com"
+      error("#{name}: #{url_field} must use developer.apple.com")
     end
-    file_version = xcode_file_version(xip_file)
-    if file_version.nil?
-      error("#{name}: xipFile '#{xip_file}' is not canonical")
-    else
-      if os_version && file_version != os_version
-        error("#{name}: version in xipFile '#{file_version}' doesn't match '#{os_version}'")
-      end
-      if boolean?(is_beta) && boolean?(is_rc) && !(is_beta && is_rc)
-        label = xcode_file_label(xip_file)
-        expected_label = is_beta ? "beta" : is_rc ? "Release_Candidate" : nil
-        if label != expected_label
-          error("#{name}: xipFile '#{xip_file}' is a #{label || 'stable'} archive " \
-                "but isBeta=#{representation(is_beta)}, isRC=#{representation(is_rc)}")
-        end
-      end
+    if string?(url) && string?(file)
+      url_file = download_filename(url, query_parameter: "path")
+      error("#{name}: #{file_field} '#{file}' doesn't match URL filename '#{url_file}'") if file != url_file
     end
+    file_version = xcode_file_version(file)
+    if file_version.nil? || xcode_file_extension(file) != extension
+      error("#{name}: #{file_field} '#{file}' is not canonical")
+      return
+    end
+    if os_version && file_version != os_version
+      error("#{name}: version in #{file_field} '#{file_version}' doesn't match '#{os_version}'")
+    end
+    return unless boolean?(is_beta) && boolean?(is_rc) && !(is_beta && is_rc)
+
+    label = xcode_file_label(file)
+    expected_label = is_beta ? "beta" : is_rc ? "Release_Candidate" : nil
+    return if label == expected_label
+
+    error("#{name}: #{file_field} '#{file}' is a #{label || 'stable'} archive " \
+          "but isBeta=#{representation(is_beta)}, isRC=#{representation(is_rc)}")
+  end
+
+  def validate_xcode_sdks(data, name)
     error("#{name}: minimumOSVersion is empty or not a string") unless string?(data["minimumOSVersion"])
     sdks = data.fetch("sdks", [])
     unless sdks.is_a?(Array) && !sdks.empty?

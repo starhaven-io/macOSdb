@@ -2,13 +2,13 @@ import Foundation
 
 /// A release with its extracted open source component versions.
 ///
-/// Supports macOS (IPSW firmware) and Xcode (.xip).
+/// Supports macOS (IPSW firmware) and Xcode (.xip or .aea).
 package struct Release: Codable, Identifiable, Hashable, Sendable {
     package var id: String { buildNumber }
 
     enum CodingKeys: String, CodingKey {
         case productType, osVersion, buildNumber, releaseName, releaseDate
-        case ipswFile, ipswURL, xipFile, xipURL
+        case ipswFile, ipswURL, xipFile, xipURL, aeaFile, aeaURL
         case isBeta, betaNumber, betaRevision, isRC, rcNumber, isDeviceSpecific
         case kernels, components, sdks, minimumOSVersion
     }
@@ -22,6 +22,8 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
     package let ipswURL: String?
     package let xipFile: String?
     package let xipURL: String?
+    package let aeaFile: String?
+    package let aeaURL: String?
     package let isBeta: Bool
     package let betaNumber: Int?
     package let betaRevision: Int?
@@ -43,6 +45,8 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         ipswURL: String? = nil,
         xipFile: String? = nil,
         xipURL: String? = nil,
+        aeaFile: String? = nil,
+        aeaURL: String? = nil,
         isBeta: Bool = false,
         betaNumber: Int? = nil,
         betaRevision: Int? = nil,
@@ -63,6 +67,8 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         self.ipswURL = ipswURL
         self.xipFile = xipFile
         self.xipURL = xipURL
+        self.aeaFile = aeaFile
+        self.aeaURL = aeaURL
         self.isBeta = isBeta
         self.betaNumber = betaNumber
         self.betaRevision = betaRevision
@@ -154,6 +160,8 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
             ipswURL: ipswURL,
             xipFile: xipFile,
             xipURL: xipURL,
+            aeaFile: aeaFile,
+            aeaURL: aeaURL,
             isBeta: isBeta,
             betaNumber: betaNumber,
             betaRevision: betaRevision,
@@ -178,6 +186,8 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         ipswURL = try container.decodeIfPresent(String.self, forKey: .ipswURL)
         xipFile = try container.decodeIfPresent(String.self, forKey: .xipFile)
         xipURL = try container.decodeIfPresent(String.self, forKey: .xipURL)
+        aeaFile = try container.decodeIfPresent(String.self, forKey: .aeaFile)
+        aeaURL = try container.decodeIfPresent(String.self, forKey: .aeaURL)
         isBeta = try container.decodeIfPresent(Bool.self, forKey: .isBeta) ?? false
         betaNumber = try container.decodeIfPresent(Int.self, forKey: .betaNumber)
         betaRevision = try container.decodeIfPresent(Int.self, forKey: .betaRevision)
@@ -201,6 +211,8 @@ package struct Release: Codable, Identifiable, Hashable, Sendable {
         try container.encodeIfPresent(ipswURL, forKey: .ipswURL)
         try container.encodeIfPresent(xipFile, forKey: .xipFile)
         try container.encodeIfPresent(xipURL, forKey: .xipURL)
+        try container.encodeIfPresent(aeaFile, forKey: .aeaFile)
+        try container.encodeIfPresent(aeaURL, forKey: .aeaURL)
         try container.encode(isBeta, forKey: .isBeta)
         try container.encodeIfPresent(betaNumber, forKey: .betaNumber)
         try container.encodeIfPresent(betaRevision, forKey: .betaRevision)
