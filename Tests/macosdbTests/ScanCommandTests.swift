@@ -227,7 +227,7 @@ struct ScanCommandTests {
 
         let cmd = try ScanCommand.parse([
             "archive.ipsw",
-            "--output", root.path,
+            "--output", root.appendingPathComponent("macos/releases").path,
             "--update-index",
             "--release-date", "2024-09-16"
         ])
@@ -346,6 +346,87 @@ struct ScanCommandTests {
 }
 
 extension ScanCommandTests {
+    @Test("Wrong-product writes identify both products and preserve the catalog", arguments: [
+        (ProductType.macOS, "macos", true, true),
+        (.macOS, "xcode", true, true),
+        (.macOS, "staging", true, true),
+        (.xcode, "staging", true, true),
+        (.macOS, "staging", false, true),
+        (.macOS, "macos", true, false)
+    ])
+    func refusesWrongProduct(owner: ProductType, destination: String, hasIndex: Bool, updateIndex: Bool) throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appendingPathComponent("macosdb-catalog-\(UUID().uuidString)")
+        defer { try? manager.removeItem(at: root) }
+        let catalog = root.appendingPathComponent(destination)
+        try manager.createDirectory(at: root, withIntermediateDirectories: true)
+        try manager.copyItem(at: catalogData.appendingPathComponent(owner.dataDirectory), to: catalog)
+        let output = catalog.appendingPathComponent("releases")
+        let index = catalog.appendingPathComponent("releases.json")
+        if !hasIndex { try manager.removeItem(at: index) }
+        let originalIndex = hasIndex ? try Data(contentsOf: index) : nil
+        let originalDetails = try manager.subpathsOfDirectory(atPath: output.path).sorted()
+        let product: ProductType = owner == .macOS ? .xcode : .macOS
+        let release = try publishedRelease(product)
+        let archive = product == .xcode ? "archive.xip" : "archive.ipsw"
+        var arguments = [archive, "--output", output.path]
+        if updateIndex { arguments += ["--update-index", "--release-date", "2024-09-16"] }
+        let cmd = try ScanCommand.parse(arguments)
+        #expect {
+            try cmd.writeOutput(release: release)
+        } throws: { error in
+            String(describing: error) == "Cannot write \(product.displayName) release data to the \(owner.displayName) catalog"
+        }
+        #expect((try? Data(contentsOf: index)) == originalIndex)
+        #expect(try manager.subpathsOfDirectory(atPath: output.path).sorted() == originalDetails)
+    }
+
+    private var catalogData: URL {
+        let repo = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        return repo.appendingPathComponent("data")
+    }
+
+    private func publishedRelease(_ product: ProductType = .xcode) throws -> Release {
+        let path = product == .xcode ? "xcode/releases/16/Xcode-16.0-16A242d.json" : "macos/releases/15/macOS-15.0-24A335.json"
+        let fixture = catalogData.appendingPathComponent(path)
+        let release = try JSONDecoder().decode(Release.self, from: Data(contentsOf: fixture))
+        try ReleasePublicationValidator.validate(release)
+        return release
+    }
+
+    @Test("Custom staging catalogs accept a first publication and a repeat publication")
+    func writesCustomCatalog() throws {
+        let (root, output, index) = try makeIndexWorkspace()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let release = try publishedRelease()
+        let cmd = try ScanCommand.parse([
+            "archive.xip", "--output", output.path, "--update-index", "--release-date", "2024-09-16"
+        ])
+        try cmd.writeOutput(release: release)
+        let first = try Data(contentsOf: index)
+        try cmd.writeOutput(release: release)
+        #expect(try Data(contentsOf: index) == first)
+        let detail = output.appendingPathComponent("16/Xcode-16.0-16A242d.json")
+        #expect(try JSONDecoder().decode(Release.self, from: Data(contentsOf: detail)) == release)
+    }
+
+    @Test("An empty catalog still binds its physical product through a staging alias")
+    func refusesWrongPhysicalProduct() throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appendingPathComponent("macosdb-catalog-\(UUID().uuidString)")
+        defer { try? manager.removeItem(at: root) }
+        let physical = root.appendingPathComponent("MacOS")
+        try manager.createDirectory(at: physical, withIntermediateDirectories: true)
+        let staging = root.appendingPathComponent("staging")
+        try manager.createSymbolicLink(at: staging, withDestinationURL: physical)
+        let cmd = try ScanCommand.parse(["archive.xip"])
+        let release = try publishedRelease()
+        #expect(throws: (any Error).self) {
+            try cmd.updateReleasesIndex(release: release, outputDir: staging.appendingPathComponent("releases"))
+        }
+        #expect(!manager.fileExists(atPath: physical.appendingPathComponent("releases.json").path))
+    }
+
     @Test("Index updates reject output directories that would invalidate canonical pointers")
     func updateIndexRequiresCanonicalOutputDirectory() throws {
         let root = FileManager.default.temporaryDirectory
