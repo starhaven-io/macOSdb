@@ -13,7 +13,9 @@ max_retries = 3
 #
 # gnu.org blocks cloud IP ranges (GitHub Actions runners) with 403.
 # The AGPL license URL is a canonical FSF reference; skip verifying it.
+# everymac.com answers the same runners with 403; it is a README source credit.
 exclude = [
     "^file://.*/(macos|xcode)/compare/?(\\?.*)?$",
     "^https://www\\.gnu\\.org/",
+    "^https://everymac\\.com/",
 ]
