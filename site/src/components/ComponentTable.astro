@@ -19,36 +19,38 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
 
 <section class="components">
   <h2>Components</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Component</th>
-        <th>Version</th>
-        <th>Source</th>
-        <th>Path</th>
-      </tr>
-    </thead>
-    <tbody>
-      {sorted.map((comp) => (
+  <div class="table-wrapper" role="region" aria-label="Component versions and paths" tabindex="0">
+    <table>
+      <thead>
         <tr>
-          <td class="comp-name">
-            <a href={`${basePath}/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
-          </td>
-          <td>
-            <code>{comp.version}</code>
-          </td>
-          <td data-pagefind-ignore>
-            <span class:list={['source', `source-${comp.source}`]}>
-              {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
-            </span>
-          </td>
-          <td class="comp-path" data-pagefind-ignore>
-            <code>{comp.path}</code>
-          </td>
+          <th>Component</th>
+          <th>Version</th>
+          <th>Source</th>
+          <th>Path</th>
         </tr>
-      ))}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {sorted.map((comp) => (
+          <tr>
+            <td class="comp-name">
+              <a href={`${basePath}/component/${componentSlug(comp.name)}/`}>{comp.name}</a>
+            </td>
+            <td>
+              <code>{comp.version}</code>
+            </td>
+            <td data-pagefind-ignore>
+              <span class:list={['source', `source-${comp.source}`]}>
+                {comp.source === 'dyldCache' ? 'dyld cache' : comp.source}
+              </span>
+            </td>
+            <td class="comp-path" data-pagefind-ignore>
+              <code>{comp.path}</code>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <style>
@@ -61,6 +63,10 @@ const sorted = [...components].sort((a, b) => a.name.localeCompare(b.name));
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--color-border);
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
   }
 
   .comp-name {
