@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Badge from './Badge.astro';
 import StructuredData from './StructuredData.astro';
 import { formatDate, componentSlug } from '../lib/utils';
+import type { HistoryTransition } from '../lib/componentHistory';
 import type { ProductConfig } from '../lib/products';
 
 interface Props {
@@ -10,19 +11,11 @@ interface Props {
   componentName: string;
   source: string;
   path: string;
-  changes: {
-    version: string;
-    firstRelease: string;
-    firstReleaseSlug: string;
-    firstReleaseDate: string;
-    firstReleaseBeta: boolean;
-    firstReleaseRC: boolean;
-    direction: string;
-  }[];
+  latestVersion: string;
+  transitions: HistoryTransition[];
 }
 
-const { product, componentName = '', source = '', path: compPath = '', changes = [] } = Astro.props;
-const latest = changes[0] ?? { version: '', direction: '' };
+const { product, componentName, source, path: compPath, latestVersion, transitions } = Astro.props;
 const slug = componentSlug(componentName);
 const preposition = product.key === 'macos' ? 'on' : 'in';
 
@@ -52,7 +45,7 @@ const titleSuffix = product.key === 'xcode' ? ` (${product.label})` : '';
     <h1 data-pagefind-weight="2">{componentName}</h1>
     <div class="meta" data-pagefind-ignore>
       <span>
-        Latest: <code>{latest.version}</code>
+        Latest: <code>{latestVersion}</code>
       </span>
       <span class:list={['source', `source-${source}`]}>{source === 'dyldCache' ? 'dyld cache' : source}</span>
       <code class="path">{compPath}</code>
@@ -62,7 +55,8 @@ const titleSuffix = product.key === 'xcode' ? ` (${product.label})` : '';
   <section class="history">
     <h2>Version History</h2>
     <p class="subtitle">
-      {changes.length} version changes across all {product.label} releases.
+      Updates follow their {product.label} minor series. A new minor follows the closest earlier minor already tracked.
+      A new major follows the most recently tracked release of the closest earlier major.
     </p>
 
     <div class="table-wrapper">
@@ -70,15 +64,24 @@ const titleSuffix = product.key === 'xcode' ? ` (${product.label})` : '';
         <thead>
           <tr>
             <th>Version</th>
-            <th>Introduced in</th>
+            <th>Release</th>
             <th>Date</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          {changes.map((entry) => (
+          {transitions.map((entry) => (
             <tr>
               <td>
+                {entry.previousReleaseSlug && (
+                  <>
+                    <a href={`/${product.key}/release/${entry.previousReleaseSlug}/`}>
+                      <code>{entry.previousVersion}</code>
+                    </a>
+                    <span aria-hidden="true"> → </span>
+                    <span class="visually-hidden"> to </span>
+                  </>
+                )}
                 <code>{entry.version}</code>
               </td>
               <td>
@@ -90,6 +93,7 @@ const titleSuffix = product.key === 'xcode' ? ` (${product.label})` : '';
               <td>
                 {entry.direction === 'upgraded' && <span class="status-badge status-upgraded">Upgraded</span>}
                 {entry.direction === 'downgraded' && <span class="status-badge status-downgraded">Downgraded</span>}
+                {entry.direction === 'unchanged' && <span>Equivalent version</span>}
                 {entry.direction === 'added' && <span class="status-badge status-added">First tracked</span>}
               </td>
             </tr>
