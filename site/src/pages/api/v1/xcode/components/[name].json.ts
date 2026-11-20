@@ -14,7 +14,8 @@ export const GET: APIRoute = async ({ params }) => {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
-  return new Response(JSON.stringify(history, null, 2), {
+  const { name, source, path, changes, transitions } = history;
+  return new Response(JSON.stringify({ name, source, path, changes, transitions }, null, 2), {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 };

@@ -14,7 +14,8 @@ export async function getStaticPaths() {
           componentName: history!.name,
           source: history!.source,
           path: history!.path,
-          changes: history!.changes,
+          latestVersion: history!.latestVersion,
+          transitions: history!.transitions,
         },
       };
     }),
@@ -22,7 +23,7 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const { componentName, source, path, changes } = Astro.props;
+const { componentName, source, path, latestVersion, transitions } = Astro.props;
 ---
 
 <ProductComponentDetail
@@ -30,5 +31,6 @@ const { componentName, source, path, changes } = Astro.props;
   componentName={componentName}
   source={source}
   path={path}
-  changes={changes}
+  latestVersion={latestVersion}
+  transitions={transitions}
 />

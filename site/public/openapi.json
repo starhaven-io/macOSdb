@@ -248,7 +248,28 @@
           "name": { "type": "string" },
           "source": { "type": "string" },
           "path": { "type": "string" },
-          "changes": { "type": "array", "items": { "$ref": "#/components/schemas/HistoryChange" } }
+          "changes": {
+            "type": "array",
+            "description": "One first appearance per distinct version, in descending component-version order.",
+            "items": { "$ref": "#/components/schemas/HistoryChange" }
+          },
+          "transitions": {
+            "type": "array",
+            "description": "Newest release first, including reversions. Updates follow their minor series. A new minor follows the closest earlier minor already tracked. A new major follows the most recently tracked release of the closest earlier major. The first observation has no predecessor.",
+            "items": {
+              "allOf": [
+                { "$ref": "#/components/schemas/HistoryChange" },
+                {
+                  "type": "object",
+                  "required": ["previousVersion", "previousReleaseSlug"],
+                  "properties": {
+                    "previousVersion": { "type": ["string", "null"] },
+                    "previousReleaseSlug": { "type": ["string", "null"] }
+                  }
+                }
+              ]
+            }
+          }
         }
       },
       "Comparison": {

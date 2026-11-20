@@ -1,5 +1,15 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { getComponentHistory } from '../../lib/api';
+
+const curl = await getComponentHistory('macos', 'curl');
+const curlExample = curl && {
+  name: curl.name,
+  source: curl.source,
+  path: curl.path,
+  changes: curl.changes.slice(0, 1),
+  transitions: curl.transitions.slice(0, 1),
+};
 ---
 
 <Base title="API — macOSdb" description="REST API for querying macOS and Xcode component version data.">
@@ -127,31 +137,21 @@ import Base from '../../layouts/Base.astro';
           /api/v1/{'{product}'}/components/{'{name}'}.json
         </code>
       </div>
-      <p>Version history for a single component across all releases.</p>
-      <details>
-        <summary>
-          Example: <code>/api/v1/macos/components/curl.json</code>
-        </summary>
-        <pre><code>{JSON.stringify({
-  "name": "curl",
-  "source": "filesystem",
-  "path": "/usr/bin/curl",
-  "changes": [
-    {
-      "version": "8.7.1",
-      "firstRelease": "macOS 15.0 Sequoia",
-      "firstReleaseDate": "2024-09-16",
-      "direction": "upgraded"
-    },
-    {
-      "version": "8.6.0",
-      "firstRelease": "macOS 14.4 Sonoma",
-      "firstReleaseDate": "2024-03-07",
-      "direction": "upgraded"
-    }
-  ]
-}, null, 2)}</code></pre>
-      </details>
+      <p>
+        <code>changes</code> lists the first appearance of each distinct version in descending version order.
+        <code>transitions</code> lists the first observation and subsequent version changes, newest release first,
+        including returns to an earlier version. Updates follow their minor series. A new minor follows the closest
+        earlier minor already tracked. A new major follows the most recently tracked release of the closest earlier
+        major.
+      </p>
+      {curlExample && (
+        <details>
+          <summary>
+            Excerpt from <code>/api/v1/macos/components/curl.json</code>
+          </summary>
+          <pre><code>{JSON.stringify(curlExample, null, 2)}</code></pre>
+        </details>
+      )}
     </div>
   </section>
 

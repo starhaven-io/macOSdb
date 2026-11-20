@@ -1,5 +1,13 @@
 import { getCollection, getEntry } from 'astro:content';
-import { displayName, releaseSlug, componentSlug, compareVersions, pickLatestReleases } from './utils';
+import {
+  compareReleasesByRecency,
+  displayName,
+  releaseSlug,
+  componentSlug,
+  compareVersions,
+  pickLatestReleases,
+} from './utils';
+import { componentHistory } from './componentHistory';
 
 export type Product = 'macos' | 'xcode';
 
@@ -8,23 +16,6 @@ interface ComponentSummary {
   version: string;
   source: string;
   path: string;
-}
-
-interface VersionChange {
-  version: string;
-  firstRelease: string;
-  firstReleaseSlug: string;
-  firstReleaseDate: string;
-  firstReleaseBeta: boolean;
-  firstReleaseRC: boolean;
-  direction: 'upgraded' | 'downgraded' | 'added' | 'unchanged';
-}
-
-interface ComponentHistory {
-  name: string;
-  source: string;
-  path: string;
-  changes: VersionChange[];
 }
 
 export interface CompareResult {
@@ -56,9 +47,7 @@ function productPrefix(product: Product) {
 
 export async function getComponents(product: Product): Promise<ComponentSummary[]> {
   const allReleases = await getCollection(detailsCollection(product));
-  const releases = allReleases.sort(
-    (a, b) => new Date(b.data.releaseDate ?? '').getTime() - new Date(a.data.releaseDate ?? '').getTime(),
-  );
+  const releases = allReleases.sort((a, b) => compareReleasesByRecency(a.data, b.data));
 
   const components: Map<string, ComponentSummary> = new Map();
   for (const release of releases) {
@@ -77,65 +66,13 @@ export async function getComponents(product: Product): Promise<ComponentSummary[
   return [...components.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getComponentHistory(product: Product, name: string): Promise<ComponentHistory | null> {
-  const allReleases = await getCollection(detailsCollection(product));
-  const prefix = productPrefix(product);
-  const includeReleaseName = product === 'macos';
-
-  interface VersionEntry {
-    firstRelease: string;
-    firstReleaseSlug: string;
-    firstReleaseDate: string;
-    firstReleaseBeta: boolean;
-    firstReleaseRC: boolean;
-    oldestDate: number;
-  }
-
-  let meta: { name: string; source: string; path: string } | null = null;
-  const versions: Map<string, VersionEntry> = new Map();
-
-  for (const release of allReleases) {
-    const releaseDate = new Date(release.data.releaseDate ?? '').getTime();
-    for (const comp of release.data.components) {
-      if (componentSlug(comp.name) !== name) continue;
-
-      const version = comp.version ?? '';
-      if (!meta) {
-        meta = { name: comp.name, source: comp.source, path: comp.path };
-      }
-
-      const existing = versions.get(version);
-      if (!existing || releaseDate < existing.oldestDate) {
-        versions.set(version, {
-          firstRelease: displayName(release.data, includeReleaseName, prefix),
-          firstReleaseSlug: releaseSlug(release.data),
-          firstReleaseDate: release.data.releaseDate ?? '',
-          firstReleaseBeta: release.data.isBeta,
-          firstReleaseRC: release.data.isRC,
-          oldestDate: releaseDate,
-        });
-      }
-    }
-  }
-
-  if (!meta) return null;
-
-  const sorted = [...versions.entries()].sort(([a], [b]) => {
-    const dir = compareVersions(a, b);
-    return dir === 'upgraded' ? 1 : dir === 'downgraded' ? -1 : 0;
-  });
-
-  const changes: VersionChange[] = sorted.map(([version, entry], i) => ({
-    version,
-    firstRelease: entry.firstRelease,
-    firstReleaseSlug: entry.firstReleaseSlug,
-    firstReleaseDate: entry.firstReleaseDate,
-    firstReleaseBeta: entry.firstReleaseBeta,
-    firstReleaseRC: entry.firstReleaseRC,
-    direction: i === sorted.length - 1 ? 'added' : compareVersions(sorted[i + 1][0], version),
-  }));
-
-  return { ...meta, changes };
+export async function getComponentHistory(product: Product, name: string) {
+  const releases = await getCollection(detailsCollection(product));
+  return componentHistory(
+    releases.map((release) => release.data),
+    name,
+    productPrefix(product),
+  );
 }
 
 // The single "latest" release (used by /releases/latest.json) is the latest GA —
