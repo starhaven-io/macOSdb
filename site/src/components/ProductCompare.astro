@@ -1,31 +1,30 @@
 ---
 import ComparePage from './ComparePage.astro';
-import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
 import { displayName } from '../lib/utils';
 import { compareReleases } from '../lib/api';
 import type { ProductConfig } from '../lib/products';
 
 interface Props {
   product: ProductConfig;
+  releases: CollectionEntry<ProductConfig['indexCollection']>[];
   url: URL;
   unknownRelease?: boolean;
 }
 
-const { product, url, unknownRelease = false } = Astro.props;
-
-const allReleases = await getCollection(product.indexCollection);
-const releases = allReleases.sort(
+const { product, releases, url, unknownRelease = false } = Astro.props;
+const sorted = releases.toSorted(
   (a, b) => new Date(b.data.releaseDate).getTime() - new Date(a.data.releaseDate).getTime(),
 );
 
-const releaseOptions = releases.map((entry) => ({
+const releaseOptions = sorted.map((entry) => ({
   key: `${entry.data.osVersion}-${entry.data.buildNumber}`,
   label: `${displayName(entry.data, product.includeReleaseName, product.label)} (${entry.data.buildNumber})`,
 }));
 
 const fromKey = url.searchParams.get('from');
 const toKey = url.searchParams.get('to');
-const result = fromKey && toKey ? await compareReleases(product.key, fromKey, toKey) : null;
+const result = !unknownRelease && fromKey && toKey ? await compareReleases(product.key, fromKey, toKey) : null;
 
 let title = `Compare ${product.label} Releases — macOSdb`;
 let description = `Compare open-source components between ${product.label} releases.`;

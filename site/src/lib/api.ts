@@ -1,4 +1,4 @@
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import { displayName, releaseSlug, componentSlug, compareVersions, pickLatestReleases } from './utils';
 
 export type Product = 'macos' | 'xcode';
@@ -158,11 +158,9 @@ export async function getLatestReleases(product: Product) {
 }
 
 export async function compareReleases(product: Product, fromId: string, toId: string): Promise<CompareResult | null> {
-  const allReleases = await getCollection(detailsCollection(product));
+  const collection = detailsCollection(product);
+  const [fromRelease, toRelease] = await Promise.all([getEntry(collection, fromId), getEntry(collection, toId)]);
   const prefix = productPrefix(product);
-
-  const fromRelease = allReleases.find((r) => r.id === fromId);
-  const toRelease = allReleases.find((r) => r.id === toId);
 
   if (!fromRelease || !toRelease) return null;
 
