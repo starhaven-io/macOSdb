@@ -62,9 +62,12 @@ Do not repeat expensive checks when the relevant source and evidence are unchang
 - Cleanup may affect only recognized stale workspaces and mounts. Preserve the
   live-process marker and repeated ownership checks; never broaden it to arbitrary
   temporary directories.
-- `scan --update-index` requires the canonical product `releases` output directory
-  and complete source metadata. Local experiments should use a temporary output
-  directory and omit `--update-index` unless testing a complete product catalog.
+- `scan --update-index` requires a `releases` output directory and complete
+  source metadata. A staging catalog may use a custom parent. Recognized product
+  directories must match the scanned product. Index publication also checks
+  existing index entries, or existing release filenames when creating an index.
+  Local experiments should use a temporary output directory and omit
+  `--update-index` unless testing a complete product catalog.
 - Keep archives, AEA keys, download cookies, signing material, and local environment
   files out of Git and logs. AEA WKMS 404s intentionally require a fresh dispatch.
 

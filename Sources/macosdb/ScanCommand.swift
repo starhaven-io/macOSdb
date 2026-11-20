@@ -293,9 +293,13 @@ struct ScanCommand: AsyncParsableCommand, Sendable {
         let filename = URL(fileURLWithPath: dataFile).lastPathComponent
         let majorVersion = URL(fileURLWithPath: dataFile).deletingLastPathComponent().lastPathComponent
         let versionDir = outputDir.appendingPathComponent(majorVersion)
-        let preparedIndex = updateIndex ? try prepareReleasesIndex(release: release, outputDir: outputDir) : nil
+        let preparedIndex: PreparedIndex?
         if updateIndex {
+            preparedIndex = try prepareReleasesIndex(release: release, outputDir: outputDir)
             try ReleasePublicationValidator.validate(release)
+        } else {
+            try validateProductDirectory(outputDir.standardizedFileURL, for: productType)
+            preparedIndex = nil
         }
         try FileManager.default.createDirectory(at: versionDir, withIntermediateDirectories: true)
         let outputPath = versionDir.appendingPathComponent(filename)
@@ -344,11 +348,7 @@ extension ScanCommand {
 
     func prepareReleasesIndex(release: Release, outputDir: URL) throws -> PreparedIndex {
         let productType = release.resolvedProductType
-        guard outputDir.standardizedFileURL.lastPathComponent == "releases" else {
-            throw ValidationError("--update-index requires an output directory named releases")
-        }
-        // Canonical dataFile paths are relative to the index's parent directory.
-        let indexPath = outputDir.deletingLastPathComponent().appendingPathComponent("releases.json")
+        let indexPath = try catalogIndexPath(for: productType, outputDir: outputDir)
         guard let dataFile = productType.canonicalDataFile(
             osVersion: release.osVersion,
             buildNumber: release.buildNumber
@@ -362,12 +362,20 @@ extension ScanCommand {
             do {
                 let data = try Data(contentsOf: indexPath)
                 entries = try JSONDecoder().decode([ReleaseIndexEntry].self, from: data)
+                if let foreign = entries.first(where: { $0.resolvedProductType != productType }) {
+                    throw productMismatch(productType, owner: foreign.resolvedProductType)
+                }
+                try DataProvider.validateIndex(entries, for: productType)
+            } catch let mismatch as ValidationError {
+                throw mismatch
             } catch {
                 throw ValidationError(
-                    "Refusing to rewrite \(indexPath.path): the existing index could not be read"
+                    "Refusing to rewrite \(indexPath.path): the existing index is invalid"
                         + " (\(error.localizedDescription)). Fix or remove it, then re-run."
                 )
             }
+        } else {
+            try validateUnindexedDetails(outputDir, for: productType)
         }
 
         entries.removeAll { $0.buildNumber == release.buildNumber }
@@ -395,6 +403,43 @@ extension ScanCommand {
         var indexData = try encoder.encode(entries)
         indexData.append(contentsOf: [0x0A]) // trailing newline
         return PreparedIndex(path: indexPath, data: indexData, entryCount: entries.count)
+    }
+
+    private func catalogIndexPath(for product: ProductType, outputDir: URL) throws -> URL {
+        let directory = outputDir.standardizedFileURL
+        guard directory.lastPathComponent == "releases" else {
+            throw ValidationError("--update-index requires an output directory named releases")
+        }
+        try validateProductDirectory(directory, for: product)
+        return directory.deletingLastPathComponent().appendingPathComponent("releases.json")
+    }
+
+    private func validateProductDirectory(_ directory: URL, for product: ProductType) throws {
+        let parent = directory.deletingLastPathComponent()
+        let physicalParent = directory.resolvingSymlinksInPath().deletingLastPathComponent().resolvingSymlinksInPath()
+        // A staging catalog may have any parent name. Recognized product names bind both the selected and physical paths.
+        for location in [parent, physicalParent] {
+            let name = location.lastPathComponent.lowercased()
+            if let owner = ProductType.allCases.first(where: { $0.dataDirectory == name }), owner != product {
+                throw productMismatch(product, owner: owner)
+            }
+        }
+    }
+
+    private func validateUnindexedDetails(_ directory: URL, for product: ProductType) throws {
+        let manager = FileManager.default
+        guard manager.fileExists(atPath: directory.path) else { return }
+        for path in try manager.subpathsOfDirectory(atPath: directory.resolvingSymlinksInPath().path) {
+            let file = directory.appendingPathComponent(path)
+            guard file.pathExtension == "json",
+                  let owner = ProductType.allCases.first(where: { file.lastPathComponent.hasPrefix($0.filePrefix + "-") }),
+                  owner != product, try file.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else { continue }
+            throw productMismatch(product, owner: owner)
+        }
+    }
+
+    private func productMismatch(_ product: ProductType, owner: ProductType) -> ValidationError {
+        ValidationError("Cannot write \(product.displayName) release data to the \(owner.displayName) catalog")
     }
 
     func writeAEAKey(_ pem: String, for ipswURL: URL) {

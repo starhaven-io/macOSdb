@@ -91,10 +91,13 @@ macosdb cleanup --force    # actually unmount and delete
 
 For the scan examples, set `IPSW_URL` or `XIP_URL` to the verified Apple download
 URL matching the local archive. Index publication requires complete source
-metadata; exploratory scans can omit `--update-index`. `scan` also accepts an
-Xcode `.aea` archive, with its download URL passed as `--aea-url`. The archive's
-format decides whether the release records `xip` or `aea` source fields, so the
-URL has to name that same format.
+metadata and an output directory named `releases`. A staging catalog can use a
+custom parent directory. A `macos` or `xcode` parent must match the archive's
+product. When publishing an index, its entries must match the product. When
+creating one, existing release detail files must match. Exploratory scans can
+omit `--update-index`. For an Xcode `.aea` archive, pass its download URL as
+`--aea-url`. The archive's format decides whether the release records `xip` or
+`aea` source fields, so the URL has to name that same format.
 
 ### Offline and local data
 

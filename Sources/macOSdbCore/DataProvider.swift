@@ -200,7 +200,7 @@ package actor DataProvider {
         return resolvedProduct
     }
 
-    private static func validateIndex(_ index: [ReleaseIndexEntry], for productType: ProductType) throws {
+    package static func validateIndex(_ index: [ReleaseIndexEntry], for productType: ProductType) throws {
         var identities = Set<String>()
         var dataFiles = Set<String>()
         for entry in index {
