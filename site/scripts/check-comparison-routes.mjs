@@ -71,7 +71,33 @@ try {
       assert.ok(response.headers.get('cache-control')?.includes('public'), path);
     }
   }
-  console.log('check-comparison-routes: five built Worker routes have the expected status and cache policy.');
+  const compareAPI = (from, to) =>
+    fetch(`${origin}/api/v1/xcode/compare/${from}/${to}.json`, { signal: AbortSignal.timeout(30000) });
+  const from = '12.0-12A8169g';
+  const to = '12.0-12A7209';
+  const comparison = await compareAPI(from, to);
+  assert.equal(comparison.status, 200);
+  const { changes } = await comparison.json();
+  assert.deepEqual(
+    changes.find((change) => change.name === 'sqlite3'),
+    {
+      name: 'sqlite3',
+      from: '3.32.3',
+      to: '3.28.0',
+      direction: 'downgraded',
+    },
+  );
+  for (const [first, second] of [
+    ['missing', to],
+    [from, 'missing'],
+  ]) {
+    const missing = await compareAPI(first, second);
+    assert.equal(missing.status, 404);
+    assert.deepEqual(await missing.json(), { error: 'One or both releases not found' });
+  }
+  console.log(
+    'check-comparison-routes: built comparison pages and APIs have the expected status, data and cache policy.',
+  );
 } catch (error) {
   console.error(output);
   throw error;
