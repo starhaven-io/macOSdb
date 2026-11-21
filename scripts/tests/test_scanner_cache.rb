@@ -5,7 +5,7 @@ class ScannerCacheTests < Minitest::Test
   include WorkflowHelpers
 
   def test_distinct_scans_and_releases_are_retained
-    { IPSW_WORKFLOW => "scan", XIP_WORKFLOW => "scan", RESCAN_WORKFLOW => "scan", RELEASE_WORKFLOW => "release" }.each do |path, group|
+    { IPSW_WORKFLOW => "scan", XCODE_WORKFLOW => "scan", RESCAN_WORKFLOW => "scan", RELEASE_WORKFLOW => "release" }.each do |path, group|
       concurrency = path.read.split("concurrency:\n", 2).last.split("\n\n", 2).first
       assert_equal({ "group" => group, "cancel-in-progress" => "false", "queue" => "max" },
                    concurrency.lines.map { |line| line.strip.split(": ", 2) }.to_h)
@@ -38,7 +38,7 @@ class ScannerCacheTests < Minitest::Test
   def test_scanner_keys_share_compiler_sdk_platform_and_source_identity
     scripts = []
     keys = []
-    [IPSW_WORKFLOW, XIP_WORKFLOW, RESCAN_WORKFLOW].each do |path|
+    [IPSW_WORKFLOW, XCODE_WORKFLOW, RESCAN_WORKFLOW].each do |path|
       workflow = path.read
       scripts << workflow_run_block(workflow, "Identify Swift build environment")
       workflow_keys = workflow.lines.map(&:strip).grep(/key: macosdb-cli-/)

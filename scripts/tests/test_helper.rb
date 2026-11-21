@@ -16,7 +16,7 @@ module WorkflowHelpers
   ROOT = Pathname.new(__dir__).join("../..").realpath
   CI_WORKFLOW = ROOT.join(".github/workflows/ci.yml")
   IPSW_WORKFLOW = ROOT.join(".github/workflows/scan-ipsw.yml")
-  XIP_WORKFLOW = ROOT.join(".github/workflows/scan-xip.yml")
+  XCODE_WORKFLOW = ROOT.join(".github/workflows/scan-xcode.yml")
   RESCAN_WORKFLOW = ROOT.join(".github/workflows/rescan.yml")
   RELEASE_WORKFLOW = ROOT.join(".github/workflows/release.yml")
   Result = Struct.new(:stdout, :stderr, :status) do

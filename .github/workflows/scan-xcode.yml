@@ -1,10 +1,10 @@
-name: Scan XIP
+name: Scan Xcode
 
 on:
   workflow_dispatch:
     inputs:
-      xip_url:
-        description: "Xcode XIP download URL"
+      archive_url:
+        description: "Xcode archive download URL (.xip or .aea)"
         required: true
         type: string
       build_number:
@@ -141,32 +141,35 @@ jobs:
         run: |
           echo "RELEASE_DATE=${TRUSTED_DATE}" >> "${GITHUB_ENV}"
 
-      - name: Resolve XIP path
-        id: resolve-xip
+      - name: Resolve archive path
+        id: resolve-archive
         env:
-          XIP_URL: ${{ inputs.xip_url }}
+          ARCHIVE_URL: ${{ inputs.archive_url }}
           BUILD: ${{ inputs.build_number }}
         run: |
-          XIP_PATH=$(echo "${XIP_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
-          # The ADCDownloadAuth secret cookie is sent to adcdownload.apple.com${XIP_PATH}.
-          # Reject anything that isn't a clean absolute .xip path so a value like
+          DOWNLOAD_PATH=$(echo "${ARCHIVE_URL}" | sed -E 's/.*[?&]path=([^&]*).*/\1/')
+          # The ADCDownloadAuth secret cookie is sent to adcdownload.apple.com${DOWNLOAD_PATH}.
+          # Reject anything that isn't a clean absolute .xip or .aea path so a value like
           # "@evil.example.com/x.xip" can't redirect curl (and the cookie) to another host.
-          if [[ ! "${XIP_PATH}" =~ ^/[A-Za-z0-9._~%/+-]+\.xip$ ]]; then
-            echo "::error::Refusing to use the supplied download path: not a clean absolute .xip path."
+          if [[ ! "${DOWNLOAD_PATH}" =~ ^/[A-Za-z0-9._~%/+-]+\.(xip|aea)$ ]]; then
+            echo "::error::Refusing to use the supplied download path: not a clean absolute .xip or .aea path."
             exit 1
           fi
-          LOWER_XIP_PATH=$(printf '%s' "${XIP_PATH}" | tr '[:upper:]' '[:lower:]')
-          if [[ "${XIP_PATH}" == *'//'* ]] \
-            || [[ "${XIP_PATH}" =~ (^|/)\.{1,2}(/|$) ]] \
-            || [[ "${LOWER_XIP_PATH}" =~ %(00|0a|0d|2f|5c) ]]; then
+          LOWER_DOWNLOAD_PATH=$(printf '%s' "${DOWNLOAD_PATH}" | tr '[:upper:]' '[:lower:]')
+          if [[ "${DOWNLOAD_PATH}" == *'//'* ]] \
+            || [[ "${DOWNLOAD_PATH}" =~ (^|/)\.{1,2}(/|$) ]] \
+            || [[ "${LOWER_DOWNLOAD_PATH}" =~ %(00|0a|0d|2f|5c) ]]; then
             echo "::error::Refusing a download path containing ambiguous or encoded separators."
             exit 1
           fi
-          ORIG_NAME=$(basename "${XIP_PATH}")
-          if [[ ! "${ORIG_NAME}" =~ ^Xcode_[0-9]+(\.[0-9]+)*(_[A-Za-z0-9._~%+-]+)?\.xip$ ]]; then
-            echo "::error::Refusing Xcode filename '${ORIG_NAME}': expected Xcode_<version>[_<qualifier>].xip."
+          ORIG_NAME=$(basename "${DOWNLOAD_PATH}")
+          if [[ ! "${ORIG_NAME}" =~ ^Xcode_[0-9]+(\.[0-9]+)*(_[A-Za-z0-9._~%+-]+)?\.(xip|aea)$ ]]; then
+            echo "::error::Refusing Xcode filename '${ORIG_NAME}': expected Xcode_<version>[_<qualifier>].xip or .aea."
             exit 1
           fi
+          # The cached archive keeps the download's format: the scanner records
+          # the source pair of the archive it reads, not of the URL it is given.
+          ARCHIVE_FORMAT="${ORIG_NAME##*.}"
           VERSION=$(echo "${ORIG_NAME}" | sed -E 's/Xcode_([0-9]+(\.[0-9]+)*).*/\1/')
           if [[ "${VERSION}" != *.* ]]; then
             VERSION="${VERSION}.0"
@@ -205,12 +208,12 @@ jobs:
             echo "::error::No mounted archive drive covers Xcode ${MAJOR}. Mounted: ${seen[*]:-none}."
             exit 1
           fi
-          XIP_DIR="${ARCHIVE_ROOT}/Xcode/${MAJOR}"
-          mkdir -p "${XIP_DIR}"
-          XIP_DIR=$(cd "${XIP_DIR}" && pwd -P)
-          XIP_FILE="${XIP_DIR}/Xcode-${VERSION}-${BUILD}.xip"
-          if [[ "${XIP_FILE}" != "${XIP_DIR}/"* ]]; then
-            echo "::error::Resolved XIP path escaped its archive directory."
+          ARCHIVE_DIR="${ARCHIVE_ROOT}/Xcode/${MAJOR}"
+          mkdir -p "${ARCHIVE_DIR}"
+          ARCHIVE_DIR=$(cd "${ARCHIVE_DIR}" && pwd -P)
+          ARCHIVE_FILE="${ARCHIVE_DIR}/Xcode-${VERSION}-${BUILD}.${ARCHIVE_FORMAT}"
+          if [[ "${ARCHIVE_FILE}" != "${ARCHIVE_DIR}/"* ]]; then
+            echo "::error::Resolved archive path escaped its archive directory."
             exit 1
           fi
           # adcdownload.apple.com is the CDN the ADCDownloadAuth cookie is
@@ -218,10 +221,11 @@ jobs:
           # link (what developer.apple.com hands out), which is what we
           # want surfaced in release JSON so visitors get logged in cleanly
           # rather than bouncing off the CDN's unauthorized page.
-          CDN_URL="https://adcdownload.apple.com${XIP_PATH}"
-          PUBLIC_URL="https://developer.apple.com/services-account/download?path=${XIP_PATH}"
+          CDN_URL="https://adcdownload.apple.com${DOWNLOAD_PATH}"
+          PUBLIC_URL="https://developer.apple.com/services-account/download?path=${DOWNLOAD_PATH}"
           {
-            printf 'XIP_FILE=%s\n' "${XIP_FILE}"
+            printf 'ARCHIVE_FILE=%s\n' "${ARCHIVE_FILE}"
+            printf 'ARCHIVE_FORMAT=%s\n' "${ARCHIVE_FORMAT}"
             printf 'CDN_URL=%s\n' "${CDN_URL}"
             printf 'PUBLIC_URL=%s\n' "${PUBLIC_URL}"
             printf 'EXPECTED_VERSION=%s\n' "${VERSION}"
@@ -256,31 +260,36 @@ jobs:
           path: .build/release/macosdb
           key: macosdb-cli-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-build-environment.outputs.digest }}-${{ hashFiles('Sources/**/*.swift', 'Package.swift', 'Package.resolved') }}
 
-      - name: Download XIP
-        id: download-xip
+      - name: Download archive
+        id: download-archive
         env:
           ADC_DOWNLOAD_AUTH: ${{ secrets.ADC_DOWNLOAD_AUTH }}
         run: |
-          if [[ -L "${XIP_FILE}" || -L "${XIP_FILE}.part" || -L "${XIP_FILE}.sha256" ]]; then
-            echo "::error::Refusing a symbolic link at the resolved XIP path."
+          if [[ -L "${ARCHIVE_FILE}" || -L "${ARCHIVE_FILE}.part" || -L "${ARCHIVE_FILE}.sha256" ]]; then
+            echo "::error::Refusing a symbolic link at the resolved archive path."
             exit 1
           fi
-          if [[ -e "${XIP_FILE}" && ! -f "${XIP_FILE}" ]]; then
-            echo "::error::Refusing a non-regular file at the resolved XIP path."
+          if [[ -e "${ARCHIVE_FILE}" && ! -f "${ARCHIVE_FILE}" ]]; then
+            echo "::error::Refusing a non-regular file at the resolved archive path."
             exit 1
           fi
-          if [[ -e "${XIP_FILE}.sha256" && ! -f "${XIP_FILE}.sha256" ]]; then
-            echo "::error::Refusing a non-regular file at the resolved XIP checksum path."
+          if [[ -e "${ARCHIVE_FILE}.sha256" && ! -f "${ARCHIVE_FILE}.sha256" ]]; then
+            echo "::error::Refusing a non-regular file at the resolved archive checksum path."
             exit 1
           fi
-          if [[ -f "${XIP_FILE}" ]]; then
-            FILE_TYPE=$(file -b "${XIP_FILE}")
-            if [[ "${FILE_TYPE}" == *"xar"* || "${FILE_TYPE}" == *"XAR"* ]]; then
+          if [[ -f "${ARCHIVE_FILE}" ]]; then
+            FORMAT_STATUS=0
+            ARCHIVE_TYPE=$(/bin/bash scripts/check-xcode-archive-format.sh "${ARCHIVE_FORMAT}" "${ARCHIVE_FILE}") || FORMAT_STATUS=$?
+            if (( FORMAT_STATUS == 0 )); then
               echo "downloaded=false" >> "${GITHUB_OUTPUT}"
-              echo "XIP already cached at ${XIP_FILE}, skipping download"
+              echo "Archive already cached at ${ARCHIVE_FILE}, skipping download"
               exit 0
             fi
-            echo "::error::Cached file is not a valid XIP (${FILE_TYPE}). Preserving it for investigation instead of replacing persistent cache state."
+            if (( FORMAT_STATUS == 1 )); then
+              echo "::error::Cached file is not a valid .${ARCHIVE_FORMAT} archive (${ARCHIVE_TYPE}). Preserving it for investigation instead of replacing persistent cache state."
+            else
+              echo "::error::Could not check the format of the cached archive. Preserving it for investigation instead of replacing persistent cache state."
+            fi
             exit 1
           fi
 
@@ -300,20 +309,20 @@ jobs:
           if [[ "${TOTAL}" =~ ^[0-9]+$ ]] && (( TOTAL > 0 )); then
             TOTAL_MB=$(( TOTAL / 1048576 ))
             TOTAL_GB=$(( TOTAL_MB * 10 / 1024 ))
-            echo "Downloading XIP ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
+            echo "Downloading archive ($(( TOTAL_GB / 10 )).$(( TOTAL_GB % 10 )) GB)..."
           else
             TOTAL=0
             TOTAL_MB=0
-            echo "Downloading XIP (server did not provide a content length)..."
+            echo "Downloading archive (server did not provide a content length)..."
           fi
           curl -sS --fail --proto '=https' --max-redirs 0 \
             --retry 10 --retry-delay 10 --retry-connrefused --retry-all-errors \
             -C - -H "Cookie: ADCDownloadAuth=${ADC_DOWNLOAD_AUTH}" \
-            -o "${XIP_FILE}.part" "${CDN_URL}" &
+            -o "${ARCHIVE_FILE}.part" "${CDN_URL}" &
           CURL_PID=$!
           while kill -0 "${CURL_PID}" 2>/dev/null; do
-            if [[ -f "${XIP_FILE}.part" ]]; then
-              SIZE=$(stat -f%z "${XIP_FILE}.part" 2>/dev/null || echo 0)
+            if [[ -f "${ARCHIVE_FILE}.part" ]]; then
+              SIZE=$(stat -f%z "${ARCHIVE_FILE}.part" 2>/dev/null || echo 0)
               SIZE_MB=$(( SIZE / 1048576 ))
               if (( TOTAL_MB > 0 )); then
                 PCT=$(( SIZE_MB * 100 / TOTAL_MB ))
@@ -325,47 +334,59 @@ jobs:
             sleep 30
           done
           wait "${CURL_PID}"
-          mv "${XIP_FILE}.part" "${XIP_FILE}"
+          mv "${ARCHIVE_FILE}.part" "${ARCHIVE_FILE}"
           echo "downloaded=true" >> "${GITHUB_OUTPUT}"
 
-      - name: Validate XIP
+      - name: Validate archive
         env:
-          DOWNLOADED: ${{ steps.download-xip.outputs.downloaded }}
+          DOWNLOADED: ${{ steps.download-archive.outputs.downloaded }}
         run: |
-          FILE_SIZE=$(stat -f%z "${XIP_FILE}")
-          FILE_TYPE=$(file -b "${XIP_FILE}")
-          if (( FILE_SIZE < 104857600 )) || { [[ "${FILE_TYPE}" != *"xar"* ]] && [[ "${FILE_TYPE}" != *"XAR"* ]]; }; then
-            echo "::error::Archive file is not a valid XIP (${FILE_TYPE}, $(( FILE_SIZE / 1024 )) KB). The ADC_DOWNLOAD_AUTH cookie may be expired — refresh it from developer.apple.com and update the secret."
+          FILE_SIZE=$(stat -f%z "${ARCHIVE_FILE}")
+          # Size comes first and the format is probed once, so a failing probe
+          # can neither remove a usable download nor leave an undersized one cached.
+          if (( FILE_SIZE < 104857600 )); then
+            FORMAT_STATUS=1
+            ARCHIVE_TYPE="under 100 MiB"
+          else
+            FORMAT_STATUS=0
+            ARCHIVE_TYPE=$(/bin/bash scripts/check-xcode-archive-format.sh "${ARCHIVE_FORMAT}" "${ARCHIVE_FILE}") || FORMAT_STATUS=$?
+          fi
+          if (( FORMAT_STATUS > 1 )); then
+            echo "::error::Could not check the format of ${ARCHIVE_FILE}. Preserving it, because a failed check says nothing about the archive."
+            exit 1
+          fi
+          if (( FORMAT_STATUS == 1 )); then
+            echo "::error::Archive file is not a valid .${ARCHIVE_FORMAT} archive (${ARCHIVE_TYPE}, $(( FILE_SIZE / 1024 )) KB). The ADC_DOWNLOAD_AUTH cookie may be expired — refresh it from developer.apple.com and update the secret."
             if [[ "${DOWNLOADED}" == "true" ]]; then
-              rm -f "${XIP_FILE}"
+              rm -f "${ARCHIVE_FILE}"
             else
               echo "Preserving the invalid preexisting cache entry for investigation."
             fi
             exit 1
           fi
-          echo "XIP validated: $(( FILE_SIZE / 1073741824 )) GB, ${FILE_TYPE}"
+          echo "Archive validated: $(( FILE_SIZE / 1073741824 )) GB, ${ARCHIVE_TYPE}"
 
-      - name: Set or verify XIP modification time
+      - name: Set or verify archive modification time
         run: |
-          if [[ "$(stat -f '%Sf' "${XIP_FILE}")" == *uchg* ]]; then
-            ARCHIVE_DATE=$(stat -f '%Sm' -t '%Y-%m-%d' "${XIP_FILE}")
+          if [[ "$(stat -f '%Sf' "${ARCHIVE_FILE}")" == *uchg* ]]; then
+            ARCHIVE_DATE=$(stat -f '%Sm' -t '%Y-%m-%d' "${ARCHIVE_FILE}")
             if [[ "${ARCHIVE_DATE}" != "${RELEASE_DATE}" ]]; then
-              echo "::error::Cached XIP is immutable with modification date ${ARCHIVE_DATE}; expected ${RELEASE_DATE}. Re-dispatch with release_date=${ARCHIVE_DATE}, or unlock and correct the archive if that date is wrong."
+              echo "::error::Cached archive is immutable with modification date ${ARCHIVE_DATE}; expected ${RELEASE_DATE}. Re-dispatch with release_date=${ARCHIVE_DATE}, or unlock and correct the archive if that date is wrong."
               exit 1
             fi
-            echo "XIP already immutable with release-date mtime ${ARCHIVE_DATE}, leaving unchanged"
+            echo "Archive already immutable with release-date mtime ${ARCHIVE_DATE}, leaving unchanged"
           else
             TOUCH_DATE=$(echo "${RELEASE_DATE}" | tr -d '-')0000
-            touch -t "${TOUCH_DATE}" "${XIP_FILE}"
+            touch -t "${TOUCH_DATE}" "${ARCHIVE_FILE}"
           fi
 
       - name: Verify existing SHA-256 sidecar
         run: |
-          if [[ -f "${XIP_FILE}.sha256" ]]; then
-            .build/release/macosdb validate "${XIP_FILE}"
+          if [[ -f "${ARCHIVE_FILE}.sha256" ]]; then
+            .build/release/macosdb validate "${ARCHIVE_FILE}"
           fi
 
-      - name: Scan XIP
+      - name: Scan Xcode archive
         env:
           IS_BETA: ${{ inputs.beta }}
           BETA_NUMBER: ${{ inputs.beta_number }}
@@ -374,12 +395,12 @@ jobs:
           RC_NUMBER: ${{ inputs.rc_number }}
         run: |
           SCAN_ARGS=(
-            "${XIP_FILE}"
+            "${ARCHIVE_FILE}"
             --output data/xcode/releases
             --release-date "${RELEASE_DATE}"
             --update-index
             --verbose
-            --xip-url "${PUBLIC_URL}"
+            "--${ARCHIVE_FORMAT}-url" "${PUBLIC_URL}"
           )
           if [[ "${IS_BETA}" == "true" ]]; then
             SCAN_ARGS+=(--beta)
@@ -432,16 +453,16 @@ jobs:
           echo "basename=$(basename "${NEW_RELEASE_FILE}" .json)" >> "${GITHUB_OUTPUT}"
 
       - name: Create or verify SHA-256 sidecar
-        run: .build/release/macosdb validate "${XIP_FILE}"
+        run: .build/release/macosdb validate "${ARCHIVE_FILE}"
 
       - name: Lock archive files
         run: |
-          if [[ "$(stat -f '%Sf' "${XIP_FILE}.sha256")" == *uchg* ]]; then
+          if [[ "$(stat -f '%Sf' "${ARCHIVE_FILE}.sha256")" == *uchg* ]]; then
             echo "SHA-256 sidecar already immutable, preserving its mtime"
           else
-            touch -r "${XIP_FILE}" "${XIP_FILE}.sha256"
+            touch -r "${ARCHIVE_FILE}" "${ARCHIVE_FILE}.sha256"
           fi
-          for f in "${XIP_FILE}" "${XIP_FILE}.sha256"; do
+          for f in "${ARCHIVE_FILE}" "${ARCHIVE_FILE}.sha256"; do
             [[ -f "$f" ]] && chflags uchg "$f"
           done
 
@@ -485,7 +506,7 @@ jobs:
         id: verify-release
         env:
           ARTIFACT: ${{ runner.temp }}/artifact/release-json.tgz
-          SOURCE_URL: ${{ inputs.xip_url }}
+          SOURCE_URL: ${{ inputs.archive_url }}
           BUILD_NUMBER: ${{ inputs.build_number }}
           RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
           IS_BETA: ${{ inputs.beta }}
@@ -539,7 +560,7 @@ jobs:
 
           BRANCH="feat/data-${BASENAME}"
           TITLE="feat(data): add ${BASENAME}"
-          printf -v PR_BODY "## Summary\n- Scanned from XIP: \`%s\`\n- Release date: %s\n\nAuto-generated by the [scan workflow](%s)." \
+          printf -v PR_BODY "## Summary\n- Scanned from: \`%s\`\n- Release date: %s\n\nAuto-generated by the [scan workflow](%s)." \
             "${SOURCE_URL}" "${RELEASE_DATE}" "${RUN_URL}"
           COMMIT_BODY="Signed-off-by: ${BOT_USER} <${BOT_ID}+${BOT_USER}@users.noreply.github.com>"
 
